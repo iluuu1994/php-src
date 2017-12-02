@@ -820,6 +820,7 @@ class ArgInfo {
     const SEND_BY_VAL = 0;
     const SEND_BY_REF = 1;
     const SEND_PREFER_REF = 2;
+    const SEND_PREFER_VAL = 3;
 
     public string $name;
     public int $sendBy;
@@ -866,6 +867,8 @@ class ArgInfo {
             return "1";
         case self::SEND_PREFER_REF:
             return "ZEND_SEND_PREFER_REF";
+        case self::SEND_PREFER_VAL:
+            return "ZEND_SEND_PREFER_VAL";
         }
         throw new Exception("Invalid sendBy value");
     }
@@ -4044,7 +4047,7 @@ class DocCommentTag {
         if ($this->name === "param") {
             // Allow for parsing extended types like callable(string):mixed in docblocks
             preg_match('/^\s*(?<type>[\w\|\\\\]+(?<parens>\((?<inparens>(?:(?&parens)|[^(){}[\]]*+))++\)|\{(?&inparens)\}|\[(?&inparens)\])*+(?::(?&type))?)\s*\$(?<name>\w+).*$/', $value, $matches);
-        } elseif ($this->name === "prefer-ref") {
+        } elseif ($this->name === "prefer-ref" || $this->name === "prefer-val") {
             preg_match('/^\s*\$(?<name>\w+).*$/', $value, $matches);
         }
 
@@ -4186,6 +4189,14 @@ function parseFunctionLike(
                         $paramMeta[$varName][$tag->name] = true;
                         break;
 
+                    case 'prefer-val':
+                        $varName = $tag->getVariableName();
+                        if (!isset($paramMeta[$varName])) {
+                            $paramMeta[$varName] = [];
+                        }
+                        $paramMeta[$varName][$tag->name] = true;
+                        break;
+
                     case 'undocumentable':
                         $isUndocumentable = true;
                         break;
@@ -4208,6 +4219,7 @@ function parseFunctionLike(
 
             $varName = $param->var->name;
             $preferRef = !empty($paramMeta[$varName]['prefer-ref']);
+            $preferVal = !empty($paramMeta[$varName]['prefer-val']);
             unset($paramMeta[$varName]);
 
             if (isset($varNameSet[$varName])) {
@@ -4217,6 +4229,8 @@ function parseFunctionLike(
 
             if ($preferRef) {
                 $sendBy = ArgInfo::SEND_PREFER_REF;
+            } else if ($preferVal) {
+                $sendBy = ArgInfo::SEND_PREFER_VAL;
             } else if ($param->byRef) {
                 $sendBy = ArgInfo::SEND_BY_REF;
             } else {

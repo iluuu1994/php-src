@@ -1996,6 +1996,9 @@ function error_get_last(): ?array {}
 
 function error_clear_last(): void {}
 
+/**
+ * @prefer-val $args
+ */
 function call_user_func(callable $callback, mixed ...$args): mixed {}
 
 function call_user_func_array(callable $callback, array $args): mixed {}
