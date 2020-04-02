@@ -48,4 +48,5 @@ var_dump(match ([1, 2, 3]) {
 --EXPECT--
 string(11) "Empty array"
 string(16) "Check array size"
-string(18) "Literal pattern: 3"
+string(19) "Explicit array keys"
+string(35) "Literal pattern in array pattern: 3"

@@ -260,7 +260,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> identifier type_expr_without_static union_type_without_static
 %type <ast> inline_function union_type
 %type <ast> match_arms non_empty_match_arms match_arm match_arm_guard
-%type <ast> pattern identifier_pattern literal_pattern range_pattern
+%type <ast> pattern identifier_pattern identifier_pattern_pattern literal_pattern range_pattern
 %type <ast> array_pattern array_pattern_element_list non_empty_array_pattern_element_list array_pattern_element array_pattern_element_key
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
@@ -1049,7 +1049,7 @@ match_arm_guard:
 	|	T_IF expr { $$ = $2; }
 
 pattern:
-		identifier_pattern { $$ = zend_ast_create(ZEND_AST_IDENTIFIER_PATTERN, $1); }
+		identifier_pattern { $$ = $1; }
 	|	literal_pattern { $$ = zend_ast_create(ZEND_AST_LITERAL_PATTERN, $1); }
 	|	range_pattern { $$ = $1; }
 	|	T_UNDERSCORE { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
@@ -1057,7 +1057,17 @@ pattern:
 ;
 
 identifier_pattern:
-		T_VARIABLE { $$ = zend_ast_create(ZEND_AST_VAR, $1); }
+		T_VARIABLE identifier_pattern_pattern {
+			$$ = zend_ast_create(
+				ZEND_AST_IDENTIFIER_PATTERN,
+				zend_ast_create(ZEND_AST_VAR, $1),
+				$2);
+		}
+;
+
+identifier_pattern_pattern:
+		%empty { $$ = NULL; }
+	|	'@' pattern { $$ = $2; }
 ;
 
 literal_pattern:

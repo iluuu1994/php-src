@@ -8791,6 +8791,13 @@ void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 void zend_compile_identifier_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 {
 	zend_ast *var_ast = ast->child[0];
+	zend_ast *pattern_ast = ast->child[1];
+
+	uint32_t jmp_fail = 0;
+	if (pattern_ast != NULL) {
+		zend_compile_pattern(result, pattern_ast, value);
+		jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, result, 0);
+	}
 
 	uint32_t offset = zend_delayed_compile_begin();
 	znode var_node;
@@ -8798,8 +8805,9 @@ void zend_compile_identifier_pattern(znode *result, zend_ast *ast, znode *value)
 	zend_delayed_compile_end(offset);
 	zend_emit_op_tmp(result, ZEND_ASSIGN, &var_node, value);
 
-	result->op_type = IS_CONST;
-	ZVAL_BOOL(&result->u.constant, 1);
+	if (jmp_fail != 0) {
+		zend_update_jump_target_to_next(jmp_fail);
+	}
 }
 /* }}} */
 
