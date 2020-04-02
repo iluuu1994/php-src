@@ -5171,6 +5171,58 @@ void zend_compile_switch(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
+{
+	zend_ast *expr_ast = ast->child[0];
+	zend_ast_list *arms = zend_ast_get_list(ast->child[1]);
+
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+
+	uint32_t *jpm_end_opnums = safe_emalloc(sizeof(uint32_t), arms->children, 0);
+
+	for (uint32_t i = 0; i < arms->children; ++i) {
+		zend_ast *arm = arms->child[i];
+		zend_ast *arm_cond_ast = arm->child[0];
+		zend_ast *arm_expr_ast = arm->child[1];
+
+		znode cond_node;
+		zend_compile_pattern(&cond_node, arm_cond_ast, &expr_node);
+		uint32_t jmp_next_opnum = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
+
+		znode arm_expr_node;
+		zend_compile_expr(&arm_expr_node, arm_expr_ast);
+
+		if (i == 0) {
+			zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &arm_expr_node, NULL);
+		} else {
+			zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &arm_expr_node, NULL);
+			SET_NODE(opline_qm_assign->result, result);
+		}
+
+		jpm_end_opnums[i] = zend_emit_jump(0);
+
+		zend_update_jump_target_to_next(jmp_next_opnum);
+	}
+
+	// // Throw error if no arm was executed
+	// zval exception_name;
+	// ZVAL_STRING(&exception_name, "InvalidArgumentException");
+	// zend_ast *exception_name_ast = zend_ast_create_zval(&exception_name);
+	// zend_ast *exception_args_ast = zend_ast_create_list(0, ZEND_AST_ARG_LIST);
+	// zend_ast *new_exception_ast = zend_ast_create(ZEND_AST_NEW, exception_name_ast, exception_args_ast);
+	// zend_ast *throw_ast = zend_ast_create(ZEND_AST_THROW, new_exception_ast);
+	// zend_compile_throw(throw_ast);
+	// zval_ptr_dtor(&exception_name);
+
+	for (uint32_t i = 0; i < arms->children; ++i) {
+		zend_update_jump_target_to_next(jpm_end_opnums[i]);
+	}
+
+	efree(jpm_end_opnums);
+}
+/* }}} */
+
 void zend_compile_try(zend_ast *ast) /* {{{ */
 {
 	zend_ast *try_ast = ast->child[0];
@@ -8725,6 +8777,103 @@ void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+void zend_compile_identifier_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	zend_ast *var_ast = ast->child[0];
+
+	uint32_t offset = zend_delayed_compile_begin();
+	znode var_node;
+	zend_delayed_compile_var(&var_node, var_ast, BP_VAR_W, 0);
+	zend_delayed_compile_end(offset);
+	zend_emit_op_tmp(result, ZEND_ASSIGN, &var_node, value);
+
+	result->op_type = IS_CONST;
+	ZVAL_BOOL(&result->u.constant, 1);
+}
+/* }}} */
+
+void zend_compile_literal_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	zend_ast *expr_ast = ast->child[0];
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+	zend_emit_op(result, ZEND_IS_IDENTICAL, &expr_node, value);
+}
+/* }}} */
+
+void zend_compile_range_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	// Check if value is an integer
+	znode is_long_node;
+	zend_op *is_long_opline = zend_emit_op(&is_long_node, ZEND_TYPE_CHECK, value, NULL);
+	is_long_opline->extended_value = (1 << IS_LONG);
+	uint32_t jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, &is_long_node, 0);
+
+	// Check lower bounds
+	zend_ast *lower_bounds_ast = ast->child[0];
+	znode lower_bounds_node;
+	zend_compile_expr(&lower_bounds_node, lower_bounds_ast);
+	znode lower_bounds_ok_node;
+	zend_emit_op(&lower_bounds_ok_node, ZEND_IS_SMALLER_OR_EQUAL, &lower_bounds_node, value);
+	uint32_t jmp_fail2 = zend_emit_cond_jump(ZEND_JMPZ, &lower_bounds_ok_node, 0);
+
+	// Check upper bounds
+	zend_ast *upper_bounds_ast = ast->child[1];
+	znode upper_bounds_node;
+	zend_compile_expr(&upper_bounds_node, upper_bounds_ast);
+	znode upper_bounds_ok_node;
+	zend_emit_op(&upper_bounds_ok_node, ZEND_IS_SMALLER_OR_EQUAL, value, &upper_bounds_node);
+	uint32_t jmp_fail3 = zend_emit_cond_jump(ZEND_JMPZ, &upper_bounds_ok_node, 0);
+
+	// Pattern maching successful, return true
+	znode true_node;
+	ZVAL_TRUE(&true_node.u.constant);
+	true_node.op_type = IS_CONST;
+	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &true_node, NULL);
+	uint32_t jmp_success = zend_emit_jump(0);
+
+	// // Pattern maching failed, return false
+	zend_update_jump_target_to_next(jmp_fail);
+	zend_update_jump_target_to_next(jmp_fail2);
+	zend_update_jump_target_to_next(jmp_fail3);
+	znode false_node;
+	ZVAL_FALSE(&false_node.u.constant);
+	false_node.op_type = IS_CONST;
+	zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &false_node, NULL);
+	SET_NODE(opline_qm_assign->result, result);
+
+	zend_update_jump_target_to_next(jmp_success);
+}
+/* }}} */
+
+void zend_compile_wildcard_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	result->op_type = IS_CONST;
+	ZVAL_BOOL(&result->u.constant, 1);
+}
+/* }}} */
+
+void zend_compile_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	switch (ast->kind) {
+		case ZEND_AST_IDENTIFIER_PATTERN:
+			zend_compile_identifier_pattern(result, ast, value);
+			break;
+		case ZEND_AST_LITERAL_PATTERN:
+			zend_compile_literal_pattern(result, ast, value);
+			break;
+		case ZEND_AST_RANGE_PATTERN:
+			zend_compile_range_pattern(result, ast, value);
+			break;
+		case ZEND_AST_WILDCARD_PATTERN:
+			zend_compile_wildcard_pattern(result, ast, value);
+			break;
+		default:
+			ZEND_ASSERT(0 /* not supported */);
+	}
+}
+/* }}} */
+
 void zend_compile_stmt(zend_ast *ast) /* {{{ */
 {
 	if (!ast) {
@@ -8967,6 +9116,9 @@ void zend_compile_expr(znode *result, zend_ast *ast) /* {{{ */
 		case ZEND_AST_CLOSURE:
 		case ZEND_AST_ARROW_FUNC:
 			zend_compile_func_decl(result, ast, 0);
+			return;
+		case ZEND_AST_MATCH:
+			zend_compile_match(result, ast);
 			return;
 		default:
 			ZEND_ASSERT(0 /* not supported */);

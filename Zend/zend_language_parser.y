@@ -161,7 +161,9 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_SWITCH     "switch (T_SWITCH)"
 %token T_ENDSWITCH  "endswitch (T_ENDSWITCH)"
 %token T_CASE       "case (T_CASE)"
+%token T_MATCH      "match (T_MATCH)"
 %token T_DEFAULT    "default (T_DEFAULT)"
+%token T_UNDERSCORE "_ (T_UNDERSCORE)"
 %token T_BREAK      "break (T_BREAK)"
 %token T_CONTINUE   "continue (T_CONTINUE)"
 %token T_GOTO       "goto (T_GOTO)"
@@ -257,6 +259,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> isset_variable type return_type type_expr type_without_static
 %type <ast> identifier type_expr_without_static union_type_without_static
 %type <ast> inline_function union_type
+%type <ast> match_arms non_empty_match_arms match_arm pattern identifier_pattern literal_pattern range_pattern
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -1021,8 +1024,47 @@ expr:
 	|	T_YIELD_FROM expr { $$ = zend_ast_create(ZEND_AST_YIELD_FROM, $2); CG(extra_fn_flags) |= ZEND_ACC_GENERATOR; }
 	|	inline_function { $$ = $1; }
 	|	T_STATIC inline_function { $$ = $2; ((zend_ast_decl *) $$)->flags |= ZEND_ACC_STATIC; }
+	|	T_MATCH '(' expr ')' '{'  match_arms '}'
+			{ $$ = zend_ast_create(ZEND_AST_MATCH, $3, $6); }
 ;
 
+match_arms:
+		%empty { $$ = zend_ast_create_list(0, ZEND_AST_ARG_LIST); }
+	|	non_empty_match_arms possible_comma { $$ = $1; }
+;
+
+non_empty_match_arms:
+		match_arm { $$ = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, $1); }
+	|	non_empty_match_arms ',' match_arm { $$ = zend_ast_list_add($1, $3); }
+;
+
+match_arm:
+	pattern T_DOUBLE_ARROW expr { $$ = zend_ast_create(ZEND_AST_MATCH_ARM, $1, $3); }
+;
+
+pattern:
+		identifier_pattern { $$ = zend_ast_create(ZEND_AST_IDENTIFIER_PATTERN, $1); }
+	|	literal_pattern { $$ = zend_ast_create(ZEND_AST_LITERAL_PATTERN, $1); }
+	|	range_pattern { $$ = $1; }
+	|	T_UNDERSCORE { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
+;
+
+identifier_pattern:
+		T_VARIABLE { $$ = zend_ast_create(ZEND_AST_VAR, $1); }
+;
+
+literal_pattern:
+		T_LNUMBER { $$ = $1; }
+	|	T_DNUMBER { $$ = $1; }
+	|	constant { $$ = $1; }
+	|	class_constant { $$ = $1; }
+	|	T_CONSTANT_ENCAPSED_STRING { $$ = $1; }
+	|	'"' encaps_list '"' { $$ = $2; }
+;
+
+range_pattern:
+		T_LNUMBER T_ELLIPSIS T_LNUMBER { $$ = zend_ast_create(ZEND_AST_RANGE_PATTERN, $1, $3); }
+;
 
 inline_function:
 		function returns_ref backup_doc_comment '(' parameter_list ')' lexical_vars return_type
