@@ -53,6 +53,13 @@ var_dump(match (15) {
     20 ... 30 => wrong(),
 });
 
+var_dump(match (true) {
+    false if false => wrong(),
+    false if true => wrong(),
+    true if false => wrong(),
+    true if true => 'Guard',
+});
+
 ?>
 --EXPECT--
 string(25) "Literal pattern with bool"
@@ -61,3 +68,4 @@ string(27) "Literal pattern with string"
 string(23) "Identifier pattern: Foo"
 string(16) "Wildcard pattern"
 string(13) "Range pattern"
+string(5) "Guard"

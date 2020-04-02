@@ -5184,11 +5184,19 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 	for (uint32_t i = 0; i < arms->children; ++i) {
 		zend_ast *arm = arms->child[i];
 		zend_ast *arm_cond_ast = arm->child[0];
-		zend_ast *arm_expr_ast = arm->child[1];
+		zend_ast *arm_guard_ast = arm->child[1];
+		zend_ast *arm_expr_ast = arm->child[2];
 
 		znode cond_node;
 		zend_compile_pattern(&cond_node, arm_cond_ast, &expr_node);
 		uint32_t jmp_next_opnum = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
+
+		uint32_t jmp_next_opnum2 = 0;
+		if (arm_guard_ast != NULL) {
+			znode guard_node;
+			zend_compile_expr(&guard_node, arm_guard_ast);
+			jmp_next_opnum2 = zend_emit_cond_jump(ZEND_JMPZ, &guard_node, 0);
+		}
 
 		znode arm_expr_node;
 		zend_compile_expr(&arm_expr_node, arm_expr_ast);
@@ -5203,6 +5211,9 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 		jpm_end_opnums[i] = zend_emit_jump(0);
 
 		zend_update_jump_target_to_next(jmp_next_opnum);
+		if (jmp_next_opnum2 != 0) {
+			zend_update_jump_target_to_next(jmp_next_opnum2);
+		}
 	}
 
 	// // Throw error if no arm was executed

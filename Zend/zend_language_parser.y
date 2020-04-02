@@ -259,7 +259,8 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> isset_variable type return_type type_expr type_without_static
 %type <ast> identifier type_expr_without_static union_type_without_static
 %type <ast> inline_function union_type
-%type <ast> match_arms non_empty_match_arms match_arm pattern identifier_pattern literal_pattern range_pattern
+%type <ast> match_arms non_empty_match_arms match_arm match_arm_guard
+%type <ast> pattern identifier_pattern literal_pattern range_pattern
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -1039,8 +1040,12 @@ non_empty_match_arms:
 ;
 
 match_arm:
-	pattern T_DOUBLE_ARROW expr { $$ = zend_ast_create(ZEND_AST_MATCH_ARM, $1, $3); }
+	pattern match_arm_guard T_DOUBLE_ARROW expr { $$ = zend_ast_create(ZEND_AST_MATCH_ARM, $1, $2, $4); }
 ;
+
+match_arm_guard:
+		%empty { $$ = NULL; }
+	|	T_IF expr { $$ = $2; }
 
 pattern:
 		identifier_pattern { $$ = zend_ast_create(ZEND_AST_IDENTIFIER_PATTERN, $1); }
