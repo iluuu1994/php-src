@@ -261,6 +261,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> inline_function union_type
 %type <ast> match_arms non_empty_match_arms match_arm match_arm_guard
 %type <ast> pattern identifier_pattern literal_pattern range_pattern
+%type <ast> array_pattern array_pattern_element_list non_empty_array_pattern_element_list array_pattern_element array_pattern_element_key
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -1052,6 +1053,7 @@ pattern:
 	|	literal_pattern { $$ = zend_ast_create(ZEND_AST_LITERAL_PATTERN, $1); }
 	|	range_pattern { $$ = $1; }
 	|	T_UNDERSCORE { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
+	|	array_pattern { $$ = $1; }
 ;
 
 identifier_pattern:
@@ -1062,13 +1064,42 @@ literal_pattern:
 		T_LNUMBER { $$ = $1; }
 	|	T_DNUMBER { $$ = $1; }
 	|	constant { $$ = $1; }
-	|	class_constant { $$ = $1; }
+	/* Why does this make the grammar ambiguous? */
+	/*|	class_constant { $$ = $1; }*/
 	|	T_CONSTANT_ENCAPSED_STRING { $$ = $1; }
 	|	'"' encaps_list '"' { $$ = $2; }
 ;
 
 range_pattern:
 		T_LNUMBER T_ELLIPSIS T_LNUMBER { $$ = zend_ast_create(ZEND_AST_RANGE_PATTERN, $1, $3); }
+;
+
+array_pattern:
+		'[' array_pattern_element_list ']' { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN, $2); }
+;
+
+array_pattern_element_list:
+		%empty { $$ = zend_ast_create_list(0, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST); }
+	|	non_empty_array_pattern_element_list { $$ = $1; }
+;
+
+non_empty_array_pattern_element_list:
+		array_pattern_element { $$ = zend_ast_create_list(1, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST, $1); }
+	|	non_empty_array_pattern_element_list ',' array_pattern_element { $$ = zend_ast_list_add($1, $3); }
+;
+
+array_pattern_element:
+		pattern { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN_ELEMENT, NULL, $1); }
+	|	array_pattern_element_key T_DOUBLE_ARROW pattern
+			 { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN_ELEMENT, $1, $3); }
+;
+
+array_pattern_element_key:
+		T_LNUMBER { $$ = $1; }
+	|	T_DNUMBER { $$ = $1; }
+	|	constant { $$ = $1; }
+	|	T_CONSTANT_ENCAPSED_STRING { $$ = $1; }
+	|	'"' encaps_list '"' { $$ = $2; }
 ;
 
 inline_function:

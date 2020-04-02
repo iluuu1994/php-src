@@ -8843,7 +8843,7 @@ void zend_compile_range_pattern(znode *result, zend_ast *ast, znode *value) /* {
 	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &true_node, NULL);
 	uint32_t jmp_success = zend_emit_jump(0);
 
-	// // Pattern maching failed, return false
+	// Pattern maching failed, return false
 	zend_update_jump_target_to_next(jmp_fail);
 	zend_update_jump_target_to_next(jmp_fail2);
 	zend_update_jump_target_to_next(jmp_fail3);
@@ -8854,6 +8854,80 @@ void zend_compile_range_pattern(znode *result, zend_ast *ast, znode *value) /* {
 	SET_NODE(opline_qm_assign->result, result);
 
 	zend_update_jump_target_to_next(jmp_success);
+}
+/* }}} */
+
+void zend_compile_array_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	zend_ast_list *element_pattern_list = zend_ast_get_list(ast->child[0]);
+
+	// Check if value is an array
+	znode is_array_node;
+	zend_op *is_long_opline = zend_emit_op(&is_array_node, ZEND_TYPE_CHECK, value, NULL);
+	is_long_opline->extended_value = (1 << IS_ARRAY);
+	uint32_t jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, &is_array_node, 0);
+
+	// Check if the value has the same number of elements as the pattern
+	znode expected_count_node;
+	ZVAL_LONG(&expected_count_node.u.constant, element_pattern_list->children);
+	expected_count_node.op_type = IS_CONST;
+	znode actual_count_node;
+	zend_emit_op(&actual_count_node, ZEND_COUNT, value, NULL);
+	znode count_is_same_node;
+	zend_emit_op(&count_is_same_node, ZEND_IS_IDENTICAL, &actual_count_node, &expected_count_node);
+	uint32_t jmp_fail2 = zend_emit_cond_jump(ZEND_JMPZ, &count_is_same_node, 0);
+
+	// Check each pattern in the element list
+	uint32_t *jmpz_fail_opnums = safe_emalloc(sizeof(uint32_t), element_pattern_list->children * 2, 0);
+	uint32_t incremental_key = 0;
+	for (uint32_t i = 0; i < element_pattern_list->children; i++) {
+		zend_ast *element_ast = element_pattern_list->child[i];
+		zend_ast *element_key_ast = element_ast->child[0];
+		zend_ast *element_pattern_ast = element_ast->child[1];
+
+		znode dim_node;
+		if (element_key_ast != NULL) {
+			zend_compile_expr(&dim_node, element_key_ast);
+		} else {
+			ZVAL_LONG(&dim_node.u.constant, incremental_key++);
+			dim_node.op_type = IS_CONST;
+		}
+
+		znode isset_dim_node;
+		zend_emit_op(&isset_dim_node, ZEND_ISSET_ISEMPTY_DIM_OBJ, value, &dim_node);
+		jmpz_fail_opnums[i] = zend_emit_cond_jump(ZEND_JMPZ, &isset_dim_node, 0);
+
+		znode element_node;
+		zend_emit_op(&element_node, ZEND_FETCH_DIM_R, value, &dim_node);
+
+		znode element_pattern_result;
+		zend_compile_pattern(&element_pattern_result, element_pattern_ast, &element_node);
+
+		jmpz_fail_opnums[i + element_pattern_list->children] = zend_emit_cond_jump(ZEND_JMPZ, &element_pattern_result, 0);
+	}
+
+	// Pattern maching successful, return true
+	znode true_node;
+	ZVAL_TRUE(&true_node.u.constant);
+	true_node.op_type = IS_CONST;
+	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &true_node, NULL);
+	uint32_t jmp_success = zend_emit_jump(0);
+
+	// Pattern maching failed, return false
+	zend_update_jump_target_to_next(jmp_fail);
+	zend_update_jump_target_to_next(jmp_fail2);
+	for (uint32_t i = 0; i < element_pattern_list->children * 2; i++) {
+		zend_update_jump_target_to_next(jmpz_fail_opnums[i]);
+	}
+	znode false_node;
+	ZVAL_FALSE(&false_node.u.constant);
+	false_node.op_type = IS_CONST;
+	zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &false_node, NULL);
+	SET_NODE(opline_qm_assign->result, result);
+
+	zend_update_jump_target_to_next(jmp_success);
+
+	efree(jmpz_fail_opnums);
 }
 /* }}} */
 
@@ -8875,6 +8949,9 @@ void zend_compile_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 			break;
 		case ZEND_AST_RANGE_PATTERN:
 			zend_compile_range_pattern(result, ast, value);
+			break;
+		case ZEND_AST_ARRAY_PATTERN:
+			zend_compile_array_pattern(result, ast, value);
 			break;
 		case ZEND_AST_WILDCARD_PATTERN:
 			zend_compile_wildcard_pattern(result, ast, value);
