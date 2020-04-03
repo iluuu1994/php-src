@@ -263,6 +263,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> pattern identifier_pattern identifier_pattern_pattern literal_pattern range_pattern
 %type <ast> array_pattern array_pattern_element_list non_empty_array_pattern_element_list array_pattern_element array_pattern_element_key
 %type <ast> object_pattern object_pattern_element_list non_empty_object_pattern_element_list object_pattern_element
+%type <ast> object_pattern_element_property_or_method_call
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -1129,7 +1130,12 @@ non_empty_object_pattern_element_list:
 ;
 
 object_pattern_element:
-		T_STRING ':' pattern { $$ = zend_ast_create(ZEND_AST_OBJECT_PATTERN_ELEMENT, $1, $3); }
+		object_pattern_element_property_or_method_call ':' pattern { $$ = zend_ast_create(ZEND_AST_OBJECT_PATTERN_ELEMENT, $1, $3); }
+;
+
+object_pattern_element_property_or_method_call:
+		T_STRING { $$ = $1; }
+	|	T_STRING argument_list { $$ = zend_ast_create(ZEND_AST_OBJECT_PATTERN_ELEMENT_METHOD_CALL, $1, $2); }
 ;
 
 inline_function:

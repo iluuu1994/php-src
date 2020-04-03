@@ -8959,17 +8959,32 @@ void zend_compile_object_pattern(znode *result, zend_ast *ast, znode *value) /* 
 	uint32_t *jmpz_fail_opnums = safe_emalloc(sizeof(uint32_t), object_elements->children, 0);
 	for (uint32_t i = 0; i < object_elements->children; i++) {
 		zend_ast *element_ast = object_elements->child[i];
-		zend_ast *element_prop_ast = element_ast->child[0];
+		zend_ast *element_fetch_ast = element_ast->child[0];
 		zend_ast *element_pattern_ast = element_ast->child[1];
 
-		znode element_prop_node;
-		zend_compile_expr(&element_prop_node, element_prop_ast);
-		znode property_value_node;
-		zend_op *fetch_property_opline = zend_emit_op(&property_value_node, ZEND_FETCH_OBJ_R, value, &element_prop_node);
-		convert_to_string(CT_CONSTANT(fetch_property_opline->op2));
-		fetch_property_opline->extended_value = zend_alloc_cache_slots(3);
+		znode element_value;
+		if (element_fetch_ast->kind == ZEND_AST_OBJECT_PATTERN_ELEMENT_METHOD_CALL) {
+			zend_ast *method_ast = element_fetch_ast->child[0];
+			zend_ast *args_ast = element_fetch_ast->child[1];
+
+			znode method_node;
+			zend_compile_expr(&method_node, method_ast);
+			zend_op *opline = zend_emit_op(NULL, ZEND_INIT_METHOD_CALL, value, NULL);
+			opline->op2_type = IS_CONST;
+			opline->op2.constant = zend_add_func_name_literal(Z_STR(method_node.u.constant));
+			opline->result.num = zend_alloc_cache_slots(2);
+
+			zend_compile_call_common(&element_value, args_ast, NULL);
+		} else {
+			znode element_prop_node;
+			zend_compile_expr(&element_prop_node, element_fetch_ast);
+			zend_op *fetch_property_opline = zend_emit_op(&element_value, ZEND_FETCH_OBJ_R, value, &element_prop_node);
+			convert_to_string(CT_CONSTANT(fetch_property_opline->op2));
+			fetch_property_opline->extended_value = zend_alloc_cache_slots(3);
+		}
+
 		znode element_pattern_matched_node;
-		zend_compile_pattern(&element_pattern_matched_node, element_pattern_ast, &property_value_node);
+		zend_compile_pattern(&element_pattern_matched_node, element_pattern_ast, &element_value);
 		jmpz_fail_opnums[i] = zend_emit_cond_jump(ZEND_JMPZ, &element_pattern_matched_node, 0);
 	}
 

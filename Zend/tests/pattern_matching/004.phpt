@@ -5,7 +5,16 @@ Test object pattern binding
 
 class Foo {
     public $bar;
-    public $baz;
+    private $baz;
+
+    public function __construct($bar, $baz) {
+        $this->bar = $bar;
+        $this->baz = $baz;
+    }
+
+    public function getBaz() {
+        return $this->baz;
+    }
 }
 
 class Bar {}
@@ -14,19 +23,17 @@ function wrong() {
     throw new Exception();
 }
 
-$foo = new Foo();
-$foo->bar = 'bar';
-$foo->baz = 'baz';
+$foo = new Foo('bar', 'baz');
 
 var_dump(match ($foo) {
     Bar {} => wrong(),
     Foo { bar: 'baz' } => wrong(),
     Foo { inexistentProp: 'nope' } => wrong(),
-    Foo { bar: $bar @ 'bar' } => 'Object pattern: ' . $bar,
+    Foo { bar: $bar @ 'bar', getBaz(): $baz } => 'Object pattern: ' . $bar . ' ' . $baz,
 });
 
 ?>
 --EXPECTF--
 
 Warning: Undefined property: Foo::$inexistentProp in %s on line %d
-string(19) "Object pattern: bar"
+string(23) "Object pattern: bar baz"
