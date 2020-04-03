@@ -35,14 +35,13 @@ var_dump(match ([1, 2, 3]) {
     [1, 2, $a] => 'Literal pattern in array pattern: ' . $a,
 });
 
-// FIXME: Memory leak with the wildcard pattern?
-// var_dump(match (['foo', 24]) {
-//     [_, 0 ... 10] => wrong(),
-//     [_, 10 ... 20] => wrong(),
-//     [_, 20 ... 30] => 'Range pattern in array pattern',
-//     [_, 30 ... 40] => wrong(),
-//     [_, 40 ... 50] => wrong(),
-// });
+var_dump(match (['foo', 24]) {
+    [_, 0 ... 10] => wrong(),
+    [_, 10 ... 20] => wrong(),
+    [_, 20 ... 30] => 'Range pattern in array pattern',
+    [_, 30 ... 40] => wrong(),
+    [_, 40 ... 50] => wrong(),
+});
 
 ?>
 --EXPECT--
@@ -50,3 +49,4 @@ string(11) "Empty array"
 string(16) "Check array size"
 string(19) "Explicit array keys"
 string(35) "Literal pattern in array pattern: 3"
+string(30) "Range pattern in array pattern"

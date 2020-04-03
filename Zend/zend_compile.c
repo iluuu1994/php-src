@@ -9075,8 +9075,12 @@ void zend_compile_type_check_pattern(znode *result, zend_ast *ast, znode *value)
 
 void zend_compile_wildcard_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 {
-	// FIXME: Add nop no avoid memory leak if value is never used
-	zend_emit_op(NULL, ZEND_NOP, value, NULL);
+	// FIXME: Not doing anything with the value causes a memory leak
+	znode null_node;
+	ZVAL_NULL(&null_node.u.constant);
+	null_node.op_type = IS_CONST;
+	znode dummy_node;
+	zend_emit_op(&dummy_node, ZEND_IS_IDENTICAL, value, &null_node);
 
 	result->op_type = IS_CONST;
 	ZVAL_BOOL(&result->u.constant, 1);
