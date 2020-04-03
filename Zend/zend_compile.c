@@ -9012,6 +9012,62 @@ void zend_compile_object_pattern(znode *result, zend_ast *ast, znode *value) /* 
 }
 /* }}} */
 
+void zend_compile_type_check_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	zend_ast *type_ast = ast->child[0];
+	zend_type type = zend_compile_typename(type_ast, 0, 1);
+	zend_type *single_type;
+
+	uint32_t num_types = 0;
+	ZEND_TYPE_FOREACH(type, single_type) {
+		num_types++;
+
+		if (ZEND_TYPE_HAS_NAME(*single_type)) {
+			num_types++;
+		}
+	} ZEND_TYPE_FOREACH_END();
+
+	uint32_t *jmpz_success_opnums = safe_emalloc(sizeof(uint32_t), num_types, 0);
+	uint32_t i = 0;
+	ZEND_TYPE_FOREACH(type, single_type) {
+		znode type_check_node;
+		zend_op *type_check_opline = zend_emit_op(&type_check_node, ZEND_TYPE_CHECK, value, NULL);
+		type_check_opline->extended_value = type.type_mask;
+		jmpz_success_opnums[i++] = zend_emit_cond_jump(ZEND_JMPNZ, &type_check_node, 0);
+
+		if (ZEND_TYPE_HAS_NAME(*single_type)) {
+			znode is_instanceof_node;
+			zend_op *is_instanceof_opline = zend_emit_op(&is_instanceof_node, ZEND_INSTANCEOF, value, NULL);
+			is_instanceof_opline->op2_type = IS_CONST;
+			is_instanceof_opline->op2.constant = zend_add_class_name_literal(ZEND_TYPE_NAME(*single_type));
+			is_instanceof_opline->extended_value = zend_alloc_cache_slot();
+			jmpz_success_opnums[i++] = zend_emit_cond_jump(ZEND_JMPNZ, &is_instanceof_node, 0);
+		}
+	} ZEND_TYPE_FOREACH_END();
+
+	// Pattern maching failed, return false
+	znode false_node;
+	ZVAL_FALSE(&false_node.u.constant);
+	false_node.op_type = IS_CONST;
+	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
+	uint32_t jmp_end = zend_emit_jump(0);
+
+	// Pattern maching successful, return true
+	for (uint32_t i = 0; i < num_types; i++) {
+		zend_update_jump_target_to_next(jmpz_success_opnums[i]);
+	}
+	znode true_node;
+	ZVAL_TRUE(&true_node.u.constant);
+	true_node.op_type = IS_CONST;
+	zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &true_node, NULL);
+	SET_NODE(opline_qm_assign->result, result);
+
+	zend_update_jump_target_to_next(jmp_end);
+
+	efree(jmpz_success_opnums);
+}
+/* }}} */
+
 void zend_compile_wildcard_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 {
 	result->op_type = IS_CONST;
@@ -9036,6 +9092,9 @@ void zend_compile_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 			break;
 		case ZEND_AST_OBJECT_PATTERN:
 			zend_compile_object_pattern(result, ast, value);
+			break;
+		case ZEND_AST_TYPE_CHECK_PATTERN:
+			zend_compile_type_check_pattern(result, ast, value);
 			break;
 		case ZEND_AST_WILDCARD_PATTERN:
 			zend_compile_wildcard_pattern(result, ast, value);

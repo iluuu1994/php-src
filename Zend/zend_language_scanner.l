@@ -1378,6 +1378,10 @@ NEWLINE ("\r"|"\n"|"\r\n")
 	RETURN_TOKEN(T_AS);
 }
 
+<ST_IN_SCRIPTING>"is" {
+	RETURN_TOKEN(T_IS);
+}
+
 <ST_IN_SCRIPTING>"switch" {
 	RETURN_TOKEN(T_SWITCH);
 }

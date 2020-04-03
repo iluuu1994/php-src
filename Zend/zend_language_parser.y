@@ -158,6 +158,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_DECLARE    "declare (T_DECLARE)"
 %token T_ENDDECLARE "enddeclare (T_ENDDECLARE)"
 %token T_AS         "as (T_AS)"
+%token T_IS         "is (T_IS)"
 %token T_SWITCH     "switch (T_SWITCH)"
 %token T_ENDSWITCH  "endswitch (T_ENDSWITCH)"
 %token T_CASE       "case (T_CASE)"
@@ -1057,6 +1058,7 @@ pattern:
 	|	T_UNDERSCORE { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
 	|	array_pattern { $$ = $1; }
 	|	object_pattern { $$ = $1; }
+	|	T_IS type_expr { $$ = zend_ast_create(ZEND_AST_TYPE_CHECK_PATTERN, $2); }
 ;
 
 identifier_pattern:
