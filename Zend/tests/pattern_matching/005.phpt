@@ -8,16 +8,13 @@ class Foo implements FooInterface {}
 class Bar {}
 class Baz {}
 
-function wrong() {
-    throw new Exception();
-}
-
 function test($value) {
     var_dump(match ($value) {
-        is int|float => 'int|float',
-        is ?string => '?string',
-        is FooInterface|Bar => 'FooInterface|Bar',
-        _ => '_',
+        $v @ is int|float => var_export($v, true) . ': int|float',
+        $v @ is ?string => var_export($v, true) . ': ?string',
+        $v @ is FooInterface|Bar => get_class($v) . ': FooInterface|Bar',
+        $v @ is object => get_class($v) . ': object',
+        $v @ _ => var_export($v, true) . ': _',
     });
 }
 
@@ -32,11 +29,11 @@ test(false);
 
 ?>
 --EXPECT--
-string(9) "int|float"
-string(9) "int|float"
-string(7) "?string"
-string(7) "?string"
-string(16) "FooInterface|Bar"
-string(16) "FooInterface|Bar"
-string(1) "_"
-string(1) "_"
+string(13) "42: int|float"
+string(16) "3.141: int|float"
+string(13) "NULL: ?string"
+string(14) "'foo': ?string"
+string(21) "Foo: FooInterface|Bar"
+string(21) "Bar: FooInterface|Bar"
+string(11) "Baz: object"
+string(8) "false: _"

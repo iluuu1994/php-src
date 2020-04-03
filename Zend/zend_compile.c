@@ -8797,13 +8797,18 @@ void zend_compile_identifier_pattern(znode *result, zend_ast *ast, znode *value)
 	if (pattern_ast != NULL) {
 		zend_compile_pattern(result, pattern_ast, value);
 		jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, result, 0);
+	} else {
+		ZVAL_LONG(&result->u.constant, 1);
+		result->op_type = IS_CONST;
 	}
 
 	uint32_t offset = zend_delayed_compile_begin();
 	znode var_node;
 	zend_delayed_compile_var(&var_node, var_ast, BP_VAR_W, 0);
 	zend_delayed_compile_end(offset);
-	zend_emit_op_tmp(result, ZEND_ASSIGN, &var_node, value);
+	znode assign_node;
+	zend_emit_op_tmp(&assign_node, ZEND_ASSIGN, &var_node, value);
+	zend_do_free(&assign_node);
 
 	if (jmp_fail != 0) {
 		zend_update_jump_target_to_next(jmp_fail);
