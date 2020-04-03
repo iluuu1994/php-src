@@ -9075,6 +9075,9 @@ void zend_compile_type_check_pattern(znode *result, zend_ast *ast, znode *value)
 
 void zend_compile_wildcard_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 {
+	// FIXME: Add nop no avoid memory leak if value is never used
+	zend_emit_op(NULL, ZEND_NOP, value, NULL);
+
 	result->op_type = IS_CONST;
 	ZVAL_BOOL(&result->u.constant, 1);
 }
