@@ -8939,6 +8939,64 @@ void zend_compile_array_pattern(znode *result, zend_ast *ast, znode *value) /* {
 }
 /* }}} */
 
+void zend_compile_object_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
+{
+	zend_ast *class_name_ast = ast->child[0];
+	zend_ast_list *object_elements = zend_ast_get_list(ast->child[1]);
+
+	// FIXME: Allow object as type?
+	// Check if the class matches
+	znode class_node;
+	zend_compile_class_ref(&class_node, class_name_ast, ZEND_FETCH_CLASS_NO_AUTOLOAD | ZEND_FETCH_CLASS_EXCEPTION);
+	znode is_instanceof_node;
+	zend_op *is_instanceof_opline = zend_emit_op_tmp(&is_instanceof_node, ZEND_INSTANCEOF, value, NULL);
+	is_instanceof_opline->op2_type = IS_CONST;
+	is_instanceof_opline->op2.constant = zend_add_class_name_literal(Z_STR(class_node.u.constant));
+	is_instanceof_opline->extended_value = zend_alloc_cache_slot();
+	uint32_t jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, &is_instanceof_node, 0);
+
+	// Check the property patterns
+	uint32_t *jmpz_fail_opnums = safe_emalloc(sizeof(uint32_t), object_elements->children, 0);
+	for (uint32_t i = 0; i < object_elements->children; i++) {
+		zend_ast *element_ast = object_elements->child[i];
+		zend_ast *element_prop_ast = element_ast->child[0];
+		zend_ast *element_pattern_ast = element_ast->child[1];
+
+		znode element_prop_node;
+		zend_compile_expr(&element_prop_node, element_prop_ast);
+		znode property_value_node;
+		zend_op *fetch_property_opline = zend_emit_op(&property_value_node, ZEND_FETCH_OBJ_R, value, &element_prop_node);
+		convert_to_string(CT_CONSTANT(fetch_property_opline->op2));
+		fetch_property_opline->extended_value = zend_alloc_cache_slots(3);
+		znode element_pattern_matched_node;
+		zend_compile_pattern(&element_pattern_matched_node, element_pattern_ast, &property_value_node);
+		jmpz_fail_opnums[i] = zend_emit_cond_jump(ZEND_JMPZ, &element_pattern_matched_node, 0);
+	}
+
+	// Pattern maching successful, return true
+	znode true_node;
+	ZVAL_TRUE(&true_node.u.constant);
+	true_node.op_type = IS_CONST;
+	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &true_node, NULL);
+	uint32_t jmp_success = zend_emit_jump(0);
+
+	// Pattern maching failed, return false
+	zend_update_jump_target_to_next(jmp_fail);
+	for (uint32_t i = 0; i < object_elements->children; i++) {
+		zend_update_jump_target_to_next(jmpz_fail_opnums[i]);
+	}
+	znode false_node;
+	ZVAL_FALSE(&false_node.u.constant);
+	false_node.op_type = IS_CONST;
+	zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &false_node, NULL);
+	SET_NODE(opline_qm_assign->result, result);
+
+	zend_update_jump_target_to_next(jmp_success);
+
+	efree(jmpz_fail_opnums);
+}
+/* }}} */
+
 void zend_compile_wildcard_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 {
 	result->op_type = IS_CONST;
@@ -8960,6 +9018,9 @@ void zend_compile_pattern(znode *result, zend_ast *ast, znode *value) /* {{{ */
 			break;
 		case ZEND_AST_ARRAY_PATTERN:
 			zend_compile_array_pattern(result, ast, value);
+			break;
+		case ZEND_AST_OBJECT_PATTERN:
+			zend_compile_object_pattern(result, ast, value);
 			break;
 		case ZEND_AST_WILDCARD_PATTERN:
 			zend_compile_wildcard_pattern(result, ast, value);
