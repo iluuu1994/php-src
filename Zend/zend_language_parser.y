@@ -1079,8 +1079,8 @@ literal_pattern:
 		T_LNUMBER { $$ = $1; }
 	|	T_DNUMBER { $$ = $1; }
 	|	constant { $$ = $1; }
-	/* Why does this make the grammar ambiguous? */
-	/*|	class_constant { $$ = $1; }*/
+	|	class_name T_PAAMAYIM_NEKUDOTAYIM identifier
+			{ $$ = zend_ast_create_class_const_or_name($1, $3); }
 	|	T_CONSTANT_ENCAPSED_STRING { $$ = $1; }
 	|	'"' encaps_list '"' { $$ = $2; }
 ;
@@ -1118,6 +1118,8 @@ array_pattern_element_key:
 		T_LNUMBER { $$ = $1; }
 	|	T_DNUMBER { $$ = $1; }
 	|	constant { $$ = $1; }
+	|	class_name T_PAAMAYIM_NEKUDOTAYIM identifier
+			{ $$ = zend_ast_create_class_const_or_name($1, $3); }
 	|	T_CONSTANT_ENCAPSED_STRING { $$ = $1; }
 	|	'"' encaps_list '"' { $$ = $2; }
 ;

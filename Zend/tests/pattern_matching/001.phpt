@@ -7,6 +7,10 @@ function wrong() {
     throw new Exception();
 }
 
+class Foo {
+    const FOO = 'foo';
+}
+
 var_dump(match (true) {
     false => wrong(),
     true => 'Literal pattern with bool',
@@ -60,6 +64,11 @@ var_dump(match (true) {
     true if true => 'Guard',
 });
 
+var_dump(match ('foo') {
+    'bar' => wrong(),
+    Foo::FOO => 'Class constant literal',
+});
+
 ?>
 --EXPECT--
 string(25) "Literal pattern with bool"
@@ -69,3 +78,4 @@ string(23) "Identifier pattern: Foo"
 string(16) "Wildcard pattern"
 string(13) "Range pattern"
 string(5) "Guard"
+string(22) "Class constant literal"

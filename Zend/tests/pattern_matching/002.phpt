@@ -49,6 +49,16 @@ var_dump(match (['foo', 'bar']) {
     ['foo', ...] => "['foo', ...]",
 });
 
+class Consts {
+    const FOO = 'foo';
+    const BAR = 'bar';
+}
+
+var_dump(match (['foo' => 'bar']) {
+    [Consts::BAR => 'bar'] => wrong(),
+    [Consts::FOO => 'bar'] => 'Const in array pattern element key',
+});
+
 ?>
 --EXPECT--
 string(11) "Empty array"
@@ -57,3 +67,4 @@ string(19) "Explicit array keys"
 string(35) "Literal pattern in array pattern: 3"
 string(30) "Range pattern in array pattern"
 string(12) "['foo', ...]"
+string(34) "Const in array pattern element key"
