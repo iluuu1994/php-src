@@ -5216,15 +5216,15 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 		}
 	}
 
-	// // Throw error if no arm was executed
-	// zval exception_name;
-	// ZVAL_STRING(&exception_name, "InvalidArgumentException");
-	// zend_ast *exception_name_ast = zend_ast_create_zval(&exception_name);
-	// zend_ast *exception_args_ast = zend_ast_create_list(0, ZEND_AST_ARG_LIST);
-	// zend_ast *new_exception_ast = zend_ast_create(ZEND_AST_NEW, exception_name_ast, exception_args_ast);
-	// zend_ast *throw_ast = zend_ast_create(ZEND_AST_THROW, new_exception_ast);
-	// zend_compile_throw(throw_ast);
-	// zval_ptr_dtor(&exception_name);
+	// Throw error if no arm was executed
+	zval exception_name;
+	ZVAL_STRING(&exception_name, "InvalidArgumentException");
+	zend_ast *exception_name_ast = zend_ast_create_zval(&exception_name);
+	zend_ast *exception_args_ast = zend_ast_create_list(0, ZEND_AST_ARG_LIST);
+	zend_ast *new_exception_ast = zend_ast_create(ZEND_AST_NEW, exception_name_ast, exception_args_ast);
+	zend_ast *throw_ast = zend_ast_create(ZEND_AST_THROW, new_exception_ast);
+	zend_compile_throw(throw_ast);
+	zval_ptr_dtor(&exception_name);
 
 	for (uint32_t i = 0; i < arms->children; ++i) {
 		zend_update_jump_target_to_next(jpm_end_opnums[i]);
