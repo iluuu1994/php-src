@@ -43,6 +43,12 @@ var_dump(match (['foo', 24]) {
     [_, 40 ... 50] => wrong(),
 });
 
+var_dump(match (['foo', 'bar']) {
+    ['foo'] => wrong(),
+    ['bar', ...] => wrong(),
+    ['foo', ...] => "['foo', ...]",
+});
+
 ?>
 --EXPECT--
 string(11) "Empty array"
@@ -50,3 +56,4 @@ string(16) "Check array size"
 string(19) "Explicit array keys"
 string(35) "Literal pattern in array pattern: 3"
 string(30) "Range pattern in array pattern"
+string(12) "['foo', ...]"

@@ -262,7 +262,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> inline_function union_type
 %type <ast> match_arms non_empty_match_arms match_arm match_arm_guard
 %type <ast> pattern identifier_pattern identifier_pattern_pattern literal_pattern range_pattern
-%type <ast> array_pattern array_pattern_element_list non_empty_array_pattern_element_list array_pattern_element array_pattern_element_key
+%type <ast> array_pattern array_pattern_element_list array_pattern_element array_pattern_element_key
 %type <ast> object_pattern object_pattern_element_list non_empty_object_pattern_element_list object_pattern_element
 %type <ast> object_pattern_element_property_or_method_call
 
@@ -1090,17 +1090,22 @@ range_pattern:
 ;
 
 array_pattern:
-		'[' array_pattern_element_list ']' { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN, $2); }
+		'[' ']' { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN, zend_ast_create_list(0, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST)); }
+	|	'[' T_ELLIPSIS ']' {
+			$$ = zend_ast_create_ex(
+				ZEND_AST_ARRAY_PATTERN,
+				ZEND_ARRAY_PATTERN_NON_EXHAUSTIVE,
+				zend_ast_create_list(0, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST));
+		}
+	|	'[' array_pattern_element_list possible_comma ']' { $$ = zend_ast_create(ZEND_AST_ARRAY_PATTERN, $2); }
+	|	'[' array_pattern_element_list ',' T_ELLIPSIS ']' {
+			$$ = zend_ast_create_ex(ZEND_AST_ARRAY_PATTERN, ZEND_ARRAY_PATTERN_NON_EXHAUSTIVE, $2);
+		}
 ;
 
 array_pattern_element_list:
-		%empty { $$ = zend_ast_create_list(0, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST); }
-	|	non_empty_array_pattern_element_list { $$ = $1; }
-;
-
-non_empty_array_pattern_element_list:
 		array_pattern_element { $$ = zend_ast_create_list(1, ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST, $1); }
-	|	non_empty_array_pattern_element_list ',' array_pattern_element { $$ = zend_ast_list_add($1, $3); }
+	|	array_pattern_element_list ',' array_pattern_element { $$ = zend_ast_list_add($1, $3); }
 ;
 
 array_pattern_element:

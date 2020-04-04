@@ -8881,14 +8881,17 @@ void zend_compile_array_pattern(znode *result, zend_ast *ast, znode *value) /* {
 	uint32_t jmp_fail = zend_emit_cond_jump(ZEND_JMPZ, &is_array_node, 0);
 
 	// Check if the value has the same number of elements as the pattern
-	znode expected_count_node;
-	ZVAL_LONG(&expected_count_node.u.constant, element_pattern_list->children);
-	expected_count_node.op_type = IS_CONST;
-	znode actual_count_node;
-	zend_emit_op(&actual_count_node, ZEND_COUNT, value, NULL);
-	znode count_is_same_node;
-	zend_emit_op(&count_is_same_node, ZEND_IS_IDENTICAL, &actual_count_node, &expected_count_node);
-	uint32_t jmp_fail2 = zend_emit_cond_jump(ZEND_JMPZ, &count_is_same_node, 0);
+	uint32_t jmp_fail2 = 0;
+	if ((ast->attr & ZEND_ARRAY_PATTERN_NON_EXHAUSTIVE) == 0) {
+		znode expected_count_node;
+		ZVAL_LONG(&expected_count_node.u.constant, element_pattern_list->children);
+		expected_count_node.op_type = IS_CONST;
+		znode actual_count_node;
+		zend_emit_op(&actual_count_node, ZEND_COUNT, value, NULL);
+		znode count_is_same_node;
+		zend_emit_op(&count_is_same_node, ZEND_IS_IDENTICAL, &actual_count_node, &expected_count_node);
+		jmp_fail2 = zend_emit_cond_jump(ZEND_JMPZ, &count_is_same_node, 0);
+	}
 
 	// Check each pattern in the element list
 	uint32_t *jmpz_fail_opnums = safe_emalloc(sizeof(uint32_t), element_pattern_list->children * 2, 0);
@@ -8928,7 +8931,9 @@ void zend_compile_array_pattern(znode *result, zend_ast *ast, znode *value) /* {
 
 	// Pattern maching failed, return false
 	zend_update_jump_target_to_next(jmp_fail);
-	zend_update_jump_target_to_next(jmp_fail2);
+	if (jmp_fail2 != 0) {
+		zend_update_jump_target_to_next(jmp_fail2);
+	}
 	for (uint32_t i = 0; i < element_pattern_list->children * 2; i++) {
 		zend_update_jump_target_to_next(jmpz_fail_opnums[i]);
 	}
