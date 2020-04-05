@@ -8415,6 +8415,24 @@ ZEND_VM_C_LABEL(type_check_resource):
 	}
 }
 
+ZEND_VM_HOT_HANDLER(201, ZEND_ARBITRARY_TYPE_CHECK, CONST|TMPVAR|CV, CONST, CACHE_SLOT)
+{
+	USE_OPLINE
+	zval *op1, *op2;
+	zend_type *type;
+
+	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+	type = Z_PTR_P(op2);
+
+	ZVAL_BOOL(
+		EX_VAR(opline->result.var),
+		// FIXME: Absuing internal/return type flags to achieve strict type check
+		zend_check_type(type, op1, CACHE_ADDR(opline->extended_value), NULL, 1, 1));
+
+	ZEND_VM_NEXT_OPCODE();
+}
+
 ZEND_VM_HOT_HANDLER(122, ZEND_DEFINED, CONST, ANY, CACHE_SLOT)
 {
 	USE_OPLINE

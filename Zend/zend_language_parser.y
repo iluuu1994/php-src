@@ -77,6 +77,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %left '*' '/' '%'
 %precedence '!'
 %precedence T_INSTANCEOF
+%precedence T_IS
 %precedence '~' T_INT_CAST T_DOUBLE_CAST T_STRING_CAST T_ARRAY_CAST T_OBJECT_CAST T_BOOL_CAST T_UNSET_CAST '@'
 %right T_POW
 %precedence T_CLONE
@@ -111,6 +112,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_YIELD         "'yield'"
 %token <ident> T_YIELD_FROM    "'yield from'"
 %token <ident> T_INSTANCEOF    "'instanceof'"
+%token <ident> T_IS            "'is'"
 %token <ident> T_NEW           "'new'"
 %token <ident> T_CLONE         "'clone'"
 %token <ident> T_EXIT          "'exit'"
@@ -270,6 +272,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
+%type <ast> is_expr_type
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier optional_visibility_modifier
@@ -293,7 +296,7 @@ reserved_non_modifiers:
 	| T_THROW | T_USE | T_INSTEADOF | T_GLOBAL | T_VAR | T_UNSET | T_ISSET | T_EMPTY | T_CONTINUE | T_GOTO
 	| T_FUNCTION | T_CONST | T_RETURN | T_PRINT | T_YIELD | T_LIST | T_SWITCH | T_ENDSWITCH | T_CASE | T_DEFAULT | T_BREAK
 	| T_ARRAY | T_CALLABLE | T_EXTENDS | T_IMPLEMENTS | T_NAMESPACE | T_TRAIT | T_INTERFACE | T_CLASS
-	| T_CLASS_C | T_TRAIT_C | T_FUNC_C | T_METHOD_C | T_LINE | T_FILE | T_DIR | T_NS_C | T_FN | T_MATCH | T_ENUM
+	| T_CLASS_C | T_TRAIT_C | T_FUNC_C | T_METHOD_C | T_LINE | T_FILE | T_DIR | T_NS_C | T_FN | T_MATCH | T_ENUM | T_IS
 ;
 
 semi_reserved:
@@ -1126,6 +1129,8 @@ expr:
 			{ $$ = zend_ast_create_binary_op(ZEND_SPACESHIP, $1, $3); }
 	|	expr T_INSTANCEOF class_name_reference
 			{ $$ = zend_ast_create(ZEND_AST_INSTANCEOF, $1, $3); }
+	|	expr T_IS is_expr_type
+			{ $$ = zend_ast_create(ZEND_AST_IS, $1, $3); }
 	|	'(' expr ')' {
 			$$ = $2;
 			if ($$->kind == ZEND_AST_CONDITIONAL) $$->attr = ZEND_PARENTHESIZED_CONDITIONAL;
@@ -1177,6 +1182,12 @@ inline_function:
 				  zend_ast_create(ZEND_AST_RETURN, $11), $7, NULL);
 				  ((zend_ast_decl *) $$)->lex_pos = $10;
 				  CG(extra_fn_flags) = $9; }
+;
+
+is_expr_type:
+		type				{ $$ = $1; }
+	|	'?' type			{ $$ = $2; $$->attr |= ZEND_TYPE_NULLABLE; }
+	|	'(' union_type ')'	{ $$ = $2; }
 ;
 
 fn:

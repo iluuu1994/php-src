@@ -556,6 +556,7 @@ struct _zend_ast_ref {
 #define IS_PTR						13
 #define IS_ALIAS_PTR				14
 #define _IS_ERROR					15
+#define IS_TYPE						16
 
 /* used for casts */
 #define _IS_BOOL					17
@@ -1107,6 +1108,11 @@ static zend_always_inline uint32_t zval_gc_info(uint32_t gc_type_info) {
 #define ZVAL_ALIAS_PTR(z, p) do {								\
 		Z_PTR_P(z) = (p);										\
 		Z_TYPE_INFO_P(z) = IS_ALIAS_PTR;						\
+	} while (0)
+
+#define ZVAL_TYPE(z, p) do {								\
+		Z_PTR_P(z) = (p);										\
+		Z_TYPE_INFO_P(z) = IS_TYPE;						\
 	} while (0)
 
 #define ZVAL_ERROR(z) do {				\

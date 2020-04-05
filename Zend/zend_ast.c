@@ -1946,6 +1946,17 @@ simple_list:
 			smart_str_appends(str, " instanceof ");
 			zend_ast_export_ns_name(str, ast->child[1], 0, indent);
 			break;
+		case ZEND_AST_IS:
+			zend_ast_export_ex(str, ast->child[0], 0, indent);
+			smart_str_appends(str, " is ");
+			if (ast->child[1]->kind == ZEND_AST_TYPE_UNION) {
+				smart_str_appends(str, "(");
+			}
+			zend_ast_export_type(str, ast->child[1], indent);
+			if (ast->child[1]->kind == ZEND_AST_TYPE_UNION) {
+				smart_str_appends(str, ")");
+			}
+			break;
 		case ZEND_AST_YIELD:
 			if (priority > 70) smart_str_appendc(str, '(');
 			smart_str_appends(str, "yield ");

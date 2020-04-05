@@ -8942,6 +8942,25 @@ void zend_compile_instanceof(znode *result, zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+void zend_compile_is(znode *result, zend_ast *ast)
+{
+	zend_ast *expr_ast = ast->child[0];
+	zend_ast *type_ast = ast->child[1];
+
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+
+	zend_type *type = emalloc(sizeof(zend_type));
+	*type = zend_compile_typename(type_ast, 0);
+
+	znode type_node;
+	type_node.op_type = IS_CONST;
+	ZVAL_TYPE(&type_node.u.constant, type);
+
+	zend_op *opline = zend_emit_op(result, ZEND_ARBITRARY_TYPE_CHECK, &expr_node, &type_node);
+	opline->extended_value = zend_alloc_cache_slots(zend_type_get_num_classes(*type));
+}
+
 void zend_compile_include_or_eval(znode *result, zend_ast *ast) /* {{{ */
 {
 	zend_ast *expr_ast = ast->child[0];
@@ -9889,6 +9908,9 @@ static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 			return;
 		case ZEND_AST_MATCH:
 			zend_compile_match(result, ast);
+			return;
+		case ZEND_AST_IS:
+			zend_compile_is(result, ast);
 			return;
 		default:
 			ZEND_ASSERT(0 /* not supported */);
