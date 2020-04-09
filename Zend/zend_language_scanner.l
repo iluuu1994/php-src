@@ -1499,6 +1499,10 @@ NEWLINE ("\r"|"\n"|"\r\n")
 	RETURN_TOKEN(T_SWITCH);
 }
 
+<ST_IN_SCRIPTING>"match" {
+	RETURN_TOKEN(T_MATCH);
+}
+
 <ST_IN_SCRIPTING>"endswitch" {
 	RETURN_TOKEN(T_ENDSWITCH);
 }

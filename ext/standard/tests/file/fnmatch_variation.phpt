@@ -78,7 +78,7 @@ unlink($file_name);
 echo "\n*** Testing fnmatch() with other types other than files ***";
 
 /* defining a common function */
-function match( $pattern, $string ) {
+function match_( $pattern, $string ) {
   for( $i = 0; $i<count($pattern); $i++ ) {
     echo "-- Iteration $i --\n";
     for( $j = 0; $j<count($string); $j++ ) {
@@ -100,7 +100,7 @@ $int_arr = array(
   0xF,
   0xF0000
 );
-match($int_arr, $int_arr);
+match_($int_arr, $int_arr);
 
 echo "\n--- With Strings ---\n";
 $str_arr = array(
@@ -113,7 +113,7 @@ $str_arr = array(
   /* binary input */
   b"string"
 );
-match($str_arr, $str_arr);
+match_($str_arr, $str_arr);
 
 echo "\n--- With booleans ---\n";
 $bool_arr = array(
@@ -127,7 +127,7 @@ $bool_arr = array(
   "",
   "string"
 );
-match($bool_arr, $bool_arr);
+match_($bool_arr, $bool_arr);
 
 echo "\n--- With NULL ---\n";
 $null_arr = array(
@@ -138,7 +138,7 @@ $null_arr = array(
   "string",
   0
 );
-match($null_arr, $null_arr);
+match_($null_arr, $null_arr);
 
 echo "\n*** Done ***\n";
 ?>

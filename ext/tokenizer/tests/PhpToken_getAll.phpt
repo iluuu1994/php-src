@@ -20,7 +20,7 @@ array(15) {
   [0]=>
   object(PhpToken)#1 (4) {
     ["id"]=>
-    int(382)
+    int(383)
     ["text"]=>
     string(6) "<?php
 "
@@ -32,7 +32,7 @@ array(15) {
   [1]=>
   object(PhpToken)#2 (4) {
     ["id"]=>
-    int(343)
+    int(344)
     ["text"]=>
     string(8) "function"
     ["line"]=>
@@ -43,7 +43,7 @@ array(15) {
   [2]=>
   object(PhpToken)#3 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -87,7 +87,7 @@ array(15) {
   [6]=>
   object(PhpToken)#7 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -109,7 +109,7 @@ array(15) {
   [8]=>
   object(PhpToken)#9 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(5) "
     "
@@ -132,7 +132,7 @@ array(15) {
   [10]=>
   object(PhpToken)#11 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -165,7 +165,7 @@ array(15) {
   [13]=>
   object(PhpToken)#14 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) "
 "
@@ -190,7 +190,7 @@ array(15) {
   [0]=>
   object(PhpToken)#15 (4) {
     ["id"]=>
-    int(382)
+    int(383)
     ["text"]=>
     string(6) "<?php
 "
@@ -202,7 +202,7 @@ array(15) {
   [1]=>
   object(PhpToken)#14 (4) {
     ["id"]=>
-    int(343)
+    int(344)
     ["text"]=>
     string(8) "function"
     ["line"]=>
@@ -213,7 +213,7 @@ array(15) {
   [2]=>
   object(PhpToken)#13 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -257,7 +257,7 @@ array(15) {
   [6]=>
   object(PhpToken)#9 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -279,7 +279,7 @@ array(15) {
   [8]=>
   object(PhpToken)#7 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(5) "
     "
@@ -302,7 +302,7 @@ array(15) {
   [10]=>
   object(PhpToken)#5 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) " "
     ["line"]=>
@@ -335,7 +335,7 @@ array(15) {
   [13]=>
   object(PhpToken)#2 (4) {
     ["id"]=>
-    int(385)
+    int(386)
     ["text"]=>
     string(1) "
 "

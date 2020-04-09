@@ -4566,8 +4566,10 @@ void zend_compile_throw(znode *result, zend_ast *ast) /* {{{ */
 
 	zend_emit_op(NULL, ZEND_THROW, &expr_node, NULL);
 
-	result->op_type = IS_CONST;
-	ZVAL_BOOL(&result->u.constant, 1);
+	if (result != NULL) {
+		result->op_type = IS_CONST;
+		ZVAL_BOOL(&result->u.constant, 1);
+	}
 }
 /* }}} */
 
@@ -5012,7 +5014,7 @@ static zend_uchar determine_switch_jumptable_type(zend_ast_list *cases) {
 	return common_type;
 }
 
-static zend_bool should_use_jumptable(zend_ast_list *cases, zend_uchar jumptable_type) {
+static zend_bool should_use_jumptable(uint32_t num_children, zend_uchar jumptable_type) {
 	if (CG(compiler_options) & ZEND_COMPILE_NO_JUMPTABLES) {
 		return 0;
 	}
@@ -5020,10 +5022,10 @@ static zend_bool should_use_jumptable(zend_ast_list *cases, zend_uchar jumptable
 	/* Thresholds are chosen based on when the average switch time for equidistributed
 	 * input becomes smaller when using the jumptable optimization. */
 	if (jumptable_type == IS_LONG) {
-		return cases->children >= 5;
+		return num_children >= 5;
 	} else {
 		ZEND_ASSERT(jumptable_type == IS_STRING);
-		return cases->children >= 2;
+		return num_children >= 2;
 	}
 }
 
@@ -5049,7 +5051,7 @@ void zend_compile_switch(zend_ast *ast) /* {{{ */
 	case_node.u.op.var = get_temporary_variable();
 
 	jumptable_type = determine_switch_jumptable_type(cases);
-	if (jumptable_type != IS_UNDEF && should_use_jumptable(cases, jumptable_type)) {
+	if (jumptable_type != IS_UNDEF && should_use_jumptable(cases->children, jumptable_type)) {
 		znode jumptable_op;
 
 		ALLOC_HASHTABLE(jumptable);
@@ -5152,6 +5154,250 @@ void zend_compile_switch(zend_ast *ast) /* {{{ */
 
 	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
 		opline = zend_emit_op(NULL, ZEND_FREE, &expr_node, NULL);
+		opline->extended_value = ZEND_FREE_SWITCH;
+	} else if (expr_node.op_type == IS_CONST) {
+		zval_ptr_dtor_nogc(&expr_node.u.constant);
+	}
+
+	efree(jmpnz_opnums);
+}
+/* }}} */
+
+static uint32_t count_match_conds(zend_ast_list *arms)
+{
+	uint32_t num_conds = 0;
+
+	for (uint32_t i = 0; i < arms->children; i++) {
+		zend_ast *arm_ast = arms->child[i];
+		if (arm_ast->child[0] == NULL) {
+			continue;
+		}
+
+		zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
+		num_conds += conds->children;
+	}
+
+	return num_conds;
+}
+
+static zend_uchar determine_match_jumptable_type(zend_ast_list *arms) {
+	zend_uchar common_type = IS_UNDEF;
+	for (uint32_t i = 0; i < arms->children; i++) {
+		zend_ast *arm_ast = arms->child[i];
+		if (!arm_ast->child[0]) {
+			/* Skip default clause */
+			continue;
+		}
+
+		zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
+		for (uint32_t j = 0; j < conds->children; j++) {
+			zend_ast **cond_ast = &conds->child[j];
+
+			zend_eval_const_expr(cond_ast);
+			if ((*cond_ast)->kind != ZEND_AST_ZVAL) {
+				/* Non-constant case */
+				return IS_UNDEF;
+			}
+
+			zval *cond_zv = zend_ast_get_zval(*cond_ast);
+			if (Z_TYPE_P(cond_zv) != IS_LONG && Z_TYPE_P(cond_zv) != IS_STRING) {
+				/* We only optimize switched on integers and strings */
+				return IS_UNDEF;
+			}
+
+			if (common_type == IS_UNDEF) {
+				common_type = Z_TYPE_P(cond_zv);
+			} else if (common_type != Z_TYPE_P(cond_zv)) {
+				/* Non-uniform case types */
+				return IS_UNDEF;
+			}
+
+			if (Z_TYPE_P(cond_zv) == IS_STRING
+					&& is_numeric_string(Z_STRVAL_P(cond_zv), Z_STRLEN_P(cond_zv), NULL, NULL, 0)) {
+				/* Numeric strings cannot be compared with a simple hash lookup */
+				return IS_UNDEF;
+			}
+		}
+	}
+
+	return common_type;
+}
+
+void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
+{
+	zend_bool result_unused = (ast->attr & ZEND_MATCH_RESULT_UNUSED) != 0;
+
+	zend_ast *expr_ast = ast->child[0];
+	zend_ast_list *arms = zend_ast_get_list(ast->child[1]);
+
+	if (result_unused || arms->children == 0) {
+		result->op_type = IS_CONST;
+		ZVAL_NULL(&result->u.constant);
+	}
+
+	zend_bool has_default_arm = 0;
+
+	uint32_t opnum_match = (uint32_t)-1;
+
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+
+	zend_begin_loop(ZEND_FREE, &expr_node, 1);
+
+	znode case_node;
+	case_node.op_type = IS_TMP_VAR;
+	case_node.u.op.var = get_temporary_variable();
+
+	uint32_t num_conds = count_match_conds(arms);
+	zend_uchar jumptable_type = determine_match_jumptable_type(arms);
+	HashTable *jumptable = NULL;
+	if (jumptable_type != IS_UNDEF && should_use_jumptable(num_conds, jumptable_type)) {
+		znode jumptable_op;
+
+		ALLOC_HASHTABLE(jumptable);
+		zend_hash_init(jumptable, arms->children, NULL, NULL, 0);
+		jumptable_op.op_type = IS_CONST;
+		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
+
+		zend_op *opline = zend_emit_op(NULL,
+			jumptable_type == IS_LONG ? ZEND_SWITCH_LONG : ZEND_SWITCH_STRING,
+			&expr_node, &jumptable_op);
+		if (opline->op1_type == IS_CONST) {
+			Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
+		}
+		opnum_match = opline - CG(active_op_array)->opcodes;
+	}
+
+	uint32_t cond_count = 0;
+	uint32_t *jmpnz_opnums = safe_emalloc(sizeof(uint32_t), num_conds, 0);
+	for (uint32_t i = 0; i < arms->children; ++i) {
+		zend_ast *arm_ast = arms->child[i];
+
+		if (!arm_ast->child[0]) {
+			if (has_default_arm) {
+				CG(zend_lineno) = arm_ast->lineno;
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"Match expressions may only contain one default arm");
+			}
+			has_default_arm = 1;
+			continue;
+		}
+
+		zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
+		for (uint32_t j = 0; j < conds->children; j++) {
+			zend_ast *cond_ast = conds->child[j];
+
+			znode cond_node;
+			zend_compile_expr(&cond_node, cond_ast);
+
+			if (expr_node.op_type == IS_CONST
+				&& Z_TYPE(expr_node.u.constant) == IS_FALSE) {
+				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
+			} else if (expr_node.op_type == IS_CONST
+				&& Z_TYPE(expr_node.u.constant) == IS_TRUE) {
+				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &cond_node, 0);
+			} else {
+				zend_op *opline = zend_emit_op(NULL, ZEND_IS_IDENTICAL, &expr_node, &cond_node);
+				SET_NODE(opline->result, &case_node);
+				if (opline->op1_type == IS_CONST) {
+					Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
+				}
+
+				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
+			}
+
+			cond_count++;
+		}
+	}
+
+	uint32_t opnum_default_jmp = zend_emit_jump(0);
+	zend_bool is_first_case = 1;
+	cond_count = 0;
+
+	for (uint32_t i = 0; i < arms->children; ++i) {
+		zend_ast *arm_ast = arms->child[i];
+		zend_ast *stmt_ast = arm_ast->child[1];
+
+		if (arm_ast->child[0] != NULL) {
+			zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
+
+			for (uint32_t j = 0; j < conds->children; j++) {
+				zend_ast *cond_ast = conds->child[j];
+				zend_update_jump_target_to_next(jmpnz_opnums[cond_count]);
+
+				if (jumptable) {
+					zval *cond_zv = zend_ast_get_zval(cond_ast);
+					zval jmp_target;
+					ZVAL_LONG(&jmp_target, get_next_op_number());
+
+					ZEND_ASSERT(Z_TYPE_P(cond_zv) == jumptable_type);
+					if (Z_TYPE_P(cond_zv) == IS_LONG) {
+						zend_hash_index_add(jumptable, Z_LVAL_P(cond_zv), &jmp_target);
+					} else {
+						ZEND_ASSERT(Z_TYPE_P(cond_zv) == IS_STRING);
+						zend_hash_add(jumptable, Z_STR_P(cond_zv), &jmp_target);
+					}
+				}
+
+				cond_count++;
+			}
+		} else {
+			zend_update_jump_target_to_next(opnum_default_jmp);
+
+			if (jumptable) {
+				ZEND_ASSERT(opnum_match != (uint32_t)-1);
+				zend_op *opline = &CG(active_op_array)->opcodes[opnum_match];
+				opline->extended_value = get_next_op_number();
+			}
+		}
+
+		if (result_unused) {
+			zend_compile_stmt(stmt_ast);
+		} else {
+			if (stmt_ast->kind == ZEND_AST_STMT_LIST) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Match expressions that utilize the result value can't contain statement lists");
+			}
+
+			znode cond_stmt_node;
+			zend_compile_expr(&cond_stmt_node, stmt_ast);
+
+			if (is_first_case) {
+				zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &cond_stmt_node, NULL);
+				is_first_case = 0;
+			} else {
+				zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &cond_stmt_node, NULL);
+				SET_NODE(opline_qm_assign->result, result);
+			}
+		}
+
+		zend_ast *break_ast = zend_ast_create(ZEND_AST_BREAK, NULL);
+		zend_compile_break_continue(break_ast);
+	}
+
+	if (!has_default_arm) {
+		zend_update_jump_target_to_next(opnum_default_jmp);
+
+		if (jumptable) {
+			zend_op *opline = &CG(active_op_array)->opcodes[opnum_match];
+			opline->extended_value = get_next_op_number();
+		}
+
+		zval error_name;
+		ZVAL_STRING(&error_name, "UnhandledMatchError");
+		zend_ast *error_name_ast = zend_ast_create_zval(&error_name);
+
+		zend_ast *error_args_ast = zend_ast_create_list(0, ZEND_AST_ARG_LIST);
+		zend_ast *new_error_ast = zend_ast_create(ZEND_AST_NEW, error_name_ast, error_args_ast);
+		zend_ast *throw_ast = zend_ast_create(ZEND_AST_THROW, new_error_ast);
+		zend_compile_throw(NULL, throw_ast);
+
+		zval_ptr_dtor(&error_name);
+	}
+
+	zend_end_loop(get_next_op_number(), &expr_node);
+
+	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
+		zend_op *opline = zend_emit_op(NULL, ZEND_FREE, &expr_node, NULL);
 		opline->extended_value = ZEND_FREE_SWITCH;
 	} else if (expr_node.op_type == IS_CONST) {
 		zval_ptr_dtor_nogc(&expr_node.u.constant);
@@ -8956,6 +9202,9 @@ void zend_compile_expr(znode *result, zend_ast *ast) /* {{{ */
 		case ZEND_AST_THROW:
 			zend_compile_throw(result, ast);
 			break;
+		case ZEND_AST_MATCH:
+			zend_compile_match(result, ast);
+			return;
 		default:
 			ZEND_ASSERT(0 /* not supported */);
 	}
