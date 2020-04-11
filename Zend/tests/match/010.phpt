@@ -8,7 +8,7 @@ match ('foo') {
         var_dump('Statement');
         var_dump('list');
     },
-};
+}
 
 ?>
 --EXPECTF--
