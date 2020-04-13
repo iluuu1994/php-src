@@ -5211,12 +5211,6 @@ static zend_uchar determine_match_jumptable_type(zend_ast_list *arms) {
 				/* Non-uniform case types */
 				return IS_UNDEF;
 			}
-
-			if (Z_TYPE_P(cond_zv) == IS_STRING
-					&& is_numeric_string(Z_STRVAL_P(cond_zv), Z_STRLEN_P(cond_zv), NULL, NULL, 0)) {
-				/* Numeric strings cannot be compared with a simple hash lookup */
-				return IS_UNDEF;
-			}
 		}
 	}
 
