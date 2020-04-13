@@ -870,7 +870,7 @@ void zend_register_default_exception(void) /* {{{ */
 	zend_ce_division_by_zero_error->create_object = zend_default_exception_new;
 
 	INIT_CLASS_ENTRY(ce, "UnhandledMatchError", NULL);
-	zend_ce_unhandled_match_error = zend_register_internal_class_ex(&ce, zend_ce_exception);
+	zend_ce_unhandled_match_error = zend_register_internal_class_ex(&ce, zend_ce_error);
 	zend_ce_unhandled_match_error->create_object = zend_default_exception_new;
 }
 /* }}} */
