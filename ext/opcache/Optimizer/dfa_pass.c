@@ -642,6 +642,8 @@ static void zend_ssa_replace_control_link(zend_op_array *op_array, zend_ssa *ssa
 				break;
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
+			case ZEND_MATCH_LONG:
+			case ZEND_MATCH_STRING:
 				{
 					HashTable *jumptable = Z_ARRVAL(ZEND_OP2_LITERAL(opline));
 					zval *zv;
@@ -896,6 +898,7 @@ optimize_jmpnz:
 					break;
 				}
 				case ZEND_SWITCH_LONG:
+				case ZEND_MATCH_LONG:
 					if (opline->op1_type == IS_CONST) {
 						zval *zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
 						if (Z_TYPE_P(zv) != IS_LONG) {
@@ -925,6 +928,7 @@ optimize_jmpnz:
 					}
 					break;
 				case ZEND_SWITCH_STRING:
+				case ZEND_MATCH_STRING:
 					if (opline->op1_type == IS_CONST) {
 						zval *zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
 						if (Z_TYPE_P(zv) != IS_STRING) {

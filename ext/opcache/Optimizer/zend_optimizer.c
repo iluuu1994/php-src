@@ -593,13 +593,19 @@ int zend_optimizer_replace_by_const(zend_op_array *op_array,
 				}
 				case ZEND_SWITCH_LONG:
 				case ZEND_SWITCH_STRING:
+				case ZEND_MATCH_LONG:
+				case ZEND_MATCH_STRING:
 				case ZEND_CASE: {
 					zend_op *end = op_array->opcodes + op_array->last;
 					while (opline < end) {
 						if (opline->op1_type == type && opline->op1.var == var) {
-							if (opline->opcode == ZEND_CASE
-									|| opline->opcode == ZEND_SWITCH_LONG
-									|| opline->opcode == ZEND_SWITCH_STRING) {
+							if (
+								opline->opcode == ZEND_CASE
+								|| opline->opcode == ZEND_SWITCH_LONG
+								|| opline->opcode == ZEND_SWITCH_STRING
+								|| opline->opcode == ZEND_MATCH_LONG
+								|| opline->opcode == ZEND_MATCH_STRING
+							) {
 								zval v;
 
 								if (opline->opcode == ZEND_CASE) {
@@ -693,6 +699,8 @@ void zend_optimizer_migrate_jump(zend_op_array *op_array, zend_op *new_opline, z
 			break;
 		case ZEND_SWITCH_LONG:
 		case ZEND_SWITCH_STRING:
+		case ZEND_MATCH_LONG:
+		case ZEND_MATCH_STRING:
 		{
 			HashTable *jumptable = Z_ARRVAL(ZEND_OP2_LITERAL(opline));
 			zval *zv;
@@ -737,6 +745,8 @@ void zend_optimizer_shift_jump(zend_op_array *op_array, zend_op *opline, uint32_
 			break;
 		case ZEND_SWITCH_LONG:
 		case ZEND_SWITCH_STRING:
+		case ZEND_MATCH_LONG:
+		case ZEND_MATCH_STRING:
 		{
 			HashTable *jumptable = Z_ARRVAL(ZEND_OP2_LITERAL(opline));
 			zval *zv;
@@ -1111,6 +1121,8 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 			case ZEND_FE_FETCH_RW:
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
+			case ZEND_MATCH_LONG:
+			case ZEND_MATCH_STRING:
 				/* relative extended_value don't have to be changed */
 				break;
 #endif
@@ -1231,6 +1243,8 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 			case ZEND_FE_FETCH_RW:
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
+			case ZEND_MATCH_LONG:
+			case ZEND_MATCH_STRING:
 				/* relative extended_value don't have to be changed */
 				break;
 #endif

@@ -4337,6 +4337,8 @@ int zend_may_throw(const zend_op *opline, const zend_ssa_op *ssa_op, const zend_
 		case ZEND_COALESCE:
 		case ZEND_SWITCH_LONG:
 		case ZEND_SWITCH_STRING:
+		case ZEND_MATCH_LONG:
+		case ZEND_MATCH_STRING:
 		case ZEND_ISSET_ISEMPTY_VAR:
 		case ZEND_ISSET_ISEMPTY_CV:
 		case ZEND_FUNC_NUM_ARGS:

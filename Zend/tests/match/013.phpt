@@ -52,7 +52,7 @@ test:
      ; (after optimizer)
      ; %s
 0000 CV0($char) = RECV 1
-0001 SWITCH_STRING CV0($char) "a": 0020, "b": 0021, "c": 0021, "d": 0022, "e": 0023, "f": 0023, "g": 0024, "h": 0025, "i": 0025, default: 0026
+0001 MATCH_STRING CV0($char) "a": 0020, "b": 0021, "c": 0021, "d": 0022, "e": 0023, "f": 0023, "g": 0024, "h": 0025, "i": 0025, default: 0026
 0002 T1 = IS_IDENTICAL CV0($char) string("a")
 0003 JMPNZ T1 0020
 0004 T1 = IS_IDENTICAL CV0($char) string("b")

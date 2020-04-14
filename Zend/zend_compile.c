@@ -5254,7 +5254,7 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
 
 		zend_op *opline = zend_emit_op(NULL,
-			jumptable_type == IS_LONG ? ZEND_SWITCH_LONG : ZEND_SWITCH_STRING,
+			jumptable_type == IS_LONG ? ZEND_MATCH_LONG : ZEND_MATCH_STRING,
 			&expr_node, &jumptable_op);
 		if (opline->op1_type == IS_CONST) {
 			Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));

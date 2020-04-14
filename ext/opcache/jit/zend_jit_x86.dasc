@@ -10735,7 +10735,7 @@ static int zend_jit_switch(dasm_State **Dst, const zend_op *opline, const zend_o
 		zval *jump_zv;
 		int b;
 
-		if (opline->opcode == ZEND_SWITCH_LONG) {
+		if (opline->opcode == ZEND_SWITCH_LONG || opline->opcode == ZEND_MATCH_LONG) {
 			if (Z_TYPE_P(zv) == IS_LONG) {
 				jump_zv = zend_hash_index_find(jumptable, Z_LVAL_P(zv));
 				if (jump_zv != NULL) {
@@ -10745,7 +10745,7 @@ static int zend_jit_switch(dasm_State **Dst, const zend_op *opline, const zend_o
 				}
 				|	jmp =>b
 			}
-		} else if (opline->opcode == ZEND_SWITCH_STRING) {
+		} else if (opline->opcode == ZEND_SWITCH_STRING || opline->opcode == ZEND_MATCH_STRING) {
 			if (Z_TYPE_P(zv) == IS_STRING) {
 				jump_zv = zend_hash_find_ex(jumptable, Z_STR_P(zv), 1);
 				if (jump_zv != NULL) {
@@ -10765,7 +10765,7 @@ static int zend_jit_switch(dasm_State **Dst, const zend_op *opline, const zend_o
 		int	b = ssa->cfg.map[ZEND_OFFSET_TO_OPLINE(opline, opline->extended_value) - op_array->opcodes];
 		zval *val;
 
-		if (opline->opcode == ZEND_SWITCH_LONG) {
+		if (opline->opcode == ZEND_SWITCH_LONG || opline->opcode == ZEND_MATCH_LONG) {
 			if (op1_info & MAY_BE_LONG) {
 				if (op1_info & MAY_BE_REF) {
 					|	IF_NOT_ZVAL_TYPE op1_addr, IS_LONG, >1
@@ -10849,7 +10849,7 @@ static int zend_jit_switch(dasm_State **Dst, const zend_op *opline, const zend_o
 					|.code
 				}
 			}
-		} else if (opline->opcode == ZEND_SWITCH_STRING) {
+		} else if (opline->opcode == ZEND_SWITCH_STRING || opline->opcode == ZEND_MATCH_STRING) {
 			if (op1_info & MAY_BE_STRING) {
 				if (op1_info & MAY_BE_REF) {
 					|	IF_NOT_ZVAL_TYPE op1_addr, IS_STRING, >1

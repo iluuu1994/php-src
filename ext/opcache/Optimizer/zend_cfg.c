@@ -73,7 +73,12 @@ static void zend_mark_reachable(zend_op *opcodes, zend_cfg *cfg, zend_basic_bloc
 						succ->flags |= ZEND_BB_FOLLOW;
 					}
 				} else {
-					ZEND_ASSERT(opcode == ZEND_SWITCH_LONG || opcode == ZEND_SWITCH_STRING);
+					ZEND_ASSERT(
+						opcode == ZEND_SWITCH_LONG
+						|| opcode == ZEND_SWITCH_STRING
+						|| opcode == ZEND_MATCH_LONG
+						|| opcode == ZEND_MATCH_STRING
+					);
 					if (i == b->successors_count - 1) {
 						succ->flags |= ZEND_BB_FOLLOW | ZEND_BB_TARGET;
 					} else {
@@ -385,6 +390,8 @@ int zend_build_cfg(zend_arena **arena, const zend_op_array *op_array, uint32_t b
 				break;
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
+			case ZEND_MATCH_LONG:
+			case ZEND_MATCH_STRING:
 			{
 				HashTable *jumptable = Z_ARRVAL_P(CRT_CONSTANT(opline->op2));
 				zval *zv;
@@ -551,6 +558,8 @@ int zend_build_cfg(zend_arena **arena, const zend_op_array *op_array, uint32_t b
 				break;
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
+			case ZEND_MATCH_LONG:
+			case ZEND_MATCH_STRING:
 			{
 				HashTable *jumptable = Z_ARRVAL_P(CRT_CONSTANT(opline->op2));
 				zval *zv;

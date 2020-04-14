@@ -304,6 +304,8 @@ static zend_bool try_replace_op1(
 				case ZEND_FETCH_LIST_R:
 				case ZEND_SWITCH_STRING:
 				case ZEND_SWITCH_LONG:
+				case ZEND_MATCH_STRING:
+				case ZEND_MATCH_LONG:
 					if (Z_TYPE(zv) == IS_STRING) {
 						zend_string_hash_val(Z_STR(zv));
 					}
@@ -1975,6 +1977,9 @@ static void sccp_mark_feasible_successors(
 			s = zend_hash_num_elements(Z_ARR_P(op1)) != 0;
 			break;
 		case ZEND_SWITCH_LONG:
+		case ZEND_MATCH_LONG:
+		{
+			zend_bool strict_comparison = opline->opcode == ZEND_MATCH_LONG;
 			if (Z_TYPE_P(op1) == IS_LONG) {
 				zend_op_array *op_array = scdf->op_array;
 				zend_ssa *ssa = scdf->ssa;
@@ -1989,10 +1994,20 @@ static void sccp_mark_feasible_successors(
 				}
 				scdf_mark_edge_feasible(scdf, block_num, target);
 				return;
+			} else if (strict_comparison) {
+				zend_op_array *op_array = scdf->op_array;
+				zend_ssa *ssa = scdf->ssa;
+				int target = ssa->cfg.map[ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value)];
+				scdf_mark_edge_feasible(scdf, block_num, target);
+				return;
 			}
 			s = 0;
 			break;
+		}
 		case ZEND_SWITCH_STRING:
+		case ZEND_MATCH_STRING:
+		{
+			zend_bool strict_comparison = opline->opcode == ZEND_MATCH_STRING;
 			if (Z_TYPE_P(op1) == IS_STRING) {
 				zend_op_array *op_array = scdf->op_array;
 				zend_ssa *ssa = scdf->ssa;
@@ -2007,9 +2022,16 @@ static void sccp_mark_feasible_successors(
 				}
 				scdf_mark_edge_feasible(scdf, block_num, target);
 				return;
+			} else if (strict_comparison) {
+				zend_op_array *op_array = scdf->op_array;
+				zend_ssa *ssa = scdf->ssa;
+				int target = ssa->cfg.map[ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value)];
+				scdf_mark_edge_feasible(scdf, block_num, target);
+				return;
 			}
 			s = 0;
 			break;
+		}
 		default:
 			for (s = 0; s < block->successors_count; s++) {
 				scdf_mark_edge_feasible(scdf, block_num, block->successors[s]);
