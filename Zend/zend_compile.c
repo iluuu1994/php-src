@@ -5293,21 +5293,13 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 				znode cond_node;
 				zend_compile_expr(&cond_node, cond_ast);
 
-				if (expr_node.op_type == IS_CONST
-					&& Z_TYPE(expr_node.u.constant) == IS_FALSE) {
-					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
-				} else if (expr_node.op_type == IS_CONST
-					&& Z_TYPE(expr_node.u.constant) == IS_TRUE) {
-					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &cond_node, 0);
-				} else {
-					zend_op *opline = zend_emit_op(NULL, ZEND_IS_IDENTICAL, &expr_node, &cond_node);
-					SET_NODE(opline->result, &case_node);
-					if (opline->op1_type == IS_CONST) {
-						Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
-					}
-
-					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
+				zend_op *opline = zend_emit_op(NULL, ZEND_IS_IDENTICAL, &expr_node, &cond_node);
+				SET_NODE(opline->result, &case_node);
+				if (opline->op1_type == IS_CONST) {
+					Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
 				}
+
+				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
 
 				cond_count++;
 			}
