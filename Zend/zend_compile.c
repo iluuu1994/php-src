@@ -5244,8 +5244,24 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 
 	uint32_t num_conds = count_match_conds(arms);
 	zend_uchar jumptable_type = determine_match_jumptable_type(arms);
+	zend_bool uses_jumptable = jumptable_type != IS_UNDEF && should_use_jumptable(num_conds, jumptable_type);
 	HashTable *jumptable = NULL;
-	if (jumptable_type != IS_UNDEF && should_use_jumptable(num_conds, jumptable_type)) {
+	uint32_t *jmpnz_opnums = NULL;
+
+	for (uint32_t i = 0; i < arms->children; ++i) {
+		zend_ast *arm_ast = arms->child[i];
+
+		if (!arm_ast->child[0]) {
+			if (has_default_arm) {
+				CG(zend_lineno) = arm_ast->lineno;
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"Match expressions may only contain one default arm");
+			}
+			has_default_arm = 1;
+		}
+	}
+
+	if (uses_jumptable) {
 		znode jumptable_op;
 
 		ALLOC_HASHTABLE(jumptable);
@@ -5260,53 +5276,51 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 			Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
 		}
 		opnum_match = opline - CG(active_op_array)->opcodes;
-	}
+	} else {
+		jmpnz_opnums = safe_emalloc(sizeof(uint32_t), num_conds, 0);
+		int cond_count = 0;
+		for (uint32_t i = 0; i < arms->children; ++i) {
+			zend_ast *arm_ast = arms->child[i];
 
-	uint32_t cond_count = 0;
-	uint32_t *jmpnz_opnums = safe_emalloc(sizeof(uint32_t), num_conds, 0);
-	for (uint32_t i = 0; i < arms->children; ++i) {
-		zend_ast *arm_ast = arms->child[i];
-
-		if (!arm_ast->child[0]) {
-			if (has_default_arm) {
-				CG(zend_lineno) = arm_ast->lineno;
-				zend_error_noreturn(E_COMPILE_ERROR,
-					"Match expressions may only contain one default arm");
+			if (!arm_ast->child[0]) {
+				continue;
 			}
-			has_default_arm = 1;
-			continue;
-		}
 
-		zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
-		for (uint32_t j = 0; j < conds->children; j++) {
-			zend_ast *cond_ast = conds->child[j];
+			zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
+			for (uint32_t j = 0; j < conds->children; j++) {
+				zend_ast *cond_ast = conds->child[j];
 
-			znode cond_node;
-			zend_compile_expr(&cond_node, cond_ast);
+				znode cond_node;
+				zend_compile_expr(&cond_node, cond_ast);
 
-			if (expr_node.op_type == IS_CONST
-				&& Z_TYPE(expr_node.u.constant) == IS_FALSE) {
-				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
-			} else if (expr_node.op_type == IS_CONST
-				&& Z_TYPE(expr_node.u.constant) == IS_TRUE) {
-				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &cond_node, 0);
-			} else {
-				zend_op *opline = zend_emit_op(NULL, ZEND_IS_IDENTICAL, &expr_node, &cond_node);
-				SET_NODE(opline->result, &case_node);
-				if (opline->op1_type == IS_CONST) {
-					Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
+				if (expr_node.op_type == IS_CONST
+					&& Z_TYPE(expr_node.u.constant) == IS_FALSE) {
+					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPZ, &cond_node, 0);
+				} else if (expr_node.op_type == IS_CONST
+					&& Z_TYPE(expr_node.u.constant) == IS_TRUE) {
+					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &cond_node, 0);
+				} else {
+					zend_op *opline = zend_emit_op(NULL, ZEND_IS_IDENTICAL, &expr_node, &cond_node);
+					SET_NODE(opline->result, &case_node);
+					if (opline->op1_type == IS_CONST) {
+						Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
+					}
+
+					jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
 				}
 
-				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
+				cond_count++;
 			}
-
-			cond_count++;
 		}
 	}
 
-	uint32_t opnum_default_jmp = zend_emit_jump(0);
+	uint32_t opnum_default_jmp = 0;
+	if (!uses_jumptable) {
+		opnum_default_jmp = zend_emit_jump(0);
+	}
+
 	zend_bool is_first_case = 1;
-	cond_count = 0;
+	uint32_t cond_count = 0;
 
 	for (uint32_t i = 0; i < arms->children; ++i) {
 		zend_ast *arm_ast = arms->child[i];
@@ -5317,7 +5331,10 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 
 			for (uint32_t j = 0; j < conds->children; j++) {
 				zend_ast *cond_ast = conds->child[j];
-				zend_update_jump_target_to_next(jmpnz_opnums[cond_count]);
+
+				if (jmpnz_opnums != NULL) {
+					zend_update_jump_target_to_next(jmpnz_opnums[cond_count]);
+				}
 
 				if (jumptable) {
 					zval *cond_zv = zend_ast_get_zval(cond_ast);
@@ -5336,7 +5353,9 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 				cond_count++;
 			}
 		} else {
-			zend_update_jump_target_to_next(opnum_default_jmp);
+			if (!uses_jumptable) {
+				zend_update_jump_target_to_next(opnum_default_jmp);
+			}
 
 			if (jumptable) {
 				ZEND_ASSERT(opnum_match != (uint32_t)-1);
@@ -5369,7 +5388,9 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 	}
 
 	if (!has_default_arm) {
-		zend_update_jump_target_to_next(opnum_default_jmp);
+		if (!uses_jumptable) {
+			zend_update_jump_target_to_next(opnum_default_jmp);
+		}
 
 		if (jumptable) {
 			zend_op *opline = &CG(active_op_array)->opcodes[opnum_match];
@@ -5397,7 +5418,9 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 		zval_ptr_dtor_nogc(&expr_node.u.constant);
 	}
 
-	efree(jmpnz_opnums);
+	if (jmpnz_opnums != NULL) {
+		efree(jmpnz_opnums);
+	}
 }
 /* }}} */
 

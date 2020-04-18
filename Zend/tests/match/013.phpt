@@ -26,7 +26,7 @@ foreach (range('a', 'i') as $char) {
 
 --EXPECTF--
 $_main:
-     ; (lines=%d, args=0, vars=1, tmps=2)
+     ; (lines=15, args=0, vars=1, tmps=2)
      ; (after optimizer)
      ; %s
 0000 INIT_FCALL 2 %d string("range")
@@ -48,40 +48,22 @@ LIVE RANGES:
      1: 0005 - 0013 (loop)
 
 test:
-     ; (lines=%d, args=1, vars=1, tmps=1)
+     ; (lines=11, args=1, vars=1, tmps=1)
      ; (after optimizer)
      ; %s
 0000 CV0($char) = RECV 1
-0001 MATCH_STRING CV0($char) "a": 0020, "b": 0021, "c": 0021, "d": 0022, "e": 0023, "f": 0023, "g": 0024, "h": 0025, "i": 0025, default: 0026
-0002 T1 = IS_IDENTICAL CV0($char) string("a")
-0003 JMPNZ T1 0020
-0004 T1 = IS_IDENTICAL CV0($char) string("b")
-0005 JMPNZ T1 0021
-0006 T1 = IS_IDENTICAL CV0($char) string("c")
-0007 JMPNZ T1 0021
-0008 T1 = IS_IDENTICAL CV0($char) string("d")
-0009 JMPNZ T1 0022
-0010 T1 = IS_IDENTICAL CV0($char) string("e")
-0011 JMPNZ T1 0023
-0012 T1 = IS_IDENTICAL CV0($char) string("f")
-0013 JMPNZ T1 0023
-0014 T1 = IS_IDENTICAL CV0($char) string("g")
-0015 JMPNZ T1 0024
-0016 T1 = IS_IDENTICAL CV0($char) string("h")
-0017 JMPNZ T1 0025
-0018 T1 = IS_IDENTICAL CV0($char) string("i")
-0019 JMPZNZ T1 0026 0025
-0020 RETURN string("a")
-0021 RETURN string("b, c")
-0022 RETURN string("d")
-0023 RETURN string("e, f")
-0024 RETURN string("g")
-0025 RETURN string("h, i")
-0026 V1 = NEW 0 string("UnhandledMatchError")
-0027 DO_FCALL
-0028 THROW V1
+0001 MATCH_STRING CV0($char) "a": 0002, "b": 0003, "c": 0003, "d": 0004, "e": 0005, "f": 0005, "g": 0006, "h": 0007, "i": 0007, default: 0008
+0002 RETURN string("a")
+0003 RETURN string("b, c")
+0004 RETURN string("d")
+0005 RETURN string("e, f")
+0006 RETURN string("g")
+0007 RETURN string("h, i")
+0008 V1 = NEW 0 string("UnhandledMatchError")
+0009 DO_FCALL
+0010 THROW V1
 LIVE RANGES:
-     1: 0027 - 0028 (new)
+     1: 0009 - 0010 (new)
 string(1) "a"
 string(4) "b, c"
 string(4) "b, c"

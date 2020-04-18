@@ -49,36 +49,18 @@ LIVE RANGES:
      1: 0005 - 0013 (loop)
 
 test:
-     ; (lines=27, args=1, vars=1, tmps=1)
+     ; (lines=9, args=1, vars=1, tmps=0)
      ; (after optimizer)
      ; %s
 0000 CV0($char) = RECV 1
-0001 MATCH_LONG CV0($char) 1: 0020, 2: 0021, 3: 0021, 4: 0022, 5: 0023, 6: 0023, 7: 0024, 8: 0025, 9: 0025, default: 0026
-0002 T1 = IS_IDENTICAL CV0($char) int(1)
-0003 JMPNZ T1 0020
-0004 T1 = IS_IDENTICAL CV0($char) int(2)
-0005 JMPNZ T1 0021
-0006 T1 = IS_IDENTICAL CV0($char) int(3)
-0007 JMPNZ T1 0021
-0008 T1 = IS_IDENTICAL CV0($char) int(4)
-0009 JMPNZ T1 0022
-0010 T1 = IS_IDENTICAL CV0($char) int(5)
-0011 JMPNZ T1 0023
-0012 T1 = IS_IDENTICAL CV0($char) int(6)
-0013 JMPNZ T1 0023
-0014 T1 = IS_IDENTICAL CV0($char) int(7)
-0015 JMPNZ T1 0024
-0016 T1 = IS_IDENTICAL CV0($char) int(8)
-0017 JMPNZ T1 0025
-0018 T1 = IS_IDENTICAL CV0($char) int(9)
-0019 JMPZNZ T1 0026 0025
-0020 RETURN string("1")
-0021 RETURN string("2, 3")
-0022 RETURN string("4")
-0023 RETURN string("5, 6")
-0024 RETURN string("7")
-0025 RETURN string("8, 9")
-0026 RETURN string("default")
+0001 MATCH_LONG CV0($char) 1: 0002, 2: 0003, 3: 0003, 4: 0004, 5: 0005, 6: 0005, 7: 0006, 8: 0007, 9: 0007, default: 0008
+0002 RETURN string("1")
+0003 RETURN string("2, 3")
+0004 RETURN string("4")
+0005 RETURN string("5, 6")
+0006 RETURN string("7")
+0007 RETURN string("8, 9")
+0008 RETURN string("default")
 string(7) "default"
 string(1) "1"
 string(4) "2, 3"
