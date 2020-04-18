@@ -5185,7 +5185,7 @@ static zend_uchar determine_match_jumptable_type(zend_ast_list *arms) {
 	for (uint32_t i = 0; i < arms->children; i++) {
 		zend_ast *arm_ast = arms->child[i];
 		if (!arm_ast->child[0]) {
-			/* Skip default clause */
+			/* Skip default arm */
 			continue;
 		}
 
@@ -5195,7 +5195,7 @@ static zend_uchar determine_match_jumptable_type(zend_ast_list *arms) {
 
 			zend_eval_const_expr(cond_ast);
 			if ((*cond_ast)->kind != ZEND_AST_ZVAL) {
-				/* Non-constant case */
+				/* Non-constant condition */
 				return IS_UNDEF;
 			}
 
@@ -5208,7 +5208,7 @@ static zend_uchar determine_match_jumptable_type(zend_ast_list *arms) {
 			if (common_type == IS_UNDEF) {
 				common_type = Z_TYPE_P(cond_zv);
 			} else if (common_type != Z_TYPE_P(cond_zv)) {
-				/* Non-uniform case types */
+				/* Non-uniform condition types */
 				return IS_UNDEF;
 			}
 		}
