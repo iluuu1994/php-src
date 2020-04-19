@@ -5350,9 +5350,15 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 
 					ZEND_ASSERT(Z_TYPE_P(cond_zv) == jumptable_type);
 					if (Z_TYPE_P(cond_zv) == IS_LONG) {
+						if (zend_hash_index_exists(jumptable, Z_LVAL_P(cond_zv))) {
+							zend_error(E_COMPILE_WARNING, "Duplicate match condition " ZEND_LONG_FMT, Z_LVAL_P(cond_zv));
+						}
 						zend_hash_index_add(jumptable, Z_LVAL_P(cond_zv), &jmp_target);
 					} else {
 						ZEND_ASSERT(Z_TYPE_P(cond_zv) == IS_STRING);
+						if (zend_hash_exists(jumptable, Z_STR_P(cond_zv))) {
+							zend_error(E_COMPILE_WARNING, "Duplicate match condition \"%s\"", ZSTR_VAL(Z_STR_P(cond_zv)));
+						}
 						zend_hash_add(jumptable, Z_STR_P(cond_zv), &jmp_target);
 					}
 				}
