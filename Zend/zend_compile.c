@@ -5375,7 +5375,7 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 			zend_compile_stmt(stmt_ast);
 		} else {
 			if (stmt_ast->kind == ZEND_AST_STMT_LIST) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Match expressions that utilize the result value can't contain statement lists");
+				zend_error_noreturn(E_COMPILE_ERROR, "Match expressions that are not statements can't contain statement lists");
 			}
 
 			znode cond_stmt_node;
