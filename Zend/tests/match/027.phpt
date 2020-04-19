@@ -70,7 +70,7 @@ Test::usesRef:
 0002 RETURN null
 
 Test::usesValue:
-     ; (lines=6, args=1, vars=1, tmps=3)
+     ; (lines=6, args=1, vars=1, tmps=%d)
      ; (after optimizer)
      ; %s027.php:9-11
 0000 CV0($x) = RECV 1
