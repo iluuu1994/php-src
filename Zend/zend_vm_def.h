@@ -8411,6 +8411,14 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(195, ZEND_MATCH_LONG, CONST|TMPVARCV, CONST, JMP
 	op = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 
 	if (Z_TYPE_P(op) != IS_LONG) {
+		if (UNEXPECTED((OP1_TYPE & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		ZVAL_DEREF(op);
 		if (Z_TYPE_P(op) != IS_LONG) {
 			/* default */
@@ -8440,6 +8448,14 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(196, ZEND_MATCH_STRING, CONST|TMPVARCV, CONST, J
 	op = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 
 	if (Z_TYPE_P(op) != IS_STRING) {
+		if (UNEXPECTED((OP1_TYPE & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		if (OP1_TYPE == IS_CONST) {
 			/* default */
 			ZEND_VM_C_GOTO(default_branch);

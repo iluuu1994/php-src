@@ -6517,6 +6517,14 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_MATCH_LONG_SPEC_C
 	op = RT_CONSTANT(opline, opline->op1);
 
 	if (Z_TYPE_P(op) != IS_LONG) {
+		if (UNEXPECTED((IS_CONST & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		ZVAL_DEREF(op);
 		if (Z_TYPE_P(op) != IS_LONG) {
 			/* default */
@@ -6546,6 +6554,14 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_MATCH_STRING_SPEC
 	op = RT_CONSTANT(opline, opline->op1);
 
 	if (Z_TYPE_P(op) != IS_STRING) {
+		if (UNEXPECTED((IS_CONST & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		if (IS_CONST == IS_CONST) {
 			/* default */
 			goto default_branch;
@@ -11442,6 +11458,14 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_MATCH_LONG_SPEC_TMPVARCV_CONST
 	op = EX_VAR(opline->op1.var);
 
 	if (Z_TYPE_P(op) != IS_LONG) {
+		if (UNEXPECTED(((IS_TMP_VAR|IS_VAR|IS_CV) & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		ZVAL_DEREF(op);
 		if (Z_TYPE_P(op) != IS_LONG) {
 			/* default */
@@ -11471,6 +11495,14 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_MATCH_STRING_SPEC_TMPVARCV_CON
 	op = EX_VAR(opline->op1.var);
 
 	if (Z_TYPE_P(op) != IS_STRING) {
+		if (UNEXPECTED(((IS_TMP_VAR|IS_VAR|IS_CV) & IS_CV) && Z_TYPE_P(op) == IS_UNDEF)) {
+			SAVE_OPLINE();
+			ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception))) {
+				HANDLE_EXCEPTION();
+			}
+		}
+
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) == IS_CONST) {
 			/* default */
 			goto default_branch;
