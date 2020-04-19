@@ -671,7 +671,7 @@ void zend_stop_lexing(void)
 }
 
 static inline void zend_begin_loop(
-		zend_uchar free_opcode, const znode *loop_var, zend_bool is_switch) /* {{{ */
+		zend_uchar free_opcode, const znode *loop_var, zend_bool is_switch, zend_bool is_match) /* {{{ */
 {
 	zend_brk_cont_element *brk_cont_element;
 	int parent = CG(context).current_brk_cont;
@@ -681,6 +681,7 @@ static inline void zend_begin_loop(
 	brk_cont_element = get_next_brk_cont_element();
 	brk_cont_element->parent = parent;
 	brk_cont_element->is_switch = is_switch;
+	brk_cont_element->is_match = is_match;
 
 	if (loop_var && (loop_var->op_type & (IS_VAR|IS_TMP_VAR))) {
 		uint32_t start = get_next_op_number();
@@ -4631,6 +4632,20 @@ void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 					depth, depth, depth + 1);
 			}
 		}
+
+		if (CG(context).brk_cont_array[cur].is_match) {
+			if (depth == 1) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"\"continue\" targeting match is equivalent to \"break\". " \
+					"Did you mean to use \"continue " ZEND_LONG_FMT "\"?",
+					depth + 1);
+			} else {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"\"continue " ZEND_LONG_FMT "\" targeting match is equivalent to \"break " ZEND_LONG_FMT "\". " \
+					"Did you mean to use \"continue " ZEND_LONG_FMT "\"?",
+					depth, depth, depth + 1);
+			}
+		}
 	}
 
 	opline = zend_emit_op(NULL, ast->kind == ZEND_AST_BREAK ? ZEND_BRK : ZEND_CONT, NULL, NULL);
@@ -4745,7 +4760,7 @@ void zend_compile_while(zend_ast *ast) /* {{{ */
 
 	opnum_jmp = zend_emit_jump(0);
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, 0, 0);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -4768,7 +4783,7 @@ void zend_compile_do_while(zend_ast *ast) /* {{{ */
 	znode cond_node;
 	uint32_t opnum_start, opnum_cond;
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, 0, 0);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -4819,7 +4834,7 @@ void zend_compile_for(zend_ast *ast) /* {{{ */
 
 	opnum_jmp = zend_emit_jump(0);
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, 0, 0);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -4881,7 +4896,7 @@ void zend_compile_foreach(zend_ast *ast) /* {{{ */
 	opnum_reset = get_next_op_number();
 	opline = zend_emit_op(&reset_node, by_ref ? ZEND_FE_RESET_RW : ZEND_FE_RESET_R, &expr_node, NULL);
 
-	zend_begin_loop(ZEND_FE_FREE, &reset_node, 0);
+	zend_begin_loop(ZEND_FE_FREE, &reset_node, 0, 0);
 
 	opnum_fetch = get_next_op_number();
 	opline = zend_emit_op(NULL, by_ref ? ZEND_FE_FETCH_RW : ZEND_FE_FETCH_R, &reset_node, NULL);
@@ -5045,7 +5060,7 @@ void zend_compile_switch(zend_ast *ast) /* {{{ */
 
 	zend_compile_expr(&expr_node, expr_ast);
 
-	zend_begin_loop(ZEND_FREE, &expr_node, 1);
+	zend_begin_loop(ZEND_FREE, &expr_node, 1, 0);
 
 	case_node.op_type = IS_TMP_VAR;
 	case_node.u.op.var = get_temporary_variable();
@@ -5236,7 +5251,7 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 	znode expr_node;
 	zend_compile_expr(&expr_node, expr_ast);
 
-	zend_begin_loop(ZEND_FREE, &expr_node, 1);
+	zend_begin_loop(ZEND_FREE, &expr_node, 0, 1);
 
 	znode case_node;
 	case_node.op_type = IS_TMP_VAR;
