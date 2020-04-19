@@ -4680,7 +4680,7 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 			CG(in_compilation) = 1;
 			CG(active_op_array) = op_array;
 			CG(zend_lineno) = opline->lineno;
-			zend_error_noreturn(E_COMPILE_ERROR, "'goto' into loop or switch statement is disallowed");
+			zend_error_noreturn(E_COMPILE_ERROR, "'goto' into loop, switch or match is disallowed");
 		}
 		if (CG(context).brk_cont_array[current].start >= 0) {
 			remove_oplines--;

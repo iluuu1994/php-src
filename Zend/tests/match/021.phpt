@@ -13,4 +13,4 @@ match (true) {
 }
 
 --EXPECTF--
-Fatal error: 'goto' into loop or switch statement is disallowed in %s on line %d
+Fatal error: 'goto' into loop, switch or match is disallowed in %s on line %d
