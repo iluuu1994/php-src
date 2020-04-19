@@ -4636,13 +4636,13 @@ void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 		if (CG(context).brk_cont_array[cur].is_match) {
 			if (depth == 1) {
 				zend_error_noreturn(E_COMPILE_ERROR,
-					"\"continue\" targeting match is equivalent to \"break\". " \
-					"Did you mean to use \"continue " ZEND_LONG_FMT "\"?",
+					"\"continue\" targeting match is disallowed. " \
+					"Did you mean to use \"break\" or \"continue " ZEND_LONG_FMT "\"?",
 					depth + 1);
 			} else {
 				zend_error_noreturn(E_COMPILE_ERROR,
-					"\"continue " ZEND_LONG_FMT "\" targeting match is equivalent to \"break " ZEND_LONG_FMT "\". " \
-					"Did you mean to use \"continue " ZEND_LONG_FMT "\"?",
+					"\"continue " ZEND_LONG_FMT "\" targeting match is disallowed. " \
+					"Did you mean to use \"break " ZEND_LONG_FMT "\" or \"continue " ZEND_LONG_FMT "\"?",
 					depth, depth, depth + 1);
 			}
 		}

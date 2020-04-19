@@ -16,4 +16,4 @@ foreach (range(0, 9) as $i) {
 }
 
 --EXPECTF--
-Fatal error: "continue" targeting match is equivalent to "break". Did you mean to use "continue 2"? in %s on line %d
+Fatal error: "continue" targeting match is disallowed. Did you mean to use "break" or "continue 2"? in %s on line %d

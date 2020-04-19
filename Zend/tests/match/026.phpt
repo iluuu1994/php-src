@@ -14,4 +14,4 @@ match (true) {
 }
 
 --EXPECTF--
-Fatal error: "continue 2" targeting match is equivalent to "break 2". Did you mean to use "continue 3"? in %s on line %d
+Fatal error: "continue 2" targeting match is disallowed. Did you mean to use "break 2" or "continue 3"? in %s on line %d
