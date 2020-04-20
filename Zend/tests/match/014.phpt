@@ -13,4 +13,4 @@ var_dump(match ('bar') {
 
 ?>
 --EXPECTF--
-Fatal error: Match expressions that are not statements can't contain statement lists in %s on line %d
+Fatal error: Match block must return a value. Did you mean to omit the last semicolon? in %s on line %d

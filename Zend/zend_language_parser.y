@@ -259,7 +259,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> isset_variable type return_type type_expr type_without_static
 %type <ast> identifier type_expr_without_static union_type_without_static
 %type <ast> inline_function union_type
-%type <ast> match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list match_arm_body
+%type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list match_arm_body
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -600,6 +600,11 @@ case_separator:
 ;
 
 
+match:
+		T_MATCH '(' expr ')' '{' match_arm_list '}'
+			{ $$ = zend_ast_create(ZEND_AST_MATCH, $3, $6); }
+;
+
 match_arm_list:
 		%empty { $$ = zend_ast_create_list(0, ZEND_AST_MATCH_ARM_LIST); }
 	|	non_empty_match_arm_list possible_comma { $$ = $1; }
@@ -622,7 +627,10 @@ match_arm_cond_list:
 
 match_arm_body:
 		expr { $$ = $1; }
-	|	'{'inner_statement_list '}' { $$ = $2; }
+	|	'{' inner_statement_list '}'
+			{ $$ = zend_ast_create(ZEND_AST_MATCH_BLOCK, $2, NULL); }
+	|	'{' inner_statement_list expr_without_block '}'
+			{ $$ = zend_ast_create(ZEND_AST_MATCH_BLOCK, $2, $3); }
 ;
 
 
@@ -940,8 +948,7 @@ statement_expr:
 ;
 
 expr_with_block:
-		T_MATCH '(' expr ')' '{' match_arm_list '}'
-			{ $$ = zend_ast_create(ZEND_AST_MATCH, $3, $6); };
+		match { $$ = $1; }
 ;
 
 expr:

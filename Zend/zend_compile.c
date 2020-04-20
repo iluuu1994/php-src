@@ -5331,7 +5331,7 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 
 	for (uint32_t i = 0; i < arms->children; ++i) {
 		zend_ast *arm_ast = arms->child[i];
-		zend_ast *stmt_ast = arm_ast->child[1];
+		zend_ast *arm_body_ast = arm_ast->child[1];
 
 		if (arm_ast->child[0] != NULL) {
 			zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
@@ -5371,21 +5371,41 @@ void zend_compile_match(znode *result, zend_ast *ast) /* {{{ */
 			}
 		}
 
-		if (result_unused) {
-			zend_compile_stmt(stmt_ast);
+		zend_ast *arm_body_statements;
+		zend_ast *arm_body_expr_ast;
+		if (arm_body_ast->kind == ZEND_AST_MATCH_BLOCK) {
+			arm_body_statements = arm_body_ast->child[0];
+			arm_body_expr_ast = arm_body_ast->child[1];
 		} else {
-			if (stmt_ast->kind == ZEND_AST_STMT_LIST) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Match expressions that are not statements can't contain statement lists");
+			arm_body_statements = NULL;
+			arm_body_expr_ast = arm_body_ast;
+		}
+
+		if (arm_body_statements != NULL) {
+			zend_compile_stmt(arm_body_statements);
+		}
+
+		if (result_unused) {
+			if (arm_body_expr_ast != NULL) {
+				if (arm_body_ast->kind == ZEND_AST_MATCH_BLOCK) {
+					zend_error(E_COMPILE_WARNING, "Useless expression. Did you mean to add a semicolon?");
+				}
+
+				zend_compile_stmt(arm_body_expr_ast);
+			}
+		} else {
+			if (arm_body_expr_ast == NULL) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Match block must return a value. Did you mean to omit the last semicolon?");
 			}
 
-			znode cond_stmt_node;
-			zend_compile_expr(&cond_stmt_node, stmt_ast);
+			znode arm_body_expr_node;
+			zend_compile_expr(&arm_body_expr_node, arm_body_expr_ast);
 
 			if (is_first_case) {
-				zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &cond_stmt_node, NULL);
+				zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &arm_body_expr_node, NULL);
 				is_first_case = 0;
 			} else {
-				zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &cond_stmt_node, NULL);
+				zend_op *opline_qm_assign = zend_emit_op(NULL, ZEND_QM_ASSIGN, &arm_body_expr_node, NULL);
 				SET_NODE(opline_qm_assign->result, result);
 			}
 		}

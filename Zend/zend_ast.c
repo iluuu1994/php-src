@@ -1886,10 +1886,15 @@ simple_list:
 			} else {
 				smart_str_appends(str, "default => ");
 			}
-			if (ast->child[1]->kind == ZEND_AST_STMT_LIST) {
+			if (ast->child[1]->kind == ZEND_AST_MATCH_BLOCK) {
+				zend_ast *block = ast->child[1];
 				smart_str_appends(str, "{\n");
-				zend_ast_export_list(str, (zend_ast_list*)ast->child[1], 0, 0, indent + 1);
+				zend_ast_export_list(str, (zend_ast_list*)block->child[0], 0, 0, indent + 1);
 				zend_ast_export_indent(str, indent);
+				if (block->child[1] != NULL) {
+					zend_ast_export_ex(str, block->child[1], 0, indent + 1);
+					zend_ast_export_indent(str, indent);
+				}
 				smart_str_appends(str, "}");
 			} else {
 				zend_ast_export_ex(str, ast->child[1], 0, 0);
