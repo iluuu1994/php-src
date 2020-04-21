@@ -111,11 +111,14 @@ static int get_const_switch_target(zend_cfg *cfg, zend_op_array *op_array, zend_
 	HashTable *jumptable = Z_ARRVAL(ZEND_OP2_LITERAL(opline));
 	zval *zv;
 	if ((opline->opcode == ZEND_SWITCH_LONG && Z_TYPE_P(val) != IS_LONG)
-			|| (opline->opcode == ZEND_SWITCH_STRING && Z_TYPE_P(val) != IS_STRING)
-			|| (opline->opcode == ZEND_MATCH_LONG && Z_TYPE_P(val) != IS_LONG)
-			|| (opline->opcode == ZEND_MATCH_STRING && Z_TYPE_P(val) != IS_STRING)) {
+			|| (opline->opcode == ZEND_SWITCH_STRING && Z_TYPE_P(val) != IS_STRING)) {
 		/* fallback to next block */
 		return block->successors[block->successors_count - 1];
+	}
+	if ((opline->opcode == ZEND_MATCH_LONG && Z_TYPE_P(val) != IS_LONG)
+			|| (opline->opcode == ZEND_MATCH_STRING && Z_TYPE_P(val) != IS_STRING)) {
+		/* fallback to next block */
+		return block->successors[block->successors_count - 2];
 	}
 	if (Z_TYPE_P(val) == IS_LONG) {
 		zv = zend_hash_index_find(jumptable, Z_LVAL_P(val));
