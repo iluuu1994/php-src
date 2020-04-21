@@ -154,6 +154,7 @@ typedef struct _zend_brk_cont_element {
 	int parent;
 	zend_bool is_switch;
 	zend_bool is_match;
+	zend_bool match_result_unused;
 } zend_brk_cont_element;
 
 typedef struct _zend_label {
