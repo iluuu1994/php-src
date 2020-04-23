@@ -117,7 +117,7 @@ static int get_const_switch_target(zend_cfg *cfg, zend_op_array *op_array, zend_
 	}
 	if ((opline->opcode == ZEND_MATCH_LONG && Z_TYPE_P(val) != IS_LONG)
 			|| (opline->opcode == ZEND_MATCH_STRING && Z_TYPE_P(val) != IS_STRING)) {
-		/* fallback to next block */
+		/* always jump to the default arm */
 		return block->successors[block->successors_count - 2];
 	}
 	if (Z_TYPE_P(val) == IS_LONG) {
