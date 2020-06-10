@@ -162,6 +162,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_CLASS         "'class'"
 %token <ident> T_TRAIT         "'trait'"
 %token <ident> T_INTERFACE     "'interface'"
+%token <ident> T_ENUM          "'enum'"
 %token <ident> T_EXTENDS       "'extends'"
 %token <ident> T_IMPLEMENTS    "'implements'"
 %token <ident> T_NAMESPACE     "'namespace'"
@@ -268,6 +269,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attributed_statement attributed_class_statement attributed_parameter
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
+%type <ast> enum_declaration_statement enum_case
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier optional_visibility_modifier
@@ -366,6 +368,7 @@ attributed_statement:
 	|	class_declaration_statement			{ $$ = $1; }
 	|	trait_declaration_statement			{ $$ = $1; }
 	|	interface_declaration_statement		{ $$ = $1; }
+	|	enum_declaration_statement			{ $$ = $1; }
 ;
 
 top_statement:
@@ -590,6 +593,19 @@ interface_declaration_statement:
 		T_INTERFACE { $<num>$ = CG(zend_lineno); }
 		T_STRING interface_extends_list backup_doc_comment '{' class_statement_list '}'
 			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_INTERFACE, $<num>2, $5, zend_ast_get_str($3), NULL, $4, $7, NULL, NULL); }
+;
+
+enum_declaration_statement:
+		T_ENUM { $<num>$ = CG(zend_lineno); }
+		T_STRING backup_doc_comment '{' class_statement_list '}'
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM, $<num>2, $4, zend_ast_get_str($3), NULL, NULL, $6, NULL, NULL); }
+;
+
+enum_case:
+		T_CASE identifier backup_doc_comment ';'
+			{ $$ = zend_ast_create_decl(ZEND_AST_ENUM_CASE, ZEND_ACC_ENUM_CASE, $<num>1, $3, zend_ast_get_str($2), zend_ast_create_list(0, ZEND_AST_PARAM_LIST), NULL, NULL, NULL, NULL); }
+	|	T_CASE identifier backup_doc_comment '(' parameter_list ')' ';'
+			{ $$ = zend_ast_create_decl(ZEND_AST_ENUM_CASE, ZEND_ACC_ENUM_CASE, $<num>1, $3, zend_ast_get_str($2), $5, NULL, NULL, NULL, NULL); }
 ;
 
 extends_from:
@@ -859,6 +875,7 @@ attributed_class_statement:
 		return_type backup_fn_flags method_body backup_fn_flags
 			{ $$ = zend_ast_create_decl(ZEND_AST_METHOD, $3 | $1 | $12, $2, $5,
 				  zend_ast_get_str($4), $7, NULL, $11, $9, NULL); CG(extra_fn_flags) = $10; }
+	|	enum_case { $$ = $1; }
 ;
 
 class_statement:

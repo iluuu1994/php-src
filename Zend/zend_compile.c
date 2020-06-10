@@ -4490,7 +4490,7 @@ void zend_compile_static_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 }
 /* }}} */
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel);
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel);
 
 void zend_compile_new(znode *result, zend_ast *ast) /* {{{ */
 {
@@ -6858,6 +6858,39 @@ static void zend_begin_func_decl(znode *result, zend_op_array *op_array, zend_as
 }
 /* }}} */
 
+static zend_ast *zend_generate_enum_case_body(zend_ast_decl *enum_case_decl)
+{
+	zend_class_entry *enum_class = CG(active_class_entry);
+
+	zend_string *enum_class_name = enum_class->name;
+	zend_string *enum_case_name = enum_case_decl->name;
+	zend_string *enum_case_class_name = zend_string_concat3(
+		ZSTR_VAL(enum_class_name), ZSTR_LEN(enum_class_name),
+		"::", sizeof("::") - 1,
+		ZSTR_VAL(enum_case_name), ZSTR_LEN(enum_case_name)
+	);
+
+	zval class_name_zval;
+	ZVAL_INTERNED_STR(&class_name_zval, enum_case_class_name);
+	zend_ast *class_name_ast = zend_ast_create_zval_ex(&class_name_zval, ZEND_NAME_NOT_FQ);
+
+	zend_ast_list *param_list = (zend_ast_list *) enum_case_decl->child[0];
+	zend_ast *arguments_ast = zend_ast_create_list(0, ZEND_AST_ARG_LIST);
+	for (uint32_t i = 0; i < param_list->children; ++i) {
+		zend_ast *param_ast = param_list->child[i];
+		zend_ast *param_fetch_ast = zend_ast_create(ZEND_AST_VAR, param_ast->child[1]);
+		zend_ast_list_add(arguments_ast, param_fetch_ast);
+	}
+	zend_ast *new_ast = zend_ast_create(ZEND_AST_NEW, class_name_ast, arguments_ast);
+
+	zend_ast *return_ast = zend_ast_create(ZEND_AST_RETURN, new_ast);
+	zend_ast *result = zend_ast_create_list(1, ZEND_AST_STMT_LIST, return_ast);
+
+	zend_string_free(enum_case_class_name);
+
+	return result;
+}
+
 void zend_compile_func_decl(znode *result, zend_ast *ast, zend_bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
@@ -6865,7 +6898,7 @@ void zend_compile_func_decl(znode *result, zend_ast *ast, zend_bool toplevel) /*
 	zend_ast *uses_ast = decl->child[1];
 	zend_ast *stmt_ast = decl->child[2];
 	zend_ast *return_type_ast = decl->child[3];
-	zend_bool is_method = decl->kind == ZEND_AST_METHOD;
+	zend_bool is_method = decl->kind == ZEND_AST_METHOD || decl->kind == ZEND_AST_ENUM_CASE;
 	zend_string *method_lcname;
 
 	zend_class_entry *orig_class_entry = CG(active_class_entry);
@@ -6896,6 +6929,11 @@ void zend_compile_func_decl(znode *result, zend_ast *ast, zend_bool toplevel) /*
 
 	if (decl->kind == ZEND_AST_CLOSURE || decl->kind == ZEND_AST_ARROW_FUNC) {
 		op_array->fn_flags |= ZEND_ACC_CLOSURE;
+	}
+
+	if (decl->flags & ZEND_ACC_ENUM_CASE) {
+		op_array->fn_flags |= ZEND_ACC_PUBLIC | ZEND_ACC_STATIC;
+		stmt_ast = zend_generate_enum_case_body(decl);
 	}
 
 	if (is_method) {
@@ -7293,7 +7331,7 @@ static zend_string *zend_generate_anon_class_name(zend_ast_decl *decl)
 	return zend_new_interned_string(result);
 }
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /* {{{ */
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
 	zend_ast *extends_ast = decl->child[0];
@@ -7410,7 +7448,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 				if (zend_try_early_bind(ce, parent_ce, lcname, NULL)) {
 					CG(zend_lineno) = ast->lineno;
 					zend_string_release(lcname);
-					return;
+					return ce;
 				}
 				CG(zend_lineno) = ast->lineno;
 			}
@@ -7418,7 +7456,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 			zend_string_release(lcname);
 			zend_build_properties_info_table(ce);
 			ce->ce_flags |= ZEND_ACC_LINKED;
-			return;
+			return ce;
 		}
 	}
 
@@ -7467,8 +7505,68 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 			opline->result.opline_num = -1;
 		}
 	}
+
+	return ce;
 }
 /* }}} */
+
+static void zend_generate_enum_case_constructor(zend_ast_decl *enum_case_decl)
+{
+	zend_string *construct_string = zend_string_init("__construct", strlen("__construct"), 0);
+	zend_string *this_string = zend_string_init("this", strlen("this"), 0);
+
+	// FIXME: Does this cause double free on ast destroy?
+	zend_ast_list *param_list = (zend_ast_list *) enum_case_decl->child[0];
+
+	zend_ast *body_ast = zend_ast_create_list(0, ZEND_AST_STMT_LIST);
+	zend_ast *this_ast = zend_ast_create(ZEND_AST_VAR, zend_ast_create_zval_from_str(this_string));
+	for (uint32_t i = 0; i < param_list->children; ++i) {
+		zend_ast *param_ast = param_list->child[i];
+		zend_ast *property_fetch_ast = zend_ast_create(ZEND_AST_PROP, this_ast, param_ast->child[1]);
+		zend_ast *param_fetch_ast = zend_ast_create(ZEND_AST_VAR, param_ast->child[1]);
+		zend_ast *assign_ast = zend_ast_create(ZEND_AST_ASSIGN, property_fetch_ast, param_fetch_ast);
+		zend_ast_list_add(body_ast, assign_ast);
+	}
+	zend_ast *function_ast = zend_ast_create_decl(ZEND_AST_METHOD, ZEND_ACC_PROTECTED, 0, NULL, construct_string, (zend_ast *) param_list, NULL, body_ast, NULL, NULL);
+
+	zend_compile_func_decl(NULL, function_ast, 0);
+
+	zend_string_release_ex(construct_string, 0);
+	zend_string_release_ex(this_string, 0);
+}
+
+static void zend_compile_enum_case_class(zend_ast *ast)
+{
+	zend_ast_decl *enum_case_decl = (zend_ast_decl *) ast;
+
+	zend_class_entry *enum_class = CG(active_class_entry);
+	CG(active_class_entry) = NULL;
+
+	zend_string *enum_class_name = enum_class->name;
+	zend_string *enum_case_name = enum_case_decl->name;
+	zend_string *enum_case_class_name = zend_string_concat3(
+		ZSTR_VAL(enum_class_name), ZSTR_LEN(enum_class_name),
+		"::", sizeof("::") - 1,
+		ZSTR_VAL(enum_case_name), ZSTR_LEN(enum_case_name)
+	);
+
+	zend_ast *extends_from = zend_ast_create_zval_from_str(enum_class_name);
+
+	zend_ast *enum_case_class_decl = zend_ast_create_decl(ZEND_AST_CLASS, 0, ast->lineno, NULL, enum_case_class_name, extends_from, NULL, NULL, NULL, NULL);
+	zend_class_entry *enum_case_class = zend_compile_class_decl(NULL, enum_case_class_decl, 0);
+	CG(active_class_entry) = enum_case_class;
+	zend_generate_enum_case_constructor(enum_case_decl);
+
+	CG(active_class_entry) = enum_class;
+
+	zend_ast_destroy(enum_case_class_decl);
+}
+
+static void zend_compile_enum_case(zend_ast *ast)
+{
+	zend_compile_enum_case_class(ast);
+	zend_compile_func_decl(NULL, ast, 0);
+}
 
 static HashTable *zend_get_import_ht(uint32_t type) /* {{{ */
 {
@@ -9418,6 +9516,9 @@ void zend_compile_stmt(zend_ast *ast) /* {{{ */
 		case ZEND_AST_FUNC_DECL:
 		case ZEND_AST_METHOD:
 			zend_compile_func_decl(NULL, ast, 0);
+			break;
+		case ZEND_AST_ENUM_CASE:
+			zend_compile_enum_case(ast);
 			break;
 		case ZEND_AST_PROP_GROUP:
 			zend_compile_prop_group(ast);
