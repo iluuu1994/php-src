@@ -82,3 +82,11 @@ final class InternalIterator implements Iterator
 
     public function rewind(): void;
 }
+
+interface UnitEnum
+{
+}
+
+interface ScalarEnum
+{
+}

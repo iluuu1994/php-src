@@ -245,6 +245,7 @@ typedef struct _zend_oparray_context {
 #define ZEND_ACC_INTERFACE               (1 <<  0) /*  X  |     |     |     */
 #define ZEND_ACC_TRAIT                   (1 <<  1) /*  X  |     |     |     */
 #define ZEND_ACC_ANON_CLASS              (1 <<  2) /*  X  |     |     |     */
+#define ZEND_ACC_ENUM                    (1 << 22) /*  X  |     |     |     */
 /*                                                        |     |     |     */
 /* Class linked with parent, interfaces and traits        |     |     |     */
 #define ZEND_ACC_LINKED                  (1 <<  3) /*  X  |     |     |     */

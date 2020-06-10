@@ -1220,9 +1220,12 @@ ZEND_API zend_result zend_update_class_constants(zend_class_entry *class_type) /
 		zval *val;
 		zend_property_info *prop_info;
 
+		// Set ZEND_ACC_CONSTANTS_UPDATED flag before loading constants to avoid infinite recursion on constant enums
+		class_type->ce_flags |= ZEND_ACC_CONSTANTS_UPDATED;
+
 		if (class_type->parent) {
 			if (UNEXPECTED(zend_update_class_constants(class_type->parent) != SUCCESS)) {
-				return FAILURE;
+				goto failure;
 			}
 		}
 
@@ -1230,7 +1233,7 @@ ZEND_API zend_result zend_update_class_constants(zend_class_entry *class_type) /
 			val = &c->value;
 			if (Z_TYPE_P(val) == IS_CONSTANT_AST) {
 				if (UNEXPECTED(zval_update_constant_ex(val, c->ce) != SUCCESS)) {
-					return FAILURE;
+					goto failure;
 				}
 			}
 		} ZEND_HASH_FOREACH_END();
@@ -1254,25 +1257,27 @@ ZEND_API zend_result zend_update_class_constants(zend_class_entry *class_type) /
 					ZVAL_COPY(&tmp, val);
 					if (UNEXPECTED(zval_update_constant_ex(&tmp, prop_info->ce) != SUCCESS)) {
 						zval_ptr_dtor(&tmp);
-						return FAILURE;
+						goto failure;
 					}
 					/* property initializers must always be evaluated with strict types */;
 					if (UNEXPECTED(!zend_verify_property_type(prop_info, &tmp, /* strict */ 1))) {
 						zval_ptr_dtor(&tmp);
-						return FAILURE;
+						goto failure;
 					}
 					zval_ptr_dtor(val);
 					ZVAL_COPY_VALUE(val, &tmp);
 				} else if (UNEXPECTED(zval_update_constant_ex(val, prop_info->ce) != SUCCESS)) {
-					return FAILURE;
+					goto failure;
 				}
 			}
 		} ZEND_HASH_FOREACH_END();
-
-		class_type->ce_flags |= ZEND_ACC_CONSTANTS_UPDATED;
 	}
 
 	return SUCCESS;
+
+failure:
+	class_type->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
+	return FAILURE;
 }
 /* }}} */
 

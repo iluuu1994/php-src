@@ -1826,6 +1826,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, zend_bool nullify
 	ce->default_static_members_count = 0;
 	ce->properties_info_table = NULL;
 	ce->attributes = NULL;
+	ce->enum_primitive_type = IS_UNDEF;
 
 	if (nullify_handlers) {
 		ce->constructor = NULL;
@@ -4502,7 +4503,7 @@ void zend_compile_static_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 }
 /* }}} */
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel);
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel);
 
 void zend_compile_new(znode *result, zend_ast *ast) /* {{{ */
 {
@@ -6760,6 +6761,11 @@ zend_string *zend_begin_method_decl(zend_op_array *op_array, zend_string *name, 
 		zend_error(E_COMPILE_WARNING, "Private methods cannot be final as they are never overridden by other classes");
 	}
 
+	// FIXME: Won't work for traits
+	if ((ce->ce_flags & ZEND_ACC_ENUM) && zend_is_constructor(name)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Enums cannot contain constructors");
+	}
+
 	if (in_interface) {
 		if (!(fn_flags & ZEND_ACC_PUBLIC) || (fn_flags & (ZEND_ACC_FINAL|ZEND_ACC_ABSTRACT))) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Access type for interface method "
@@ -7001,6 +7007,10 @@ void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t flags, z
 		zend_error_noreturn(E_COMPILE_ERROR, "Interfaces may not include member variables");
 	}
 
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Enums may not include member variables");
+	}
+
 	if (flags & ZEND_ACC_ABSTRACT) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Properties cannot be declared abstract");
 	}
@@ -7109,6 +7119,11 @@ void zend_compile_class_const_decl(zend_ast *ast, uint32_t flags, zend_ast *attr
 
 	if ((ce->ce_flags & ZEND_ACC_TRAIT) != 0) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Traits cannot have constants");
+		return;
+	}
+
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Enums cannot have constants");
 		return;
 	}
 
@@ -7289,12 +7304,13 @@ static zend_string *zend_generate_anon_class_name(zend_ast_decl *decl)
 	return zend_new_interned_string(result);
 }
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /* {{{ */
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
 	zend_ast *extends_ast = decl->child[0];
 	zend_ast *implements_ast = decl->child[1];
 	zend_ast *stmt_ast = decl->child[2];
+	zend_ast *enum_primitive_type_ast = decl->child[4];
 	zend_string *name, *lcname;
 	zend_class_entry *ce = zend_arena_alloc(&CG(arena), sizeof(zend_class_entry));
 	zend_op *opline;
@@ -7365,6 +7381,47 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 			zend_resolve_const_class_name_reference(extends_ast, "class name");
 	}
 
+	if (enum_primitive_type_ast != NULL) {
+		ZEND_ASSERT(ce->ce_flags & ZEND_ACC_ENUM);
+		zend_type type = zend_compile_typename(enum_primitive_type_ast, 0, 0);
+		if (
+			type.ptr != NULL
+			|| (
+				type.type_mask != MAY_BE_LONG
+				&& type.type_mask != MAY_BE_STRING
+			)
+		) {
+			zend_error_noreturn(E_ERROR, "Enum primitive type must be int or string");
+		}
+		if (type.type_mask == MAY_BE_LONG) {
+			ce->enum_primitive_type = IS_LONG;
+		} else if (type.type_mask == MAY_BE_STRING) {
+			ce->enum_primitive_type = IS_STRING;
+		} else {
+			ZEND_ASSERT(0);
+		}
+		zend_type_release(type, 0);
+	}
+
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		if (implements_ast == NULL) {
+			implements_ast = zend_ast_create_list(0, ZEND_AST_NAME_LIST);
+			decl->child[1] = implements_ast;
+		}
+		
+		zend_string *unit_enum_string = zend_string_init("UnitEnum", strlen("UnitEnum"), 0);
+		zend_ast *unit_enum_ast = zend_ast_create_zval_from_str(unit_enum_string);
+		unit_enum_ast->attr = ZEND_NAME_FQ;
+		zend_ast_list_add(implements_ast, unit_enum_ast);
+
+		if (ce->enum_primitive_type != IS_UNDEF) {
+			zend_string *scalar_enum_string = zend_string_init("ScalarEnum", strlen("ScalarEnum"), 0);
+			zend_ast *scalar_enum_ast = zend_ast_create_zval_from_str(scalar_enum_string);
+			scalar_enum_ast->attr = ZEND_NAME_FQ;
+			zend_ast_list_add(implements_ast, scalar_enum_ast);
+		}
+	}
+
 	CG(active_class_entry) = ce;
 
 	if (decl->child[3]) {
@@ -7382,6 +7439,24 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 
 	if ((ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) == ZEND_ACC_IMPLICIT_ABSTRACT_CLASS) {
 		zend_verify_abstract_class(ce);
+	}
+
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zval case_default_value;
+		ZVAL_NULL(&case_default_value);
+		zend_string *case_property_name = zend_string_init("case", strlen("case"), 0);
+		zend_type case_type = ZEND_TYPE_INIT_NONE(0);
+		zend_declare_typed_property(ce, case_property_name, &case_default_value, ZEND_ACC_PUBLIC, NULL, case_type);
+		zend_string_release(case_property_name);
+
+		if (ce->enum_primitive_type != IS_UNDEF) {
+			zval value_default_value;
+			ZVAL_NULL(&value_default_value);
+			zend_string *vaue_property_name = zend_string_init("value", strlen("value"), 0);
+			zend_type value_type = ZEND_TYPE_INIT_NONE(0);
+			zend_declare_typed_property(ce, vaue_property_name, &value_default_value, ZEND_ACC_PUBLIC, NULL, value_type);
+			zend_string_release(vaue_property_name);
+		}
 	}
 
 	CG(active_class_entry) = original_ce;
@@ -7406,7 +7481,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 				if (zend_try_early_bind(ce, parent_ce, lcname, NULL)) {
 					CG(zend_lineno) = ast->lineno;
 					zend_string_release(lcname);
-					return;
+					return ce;
 				}
 				CG(zend_lineno) = ast->lineno;
 			}
@@ -7414,7 +7489,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 			zend_string_release(lcname);
 			zend_build_properties_info_table(ce);
 			ce->ce_flags |= ZEND_ACC_LINKED;
-			return;
+			return ce;
 		}
 	}
 
@@ -7463,8 +7538,61 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, zend_bool toplevel) /
 			opline->result.opline_num = -1;
 		}
 	}
+
+	return ce;
 }
 /* }}} */
+
+static void zend_declare_enum_case_constant(zend_ast *ast, zend_class_entry *enum_class)
+{
+	zend_string *enum_case_name = zend_ast_get_str(ast->child[0]);
+	zend_string *enum_class_name = enum_class->name;
+
+	zval class_name_zval;
+	ZVAL_STR_COPY(&class_name_zval, enum_class_name);
+	zend_ast *class_name_ast = zend_ast_create_zval_ex(&class_name_zval, ZEND_NAME_NOT_FQ);
+
+	zval case_name_zval;
+	ZVAL_STR_COPY(&case_name_zval, enum_case_name);
+	zend_ast *case_name_ast = zend_ast_create_zval_ex(&case_name_zval, ZEND_NAME_NOT_FQ);
+
+	zend_ast *case_value_zval_ast = NULL;
+	zend_ast *case_value_ast = ast->child[1];
+	if (case_value_ast != NULL) {
+		znode case_value_node;
+		zend_compile_expr(&case_value_node, case_value_ast);
+		if (case_value_node.op_type != IS_CONST) {
+			zend_error_noreturn(E_ERROR, "Enum case value must be constant");
+		}
+		if (enum_class->enum_primitive_type != Z_TYPE(case_value_node.u.constant)) {
+			zend_error_noreturn(E_ERROR, "Enum case type %s does not match enum type %s", 
+				zend_get_type_by_const(Z_TYPE(case_value_node.u.constant)),
+				zend_get_type_by_const(enum_class->enum_primitive_type));
+		}
+		// FIXME: Make sure the type matches the enum type
+		case_value_zval_ast = zend_ast_create_zval(&case_value_node.u.constant);
+	}
+
+	zend_ast *const_enum_init_ast = zend_ast_create(ZEND_AST_CONST_ENUM_INIT, class_name_ast, case_name_ast, case_value_zval_ast);
+
+	zval value_zv;
+	zend_const_expr_to_zval(&value_zv, &const_enum_init_ast);
+	zend_declare_class_constant_ex(enum_class, enum_case_name, &value_zv, ZEND_ACC_PUBLIC, NULL);
+
+	zend_ast_destroy(const_enum_init_ast);
+}
+
+static void zend_compile_enum_case_class(zend_ast *ast)
+{
+	zend_class_entry *enum_class = CG(active_class_entry);
+
+	zend_declare_enum_case_constant(ast, enum_class);
+}
+
+static void zend_compile_enum_case(zend_ast *ast)
+{
+	zend_compile_enum_case_class(ast);
+}
 
 static HashTable *zend_get_import_ht(uint32_t type) /* {{{ */
 {
@@ -9158,7 +9286,8 @@ zend_bool zend_is_allowed_in_const_expr(zend_ast_kind kind) /* {{{ */
 		|| kind == ZEND_AST_UNPACK
 		|| kind == ZEND_AST_CONST || kind == ZEND_AST_CLASS_CONST
 		|| kind == ZEND_AST_CLASS_NAME
-		|| kind == ZEND_AST_MAGIC_CONST || kind == ZEND_AST_COALESCE;
+		|| kind == ZEND_AST_MAGIC_CONST || kind == ZEND_AST_COALESCE
+		|| kind == ZEND_AST_CONST_ENUM_INIT;
 }
 /* }}} */
 
@@ -9412,6 +9541,9 @@ void zend_compile_stmt(zend_ast *ast) /* {{{ */
 		case ZEND_AST_FUNC_DECL:
 		case ZEND_AST_METHOD:
 			zend_compile_func_decl(NULL, ast, 0);
+			break;
+		case ZEND_AST_ENUM_CASE:
+			zend_compile_enum_case(ast);
 			break;
 		case ZEND_AST_PROP_GROUP:
 			zend_compile_prop_group(ast);

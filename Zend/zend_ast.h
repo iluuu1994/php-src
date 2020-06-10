@@ -147,6 +147,7 @@ enum _zend_ast_kind {
 	ZEND_AST_MATCH,
 	ZEND_AST_MATCH_ARM,
 	ZEND_AST_NAMED_ARG,
+	ZEND_AST_ENUM_CASE,
 
 	/* 3 child nodes */
 	ZEND_AST_METHOD_CALL = 3 << ZEND_AST_NUM_CHILDREN_SHIFT,
@@ -159,6 +160,9 @@ enum _zend_ast_kind {
 	ZEND_AST_PROP_GROUP,
 	ZEND_AST_PROP_ELEM,
 	ZEND_AST_CONST_ELEM,
+
+	// Pseudo node for initializing enums
+	ZEND_AST_CONST_ENUM_INIT,
 
 	/* 4 child nodes */
 	ZEND_AST_FOR = 4 << ZEND_AST_NUM_CHILDREN_SHIFT,

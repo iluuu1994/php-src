@@ -162,6 +162,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_CLASS         "'class'"
 %token <ident> T_TRAIT         "'trait'"
 %token <ident> T_INTERFACE     "'interface'"
+%token <ident> T_ENUM          "'enum'"
 %token <ident> T_EXTENDS       "'extends'"
 %token <ident> T_IMPLEMENTS    "'implements'"
 %token <ident> T_NAMESPACE     "'namespace'"
@@ -268,6 +269,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attributed_statement attributed_class_statement attributed_parameter
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
+%type <ast> enum_declaration_statement enum_case enum_primitive_type enum_case_expr enum_case_value
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier optional_visibility_modifier
@@ -366,6 +368,7 @@ attributed_statement:
 	|	class_declaration_statement			{ $$ = $1; }
 	|	trait_declaration_statement			{ $$ = $1; }
 	|	interface_declaration_statement		{ $$ = $1; }
+	|	enum_declaration_statement			{ $$ = $1; }
 ;
 
 top_statement:
@@ -592,6 +595,33 @@ interface_declaration_statement:
 			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_INTERFACE, $<num>2, $5, zend_ast_get_str($3), NULL, $4, $7, NULL, NULL); }
 ;
 
+enum_declaration_statement:
+		T_ENUM { $<num>$ = CG(zend_lineno); }
+		T_STRING enum_primitive_type implements_list backup_doc_comment '{' class_statement_list '}'
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM|ZEND_ACC_FINAL|ZEND_ACC_NO_DYNAMIC_PROPERTIES, $<num>2, $6, zend_ast_get_str($3), NULL, $5, $8, NULL, $4); }
+;
+
+enum_case:
+		T_CASE identifier enum_case_expr ';'
+			{ $$ = zend_ast_create(ZEND_AST_ENUM_CASE, $2, $3); }
+;
+
+enum_case_expr:
+		%empty	{ $$ = NULL; }
+	|	'=' enum_case_value { $$ = $2; }
+;
+
+enum_case_value:
+		T_LNUMBER 	{ $$ = $1; }
+	|	T_DNUMBER 	{ $$ = $1; }
+	|	T_START_HEREDOC T_ENCAPSED_AND_WHITESPACE T_END_HEREDOC { $$ = $2; }
+	|	T_START_HEREDOC T_END_HEREDOC
+			{ $$ = zend_ast_create_zval_from_str(ZSTR_EMPTY_ALLOC()); }
+	|	T_START_HEREDOC encaps_list T_END_HEREDOC { $$ = $2; }
+	|	dereferencable_scalar	{ $$ = $1; }
+	|	constant				{ $$ = $1; }
+;
+
 extends_from:
 		%empty				{ $$ = NULL; }
 	|	T_EXTENDS class_name	{ $$ = $2; }
@@ -605,6 +635,11 @@ interface_extends_list:
 implements_list:
 		%empty		        		{ $$ = NULL; }
 	|	T_IMPLEMENTS class_name_list	{ $$ = $2; }
+;
+
+enum_primitive_type:
+		%empty	{ $$ = NULL; }
+	|	':' type { $$ = $2; }
 ;
 
 foreach_variable:
@@ -859,6 +894,7 @@ attributed_class_statement:
 		return_type backup_fn_flags method_body backup_fn_flags
 			{ $$ = zend_ast_create_decl(ZEND_AST_METHOD, $3 | $1 | $12, $2, $5,
 				  zend_ast_get_str($4), $7, NULL, $11, $9, NULL); CG(extra_fn_flags) = $10; }
+	|	enum_case { $$ = $1; }
 ;
 
 class_statement:

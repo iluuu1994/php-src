@@ -30,6 +30,8 @@ ZEND_API zend_class_entry *zend_ce_serializable;
 ZEND_API zend_class_entry *zend_ce_countable;
 ZEND_API zend_class_entry *zend_ce_stringable;
 ZEND_API zend_class_entry *zend_ce_internal_iterator;
+ZEND_API zend_class_entry *zend_ce_unit_enum;
+ZEND_API zend_class_entry *zend_ce_scalar_enum;
 
 static zend_object_handlers zend_internal_iterator_handlers;
 
@@ -624,6 +626,12 @@ ZEND_API void zend_register_interfaces(void)
 	zend_ce_internal_iterator->create_object = zend_internal_iterator_create;
 	zend_ce_internal_iterator->serialize = zend_class_serialize_deny;
 	zend_ce_internal_iterator->unserialize = zend_class_unserialize_deny;
+
+	INIT_CLASS_ENTRY(ce, "UnitEnum", class_UnitEnum_methods);
+	zend_ce_unit_enum = zend_register_internal_interface(&ce);
+
+	INIT_CLASS_ENTRY(ce, "ScalarEnum", class_ScalarEnum_methods);
+	zend_ce_scalar_enum = zend_register_internal_interface(&ce);
 
 	memcpy(&zend_internal_iterator_handlers, zend_get_std_object_handlers(),
 		sizeof(zend_object_handlers));

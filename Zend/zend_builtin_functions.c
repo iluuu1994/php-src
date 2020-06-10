@@ -1061,6 +1061,11 @@ ZEND_FUNCTION(trait_exists)
 }
 /* }}} */
 
+ZEND_FUNCTION(is_enum)
+{
+	class_exists_impl(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_ENUM, 0);
+}
+
 /* {{{ Checks if the function exists */
 ZEND_FUNCTION(function_exists)
 {

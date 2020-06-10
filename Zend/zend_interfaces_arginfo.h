@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 29a5ed0b859b0732074c81cf9d26047a6eb9059a */
+ * Stub hash: 841d2d059ea39ffe39e566fbc26ae730da8a30c4 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_IteratorAggregate_getIterator, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -117,5 +117,15 @@ static const zend_function_entry class_InternalIterator_methods[] = {
 	ZEND_ME(InternalIterator, next, arginfo_class_InternalIterator_next, ZEND_ACC_PUBLIC)
 	ZEND_ME(InternalIterator, valid, arginfo_class_InternalIterator_valid, ZEND_ACC_PUBLIC)
 	ZEND_ME(InternalIterator, rewind, arginfo_class_InternalIterator_rewind, ZEND_ACC_PUBLIC)
+	ZEND_FE_END
+};
+
+
+static const zend_function_entry class_UnitEnum_methods[] = {
+	ZEND_FE_END
+};
+
+
+static const zend_function_entry class_ScalarEnum_methods[] = {
 	ZEND_FE_END
 };

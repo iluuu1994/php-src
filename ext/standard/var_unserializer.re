@@ -1193,6 +1193,96 @@ object ":" uiv ":" ["]	{
 	return object_common(UNSERIALIZE_PASSTHRU, elements, has_unserialize);
 }
 
+"E:" uiv ":" ["]	{
+	size_t len, maxlen;
+	char *str;
+	zend_string *full_name, *enum_name, *case_name;
+	zend_class_entry *ce;
+
+    if (!var_hash) return 0;
+
+	len = parse_uiv(start + 2);
+	maxlen = max - YYCURSOR;
+	if (maxlen < len || len == 0) {
+		*p = start + 2;
+		return 0;
+	}
+
+	str = (char*)YYCURSOR;
+
+	YYCURSOR += len;
+
+	if (*(YYCURSOR) != '"') {
+		*p = YYCURSOR;
+		return 0;
+	}
+	if (*(YYCURSOR+1) != ';') {
+		*p = YYCURSOR+1;
+		return 0;
+	}
+
+	full_name = zend_string_init(str, len, 0);
+	int32_t colon_pos = -1;
+	for (uint32_t i = 0; i < ZSTR_LEN(full_name); ++i) {
+		if (ZSTR_VAL(full_name)[i] == ':') {
+			colon_pos = i;
+			break;
+		}
+	}
+	ZEND_ASSERT(colon_pos != -1);
+	ZEND_ASSERT(ZSTR_VAL(full_name)[colon_pos + 1] == ':');
+
+	enum_name = zend_string_init_fast(ZSTR_VAL(full_name), -(colon_pos - len) - 2);
+	case_name = zend_string_init_fast(&ZSTR_VAL(full_name)[colon_pos + 2], len - colon_pos - 2);
+	zend_string_release_ex(full_name, 0);
+
+	//if (!zend_is_valid_class_name(enum_name)) {
+	//	zend_string_release_ex(enum_name, 0);
+	//	zend_string_release_ex(case_name, 0);
+	//	return 0;
+	//}
+
+	ce = zend_lookup_class(enum_name);
+	if (!ce) {
+		php_error_docref(NULL, E_WARNING, "Class '%s' not found", ZSTR_VAL(enum_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	if (EG(exception)) {
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	*p = YYCURSOR;
+
+	zval *zv = zend_hash_find_ex(&ce->constants_table, case_name, 0);
+	if (!zv) {
+		php_error_docref(NULL, E_WARNING, "Undefined constant %s::%s", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	zend_class_constant *c = Z_PTR_P(zv);
+	zval *value = &c->value;
+	if (Z_TYPE_P(value) == IS_CONSTANT_AST) {
+		zval_update_constant_ex(value, c->ce);
+		if (UNEXPECTED(EG(exception) != NULL)) {
+			zend_string_release_ex(enum_name, 0);
+			zend_string_release_ex(case_name, 0);
+			return 0;
+		}
+	}
+	*rval = *value;
+
+	zend_string_release_ex(enum_name, 0);
+	zend_string_release_ex(case_name, 0);
+	return 1;
+}
+
 "}" {
 	/* this is the case where we have less data than planned */
 	php_error_docref(NULL, E_NOTICE, "Unexpected end of serialized data");

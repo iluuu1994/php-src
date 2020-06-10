@@ -754,6 +754,32 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 				}
 			}
 			break;
+		case ZEND_AST_CONST_ENUM_INIT:
+		{
+			zend_ast *class_name_ast = ast->child[0];
+			zend_string *class_name = zend_ast_get_str(class_name_ast);
+
+			zend_ast *case_name_ast = ast->child[1];
+			zval *case_name_zv = zend_ast_get_zval(case_name_ast);
+
+			zend_class_entry *ce = zend_fetch_class_by_name(class_name, NULL, 0);
+			object_init_ex(result, ce);
+
+			zend_object *zobj = Z_OBJ_P(result);
+
+			zend_string *case_property_name = zend_string_init("case", strlen("case"), 0);
+			zobj->handlers->write_property(zobj, case_property_name, case_name_zv, NULL);
+			zend_string_free(case_property_name);
+
+			zend_ast *case_value_ast = ast->child[2];
+			if (case_value_ast != NULL) {
+				zval *case_value_zv = zend_ast_get_zval(case_value_ast);
+				zend_string *value_property_name = zend_string_init("value", strlen("value"), 0);
+				zobj->handlers->write_property(zobj, value_property_name, case_value_zv, NULL);
+				zend_string_free(value_property_name);
+			}
+			break;
+		}
 		default:
 			zend_throw_error(NULL, "Unsupported constant expression");
 			ret = FAILURE;
