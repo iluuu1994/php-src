@@ -1205,6 +1205,110 @@ object ":" uiv ":" ["]	{
 	return object_common(UNSERIALIZE_PASSTHRU, elements, has_unserialize);
 }
 
+"E:" uiv ":" ["]	{
+	size_t len, maxlen;
+	char *str;
+	zend_string *enum_name, *case_name;
+	zend_class_entry *ce;
+
+	if (!var_hash) return 0;
+
+	len = parse_uiv(start + 2);
+	maxlen = max - YYCURSOR;
+	if (maxlen < len || len == 0) {
+		*p = start + 2;
+		return 0;
+	}
+
+	str = (char*)YYCURSOR;
+
+	YYCURSOR += len;
+
+	if (*(YYCURSOR) != '"') {
+		*p = YYCURSOR;
+		return 0;
+	}
+	if (*(YYCURSOR+1) != ';') {
+		*p = YYCURSOR+1;
+		return 0;
+	}
+
+	size_t colon_pos = SIZE_MAX;
+	for (size_t i = 0; i < len; ++i) {
+		if (str[i] == ':') {
+			colon_pos = i;
+			break;
+		}
+	}
+	if (colon_pos == SIZE_MAX) {
+		php_error_docref(NULL, E_WARNING, "Invalid enum name '%.*s' (missing colon)", (int) len, str);
+		return 0;
+	}
+
+	enum_name = zend_string_init_fast(str, -(colon_pos - len) - 1);
+	case_name = zend_string_init_fast(&str[colon_pos + 1], len - colon_pos - 1);
+
+	if (!zend_is_valid_class_name(enum_name)) {
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	ce = zend_lookup_class(enum_name);
+	if (!ce) {
+		php_error_docref(NULL, E_WARNING, "Class '%s' not found", ZSTR_VAL(enum_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+	if (!(ce->ce_flags & ZEND_ACC_ENUM)) {
+		php_error_docref(NULL, E_WARNING, "Class '%s' is not an enum", ZSTR_VAL(enum_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	if (EG(exception)) {
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	YYCURSOR += 2;
+	*p = YYCURSOR;
+
+	zval *zv = zend_hash_find_ex(&ce->constants_table, case_name, 0);
+	if (!zv) {
+		php_error_docref(NULL, E_WARNING, "Undefined constant %s::%s", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	zend_class_constant *c = Z_PTR_P(zv);
+	if (!(c->const_flags & ZEND_CLASS_CONST_IS_CASE)) {
+		php_error_docref(NULL, E_WARNING, "%s::%s is not an enum case", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
+		zend_string_release_ex(enum_name, 0);
+		zend_string_release_ex(case_name, 0);
+		return 0;
+	}
+
+	zend_string_release_ex(enum_name, 0);
+	zend_string_release_ex(case_name, 0);
+
+	zval *value = &c->value;
+	if (Z_TYPE_P(value) == IS_CONSTANT_AST) {
+		zval_update_constant_ex(value, c->ce);
+		if (UNEXPECTED(EG(exception) != NULL)) {
+			return 0;
+		}
+	}
+	ZEND_ASSERT(Z_TYPE_P(value) == IS_OBJECT);
+	ZVAL_COPY(rval, value);
+
+	return 1;
+}
+
 "}" {
 	/* this is the case where we have less data than planned */
 	php_error_docref(NULL, E_NOTICE, "Unexpected end of serialized data");

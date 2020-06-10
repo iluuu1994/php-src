@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: c6ef101bd3881348a74b60cecd22d1d7f80017c8 */
+ * Stub hash: 7601b87fceb267c47192081b7c895f1d8cf5cf06 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_IteratorAggregate_getIterator, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -51,6 +51,14 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_InternalIterator_valid, 0,
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_InternalIterator_rewind arginfo_class_InternalIterator_next
+
+#define arginfo_class_UnitEnum_cases arginfo_class_IteratorAggregate_getIterator
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_class_ScalarEnum_from, 0, 0, 1)
+	ZEND_ARG_TYPE_MASK(0, value, MAY_BE_LONG|MAY_BE_STRING, NULL)
+ZEND_END_ARG_INFO()
+
+#define arginfo_class_ScalarEnum_tryFrom arginfo_class_ScalarEnum_from
 
 
 ZEND_METHOD(InternalIterator, __construct);
@@ -117,5 +125,18 @@ static const zend_function_entry class_InternalIterator_methods[] = {
 	ZEND_ME(InternalIterator, next, arginfo_class_InternalIterator_next, ZEND_ACC_PUBLIC)
 	ZEND_ME(InternalIterator, valid, arginfo_class_InternalIterator_valid, ZEND_ACC_PUBLIC)
 	ZEND_ME(InternalIterator, rewind, arginfo_class_InternalIterator_rewind, ZEND_ACC_PUBLIC)
+	ZEND_FE_END
+};
+
+
+static const zend_function_entry class_UnitEnum_methods[] = {
+	ZEND_ABSTRACT_ME_WITH_FLAGS(UnitEnum, cases, arginfo_class_UnitEnum_cases, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_ABSTRACT)
+	ZEND_FE_END
+};
+
+
+static const zend_function_entry class_ScalarEnum_methods[] = {
+	ZEND_ABSTRACT_ME_WITH_FLAGS(ScalarEnum, from, arginfo_class_ScalarEnum_from, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_ABSTRACT)
+	ZEND_ABSTRACT_ME_WITH_FLAGS(ScalarEnum, tryFrom, arginfo_class_ScalarEnum_tryFrom, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_ABSTRACT)
 	ZEND_FE_END
 };

@@ -26,6 +26,7 @@
 #include "zend_smart_str.h"
 #include "zend_operators.h"
 #include "zend_exceptions.h"
+#include "zend_enum.h"
 
 static void add_dependency_obligation(zend_class_entry *ce, zend_class_entry *dependency_ce);
 static void add_compatibility_obligation(
@@ -2472,6 +2473,9 @@ ZEND_API zend_result zend_do_link_class(zend_class_entry *ce, zend_string *lc_pa
 		&& (ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS))
 	) {
 		zend_verify_abstract_class(ce);
+	}
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zend_verify_enum(ce);
 	}
 
 	zend_build_properties_info_table(ce);

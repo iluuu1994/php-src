@@ -32,6 +32,7 @@
 #include "zend_language_scanner.h"
 #include "zend_inheritance.h"
 #include "zend_vm.h"
+#include "zend_enum.h"
 
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
@@ -88,6 +89,7 @@ ZEND_API zend_executor_globals executor_globals;
 
 static zend_op *zend_emit_op(znode *result, zend_uchar opcode, znode *op1, znode *op2);
 static bool zend_try_ct_eval_array(zval *result, zend_ast *ast);
+zend_bool zend_is_allowed_in_const_expr(zend_ast_kind kind);
 
 static void init_op(zend_op *op)
 {
@@ -1836,6 +1838,8 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 	ce->default_static_members_count = 0;
 	ce->properties_info_table = NULL;
 	ce->attributes = NULL;
+	ce->enum_scalar_type = IS_UNDEF;
+	ce->enum_scalar_table = NULL;
 
 	if (nullify_handlers) {
 		ce->constructor = NULL;
@@ -4572,7 +4576,7 @@ void zend_compile_static_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 }
 /* }}} */
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel);
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel);
 
 void zend_compile_new(znode *result, zend_ast *ast) /* {{{ */
 {
@@ -7097,6 +7101,10 @@ void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t flags, z
 		zend_error_noreturn(E_COMPILE_ERROR, "Interfaces may not include member variables");
 	}
 
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Enums may not include member variables");
+	}
+
 	if (flags & ZEND_ACC_ABSTRACT) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Properties cannot be declared abstract");
 	}
@@ -7385,12 +7393,41 @@ static zend_string *zend_generate_anon_class_name(zend_ast_decl *decl)
 	return zend_new_interned_string(result);
 }
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{ */
+static void zend_compile_enum_scalar_type(zend_class_entry *ce, zend_ast *enum_scalar_type_ast)
+{
+	ZEND_ASSERT(ce->ce_flags & ZEND_ACC_ENUM);
+	zend_type type = zend_compile_typename(enum_scalar_type_ast, 0);
+	if (
+		type.ptr != NULL
+		|| (
+			type.type_mask != MAY_BE_LONG
+			&& type.type_mask != MAY_BE_STRING
+		)
+	) {
+		zend_string *type_string = zend_type_to_string(type);
+		zend_error_noreturn(E_COMPILE_ERROR,
+			"Enum scalar type must be int or string, %s given",
+			ZSTR_VAL(type_string));
+	}
+	if (type.type_mask == MAY_BE_LONG) {
+		ce->enum_scalar_type = IS_LONG;
+	} else {
+		ZEND_ASSERT(type.type_mask == MAY_BE_STRING);
+		ce->enum_scalar_type = IS_STRING;
+	}
+	zend_type_release(type, 0);
+
+	ce->enum_scalar_table = emalloc(sizeof(HashTable));
+	zend_hash_init(ce->enum_scalar_table, 0, NULL, ZVAL_PTR_DTOR, 0);
+}
+
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
 	zend_ast *extends_ast = decl->child[0];
 	zend_ast *implements_ast = decl->child[1];
 	zend_ast *stmt_ast = decl->child[2];
+	zend_ast *enum_scalar_type_ast = decl->child[4];
 	zend_string *name, *lcname;
 	zend_class_entry *ce = zend_arena_alloc(&CG(arena), sizeof(zend_class_entry));
 	zend_op *opline;
@@ -7471,6 +7508,15 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 		zend_compile_implements(implements_ast);
 	}
 
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		if (enum_scalar_type_ast != NULL) {
+			zend_compile_enum_scalar_type(ce, enum_scalar_type_ast);
+		}
+		zend_enum_add_interfaces(ce);
+		zend_enum_register_funcs(ce);
+		zend_enum_register_props(ce);
+	}
+
 	zend_compile_stmt(stmt_ast);
 
 	/* Reset lineno for final opcodes and errors */
@@ -7478,6 +7524,10 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 
 	if ((ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) == ZEND_ACC_IMPLICIT_ABSTRACT_CLASS) {
 		zend_verify_abstract_class(ce);
+	}
+
+	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		zend_verify_enum(ce);
 	}
 
 	CG(active_class_entry) = original_ce;
@@ -7502,7 +7552,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 				if (zend_try_early_bind(ce, parent_ce, lcname, NULL)) {
 					CG(zend_lineno) = ast->lineno;
 					zend_string_release(lcname);
-					return;
+					return ce;
 				}
 				CG(zend_lineno) = ast->lineno;
 			}
@@ -7510,7 +7560,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 			zend_string_release(lcname);
 			zend_build_properties_info_table(ce);
 			ce->ce_flags |= ZEND_ACC_LINKED;
-			return;
+			return ce;
 		}
 	}
 
@@ -7559,8 +7609,80 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 			opline->result.opline_num = -1;
 		}
 	}
+
+	return ce;
 }
 /* }}} */
+
+static void zend_compile_enum_case(zend_ast *ast)
+{
+	zend_class_entry *enum_class = CG(active_class_entry);
+	if (!(enum_class->ce_flags & ZEND_ACC_ENUM)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Case can only be used in enums");
+	}
+
+	zend_string *enum_case_name = zend_ast_get_str(ast->child[0]);
+	zend_string *enum_class_name = enum_class->name;
+
+	zval class_name_zval;
+	ZVAL_STR_COPY(&class_name_zval, enum_class_name);
+	zend_ast *class_name_ast = zend_ast_create_zval_ex(&class_name_zval, ZEND_NAME_NOT_FQ);
+
+	zval case_name_zval;
+	ZVAL_STR_COPY(&case_name_zval, enum_case_name);
+	zend_ast *case_name_ast = zend_ast_create_zval_ex(&case_name_zval, ZEND_NAME_NOT_FQ);
+
+	zend_ast *case_value_zval_ast = NULL;
+	zend_ast *case_value_ast = ast->child[1];
+	if (case_value_ast != NULL) {
+		if (enum_class->enum_scalar_type == IS_UNDEF) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Case %s of non-scalar enum %s must not have a value",
+				ZSTR_VAL(enum_case_name),
+				ZSTR_VAL(enum_class_name));
+		}
+
+		if (!zend_is_allowed_in_const_expr(case_value_ast->kind)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Enum case value must be constant");
+		}
+		zval case_value_zv;
+		zend_ast_evaluate(&case_value_zv, case_value_ast, enum_class);
+		if (enum_class->enum_scalar_type != Z_TYPE(case_value_zv)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Enum case type %s does not match enum scalar type %s", 
+				zend_get_type_by_const(Z_TYPE(case_value_zv)),
+				zend_get_type_by_const(enum_class->enum_scalar_type));
+		}
+		case_value_zval_ast = zend_ast_create_zval(&case_value_zv);
+
+		if (enum_class->enum_scalar_type == IS_LONG) {
+			zend_long long_key = Z_LVAL(case_value_zv);
+			if (zend_hash_index_find(enum_class->enum_scalar_table, long_key)) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Duplicate enum case value");
+			}
+			zend_hash_index_add(enum_class->enum_scalar_table, long_key, &case_name_zval);
+		} else {
+			ZEND_ASSERT(enum_class->enum_scalar_type == IS_STRING);
+			zend_string *string_key = Z_STR(case_value_zv);
+			if (zend_hash_find_ex(enum_class->enum_scalar_table, string_key, 1) != NULL) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Duplicate enum case value");
+			}
+			zend_hash_add(enum_class->enum_scalar_table, string_key, &case_name_zval);
+		}
+	}
+
+	zend_ast *const_enum_init_ast = zend_ast_create(ZEND_AST_CONST_ENUM_INIT, class_name_ast, case_name_ast, case_value_zval_ast);
+
+	zval value_zv;
+	zend_const_expr_to_zval(&value_zv, &const_enum_init_ast);
+	zend_class_constant *c = zend_declare_class_constant_ex(enum_class, enum_case_name, &value_zv, ZEND_ACC_PUBLIC, NULL);
+	c->const_flags = ZEND_CLASS_CONST_IS_CASE;
+
+	zend_ast *attr_ast = ast->child[2];
+	if (attr_ast) {
+		zend_compile_attributes(&c->attributes, attr_ast, 0, ZEND_ATTRIBUTE_TARGET_CLASS_CONST);
+	}
+
+	zend_ast_destroy(const_enum_init_ast);
+}
 
 static HashTable *zend_get_import_ht(uint32_t type) /* {{{ */
 {
@@ -9276,7 +9398,8 @@ bool zend_is_allowed_in_const_expr(zend_ast_kind kind) /* {{{ */
 		|| kind == ZEND_AST_UNPACK
 		|| kind == ZEND_AST_CONST || kind == ZEND_AST_CLASS_CONST
 		|| kind == ZEND_AST_CLASS_NAME
-		|| kind == ZEND_AST_MAGIC_CONST || kind == ZEND_AST_COALESCE;
+		|| kind == ZEND_AST_MAGIC_CONST || kind == ZEND_AST_COALESCE
+		|| kind == ZEND_AST_CONST_ENUM_INIT;
 }
 /* }}} */
 
@@ -9530,6 +9653,9 @@ void zend_compile_stmt(zend_ast *ast) /* {{{ */
 		case ZEND_AST_FUNC_DECL:
 		case ZEND_AST_METHOD:
 			zend_compile_func_decl(NULL, ast, 0);
+			break;
+		case ZEND_AST_ENUM_CASE:
+			zend_compile_enum_case(ast);
 			break;
 		case ZEND_AST_PROP_GROUP:
 			zend_compile_prop_group(ast);

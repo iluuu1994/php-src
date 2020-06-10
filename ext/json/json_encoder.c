@@ -509,6 +509,26 @@ static int php_json_encode_serializable_object(smart_str *buf, zval *val, int op
 }
 /* }}} */
 
+static int php_json_encode_serializable_enum(smart_str *buf, zval *val, int options, php_json_encoder *encoder)
+{
+	zend_class_entry *ce = Z_OBJCE_P(val);
+	if (ce->enum_scalar_type == IS_UNDEF) {
+		encoder->error_code = PHP_JSON_ERROR_NON_SCALAR_ENUM;
+		smart_str_appendc(buf, '0');
+		return FAILURE;
+	}
+
+	zend_string *value_string = zend_string_init("value", strlen("value"), 0);
+	zval tmp;
+	zval *value_zv = zend_read_property_ex(ce, Z_OBJ_P(val), value_string, 0, &tmp);
+
+	int result = php_json_encode_zval(buf, value_zv, options, encoder);
+
+	zend_string_free(value_string);
+
+	return result;
+}
+
 int php_json_encode_zval(smart_str *buf, zval *val, int options, php_json_encoder *encoder) /* {{{ */
 {
 again:
@@ -544,6 +564,9 @@ again:
 		case IS_OBJECT:
 			if (instanceof_function(Z_OBJCE_P(val), php_json_serializable_ce)) {
 				return php_json_encode_serializable_object(buf, val, options, encoder);
+			}
+			if (Z_OBJCE_P(val)->ce_flags & ZEND_ACC_ENUM) {
+				return php_json_encode_serializable_enum(buf, val, options, encoder);
 			}
 			/* fallthrough -- Non-serializable object */
 		case IS_ARRAY: {

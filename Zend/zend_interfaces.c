@@ -30,6 +30,8 @@ ZEND_API zend_class_entry *zend_ce_serializable;
 ZEND_API zend_class_entry *zend_ce_countable;
 ZEND_API zend_class_entry *zend_ce_stringable;
 ZEND_API zend_class_entry *zend_ce_internal_iterator;
+ZEND_API zend_class_entry *zend_ce_unit_enum;
+ZEND_API zend_class_entry *zend_ce_scalar_enum;
 
 static zend_object_handlers zend_internal_iterator_handlers;
 
@@ -264,6 +266,38 @@ static int zend_implement_traversable(zend_class_entry *interface, zend_class_en
 	return FAILURE;
 }
 /* }}} */
+
+static int zend_implement_unit_enum(zend_class_entry *interface, zend_class_entry *class_type)
+{
+	if (class_type->ce_flags & ZEND_ACC_ENUM) {
+		return SUCCESS;
+	}
+
+	zend_error_noreturn(E_CORE_ERROR, "Non-enum class %s cannot implement interface %s",
+		ZSTR_VAL(class_type->name),
+		ZSTR_VAL(interface->name));
+
+	return FAILURE;
+}
+
+static int zend_implement_scalar_enum(zend_class_entry *interface, zend_class_entry *class_type)
+{
+	if (!(class_type->ce_flags & ZEND_ACC_ENUM)) {
+		zend_error_noreturn(E_CORE_ERROR, "Non-enum class %s cannot implement interface %s",
+			ZSTR_VAL(class_type->name),
+			ZSTR_VAL(interface->name));
+		return FAILURE;
+	}
+
+	if (class_type->enum_scalar_type == IS_UNDEF) {
+		zend_error_noreturn(E_CORE_ERROR, "Non-scalar enum %s cannot implement interface %s",
+			ZSTR_VAL(class_type->name),
+			ZSTR_VAL(interface->name));
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
 
 /* {{{ zend_implement_aggregate */
 static int zend_implement_aggregate(zend_class_entry *interface, zend_class_entry *class_type)
@@ -624,6 +658,9 @@ ZEND_API void zend_register_interfaces(void)
 	zend_ce_internal_iterator->create_object = zend_internal_iterator_create;
 	zend_ce_internal_iterator->serialize = zend_class_serialize_deny;
 	zend_ce_internal_iterator->unserialize = zend_class_unserialize_deny;
+
+	REGISTER_MAGIC_INTERFACE(unit_enum, UnitEnum);
+	REGISTER_MAGIC_INTERFACE(scalar_enum, ScalarEnum);
 
 	memcpy(&zend_internal_iterator_handlers, zend_get_std_object_handlers(),
 		sizeof(zend_object_handlers));

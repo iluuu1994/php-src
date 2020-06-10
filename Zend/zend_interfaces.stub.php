@@ -82,3 +82,19 @@ final class InternalIterator implements Iterator
 
     public function rewind(): void;
 }
+
+interface UnitEnum
+{
+    /** @return array */
+    public static function cases();
+}
+
+
+interface ScalarEnum extends UnitEnum
+{
+    /** @return static */
+    public static function from(int|string $value);
+
+    /** @return static|null */
+    public static function tryFrom(int|string $value);
+}

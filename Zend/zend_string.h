@@ -551,6 +551,7 @@ EMPTY_SWITCH_DEFAULT_CASE()
 	_(ZEND_STR_FALSE,                  "false") \
 	_(ZEND_STR_NULL_LOWERCASE,         "null") \
 	_(ZEND_STR_MIXED,                  "mixed") \
+	_(ZEND_STR_ENUM,                   "enum") \
 
 
 typedef enum _zend_known_string_id {
