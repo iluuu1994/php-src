@@ -504,6 +504,7 @@ struct _zend_execute_data {
 	zend_execute_data   *prev_execute_data;
 	zend_array          *symbol_table;
 	void               **run_time_cache;   /* cache op_array->run_time_cache */
+	zend_bool            is_partial_call;
 };
 
 #define ZEND_CALL_HAS_THIS           IS_OBJECT_EX

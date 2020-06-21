@@ -236,6 +236,8 @@ struct _zend_executor_globals {
 	zend_function trampoline;
 	zend_op       call_trampoline_op;
 
+	zend_op       build_partial_op;
+
 	HashTable weakrefs;
 
 	zend_bool exception_ignore_args;

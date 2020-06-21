@@ -3870,10 +3870,14 @@ ZEND_VM_HOT_HANDLER(129, ZEND_DO_ICALL, ANY, ANY, SPEC(RETVAL))
 	ret = RETURN_VALUE_USED(opline) ? EX_VAR(opline->result.var) : &retval;
 	ZVAL_NULL(ret);
 
-	fbc->internal_function.handler(call, ret);
+	if (EXPECTED(!call->is_partial_call)) {
+		fbc->internal_function.handler(call, ret);
+	} else {
+		zend_make_partial_closure(fbc, call, ret);
+	}
 
 #if ZEND_DEBUG
-	if (!EG(exception) && call->func) {
+	if (!EG(exception) && call->func && !call->is_partial_call) {
 		if (should_throw) {
 			zend_internal_call_arginfo_violation(call->func);
 		}
@@ -9145,6 +9149,29 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_SEND_VAL_EX, op->op2.num <= MAX_ARG_FLAG_NUM 
 	arg = ZEND_CALL_VAR(EX(call), opline->result.var);
 	ZVAL_COPY_VALUE(arg, value);
 	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(195, ZEND_SEND_PLACEHOLDER, UNUSED, NUM)
+{
+	USE_OPLINE
+	zval *arg;
+
+	arg = ZEND_CALL_VAR(EX(call), opline->result.var);
+	ZVAL_UNDEF(arg);
+
+	EX(call)->is_partial_call = 1;
+
+	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(196, ZEND_BUILD_PARTIAL, UNUSED, UNUSED)
+{
+	zval *return_value;
+
+	return_value = EX(return_value);
+	zend_partial_closure_handler(execute_data, return_value);
+
+	ZEND_VM_DISPATCH_TO_HELPER(zend_leave_helper);
 }
 
 ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_info & (MAY_BE_UNDEF|MAY_BE_ANY|MAY_BE_REF)) == MAY_BE_ARRAY, ZEND_FE_FETCH_R_SIMPLE, VAR, CV, JMP_ADDR, SPEC(RETVAL))

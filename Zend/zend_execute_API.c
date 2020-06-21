@@ -1656,3 +1656,125 @@ ZEND_API int zend_set_local_var_str(const char *name, size_t len, zval *value, i
 	return FAILURE;
 }
 /* }}} */
+
+// FIXME: Use string concat
+static zend_string *create_outer_arg_string(uint32_t i)
+{
+	char arg_string_c[100];
+	sprintf(arg_string_c, "arg_%d", i);
+	return zend_string_init(arg_string_c, strlen(arg_string_c), 0);
+}
+
+ZEND_NAMED_FUNCTION(zend_partial_closure_handler)
+{
+	zval *args;
+	uint32_t argc;
+
+	ZEND_PARSE_PARAMETERS_START(0, -1)
+		Z_PARAM_VARIADIC('*', args, argc)
+	ZEND_PARSE_PARAMETERS_END();
+
+	zend_op_array *op_array = (zend_op_array *)execute_data->func;
+
+	zend_string *original_fbc_string = zend_string_init("original_fbc", sizeof("original_fbc") - 1, 0);
+	zend_function *fbc = Z_PTR_P(zend_hash_find(op_array->static_variables, original_fbc_string));
+	zend_string_release(original_fbc_string);
+
+	zend_string *outer_argc_string = zend_string_init("argc", sizeof("argc") - 1, 0);
+	uint32_t outer_argc = Z_LVAL_P(zend_hash_find(op_array->static_variables, outer_argc_string));
+	zend_string_release(outer_argc_string);
+
+	zend_execute_data *call = zend_vm_stack_push_call_frame(ZEND_CALL_TOP_FUNCTION | ZEND_CALL_DYNAMIC, fbc, outer_argc, NULL);
+
+	uint32_t inner_i = 0;
+	for (uint32_t i = 0; i < outer_argc; ++i) {
+		zend_string *outer_arg_string = create_outer_arg_string(i);
+		zval *outer_arg = zend_hash_find(op_array->static_variables, outer_arg_string);
+		zend_string_release(outer_arg_string);
+
+		if (Z_TYPE_P(outer_arg) != IS_UNDEF) {
+			zval *param = ZEND_CALL_ARG(call, i+1);
+			ZVAL_COPY(param, outer_arg);
+		} else {
+			zval *inner_arg = &args[inner_i];
+			zval *param = ZEND_CALL_ARG(call, i+1);
+			ZVAL_COPY(param, inner_arg);
+			++inner_i;
+		}
+	}
+
+	fbc->internal_function.handler(call, return_value);
+}
+
+// ZEND_API ZEND_NAMED_FUNCTION(zend_make_partial_closure)
+void ZEND_FASTCALL zend_make_partial_closure(zend_function *fbc, INTERNAL_FUNCTION_PARAMETERS)
+{
+	size_t mname_len;
+	zend_op_array *func;
+	/* We use non-NULL value to avoid useless run_time_cache allocation.
+	 * The low bit must be zero, to not be interpreted as a MAP_PTR offset.
+	 */
+	static const void *dummy = (void*)(intptr_t)2;
+
+	ZEND_ASSERT(fbc);
+
+	if (EXPECTED(EG(trampoline).common.function_name == NULL)) {
+		func = &EG(trampoline).op_array;
+	} else {
+		func = ecalloc(1, sizeof(zend_op_array));
+	}
+
+	func->type = ZEND_USER_FUNCTION;
+	func->arg_flags[0] = 0;
+	func->arg_flags[1] = 0;
+	func->arg_flags[2] = 0;
+	func->fn_flags = ZEND_ACC_CALL_VIA_TRAMPOLINE | ZEND_ACC_PUBLIC;
+	// if (is_static) {
+	// 	func->fn_flags |= ZEND_ACC_STATIC;
+	// }
+	func->opcodes = &EG(build_partial_op);
+	ZEND_MAP_PTR_INIT(func->run_time_cache, (void***)&dummy);
+	func->scope = fbc->common.scope;
+	/* reserve space for arguments, local and temporary variables */
+	func->T = (fbc->type == ZEND_USER_FUNCTION)? MAX(fbc->op_array.last_var + fbc->op_array.T, 2) : 2;
+	func->filename = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.filename : ZSTR_EMPTY_ALLOC();
+	func->line_start = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.line_start : 0;
+	func->line_end = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.line_end : 0;
+	func->function_name = zend_string_copy(fbc->internal_function.function_name);
+	func->prototype = NULL;
+	func->num_args = 0;
+	func->required_num_args = 0;
+	func->arg_info = 0;
+	func->static_variables = zend_new_array(8);
+	ZEND_MAP_PTR_INIT(func->static_variables_ptr, &func->static_variables);
+
+	zend_create_closure(return_value, (zend_function *)func, NULL, NULL, NULL);
+
+	// Bind original function
+	zval original_fbc_zval;
+	ZVAL_PTR(&original_fbc_zval, fbc);
+	zend_string *original_fbc_string = zend_string_init("original_fbc", sizeof("original_fbc") - 1, 0);
+	zend_closure_bind_var(return_value, original_fbc_string, &original_fbc_zval);
+	zend_string_release(original_fbc_string);
+
+	zval *args;
+	uint32_t argc;
+
+	ZEND_PARSE_PARAMETERS_START(0, -1)
+		Z_PARAM_VARIADIC('*', args, argc)
+	ZEND_PARSE_PARAMETERS_END();
+
+	// Bind argc
+	zval argc_zval;
+	ZVAL_LONG(&argc_zval, argc);
+	zend_string *argc_string = zend_string_init("argc", sizeof("argc") - 1, 0);
+	zend_closure_bind_var(return_value, argc_string, &argc_zval);
+	zend_string_release(argc_string);
+
+	for (uint32_t i = 0; i < argc; ++i) {
+		zval *arg = &args[i];
+		zend_string *outer_arg_string = create_outer_arg_string(i);
+		zend_closure_bind_var(return_value, outer_arg_string, arg);
+		zend_string_release(outer_arg_string);
+	}
+}

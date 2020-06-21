@@ -555,6 +555,13 @@ static void zend_init_call_trampoline_op(void) /* {{{ */
 }
 /* }}} */
 
+static void zend_init_build_partial_op(void)
+{
+	memset(&EG(build_partial_op), 0, sizeof(EG(build_partial_op)));
+	EG(build_partial_op).opcode = ZEND_BUILD_PARTIAL;
+	ZEND_VM_SET_OPCODE_HANDLER(&EG(build_partial_op));
+}
+
 static void auto_global_dtor(zval *zv) /* {{{ */
 {
 	free(Z_PTR_P(zv));
@@ -693,6 +700,7 @@ static void executor_globals_ctor(zend_executor_globals *executor_globals) /* {{
 	zend_init_rsrc_plist();
 	zend_init_exception_op();
 	zend_init_call_trampoline_op();
+	zend_init_build_partial_op();
 	memset(&executor_globals->trampoline, 0, sizeof(zend_op_array));
 	executor_globals->lambda_count = 0;
 	ZVAL_UNDEF(&executor_globals->user_error_handler);
@@ -930,6 +938,7 @@ int zend_startup(zend_utility_functions *utility_functions) /* {{{ */
 	zend_init_rsrc_plist();
 	zend_init_exception_op();
 	zend_init_call_trampoline_op();
+	zend_init_build_partial_op();
 #endif
 
 	zend_ini_startup();
