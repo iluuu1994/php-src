@@ -1016,6 +1016,14 @@ static int zend_scan_escape_string(zval *zendlval, char *str, int len, char quot
 				case '$':
 					*t++ = *s;
 					break;
+				case '#':
+					if (*(s+1) == '{') {
+						*t++ = *s;
+					} else {
+						*t++ = '\\';
+						*t++ = *s;
+					}
+					break;
 				case 'x':
 				case 'X':
 					if (ZEND_IS_HEX(*(s+1))) {
@@ -1904,6 +1912,12 @@ NEWLINE ("\r"|"\n"|"\r\n")
 	RETURN_TOKEN(T_DOLLAR_OPEN_CURLY_BRACES);
 }
 
+<ST_DOUBLE_QUOTES,ST_BACKQUOTE,ST_HEREDOC>"#{" {
+	yy_push_state(ST_IN_SCRIPTING);
+	enter_nesting('{');
+	RETURN_TOKEN(T_HASH_OPEN_CURLY_BRACES);
+}
+
 <ST_IN_SCRIPTING>"}" {
 	RESET_DOC_COMMENT();
 	if (!zend_stack_is_empty(&SCNG(state_stack))) {
@@ -2514,6 +2528,11 @@ skip_escape_conversion:
 					break;
 				}
 				continue;
+			case '#':
+				if (*YYCURSOR == '{') {
+					break;
+				}
+				continue;
 			case '\\':
 				if (YYCURSOR < YYLIMIT) {
 					YYCURSOR++;
@@ -2751,6 +2770,11 @@ skip_escape_conversion:
 					break;
 				}
 				continue;
+			case '#':
+				if (*YYCURSOR == '{') {
+					break;
+				}
+				continue;
 			case '\\':
 				if (YYCURSOR < YYLIMIT) {
 					YYCURSOR++;
@@ -2795,6 +2819,11 @@ double_quotes_scan_done:
 				continue;
 			case '{':
 				if (*YYCURSOR == '$') {
+					break;
+				}
+				continue;
+			case '#':
+				if (*YYCURSOR == '{') {
 					break;
 				}
 				continue;
@@ -2901,6 +2930,11 @@ double_quotes_scan_done:
 				continue;
 			case '{':
 				if (*YYCURSOR == '$') {
+					break;
+				}
+				continue;
+			case '#':
+				if (*YYCURSOR == '{') {
 					break;
 				}
 				continue;
