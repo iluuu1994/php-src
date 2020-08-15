@@ -2536,6 +2536,14 @@ skip_escape_conversion:
 			case '\\':
 				if (YYCURSOR < YYLIMIT) {
 					YYCURSOR++;
+
+					if (
+						YYCURSOR < YYLIMIT
+						&& *(YYCURSOR - 1) == '#'
+						&& *YYCURSOR == '{'
+					) {
+						YYCURSOR += 2;
+					}
 				}
 				/* fall through */
 			default:
@@ -2778,6 +2786,14 @@ skip_escape_conversion:
 			case '\\':
 				if (YYCURSOR < YYLIMIT) {
 					YYCURSOR++;
+
+					if (
+						YYCURSOR < YYLIMIT
+						&& *(YYCURSOR - 1) == '#'
+						&& *YYCURSOR == '{'
+					) {
+						YYCURSOR += 2;
+					}
 				}
 				/* fall through */
 			default:
@@ -2830,6 +2846,14 @@ double_quotes_scan_done:
 			case '\\':
 				if (YYCURSOR < YYLIMIT) {
 					YYCURSOR++;
+
+					if (
+						YYCURSOR < YYLIMIT
+						&& *(YYCURSOR - 1) == '#'
+						&& *YYCURSOR == '{'
+					) {
+						YYCURSOR += 2;
+					}
 				}
 				/* fall through */
 			default:
@@ -2941,6 +2965,14 @@ double_quotes_scan_done:
 			case '\\':
 				if (YYCURSOR < YYLIMIT && *YYCURSOR != '\n' && *YYCURSOR != '\r') {
 					YYCURSOR++;
+
+					if (
+						YYCURSOR < YYLIMIT
+						&& *(YYCURSOR - 1) == '#'
+						&& *YYCURSOR == '{'
+					) {
+						YYCURSOR += 2;
+					}
 				}
 				/* fall through */
 			default:
