@@ -2252,6 +2252,12 @@ ZEND_API void zend_check_magic_method_implementation(const zend_class_entry *ce,
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);
+	} else if (zend_string_equals_literal(lcname, ZEND_ISIDENTICAL_FUNC_NAME)) {
+		zend_check_magic_method_args(2, ce, fptr, error_type);
+		zend_check_magic_method_static(ce, fptr, error_type);
+		zend_check_magic_method_public(ce, fptr, error_type);
+		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_OBJECT);
+		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_BOOL);
 	}
 }
 /* }}} */
@@ -2291,6 +2297,8 @@ ZEND_API void zend_add_magic_method(zend_class_entry *ce, zend_function *fptr, z
 		ce->__serialize = fptr;
 	} else if (zend_string_equals_literal(lcname, "__unserialize")) {
 		ce->__unserialize = fptr;
+	} else if (zend_string_equals_literal(lcname, ZEND_ISIDENTICAL_FUNC_NAME)) {
+		ce->__isidentical = fptr;
 	}
 }
 

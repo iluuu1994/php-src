@@ -2194,6 +2194,47 @@ static int hash_zval_identical_function(zval *z1, zval *z2) /* {{{ */
 }
 /* }}} */
 
+static void zend_call_isidentical_handler(zval *result, zval *op1, zval *op2)
+{
+	ZEND_ASSERT(Z_OBJ_P(op1));
+	ZEND_ASSERT(Z_OBJ_P(op2));
+
+	zend_class_entry *ce = Z_OBJCE_P(op1);
+	if (ce->__isidentical == NULL) {
+		ZVAL_BOOL(result, Z_OBJ_P(op1) == Z_OBJ_P(op2));
+		return;
+	}
+
+	zend_object *zobj = Z_OBJ_P(op1);
+	zend_class_entry *orig_fake_scope = EG(fake_scope);
+
+	EG(fake_scope) = NULL;
+
+	zval params[2];
+	params[0] = *op1;
+	params[1] = *op2;
+
+	zend_fcall_info fci;
+	fci.param_count = 2;
+	fci.params = params;
+	fci.size = sizeof(fci);
+	fci.retval = result;
+	fci.object = zobj;
+	fci.named_params = NULL;
+	ZVAL_STRING(&fci.function_name, ZEND_ISIDENTICAL_FUNC_NAME);
+
+	zend_fcall_info_cache fcic;
+	fcic.function_handler = ce->__isidentical;
+	fcic.called_scope = ce;
+	fcic.object = zobj;
+	fcic.function_handler->type = ZEND_USER_FUNCTION;
+
+	zend_call_function(&fci, &fcic);
+	EG(fake_scope) = orig_fake_scope;
+
+	zval_ptr_dtor(&fci.function_name);
+}
+
 ZEND_API zend_bool ZEND_FASTCALL zend_is_identical(zval *op1, zval *op2) /* {{{ */
 {
 	if (Z_TYPE_P(op1) != Z_TYPE_P(op2)) {
@@ -2216,7 +2257,13 @@ ZEND_API zend_bool ZEND_FASTCALL zend_is_identical(zval *op1, zval *op2) /* {{{ 
 			return (Z_ARRVAL_P(op1) == Z_ARRVAL_P(op2) ||
 				zend_hash_compare(Z_ARRVAL_P(op1), Z_ARRVAL_P(op2), (compare_func_t) hash_zval_identical_function, 1) == 0);
 		case IS_OBJECT:
-			return (Z_OBJ_P(op1) == Z_OBJ_P(op2));
+			if (Z_OBJ_P(op1) == Z_OBJ_P(op2)) {
+				return 1;
+			}
+
+			zval result;
+			zend_call_isidentical_handler(&result, op1, op2);
+			return Z_TYPE(result) == IS_TRUE;
 		default:
 			return 0;
 	}

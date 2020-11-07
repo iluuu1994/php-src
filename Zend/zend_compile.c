@@ -1853,6 +1853,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, zend_bool nullify
 		ce->trait_precedences = NULL;
 		ce->serialize = NULL;
 		ce->unserialize = NULL;
+		ce->__isidentical = NULL;
 		if (ce->type == ZEND_INTERNAL_CLASS) {
 			ce->info.internal.module = NULL;
 			ce->info.internal.builtin_functions = NULL;

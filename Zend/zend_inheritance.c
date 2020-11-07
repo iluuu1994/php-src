@@ -187,6 +187,9 @@ static void do_inherit_parent_constructor(zend_class_entry *ce) /* {{{ */
 	if (EXPECTED(!ce->__debugInfo)) {
 		ce->__debugInfo = parent->__debugInfo;
 	}
+	if (EXPECTED(!ce->__isidentical)) {
+		ce->__isidentical = parent->__isidentical;
+	}
 
 	if (ce->constructor) {
 		if (parent->constructor && UNEXPECTED(parent->constructor->common.fn_flags & ZEND_ACC_FINAL)) {

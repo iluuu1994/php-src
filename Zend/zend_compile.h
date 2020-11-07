@@ -1069,6 +1069,7 @@ END_EXTERN_C()
 #define ZEND_TOSTRING_FUNC_NAME     "__tostring"
 #define ZEND_INVOKE_FUNC_NAME       "__invoke"
 #define ZEND_DEBUGINFO_FUNC_NAME    "__debuginfo"
+#define ZEND_ISIDENTICAL_FUNC_NAME  "__isidentical"
 
 /* The following constants may be combined in CG(compiler_options)
  * to change the default compiler behavior */
