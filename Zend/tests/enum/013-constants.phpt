@@ -1,5 +1,5 @@
 --TEST--
-Enum disallows constants
+Enum allow constants
 --FILE--
 <?php
 

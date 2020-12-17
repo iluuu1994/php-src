@@ -1,5 +1,5 @@
 --TEST--
-Enum type hints
+Enum types as parameters
 --FILE--
 <?php
 
