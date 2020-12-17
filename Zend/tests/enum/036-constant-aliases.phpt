@@ -1,5 +1,9 @@
 --TEST--
 Enum constants can alias cases
+--SKIPIF--
+<?php
+die("skip, not yet implemented");
+?>
 --FILE--
 <?php
 

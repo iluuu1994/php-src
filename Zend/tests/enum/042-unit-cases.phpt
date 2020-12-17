@@ -1,13 +1,17 @@
 --TEST--
 Unit enums can list cases
+--SKIPIF--
+<?php
+die("skip, not yet implemented");
+?>
 --FILE--
 <?php
 
 enum Suit {
-  case Hearts;
-  case Diamonds;
-  case Clubs;
-  case Spades;
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
 }
 
 var_dump(Suit::cases());

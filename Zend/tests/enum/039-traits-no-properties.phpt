@@ -1,24 +1,27 @@
 --TEST--
 Enum cannot have properties, even via traits
+--SKIPIF--
+<?php
+die("skip, not yet implemented");
+?>
 --FILE--
 <?php
 
 trait Rectangle {
-  protected string $shape = "Rectangle";
+    protected string $shape = "Rectangle";
 
-  public function shape(): string {
-    return $this->shape;
-  }
+    public function shape(): string {
+        return $this->shape;
+    }
 }
 
 enum Suit {
-  use Rectangle;
+    use Rectangle;
 
-  case Hearts;
-  case Diamonds;
-  case Clubs;
-  case Spades;
-
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
 }
 
 ?>

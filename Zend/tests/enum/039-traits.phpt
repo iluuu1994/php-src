@@ -4,19 +4,18 @@ Enum can use traits
 <?php
 
 trait Rectangle {
-  public function shape(): string {
-    return "Rectangle";
-  }
+    public function shape(): string {
+        return "Rectangle";
+    }
 }
 
 enum Suit {
-  use Rectangle;
+    use Rectangle;
 
-  case Hearts;
-  case Diamonds;
-  case Clubs;
-  case Spades;
-
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
 }
 
 print Suit::Hearts->shape() . PHP_EOL;

@@ -1,5 +1,9 @@
 --TEST--
 Enum allows constants
+--SKIPIF--
+<?php
+die("skip, not yet implemented");
+?>
 --FILE--
 <?php
 

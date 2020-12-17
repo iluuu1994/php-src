@@ -1,13 +1,17 @@
 --TEST--
 Scalar enums reject upcasting from invalid input
+--SKIPIF--
+<?php
+die("skip, not yet implemented");
+?>
 --FILE--
 <?php
 
 enum Suit: string {
-  case Hearts = 'H';
-  case Diamonds = 'D';
-  case Clubs = 'C';
-  case Spades = 'S';
+    case Hearts = 'H';
+    case Diamonds = 'D';
+    case Clubs = 'C';
+    case Spades = 'S';
 }
 
 var_dump(Suit::from('A'));
