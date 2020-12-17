@@ -1,5 +1,5 @@
 --TEST--
-Enum allow constants
+Enum allows constants
 --FILE--
 <?php
 
@@ -7,6 +7,8 @@ enum Foo {
     const BAR = 'Bar';
 }
 
+print Foo::BAR;
+
 ?>
 --EXPECTF--
-Fatal error: Enums cannot have constants in %s on line %d
+Bar
