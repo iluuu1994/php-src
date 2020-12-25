@@ -285,6 +285,29 @@ static HashTable *zend_persist_attributes(HashTable *attributes)
 	return ptr;
 }
 
+static HashTable *zend_persist_enum_scalar_table(HashTable *enum_scalar_table)
+{
+	HashTable *ptr = zend_shared_alloc_get_xlat_entry(enum_scalar_table);
+	Bucket *p;
+
+	if (!ptr) {
+		zend_hash_persist(enum_scalar_table);
+
+		ZEND_HASH_FOREACH_BUCKET(enum_scalar_table, p) {
+			if (p->key != NULL) {
+				zend_accel_store_interned_string(p->key);
+			}
+			zend_persist_zval(&p->val);
+		} ZEND_HASH_FOREACH_END();
+
+		ptr = zend_shared_memdup_put_free(enum_scalar_table, sizeof(HashTable));
+		GC_SET_REFCOUNT(ptr, 2);
+		GC_TYPE_INFO(ptr) = GC_ARRAY | ((IS_ARRAY_IMMUTABLE|GC_NOT_COLLECTABLE) << GC_FLAGS_SHIFT);
+	}
+
+	return ptr;
+}
+
 static void zend_persist_type(zend_type *type, bool use_arena) {
 	if (ZEND_TYPE_HAS_LIST(*type)) {
 		zend_type_list *list = ZEND_TYPE_LIST(*type);
@@ -976,6 +999,10 @@ static void zend_persist_class_entry(zval *zv)
 
 		if (ce->iterator_funcs_ptr) {
 			ce->iterator_funcs_ptr = zend_shared_memdup(ce->iterator_funcs_ptr, sizeof(zend_class_iterator_funcs));
+		}
+
+		if (ce->enum_scalar_table) {
+			ce->enum_scalar_table = zend_persist_enum_scalar_table(ce->enum_scalar_table);
 		}
 	}
 }

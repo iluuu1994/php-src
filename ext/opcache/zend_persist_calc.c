@@ -527,6 +527,22 @@ static void zend_persist_class_entry_calc(zval *zv)
 		if (ce->iterator_funcs_ptr) {
 			ADD_SIZE(sizeof(zend_class_iterator_funcs));
 		}
+
+		if (ce->enum_scalar_table) {
+			if (!zend_shared_alloc_get_xlat_entry(ce->enum_scalar_table)) {
+				Bucket *p;
+
+				zend_shared_alloc_register_xlat_entry(ce->enum_scalar_table, ce->enum_scalar_table);
+				ADD_SIZE(sizeof(HashTable));
+				zend_hash_persist_calc(ce->enum_scalar_table);
+				ZEND_HASH_FOREACH_BUCKET(ce->enum_scalar_table, p) {
+					if (p->key != NULL) {
+						ADD_INTERNED_STRING(p->key);
+					}
+					zend_persist_zval_calc(&p->val);
+				} ZEND_HASH_FOREACH_END();
+			}
+		}
 	}
 }
 

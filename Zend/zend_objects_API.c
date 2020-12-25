@@ -114,7 +114,9 @@ ZEND_API void ZEND_FASTCALL zend_objects_store_free_object_storage(zend_objects_
 				if (!(OBJ_FLAGS(obj) & IS_OBJ_FREE_CALLED)) {
 					GC_ADD_FLAGS(obj, IS_OBJ_FREE_CALLED);
 					// FIXME: This causes constant objects to leak
-					//GC_ADDREF(obj);
+					if (!(obj->ce->ce_flags & ZEND_ACC_ENUM)) {
+						GC_ADDREF(obj);
+					}
 					obj->handlers->free_obj(obj);
 				}
 			}
