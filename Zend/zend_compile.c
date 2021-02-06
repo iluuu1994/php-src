@@ -7626,11 +7626,11 @@ static void zend_compile_enum_case(zend_ast *ast)
 
 	zval class_name_zval;
 	ZVAL_STR_COPY(&class_name_zval, enum_class_name);
-	zend_ast *class_name_ast = zend_ast_create_zval_ex(&class_name_zval, ZEND_NAME_NOT_FQ);
+	zend_ast *class_name_ast = zend_ast_create_zval(&class_name_zval);
 
 	zval case_name_zval;
 	ZVAL_STR_COPY(&case_name_zval, enum_case_name);
-	zend_ast *case_name_ast = zend_ast_create_zval_ex(&case_name_zval, ZEND_NAME_NOT_FQ);
+	zend_ast *case_name_ast = zend_ast_create_zval(&case_name_zval);
 
 	zend_ast *case_value_zval_ast = NULL;
 	zend_ast *case_value_ast = ast->child[1];
