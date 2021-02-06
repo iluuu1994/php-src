@@ -3,7 +3,7 @@ Enum case attributes
 --FILE--
 <?php
 
-#[Attribute]
+#[Attribute(Attribute::TARGET_CLASS_CONSTANT)]
 class EnumCaseAttribute {
     public function __construct(
         public string $value,
