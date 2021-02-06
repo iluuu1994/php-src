@@ -7,14 +7,31 @@ enum Foo {
     case Bar;
 }
 
-$foo = Foo::Bar;
+enum IntFoo: int {
+    case Bar = 0;
+}
 
+$foo = Foo::Bar;
 try {
     unset($foo->case);
 } catch (Error $e) {
     echo $e->getMessage() . "\n";
 }
 
+$intFoo = IntFoo::Bar;
+try {
+    unset($intFoo->case);
+} catch (Error $e) {
+    echo $e->getMessage() . "\n";
+}
+try {
+    unset($intFoo->value);
+} catch (Error $e) {
+    echo $e->getMessage() . "\n";
+}
+
 ?>
 --EXPECT--
+Enum properties are immutable
+Enum properties are immutable
 Enum properties are immutable
