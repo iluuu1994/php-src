@@ -740,10 +740,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 				zend_error_noreturn(E_COMPILE_ERROR, "Cannot use [] for reading");
 			}
 
-			zend_result evaluate_result;
-
-			evaluate_result = zend_ast_evaluate(&op1, ast->child[0], scope);
-			if (UNEXPECTED(evaluate_result) != SUCCESS) {
+			if (UNEXPECTED(zend_ast_evaluate(&op1, ast->child[0], scope) != SUCCESS)) {
 				ret = FAILURE;
 				break;
 			}
@@ -756,8 +753,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 				}
 			}
 
-			evaluate_result = zend_ast_evaluate(&op2, ast->child[1], scope);
-			if (UNEXPECTED(evaluate_result != SUCCESS)) {
+			if (UNEXPECTED(zend_ast_evaluate(&op2, ast->child[1], scope) != SUCCESS)) {
 				zval_ptr_dtor_nogc(&op1);
 				ret = FAILURE;
 				break;
