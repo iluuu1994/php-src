@@ -747,7 +747,10 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 
 			// DIM on objects is disallowed because it allows executing arbitrary expressions
 			if (Z_TYPE(op1) == IS_OBJECT) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Cannot use [] on objects in constant expression");
+				zval_ptr_dtor_nogc(&op1);
+				zend_throw_error(NULL, "Cannot use [] on objects in constant expression");
+				ret = FAILURE;
+				break;
 			}
 
 			if (UNEXPECTED(zend_ast_evaluate(&op2, ast->child[1], scope) != SUCCESS)) {
