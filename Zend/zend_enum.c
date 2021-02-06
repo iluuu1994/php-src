@@ -296,19 +296,18 @@ void zend_enum_register_funcs(zend_class_entry *ce)
 		from_function->arg_info = (zend_internal_arg_info *) (arginfo_class_ScalarEnum_from + 1);
 		zend_hash_add_ptr(&ce->function_table, from_func_name, from_function);
 
-		zend_string *try_from_func_name = zend_string_init("tryfrom", strlen("tryfrom"), 1);
 		zend_internal_function *try_from_function = malloc(sizeof(zend_internal_function));
 		memset(try_from_function, 0, sizeof(zend_internal_function));
 		try_from_function->type = ZEND_INTERNAL_FUNCTION;
 		try_from_function->module = EG(current_module);
 		try_from_function->handler = zend_enum_try_from_func;
-		try_from_function->function_name = try_from_func_name;
+		try_from_function->function_name = zend_string_init("tryFrom", strlen("tryFrom"), 1);
 		try_from_function->scope = ce;
 		try_from_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC;
 		try_from_function->num_args = 1;
 		try_from_function->required_num_args = 1;
 		try_from_function->arg_info = (zend_internal_arg_info *) (arginfo_class_ScalarEnum_tryFrom + 1);
-		zend_hash_add_ptr(&ce->function_table, try_from_func_name, try_from_function);
+		zend_hash_add_ptr(&ce->function_table, zend_string_init("tryfrom", strlen("tryfrom"), 1), try_from_function);
 	}
 }
 
