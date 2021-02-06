@@ -1245,7 +1245,7 @@ object ":" uiv ":" ["]	{
 		return 0;
 	}
 
-	enum_name = zend_string_init_fast(str, -(colon_pos - len) - 1);
+	enum_name = zend_string_init_fast(str, colon_pos);
 	case_name = zend_string_init_fast(&str[colon_pos + 1], len - colon_pos - 1);
 
 	if (!zend_is_valid_class_name(enum_name)) {
