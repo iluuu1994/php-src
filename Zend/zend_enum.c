@@ -87,7 +87,7 @@ static void zend_verify_enum_magic_methods(zend_class_entry *ce)
 	ZEND_ENUM_DISALLOW_MAGIC_METHOD(__serialize, "__serialize");
 	ZEND_ENUM_DISALLOW_MAGIC_METHOD(__unserialize, "__unserialize");
 
-	char* forbidden_methods[] = {
+	const char* forbidden_methods[] = {
 		"__sleep",
 		"__wakeup",
 		"__set_state",
@@ -95,7 +95,7 @@ static void zend_verify_enum_magic_methods(zend_class_entry *ce)
 
 	uint32_t forbidden_methods_length = sizeof(forbidden_methods) / sizeof(forbidden_methods[0]);
 	for (uint32_t i = 0; i < forbidden_methods_length; ++i) {
-		char *forbidden_method = forbidden_methods[i];
+		const char *forbidden_method = forbidden_methods[i];
 
 		if (zend_hash_str_find_ptr(&ce->function_table, forbidden_method, strlen(forbidden_method))) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Enum may not include magic method %s", forbidden_method);
