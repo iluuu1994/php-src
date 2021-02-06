@@ -13,14 +13,14 @@ enum IntFoo: int {
 
 $bar = Foo::Bar;
 try {
-    $bar->case = 'Baz';
+    $bar->name = 'Baz';
 } catch (Error $e) {
     echo $e->getMessage() . "\n";
 }
 
 $intBar = Foo::Bar;
 try {
-    $intBar->case = 'Baz';
+    $intBar->name = 'Baz';
 } catch (Error $e) {
     echo $e->getMessage() . "\n";
 }
