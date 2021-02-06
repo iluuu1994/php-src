@@ -33,7 +33,7 @@
 
 static zend_object_handlers enum_handlers;
 
-zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zval *case_name_zv, zval *scalar_zv)
+zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zend_string *case_name, zval *scalar_zv)
 {
 	// Temporarily remove the ZEND_ACC_ENUM flag to allow instantiation
 	ce->ce_flags &= ~ZEND_ACC_ENUM;

@@ -782,7 +782,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 				: NULL;
 
 			zend_class_entry *ce = zend_lookup_class(class_name);
-			zend_enum_new(result, ce, case_name_zv, case_value_zv);
+			zend_enum_new(result, ce, Z_STR_P(case_name_zv), case_value_zv);
 
 			break;
 		}

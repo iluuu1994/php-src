@@ -24,7 +24,7 @@
 
 void zend_register_enum_ce(void);
 void zend_enum_add_interfaces(zend_class_entry *ce);
-zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zval *case_name_zv, zval *scalar_zv);
+zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zend_string *case_name, zval *scalar_zv);
 void zend_verify_enum(zend_class_entry *ce);
 void zend_enum_register_funcs(zend_class_entry *ce);
 void zend_enum_register_props(zend_class_entry *ce);
