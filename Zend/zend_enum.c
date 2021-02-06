@@ -111,7 +111,11 @@ void zend_verify_enum(zend_class_entry *ce)
 
 static zval *zend_enum_read_property(zend_object *zobj, zend_string *name, int type, void **cache_slot, zval *rv) /* {{{ */
 {
-	if (type == BP_VAR_W) {
+	if (
+		type == BP_VAR_W
+		|| type == BP_VAR_RW
+		|| type == BP_VAR_UNSET
+	) {
 		zend_throw_error(NULL, "Cannot acquire reference to property %s::$%s", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 		return &EG(uninitialized_zval);
 	}
