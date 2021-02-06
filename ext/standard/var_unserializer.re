@@ -1277,7 +1277,7 @@ object ":" uiv ":" ["]	{
 	YYCURSOR += 2;
 	*p = YYCURSOR;
 
-	zval *zv = zend_hash_find_ex(&ce->constants_table, case_name, 0);
+	zval *zv = zend_hash_find(&ce->constants_table, case_name);
 	if (!zv) {
 		php_error_docref(NULL, E_WARNING, "Undefined constant %s::%s", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
 		zend_string_release_ex(enum_name, 0);
