@@ -7098,11 +7098,11 @@ void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t flags, z
 	uint32_t i, children = list->children;
 
 	if (ce->ce_flags & ZEND_ACC_INTERFACE) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Interfaces may not include member variables");
+		zend_error_noreturn(E_COMPILE_ERROR, "Interfaces may not include properties");
 	}
 
 	if (ce->ce_flags & ZEND_ACC_ENUM) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Enums may not include member variables");
+		zend_error_noreturn(E_COMPILE_ERROR, "Enums may not include properties");
 	}
 
 	if (flags & ZEND_ACC_ABSTRACT) {
