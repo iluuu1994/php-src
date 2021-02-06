@@ -273,7 +273,7 @@ static int zend_implement_unit_enum(zend_class_entry *interface, zend_class_entr
 		return SUCCESS;
 	}
 
-	zend_error_noreturn(E_CORE_ERROR, "Non-enum class %s cannot implement interface %s",
+	zend_error_noreturn(E_ERROR, "Non-enum class %s cannot implement interface %s",
 		ZSTR_VAL(class_type->name),
 		ZSTR_VAL(interface->name));
 
@@ -283,14 +283,14 @@ static int zend_implement_unit_enum(zend_class_entry *interface, zend_class_entr
 static int zend_implement_scalar_enum(zend_class_entry *interface, zend_class_entry *class_type)
 {
 	if (!(class_type->ce_flags & ZEND_ACC_ENUM)) {
-		zend_error_noreturn(E_CORE_ERROR, "Non-enum class %s cannot implement interface %s",
+		zend_error_noreturn(E_ERROR, "Non-enum class %s cannot implement interface %s",
 			ZSTR_VAL(class_type->name),
 			ZSTR_VAL(interface->name));
 		return FAILURE;
 	}
 
 	if (class_type->enum_scalar_type == IS_UNDEF) {
-		zend_error_noreturn(E_CORE_ERROR, "Non-scalar enum %s cannot implement interface %s",
+		zend_error_noreturn(E_ERROR, "Non-scalar enum %s cannot implement interface %s",
 			ZSTR_VAL(class_type->name),
 			ZSTR_VAL(interface->name));
 		return FAILURE;
