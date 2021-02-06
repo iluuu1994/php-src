@@ -1551,7 +1551,7 @@ NEWLINE ("\r"|"\n"|"\r\n")
 }
 
 <ST_IN_SCRIPTING>"enum" {
-	RETURN_TOKEN(T_ENUM);
+	RETURN_TOKEN_WITH_IDENT(T_ENUM);
 }
 
 <ST_IN_SCRIPTING>"extends" {
