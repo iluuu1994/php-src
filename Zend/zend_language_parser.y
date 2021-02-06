@@ -603,7 +603,7 @@ enum_declaration_statement:
 
 enum_scalar_type:
 		%empty	{ $$ = NULL; }
-	|	':' type { $$ = $2; }
+	|	':' type_expr { $$ = $2; }
 ;
 
 enum_case:
