@@ -7634,6 +7634,11 @@ static void zend_compile_enum_case(zend_ast *ast)
 
 	zend_ast *case_value_zval_ast = NULL;
 	zend_ast *case_value_ast = ast->child[1];
+	if (enum_class->enum_scalar_type != IS_UNDEF && case_value_ast == NULL) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Case %s of scalar enum %s must have a value",
+			ZSTR_VAL(enum_case_name),
+			ZSTR_VAL(enum_class_name));
+	}
 	if (case_value_ast != NULL) {
 		if (enum_class->enum_scalar_type == IS_UNDEF) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Case %s of non-scalar enum %s must not have a value",
