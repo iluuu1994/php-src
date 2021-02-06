@@ -23,4 +23,4 @@ var_dump(X::FOO_BAR);
 
 ?>
 --EXPECTF--
-Fatal error: Cannot use [] on enums in constant expression in %s on line %d
+Fatal error: Cannot use [] on objects in constant expression in %s on line %d

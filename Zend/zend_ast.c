@@ -745,12 +745,9 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 				break;
 			}
 
-			// DIM on enums is disallowed because it allows executing arbitrary expressions
+			// DIM on objects is disallowed because it allows executing arbitrary expressions
 			if (Z_TYPE(op1) == IS_OBJECT) {
-				zend_class_entry *ce = Z_OBJCE(op1);
-				if (ce->ce_flags & ZEND_ACC_ENUM) {
-					zend_error_noreturn(E_COMPILE_ERROR, "Cannot use [] on enums in constant expression");
-				}
+				zend_error_noreturn(E_COMPILE_ERROR, "Cannot use [] on objects in constant expression");
 			}
 
 			if (UNEXPECTED(zend_ast_evaluate(&op2, ast->child[1], scope) != SUCCESS)) {
