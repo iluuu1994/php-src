@@ -1,5 +1,5 @@
 --TEST--
-String scalar enums with can list cases
+String scalar enums can list cases
 --FILE--
 <?php
 
