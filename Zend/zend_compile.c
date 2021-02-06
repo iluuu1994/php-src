@@ -7660,8 +7660,12 @@ static void zend_compile_enum_case(zend_ast *ast)
 
 		if (enum_class->enum_scalar_type == IS_LONG) {
 			zend_long long_key = Z_LVAL(case_value_zv);
-			if (zend_hash_index_find(enum_class->enum_scalar_table, long_key)) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Duplicate enum case value");
+			zval *existing_case_name = zend_hash_index_find(enum_class->enum_scalar_table, long_key);
+			if (existing_case_name) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Duplicate value in enum %s for cases %s and %s",
+					ZSTR_VAL(enum_class_name),
+					Z_STRVAL_P(existing_case_name),
+					ZSTR_VAL(enum_case_name));
 			}
 			zend_hash_index_add(enum_class->enum_scalar_table, long_key, &case_name_zval);
 		} else {

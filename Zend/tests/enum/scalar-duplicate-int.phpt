@@ -10,4 +10,4 @@ enum Foo: int {
 
 ?>
 --EXPECTF--
-Fatal error: Duplicate enum case value in %s on line %s
+Fatal error: Duplicate value in enum Foo for cases Bar and Baz in %s on line %s
