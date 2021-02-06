@@ -41,9 +41,9 @@ zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zval *case_name_z
 	ce->ce_flags |= ZEND_ACC_ENUM;
 
 	zend_object *zobj = Z_OBJ_P(result);
-	zobj->handlers->write_property(zobj, ZSTR_KNOWN(ZEND_STR_NAME), case_name_zv, NULL);
+	ZVAL_STR_COPY(OBJ_PROP_NUM(zobj, 0), case_name);
 	if (scalar_zv != NULL) {
-		zobj->handlers->write_property(zobj, ZSTR_KNOWN(ZEND_STR_VALUE), scalar_zv, NULL);
+		ZVAL_COPY(OBJ_PROP_NUM(zobj, 1), scalar_zv);
 	}
 
 	zobj->handlers = &enum_handlers;
