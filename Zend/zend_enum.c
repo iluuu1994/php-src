@@ -206,7 +206,7 @@ static ZEND_NAMED_FUNCTION(zend_enum_cases_func)
 	} ZEND_HASH_FOREACH_END();
 }
 
-static void zend_enum_from_base(INTERNAL_FUNCTION_PARAMETERS, zend_bool try)
+static void zend_enum_from_base(INTERNAL_FUNCTION_PARAMETERS, bool try)
 {
 	zend_class_entry *ce = execute_data->func->common.scope;
 	zend_string *string_key;
