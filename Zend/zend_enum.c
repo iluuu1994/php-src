@@ -197,22 +197,7 @@ static ZEND_NAMED_FUNCTION(zend_enum_cases_func)
 				return;
 			}
 		}
-		if (ce->enum_scalar_type == IS_UNDEF) {
-			zend_hash_next_index_insert(Z_ARRVAL_P(return_value), zv);
-		} else {
-			zend_object *zobj = Z_OBJ_P(zv);
-			zend_string *value_string = zend_string_init("value", strlen("value"), 0);
-			zval tmp;
-			zval *value_zv = zend_read_property_ex(ce, zobj, value_string, 0, &tmp);
-			zend_string_free(value_string);
-
-			if (ce->enum_scalar_type == IS_LONG) {
-				zend_hash_index_update(Z_ARRVAL_P(return_value), Z_LVAL_P(value_zv), zv);
-			} else {
-				ZEND_ASSERT(ce->enum_scalar_type == IS_STRING);
-				zend_symtable_update(Z_ARRVAL_P(return_value), Z_STR_P(value_zv), zv);
-			}
-		}
+		zend_hash_next_index_insert(Z_ARRVAL_P(return_value), zv);
 	} ZEND_HASH_FOREACH_END();
 }
 

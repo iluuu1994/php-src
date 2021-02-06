@@ -15,12 +15,12 @@ var_dump(Suit::cases());
 ?>
 --EXPECT--
 array(4) {
-  ["H"]=>
+  [0]=>
   enum(Suit::Hearts)
-  ["D"]=>
+  [1]=>
   enum(Suit::Diamonds)
-  ["C"]=>
+  [2]=>
   enum(Suit::Clubs)
-  ["S"]=>
+  [3]=>
   enum(Suit::Spades)
 }
