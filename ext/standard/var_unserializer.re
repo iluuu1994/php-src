@@ -1240,8 +1240,8 @@ object ":" uiv ":" ["]	{
 	}
 	size_t colon_pos = colon_ptr - str;
 
-	enum_name = zend_string_init_fast(str, colon_pos);
-	case_name = zend_string_init_fast(&str[colon_pos + 1], len - colon_pos - 1);
+	enum_name = zend_string_init(str, colon_pos, 0);
+	case_name = zend_string_init(&str[colon_pos + 1], len - colon_pos - 1, 0);
 
 	if (!zend_is_valid_class_name(enum_name)) {
 		zend_string_release_ex(enum_name, 0);
