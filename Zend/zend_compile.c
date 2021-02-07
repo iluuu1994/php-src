@@ -7397,11 +7397,12 @@ static void zend_compile_enum_scalar_type(zend_class_entry *ce, zend_ast *enum_s
 {
 	ZEND_ASSERT(ce->ce_flags & ZEND_ACC_ENUM);
 	zend_type type = zend_compile_typename(enum_scalar_type_ast, 0);
+	uint32_t type_mask = ZEND_TYPE_PURE_MASK(type);
 	if (
-		type.ptr != NULL
+		ZEND_TYPE_HAS_CLASS(type)
 		|| (
-			type.type_mask != MAY_BE_LONG
-			&& type.type_mask != MAY_BE_STRING
+			type_mask != MAY_BE_LONG
+			&& type_mask != MAY_BE_STRING
 		)
 	) {
 		zend_string *type_string = zend_type_to_string(type);
@@ -7409,10 +7410,10 @@ static void zend_compile_enum_scalar_type(zend_class_entry *ce, zend_ast *enum_s
 			"Enum scalar type must be int or string, %s given",
 			ZSTR_VAL(type_string));
 	}
-	if (type.type_mask == MAY_BE_LONG) {
+	if (type_mask == MAY_BE_LONG) {
 		ce->enum_scalar_type = IS_LONG;
 	} else {
-		ZEND_ASSERT(type.type_mask == MAY_BE_STRING);
+		ZEND_ASSERT(type_mask == MAY_BE_STRING);
 		ce->enum_scalar_type = IS_STRING;
 	}
 	zend_type_release(type, 0);
