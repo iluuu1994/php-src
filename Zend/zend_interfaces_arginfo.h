@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 89daa237359e35adcbd398a6b0481c19cfb14711 */
+ * Stub hash: e6f07ab1308a6b5dad925996022bdec3182553b1 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_IteratorAggregate_getIterator, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -55,11 +55,13 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_UnitEnum_cases, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_class_ScalarEnum_from, 0, 0, 1)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_ScalarEnum_from, 0, 1, IS_STATIC, 0)
 	ZEND_ARG_TYPE_MASK(0, value, MAY_BE_LONG|MAY_BE_STRING, NULL)
 ZEND_END_ARG_INFO()
 
-#define arginfo_class_ScalarEnum_tryFrom arginfo_class_ScalarEnum_from
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_ScalarEnum_tryFrom, 0, 1, IS_STATIC, 1)
+	ZEND_ARG_TYPE_MASK(0, value, MAY_BE_LONG|MAY_BE_STRING, NULL)
+ZEND_END_ARG_INFO()
 
 
 ZEND_METHOD(InternalIterator, __construct);

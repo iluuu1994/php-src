@@ -290,7 +290,7 @@ void zend_enum_register_funcs(zend_class_entry *ce)
 		from_function->handler = zend_enum_from_func;
 		from_function->function_name = from_func_name;
 		from_function->scope = ce;
-		from_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC;
+		from_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_HAS_RETURN_TYPE;
 		from_function->num_args = 1;
 		from_function->required_num_args = 1;
 		from_function->arg_info = (zend_internal_arg_info *) (arginfo_class_ScalarEnum_from + 1);
@@ -303,7 +303,7 @@ void zend_enum_register_funcs(zend_class_entry *ce)
 		try_from_function->handler = zend_enum_try_from_func;
 		try_from_function->function_name = zend_string_init("tryFrom", strlen("tryFrom"), 1);
 		try_from_function->scope = ce;
-		try_from_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC;
+		try_from_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_HAS_RETURN_TYPE;
 		try_from_function->num_args = 1;
 		try_from_function->required_num_args = 1;
 		try_from_function->arg_info = (zend_internal_arg_info *) (arginfo_class_ScalarEnum_tryFrom + 1);

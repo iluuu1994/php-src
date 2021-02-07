@@ -91,9 +91,7 @@ interface UnitEnum
 
 interface ScalarEnum extends UnitEnum
 {
-    /** @return static */
-    public static function from(int|string $value);
+    public static function from(int|string $value): static;
 
-    /** @return static|null */
-    public static function tryFrom(int|string $value);
+    public static function tryFrom(int|string $value): ?static;
 }
