@@ -1271,7 +1271,7 @@ object ":" uiv ":" ["]	{
 	}
 
 	zend_class_constant *c = Z_PTR_P(zv);
-	if (!(c->const_flags & ZEND_CLASS_CONST_IS_CASE)) {
+	if (!(c->value.u2.access_flags & ZEND_CLASS_CONST_IS_CASE)) {
 		php_error_docref(NULL, E_WARNING, "%s::%s is not an enum case", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
 		goto fail;
 	}

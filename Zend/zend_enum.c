@@ -191,7 +191,7 @@ static ZEND_NAMED_FUNCTION(zend_enum_cases_func)
 	array_init(return_value);
 
 	ZEND_HASH_FOREACH_PTR(&ce->constants_table, c) {
-		if (!(c->const_flags & ZEND_CLASS_CONST_IS_CASE)) {
+		if (!(c->value.u2.access_flags & ZEND_CLASS_CONST_IS_CASE)) {
 			continue;
 		}
 		zval *zv = &c->value;

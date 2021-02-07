@@ -4128,7 +4128,6 @@ ZEND_API zend_class_constant *zend_declare_class_constant_ex(zend_class_entry *c
 	Z_ACCESS_FLAGS(c->value) = access_type;
 	c->doc_comment = doc_comment;
 	c->attributes = NULL;
-	c->const_flags = 0;
 	c->ce = ce;
 	if (Z_TYPE_P(value) == IS_CONSTANT_AST) {
 		ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;

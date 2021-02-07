@@ -378,10 +378,9 @@ typedef struct _zend_property_info {
 	((offset - OBJ_PROP_TO_OFFSET(0)) / sizeof(zval))
 
 typedef struct _zend_class_constant {
-	zval value; /* access flags are stored in reserved: zval.u2.access_flags */
+	zval value; /* access flags and other constant flags are stored in reserved: zval.u2.access_flags */
 	zend_string *doc_comment;
 	HashTable *attributes;
-	zend_ast_attr const_flags;
 	zend_class_entry *ce;
 } zend_class_constant;
 
@@ -959,7 +958,8 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 
 #define ZEND_FCALL_MAY_HAVE_EXTRA_NAMED_PARAMS 1
 
-#define ZEND_CLASS_CONST_IS_CASE	1
+/* Must not conflict ZEND_ACC_ visibility flags or IS_CONSTANT_VISITED_MARK */
+#define ZEND_CLASS_CONST_IS_CASE	(1 << 6)
 
 /* The send mode and is_variadic flag are stored as part of zend_type */
 #define _ZEND_SEND_MODE_SHIFT _ZEND_TYPE_EXTRA_FLAGS_SHIFT

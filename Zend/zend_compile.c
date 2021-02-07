@@ -7688,7 +7688,7 @@ static void zend_compile_enum_case(zend_ast *ast)
 	zval value_zv;
 	zend_const_expr_to_zval(&value_zv, &const_enum_init_ast);
 	zend_class_constant *c = zend_declare_class_constant_ex(enum_class, enum_case_name, &value_zv, ZEND_ACC_PUBLIC, NULL);
-	c->const_flags = ZEND_CLASS_CONST_IS_CASE;
+	c->value.u2.access_flags |= ZEND_CLASS_CONST_IS_CASE;
 
 	zend_ast *attr_ast = ast->child[2];
 	if (attr_ast) {
