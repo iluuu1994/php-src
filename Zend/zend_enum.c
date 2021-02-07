@@ -277,7 +277,7 @@ void zend_enum_register_funcs(zend_class_entry *ce)
 	cases_function->handler = zend_enum_cases_func;
 	cases_function->function_name = cases_func_name;
 	cases_function->scope = ce;
-	cases_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC;
+	cases_function->fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_HAS_RETURN_TYPE;
 	cases_function->arg_info = (zend_internal_arg_info *) (arginfo_class_UnitEnum_cases + 1);
 	zend_hash_add_ptr(&ce->function_table, cases_func_name, cases_function);
 

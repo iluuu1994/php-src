@@ -85,8 +85,7 @@ final class InternalIterator implements Iterator
 
 interface UnitEnum
 {
-    /** @return array */
-    public static function cases();
+    public static function cases(): array;
 }
 
 

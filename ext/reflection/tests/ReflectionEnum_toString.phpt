@@ -26,6 +26,7 @@ Class [ <user> final class Foo implements UnitEnum ] {
 
       - Parameters [0] {
       }
+      - Return [ array ]
     }
   }
 

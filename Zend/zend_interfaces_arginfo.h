@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 7601b87fceb267c47192081b7c895f1d8cf5cf06 */
+ * Stub hash: 89daa237359e35adcbd398a6b0481c19cfb14711 */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_IteratorAggregate_getIterator, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -52,7 +52,8 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_class_InternalIterator_rewind arginfo_class_InternalIterator_next
 
-#define arginfo_class_UnitEnum_cases arginfo_class_IteratorAggregate_getIterator
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_UnitEnum_cases, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_ScalarEnum_from, 0, 0, 1)
 	ZEND_ARG_TYPE_MASK(0, value, MAY_BE_LONG|MAY_BE_STRING, NULL)
