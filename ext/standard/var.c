@@ -26,6 +26,7 @@
 #include "zend_smart_str.h"
 #include "basic_functions.h"
 #include "php_incomplete_class.h"
+#include "zend_enum.h"
 /* }}} */
 
 struct php_serialize_data {
@@ -149,8 +150,7 @@ again:
 
 			zend_class_entry *ce = Z_OBJCE_P(struc);
 			if (ce->ce_flags & ZEND_ACC_ENUM) {
-				zval tmp;
-				zval *case_name_zval = zend_read_property_ex(ce, Z_OBJ_P(struc), ZSTR_KNOWN(ZEND_STR_NAME), 0, &tmp);
+				zval *case_name_zval = zend_enum_fetch_case_name(Z_OBJ_P(struc));
 				php_printf("enum(%s::%s)\n", ZSTR_VAL(class_name), Z_STRVAL_P(case_name_zval));
 				return;
 			}
@@ -588,8 +588,7 @@ again:
 				smart_str_append(buf, ce->name);
 				if (is_enum) {
 					zend_object *zobj = Z_OBJ_P(struc);
-					zval tmp;
-					zval *case_name_zval = zend_read_property_ex(ce, zobj, ZSTR_KNOWN(ZEND_STR_NAME), 0, &tmp);
+					zval *case_name_zval = zend_enum_fetch_case_name(zobj);
 					smart_str_appendl(buf, "::", 2);
 					smart_str_append(buf, Z_STR_P(case_name_zval));
 				} else {
@@ -1026,8 +1025,7 @@ again:
 				if (ce->ce_flags & ZEND_ACC_ENUM) {
 					PHP_CLASS_ATTRIBUTES;
 
-					zval tmp;
-					zval *case_name_zval = zend_read_property_ex(ce, Z_OBJ_P(struc), ZSTR_KNOWN(ZEND_STR_NAME), 0, &tmp);
+					zval *case_name_zval = zend_enum_fetch_case_name(Z_OBJ_P(struc));
 
 					PHP_SET_CLASS_ATTRIBUTES(struc);
 					smart_str_appendl(buf, "E:", 2);

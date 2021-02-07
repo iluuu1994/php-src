@@ -43,6 +43,7 @@
 #include "zend_extensions.h"
 #include "zend_builtin_functions.h"
 #include "zend_smart_str.h"
+#include "zend_enum.h"
 #include "php_reflection_arginfo.h"
 
 /* Key used to avoid leaking addresses in ReflectionProperty::getId() */
@@ -6671,8 +6672,11 @@ ZEND_METHOD(ReflectionEnumUnitCase, getScalar)
 		zval_update_constant_ex(&ref->value, ref->ce);
 	}
 
-	zval rv;
-	zval *member_p = zend_read_property_ex(intern->ce, Z_OBJ(ref->value), ZSTR_KNOWN(ZEND_STR_VALUE), 1, &rv);
+	if (intern->ce->enum_scalar_type == IS_UNDEF) {
+		RETURN_NULL();
+	}
+
+	zval *member_p = zend_enum_fetch_case_value(Z_OBJ(ref->value));
 
 	ZVAL_COPY_OR_DUP(return_value, member_p);
 }

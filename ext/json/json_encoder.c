@@ -27,6 +27,7 @@
 #include "php_json.h"
 #include "php_json_encoder.h"
 #include <zend_exceptions.h>
+#include "zend_enum.h"
 
 static const char digits[] = "0123456789abcdef";
 
@@ -518,13 +519,9 @@ static int php_json_encode_serializable_enum(smart_str *buf, zval *val, int opti
 		return FAILURE;
 	}
 
-	zend_string *value_string = zend_string_init("value", strlen("value"), 0);
-	zval tmp;
-	zval *value_zv = zend_read_property_ex(ce, Z_OBJ_P(val), value_string, 0, &tmp);
+	zval *value_zv = zend_enum_fetch_case_value(Z_OBJ_P(val));
 
 	int result = php_json_encode_zval(buf, value_zv, options, encoder);
-
-	zend_string_free(value_string);
 
 	return result;
 }

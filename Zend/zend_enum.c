@@ -325,3 +325,16 @@ void zend_enum_register_props(zend_class_entry *ce)
 		zend_declare_typed_property(ce, ZSTR_KNOWN(ZEND_STR_VALUE), &value_default_value, ZEND_ACC_PUBLIC, NULL, value_type);
 	}
 }
+
+zval *zend_enum_fetch_case_name(zend_object *zobj)
+{
+	ZEND_ASSERT(zobj->ce->ce_flags & ZEND_ACC_ENUM);
+	return OBJ_PROP_NUM(zobj, 0);
+}
+
+zval *zend_enum_fetch_case_value(zend_object *zobj)
+{
+	ZEND_ASSERT(zobj->ce->ce_flags & ZEND_ACC_ENUM);
+	ZEND_ASSERT(zobj->ce->enum_scalar_type != IS_UNDEF);
+	return OBJ_PROP_NUM(zobj, 1);
+}
