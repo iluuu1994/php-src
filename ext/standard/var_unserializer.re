@@ -1233,17 +1233,12 @@ object ":" uiv ":" ["]	{
 		return 0;
 	}
 
-	size_t colon_pos = SIZE_MAX;
-	for (size_t i = 0; i < len; ++i) {
-		if (str[i] == ':') {
-			colon_pos = i;
-			break;
-		}
-	}
-	if (colon_pos == SIZE_MAX) {
+	char *colon_ptr = memchr(str, ':', len);
+	if (colon_ptr == NULL) {
 		php_error_docref(NULL, E_WARNING, "Invalid enum name '%.*s' (missing colon)", (int) len, str);
 		return 0;
 	}
+	size_t colon_pos = colon_ptr - str;
 
 	enum_name = zend_string_init_fast(str, colon_pos);
 	case_name = zend_string_init_fast(&str[colon_pos + 1], len - colon_pos - 1);
