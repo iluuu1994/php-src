@@ -1244,29 +1244,21 @@ object ":" uiv ":" ["]	{
 	case_name = zend_string_init(&str[colon_pos + 1], len - colon_pos - 1, 0);
 
 	if (!zend_is_valid_class_name(enum_name)) {
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 
 	ce = zend_lookup_class(enum_name);
 	if (!ce) {
 		php_error_docref(NULL, E_WARNING, "Class '%s' not found", ZSTR_VAL(enum_name));
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 	if (!(ce->ce_flags & ZEND_ACC_ENUM)) {
 		php_error_docref(NULL, E_WARNING, "Class '%s' is not an enum", ZSTR_VAL(enum_name));
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 
 	if (EG(exception)) {
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 
 	YYCURSOR += 2;
@@ -1275,17 +1267,13 @@ object ":" uiv ":" ["]	{
 	zval *zv = zend_hash_find(&ce->constants_table, case_name);
 	if (!zv) {
 		php_error_docref(NULL, E_WARNING, "Undefined constant %s::%s", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 
 	zend_class_constant *c = Z_PTR_P(zv);
 	if (!(c->const_flags & ZEND_CLASS_CONST_IS_CASE)) {
 		php_error_docref(NULL, E_WARNING, "%s::%s is not an enum case", ZSTR_VAL(enum_name), ZSTR_VAL(case_name));
-		zend_string_release_ex(enum_name, 0);
-		zend_string_release_ex(case_name, 0);
-		return 0;
+		goto fail;
 	}
 
 	zend_string_release_ex(enum_name, 0);
@@ -1302,6 +1290,11 @@ object ":" uiv ":" ["]	{
 	ZVAL_COPY(rval, value);
 
 	return 1;
+
+fail:
+	zend_string_release_ex(enum_name, 0);
+	zend_string_release_ex(case_name, 0);
+	return 0;
 }
 
 "}" {
