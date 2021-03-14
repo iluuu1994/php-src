@@ -851,40 +851,74 @@ static zend_class_entry *resolve_single_class_type(zend_string *name, zend_class
 	}
 }
 
+// TODO Check intersection type here
 static bool zend_check_and_resolve_property_class_type(
 		zend_property_info *info, zend_class_entry *object_ce) {
 	zend_class_entry *ce;
 	if (ZEND_TYPE_HAS_LIST(info->type)) {
 		zend_type *list_type;
-		ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(info->type), list_type) {
-			if (ZEND_TYPE_HAS_NAME(*list_type)) {
-				if (ZEND_TYPE_HAS_CE_CACHE(*list_type)) {
-					ce = ZEND_TYPE_CE_CACHE(*list_type);
-					if (!ce) {
+
+		if (ZEND_TYPE_HAS_INTERSECTION(info->type)) {
+			ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(info->type), list_type) {
+				if (ZEND_TYPE_HAS_NAME(*list_type)) {
+					if (ZEND_TYPE_HAS_CE_CACHE(*list_type)) {
+						ce = ZEND_TYPE_CE_CACHE(*list_type);
+						if (!ce) {
+							zend_string *name = ZEND_TYPE_NAME(*list_type);
+							ce = resolve_single_class_type(name, info->ce);
+							if (UNEXPECTED(!ce)) {
+								continue;
+							}
+							ZEND_TYPE_SET_CE_CACHE(*list_type, ce);
+						}
+					} else {
 						zend_string *name = ZEND_TYPE_NAME(*list_type);
 						ce = resolve_single_class_type(name, info->ce);
-						if (UNEXPECTED(!ce)) {
+						if (!ce) {
 							continue;
 						}
-						ZEND_TYPE_SET_CE_CACHE(*list_type, ce);
+						zend_string_release(name);
+						ZEND_TYPE_SET_CE(*list_type, ce);
 					}
 				} else {
-					zend_string *name = ZEND_TYPE_NAME(*list_type);
-					ce = resolve_single_class_type(name, info->ce);
-					if (!ce) {
-						continue;
-					}
-					zend_string_release(name);
-					ZEND_TYPE_SET_CE(*list_type, ce);
+					ce = ZEND_TYPE_CE(*list_type);
 				}
-			} else {
-				ce = ZEND_TYPE_CE(*list_type);
-			}
-			if (instanceof_function(object_ce, ce)) {
-				return 1;
-			}
-		} ZEND_TYPE_LIST_FOREACH_END();
-		return 0;
+				if (!instanceof_function(object_ce, ce)) {
+					return false;
+				}
+			} ZEND_TYPE_LIST_FOREACH_END();
+			return true;
+		} else {
+			ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(info->type), list_type) {
+				if (ZEND_TYPE_HAS_NAME(*list_type)) {
+					if (ZEND_TYPE_HAS_CE_CACHE(*list_type)) {
+						ce = ZEND_TYPE_CE_CACHE(*list_type);
+						if (!ce) {
+							zend_string *name = ZEND_TYPE_NAME(*list_type);
+							ce = resolve_single_class_type(name, info->ce);
+							if (UNEXPECTED(!ce)) {
+								continue;
+							}
+							ZEND_TYPE_SET_CE_CACHE(*list_type, ce);
+						}
+					} else {
+						zend_string *name = ZEND_TYPE_NAME(*list_type);
+						ce = resolve_single_class_type(name, info->ce);
+						if (!ce) {
+							continue;
+						}
+						zend_string_release(name);
+						ZEND_TYPE_SET_CE(*list_type, ce);
+					}
+				} else {
+					ce = ZEND_TYPE_CE(*list_type);
+				}
+				if (instanceof_function(object_ce, ce)) {
+					return 1;
+				}
+			} ZEND_TYPE_LIST_FOREACH_END();
+			return 0;
+		}
 	} else {
 		if (UNEXPECTED(ZEND_TYPE_HAS_NAME(info->type))) {
 			if (ZEND_TYPE_HAS_CE_CACHE(info->type)) {
@@ -983,6 +1017,8 @@ ZEND_API bool zend_value_instanceof_static(zval *zv) {
 # define HAVE_CACHE_SLOT 1
 #endif
 
+// TODO Check intersection type here
+// TODO Update to handle union and intersection in the same loop
 static zend_always_inline bool zend_check_type_slow(
 		zend_type *type, zval *arg, zend_reference *ref, void **cache_slot, zend_class_entry *scope,
 		bool is_return_type, bool is_internal)
@@ -992,7 +1028,35 @@ static zend_always_inline bool zend_check_type_slow(
 		zend_class_entry *ce;
 		if (ZEND_TYPE_HAS_LIST(*type)) {
 			zend_type *list_type;
+			bool check_intersection = false;
+			bool is_intersection_valid = true;
+
 			ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(*type), list_type) {
+				/* Are we currently checking that an Intersection type is valid */
+				if (check_intersection) {
+					/* If the current type is not part of the intersection
+					 * it means the type has validated */
+					if (!ZEND_TYPE_HAS_INTERSECTION(*list_type)) {
+						return true;
+					}
+					/* The intersection type is not valid but a union type is present */
+					if (!is_intersection_valid) {
+						/* We moved passed the types part of the intersection */
+						if (!ZEND_TYPE_HAS_INTERSECTION(*list_type)) {
+							/* Reset values */
+							is_intersection_valid = true;
+							check_intersection = false;
+						} else {
+							/* Skip checking the current type as it's already false */
+							if (HAVE_CACHE_SLOT) {
+								cache_slot++;
+							}
+							continue;
+						}
+					}
+				}
+
+				/* Fetch class_entry */
 				if (HAVE_CACHE_SLOT && *cache_slot) {
 					ce = *cache_slot;
 				} else if (ZEND_TYPE_HAS_CE_CACHE(*list_type) && ZEND_TYPE_CE_CACHE(*list_type)) {
@@ -1016,8 +1080,22 @@ static zend_always_inline bool zend_check_type_slow(
 						ZEND_TYPE_SET_CE_CACHE(*list_type, ce);
 					}
 				}
-				if (instanceof_function(Z_OBJCE_P(arg), ce)) {
-					return 1;
+
+				/* Perform actual type check */
+				if (ZEND_TYPE_HAS_INTERSECTION(*list_type)) {
+					if (!instanceof_function(Z_OBJCE_P(arg), ce)) {
+						is_intersection_valid = false;
+						/* If the whole type does not have a union we can exit immediately */
+						if (!ZEND_TYPE_HAS_UNION(*type)) {
+							return false;
+						}
+					}
+					check_intersection = true;
+				} else {
+					/* Instance of a single type part of a union is sufficient to pass the type check */
+					if (instanceof_function(Z_OBJCE_P(arg), ce)) {
+						return true;
+					}
 				}
 				if (HAVE_CACHE_SLOT) {
 					cache_slot++;

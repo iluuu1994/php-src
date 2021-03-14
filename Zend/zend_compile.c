@@ -1156,15 +1156,21 @@ ZEND_API zend_result do_bind_class(zval *lcname, zend_string *lc_parent_name) /*
 }
 /* }}} */
 
-static zend_string *add_type_string(zend_string *type, zend_string *new_type) {
+static zend_string *add_type_string(zend_string *type, zend_string *new_type, bool is_intersection) {
 	zend_string *result;
 	if (type == NULL) {
 		return zend_string_copy(new_type);
 	}
 
-	result = zend_string_concat3(
-		ZSTR_VAL(type), ZSTR_LEN(type), "|", 1, ZSTR_VAL(new_type), ZSTR_LEN(new_type));
-	zend_string_release(type);
+	if (is_intersection) {
+		result = zend_string_concat3(ZSTR_VAL(type), ZSTR_LEN(type),
+			"&", 1, ZSTR_VAL(new_type), ZSTR_LEN(new_type));
+		zend_string_release(type);
+	} else {
+		result = zend_string_concat3(
+			ZSTR_VAL(type), ZSTR_LEN(type), "|", 1, ZSTR_VAL(new_type), ZSTR_LEN(new_type));
+		zend_string_release(type);
+	}
 	return result;
 }
 
@@ -1192,22 +1198,23 @@ zend_string *zend_type_to_string_resolved(zend_type type, zend_class_entry *scop
 
 	if (ZEND_TYPE_HAS_LIST(type)) {
 		zend_type *list_type;
+		bool is_intersection = ZEND_TYPE_HAS_INTERSECTION(type);
 		ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
 			if (ZEND_TYPE_HAS_CE(*list_type)) {
-				str = add_type_string(str, ZEND_TYPE_CE(*list_type)->name);
+				str = add_type_string(str, ZEND_TYPE_CE(*list_type)->name, is_intersection);
 			} else {
 				if (ZEND_TYPE_HAS_CE_CACHE(*list_type)
 				 && ZEND_TYPE_CE_CACHE(*list_type)) {
 					zend_class_entry *ce = ZEND_TYPE_CE_CACHE(*list_type);
 					if (ce->ce_flags & ZEND_ACC_ANON_CLASS) {
 						zend_string *tmp = zend_string_init(ZSTR_VAL(ce->name), strlen(ZSTR_VAL(ce->name)), 0);
-						str = add_type_string(str, tmp);
+						str = add_type_string(str, tmp, is_intersection);
 					} else {
-						str = add_type_string(str, ce->name);
+						str = add_type_string(str, ce->name, is_intersection);
 					}
 				} else {
 					zend_string *resolved = resolve_class_name(ZEND_TYPE_NAME(*list_type), scope);
-					str = add_type_string(str, resolved);
+					str = add_type_string(str, resolved, is_intersection);
 					zend_string_release(resolved);
 				}
 			}
@@ -1231,7 +1238,7 @@ zend_string *zend_type_to_string_resolved(zend_type type, zend_class_entry *scop
 	uint32_t type_mask = ZEND_TYPE_PURE_MASK(type);
 
 	if (type_mask == MAY_BE_ANY) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_MIXED));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_MIXED), /* is_intersection */ false);
 
 		return str;
 	}
@@ -1243,36 +1250,36 @@ zend_string *zend_type_to_string_resolved(zend_type type, zend_class_entry *scop
 				name = called_scope->name;
 			}
 		}
-		str = add_type_string(str, name);
+		str = add_type_string(str, name, /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_CALLABLE) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_CALLABLE));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_CALLABLE), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_ITERABLE) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_ITERABLE));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_ITERABLE), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_OBJECT) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_OBJECT));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_OBJECT), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_ARRAY) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_ARRAY));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_ARRAY), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_STRING) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_STRING));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_STRING), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_LONG) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_INT));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_INT), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_DOUBLE) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_FLOAT));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_FLOAT), /* is_intersection */ false);
 	}
 	if ((type_mask & MAY_BE_BOOL) == MAY_BE_BOOL) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_BOOL));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_BOOL), /* is_intersection */ false);
 	} else if (type_mask & MAY_BE_FALSE) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_FALSE));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_FALSE), /* is_intersection */ false);
 	}
 	if (type_mask & MAY_BE_VOID) {
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_VOID));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_VOID), /* is_intersection */ false);
 	}
 
 	if (type_mask & MAY_BE_NULL) {
@@ -1283,7 +1290,7 @@ zend_string *zend_type_to_string_resolved(zend_type type, zend_class_entry *scop
 			return nullable_str;
 		}
 
-		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_NULL_LOWERCASE));
+		str = add_type_string(str, ZSTR_KNOWN(ZEND_STR_NULL_LOWERCASE), /* is_intersection */ false);
 	}
 	return str;
 }
@@ -6274,6 +6281,80 @@ static zend_type zend_compile_typename(
 			memcpy(list, type_list, ZEND_TYPE_LIST_SIZE(type_list->num_types));
 			ZEND_TYPE_SET_LIST(type, list);
 			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ARENA_BIT;
+			/* Inform that the type list contains a union type */
+			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_UNION_BIT;
+		}
+
+		free_alloca(type_list, use_heap);
+	} else if (ast->kind == ZEND_AST_TYPE_INTERSECTION) {
+		zend_ast_list *list = zend_ast_get_list(ast);
+		zend_type_list *type_list;
+
+		if (allow_null) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Nullable type cannot be part of an intersection type");
+		}
+
+		ALLOCA_FLAG(use_heap)
+
+		type_list = do_alloca(ZEND_TYPE_LIST_SIZE(list->children), use_heap);
+		type_list->num_types = 0;
+
+		for (uint32_t i = 0; i < list->children; i++) {
+			zend_ast *type_ast = list->child[i];
+			zend_type single_type = zend_compile_single_typename(type_ast);
+			zend_string *standard_type_str = zend_type_to_string(single_type);
+
+			/* An intersection of standard types cannot exist so invalidate it */
+			if (ZEND_TYPE_IS_ONLY_MASK(single_type)) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"Type %s cannot be part of an intersection type", ZSTR_VAL(standard_type_str));
+			}
+			/* Check for "self" and "parent" too */
+			if (zend_string_equals_literal_ci(standard_type_str, "self")
+					|| zend_string_equals_literal_ci(standard_type_str, "parent")) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"Type %s cannot be part of an intersection type", ZSTR_VAL(standard_type_str));
+			}
+			zend_string_release_ex(standard_type_str, false);
+
+			/* Inform that the type is part of an intersection type */
+			ZEND_TYPE_FULL_MASK(single_type) |= _ZEND_TYPE_INTERSECTION_BIT;
+
+			if (!ZEND_TYPE_HAS_CLASS(type)) {
+				/* The first class type can be stored directly as the type ptr payload. */
+				ZEND_TYPE_SET_PTR(type, ZEND_TYPE_NAME(single_type));
+				ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_NAME_BIT;
+			} else {
+				if (type_list->num_types == 0) {
+					/* Switch from single name to name list. */
+					type_list->num_types = 1;
+					type_list->types[0] = type;
+					ZEND_TYPE_FULL_MASK(type_list->types[0]) &= ~_ZEND_TYPE_MAY_BE_MASK;
+					ZEND_TYPE_SET_LIST(type, type_list);
+				}
+
+				type_list->types[type_list->num_types++] = single_type;
+
+				/* Check for trivially redundant class types */
+				for (size_t i = 0; i < type_list->num_types - 1; i++) {
+					if (zend_string_equals_ci(
+							ZEND_TYPE_NAME(type_list->types[i]), ZEND_TYPE_NAME(single_type))) {
+						zend_string *single_type_str = zend_type_to_string(single_type);
+						zend_error_noreturn(E_COMPILE_ERROR,
+							"Duplicate type %s is redundant", ZSTR_VAL(single_type_str));
+					}
+				}
+			}
+		}
+
+		if (type_list->num_types) {
+			zend_type_list *list = zend_arena_alloc(
+				&CG(arena), ZEND_TYPE_LIST_SIZE(type_list->num_types));
+			memcpy(list, type_list, ZEND_TYPE_LIST_SIZE(type_list->num_types));
+			ZEND_TYPE_SET_LIST(type, list);
+			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ARENA_BIT;
+			/* Inform that the type list contains an intersection type */
+			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_INTERSECTION_BIT;
 		}
 
 		free_alloca(type_list, use_heap);

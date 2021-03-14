@@ -399,6 +399,8 @@ static inheritance_status zend_perform_covariant_class_type_check(
 		zend_class_entry *proto_scope, zend_type proto_type,
 		bool register_unresolved) {
 	bool have_unresolved = 0;
+
+	/* If the parent has 'object' as a return type, any class satisfies the co-variant check */
 	if (ZEND_TYPE_FULL_MASK(proto_type) & MAY_BE_OBJECT) {
 		/* Currently, any class name would be allowed here. We still perform a class lookup
 		 * for forward-compatibility reasons, as we may have named types in the future that
@@ -421,7 +423,11 @@ static inheritance_status zend_perform_covariant_class_type_check(
 		}
 	}
 
+	// TODO Add support for covariant check for intersection types
 	zend_type *single_type;
+
+	/* Traverse the list of parent types and check if the current child (FE)
+	 * class is the subtype of at least one of them */
 	ZEND_TYPE_FOREACH(proto_type, single_type) {
 		zend_class_entry *proto_ce;
 		zend_string *proto_class_name = NULL;
@@ -439,6 +445,7 @@ static inheritance_status zend_perform_covariant_class_type_check(
 			if (!fe_ce) fe_ce = lookup_class(fe_scope, fe_class_name, register_unresolved);
 			proto_ce = ZEND_TYPE_CE(*single_type);
 		} else {
+			/* standard type */
 			continue;
 		}
 
@@ -510,7 +517,14 @@ static inheritance_status zend_perform_covariant_type_check(
 		}
 
 		if (status == INHERITANCE_ERROR) {
-			return INHERITANCE_ERROR;
+			// TODO This is hacky and incorrect (will accept a parent type which breaks co-variance)
+			// Fix this later *somehow*
+			/* One can add types to an intersection */
+			if (ZEND_TYPE_HAS_INTERSECTION(*single_type)) {
+				status = INHERITANCE_SUCCESS;
+			} else {
+				return INHERITANCE_ERROR;
+			}
 		}
 		if (status != INHERITANCE_SUCCESS) {
 			all_success = 0;
