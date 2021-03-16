@@ -263,7 +263,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> lexical_var_list encaps_list
 %type <ast> array_pair non_empty_array_pair_list array_pair_list possible_array_pair
 %type <ast> isset_variable type return_type type_expr type_without_static
-%type <ast> identifier type_expr_without_static union_type_without_static intersection_type_without_static
+%type <ast> identifier type_expr_without_static union_type_without_static
 %type <ast> inline_function union_type intersection_type
 %type <ast> attributed_statement attributed_class_statement attributed_parameter
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
@@ -741,30 +741,14 @@ optional_visibility_modifier:
 ;
 
 parameter:
-		optional_visibility_modifier type_expr_without_static
-		'&' is_variadic T_VARIABLE backup_doc_comment
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | ZEND_PARAM_REF | $4, $2, $5, NULL,
+		optional_visibility_modifier optional_type_without_static
+		is_reference is_variadic T_VARIABLE backup_doc_comment
+			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $3 | $4, $2, $5, NULL,
 					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL); }
-	|	optional_visibility_modifier type_expr_without_static
-		'&' is_variadic T_VARIABLE backup_doc_comment '=' expr
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | ZEND_PARAM_REF | $4, $2, $5, $8,
+	|	optional_visibility_modifier optional_type_without_static
+		is_reference is_variadic T_VARIABLE backup_doc_comment '=' expr
+			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $3 | $4, $2, $5, $8,
 					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL); }
-	|	optional_visibility_modifier type_expr_without_static
-		is_variadic T_VARIABLE backup_doc_comment
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | 0 | $3, $2, $4, NULL,
-					NULL, $5 ? zend_ast_create_zval_from_str($5) : NULL); }
-	|	optional_visibility_modifier type_expr_without_static
-		is_variadic T_VARIABLE backup_doc_comment '=' expr
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | 0 | $3, $2, $4, $7,
-					NULL, $5 ? zend_ast_create_zval_from_str($5) : NULL); }
-	|	optional_visibility_modifier is_reference
-		is_variadic T_VARIABLE backup_doc_comment
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $2 | $3, NULL, $4, NULL,
-					NULL, $5 ? zend_ast_create_zval_from_str($5) : NULL); }
-	|	optional_visibility_modifier is_reference
-		is_variadic T_VARIABLE backup_doc_comment '=' expr
-			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $2 | $3, NULL, $4, $7,
-					NULL, $5 ? zend_ast_create_zval_from_str($5) : NULL); }
 ;
 
 
@@ -802,7 +786,6 @@ type_expr_without_static:
 		type_without_static			{ $$ = $1; }
 	|	'?' type_without_static		{ $$ = $2; $$->attr |= ZEND_TYPE_NULLABLE; }
 	|	union_type_without_static	{ $$ = $1; }
-	|	intersection_type_without_static	{ $$ = $1; }
 ;
 
 type_without_static:
@@ -818,12 +801,7 @@ union_type_without_static:
 			{ $$ = zend_ast_list_add($1, $3); }
 ;
 
-intersection_type_without_static:
-		type_without_static '&' type_without_static
-			{ $$ = zend_ast_create_list(2, ZEND_AST_TYPE_INTERSECTION, $1, $3); }
-	|	intersection_type_without_static '&' type_without_static
-			{ $$ = zend_ast_list_add($1, $3); }
-;
+// TODO Check if need to do intersection without static (seems weird)
 
 return_type:
 		%empty	{ $$ = NULL; }
