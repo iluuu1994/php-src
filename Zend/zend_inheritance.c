@@ -479,7 +479,6 @@ static inheritance_status zend_perform_covariant_class_type_check(
 
 	// TODO Add support for covariant check for intersection types
 	zend_type *single_type;
-	bool is_super_type = false;
 
 	/* Traverse the list of parent types and check if the current child (FE)
 	 * class is the subtype of at least one of them */
@@ -510,17 +509,8 @@ static inheritance_status zend_perform_covariant_class_type_check(
 			track_class_dependency(fe_ce, fe_class_name);
 			track_class_dependency(proto_ce, proto_class_name);
 			return INHERITANCE_SUCCESS;
-		} else if (unlinked_instanceof(proto_ce, fe_ce)) {
-			/* Check co-variance by ensuring the child type is NOT a supertype
-			 * of the parent type, do this as a child type can add more types
-			 * to the intersection */
-			is_super_type = true;
 		}
 	} ZEND_TYPE_FOREACH_END();
-
-	if (is_super_type) {
-		return INHERITANCE_ERROR;
-	}
 
 	return have_unresolved ? INHERITANCE_UNRESOLVED : INHERITANCE_ERROR;
 }
@@ -562,7 +552,85 @@ static inheritance_status zend_perform_covariant_type_check(
 	zend_type *single_type;
 	bool all_success = 1;
 
-	//if (ZEND_TYPE_HAS_UNION(fe_type)) {
+	/* Quick check if the parent type has an intersection the child must have one too */
+	if (ZEND_TYPE_HAS_INTERSECTION(proto_type) && !ZEND_TYPE_HAS_INTERSECTION(fe_type)) {
+		return INHERITANCE_ERROR;
+	}
+	/* For intersection types loop over the parent types first as a child
+	 * can add them */
+	if (ZEND_TYPE_HAS_INTERSECTION(fe_type)) {
+		uint32_t nb_parent_types = 0;
+		uint32_t nb_child_types = 0;
+
+		/* First try to check whether we can succeed without resolving anything */
+		ZEND_TYPE_FOREACH(proto_type, single_type) {
+			//inheritance_status status;
+			zend_string *proto_class_name;
+			zend_class_entry *proto_ce = NULL;
+			zend_type *single_fe_type;
+			bool register_unresolved = false;
+			uint32_t current_nb_child_types = 0;
+
+			if (ZEND_TYPE_HAS_NAME(*single_type)) {
+				proto_class_name = resolve_class_name(proto_scope, ZEND_TYPE_NAME(*single_type));
+			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
+				proto_ce = ZEND_TYPE_CE(*single_type);
+				proto_class_name = proto_ce->name;
+			} else {
+				/* standard type */
+				ZEND_ASSERT(0 && "This shouldn't happen yet as no support for complex types");
+				continue;
+			}
+			nb_parent_types++;
+
+			/* Traverse the list of child types and check if it is either a subtype
+			 * of one of the parent types OR is not in the parent type list */
+			ZEND_TYPE_FOREACH(fe_type, single_fe_type) {
+				zend_class_entry *fe_ce;
+				zend_string *fe_class_name = NULL;
+
+				//nb_child_types = MAX(++current_nb_child_types, nb_child_types);
+				if (ZEND_TYPE_HAS_NAME(*single_fe_type)) {
+					fe_class_name = resolve_class_name(fe_scope, ZEND_TYPE_NAME(*single_fe_type));
+					if (zend_string_equals_ci(fe_class_name, proto_class_name)) {
+						break;
+					}
+
+					if (!proto_ce) proto_ce = lookup_class(proto_scope, proto_class_name, register_unresolved);
+					fe_ce = lookup_class(fe_scope, fe_class_name, register_unresolved);
+				} else if (ZEND_TYPE_HAS_CE(*single_type)) {
+					if (!proto_ce) proto_ce = lookup_class(proto_scope, proto_class_name, register_unresolved);
+					fe_ce = ZEND_TYPE_CE(*single_type);
+				} else {
+					/* standard type */
+					ZEND_ASSERT(0 && "This shouldn't happen yet as no support for complex types");
+					continue;
+				}
+
+				if (!fe_ce || !proto_ce) {
+					return INHERITANCE_UNRESOLVED;
+				}
+
+				if (unlinked_instanceof(fe_ce, proto_ce)) {
+					track_class_dependency(fe_ce, fe_class_name);
+					track_class_dependency(proto_ce, proto_class_name);
+					break;
+				} else if (unlinked_instanceof(proto_ce, fe_ce)) {
+				/* Check co-variance by ensuring the child type is NOT a supertype
+				 * of the parent type, do this as a child type can add more types
+				 * to the intersection */
+					//return INHERITANCE_ERROR;
+				}
+			} ZEND_TYPE_FOREACH_END();
+		} ZEND_TYPE_FOREACH_END();
+/*
+		if (nb_child_types < nb_parent_types) {
+			return INHERITANCE_ERROR;
+		}
+*/
+	}
+
+	if (ZEND_TYPE_HAS_UNION(fe_type)) {
 		/* First try to check whether we can succeed without resolving anything */
 		ZEND_TYPE_FOREACH(fe_type, single_type) {
 			inheritance_status status;
@@ -588,7 +656,7 @@ static inheritance_status zend_perform_covariant_type_check(
 				all_success = 0;
 			}
 		} ZEND_TYPE_FOREACH_END();
-	//}
+	}
 
 	/* All individual checks succeeded, overall success */
 	if (all_success) {
