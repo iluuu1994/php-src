@@ -1,5 +1,5 @@
 --TEST--
-Co-variance check failure for intersection type where child replaces it with standard type
+Co-variance check failure for intersection type where child removes one of intersection type members
 --FILE--
 <?php
 
@@ -16,11 +16,11 @@ class Foo {
 
 /* This fails because just A larger than A&B */
 class FooChild extends Foo {
-    public function foo(): array {
+    public function foo(): A {
         return new Test();
     }
 }
 
 ?>
 --EXPECTF--
-Fatal error: Declaration of FooChild::foo(): array must be compatible with Foo::foo(): A&B in %s on line %d
+Fatal error: Declaration of FooChild::foo(): A must be compatible with Foo::foo(): A&B in %s on line %d
