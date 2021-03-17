@@ -400,6 +400,7 @@ static inheritance_status zend_perform_intersection_covariant_class_type_check(
 		bool register_unresolved)
 {
 	bool have_unresolved = false;
+	bool is_super_type = false;
 	zend_type *single_type;
 
 	/* Traverse the list of child types and check if it is either a subtype
@@ -411,6 +412,7 @@ static inheritance_status zend_perform_intersection_covariant_class_type_check(
 			fe_class_name =
 				resolve_class_name(fe_scope, ZEND_TYPE_NAME(*single_type));
 			if (zend_string_equals_ci(fe_class_name, proto_class_name)) {
+				is_super_type = false;
 				continue;
 			}
 
@@ -433,17 +435,25 @@ static inheritance_status zend_perform_intersection_covariant_class_type_check(
 
 		/* Check co-variance by ensuring the child type is NOT a supertype
 		 * of the parent type, do this as a child type can add more types
-		 * to the intersection */
+		 * to the intersection.
+		 * Do not bail out immediately as sub-type relation might be validated
+		 * by another child type
+		 * */
 		if (unlinked_instanceof(proto_ce, fe_ce)) {
-			return INHERITANCE_ERROR;
+			is_super_type = true;
+			continue;
 		}
 
 		if (unlinked_instanceof(fe_ce, proto_ce)) {
 			track_class_dependency(fe_ce, fe_class_name);
 			track_class_dependency(proto_ce, proto_class_name);
+			is_super_type = false;
 		}
 	} ZEND_TYPE_FOREACH_END();
 
+	if (is_super_type) {
+		return INHERITANCE_ERROR;
+	}
 	return have_unresolved ? INHERITANCE_UNRESOLVED : INHERITANCE_SUCCESS;
 }
 
