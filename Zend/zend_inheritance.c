@@ -428,9 +428,17 @@ static inheritance_status zend_perform_intersection_covariant_class_type_check(
 
 		if (!fe_ce || !proto_ce) {
 			have_unresolved = 1;
-		} else if (!unlinked_instanceof(fe_ce, proto_ce)) {
+			continue;
+		}
+
+		/* Check co-variance by ensuring the child type is NOT a supertype
+		 * of the parent type, do this as a child type can add more types
+		 * to the intersection */
+		if (unlinked_instanceof(proto_ce, fe_ce)) {
 			return INHERITANCE_ERROR;
-		} else {
+		}
+
+		if (unlinked_instanceof(fe_ce, proto_ce)) {
 			track_class_dependency(fe_ce, fe_class_name);
 			track_class_dependency(proto_ce, proto_class_name);
 		}
@@ -549,8 +557,6 @@ static inheritance_status zend_perform_covariant_type_check(
 		/* First try to check whether we can succeed without resolving anything */
 		ZEND_TYPE_FOREACH(proto_type, single_type) {
 			inheritance_status status;
-
-			printf("In intersection type checkiing code");
 			if (ZEND_TYPE_HAS_NAME(*single_type)) {
 				zend_string *proto_class_name =
 					resolve_class_name(proto_scope, ZEND_TYPE_NAME(*single_type));
@@ -573,42 +579,34 @@ static inheritance_status zend_perform_covariant_type_check(
 				all_success = 0;
 			}
 		} ZEND_TYPE_FOREACH_END();
-
 	}
 
 	if (ZEND_TYPE_HAS_UNION(fe_type)) {
-	/* First try to check whether we can succeed without resolving anything */
-	ZEND_TYPE_FOREACH(fe_type, single_type) {
-		inheritance_status status;
-		if (ZEND_TYPE_HAS_NAME(*single_type)) {
-			zend_string *fe_class_name =
-				resolve_class_name(fe_scope, ZEND_TYPE_NAME(*single_type));
-			status = zend_perform_covariant_class_type_check(
-				fe_scope, fe_class_name, NULL,
-				proto_scope, proto_type, /* register_unresolved */ 0);
-		} else if (ZEND_TYPE_HAS_CE(*single_type)) {
-			zend_class_entry *fe_ce = ZEND_TYPE_CE(*single_type);
-			status = zend_perform_covariant_class_type_check(
-				fe_scope, fe_ce->name, fe_ce,
-				proto_scope, proto_type, /* register_unresolved */ 0);
-		} else {
-			continue;
-		}
-
-		if (status == INHERITANCE_ERROR) {
-			// TODO This is hacky and incorrect (will accept a parent type which breaks co-variance)
-			// Fix this later *somehow*
-			/* One can add types to an intersection */
-			if (ZEND_TYPE_HAS_INTERSECTION(*single_type)) {
-				status = INHERITANCE_SUCCESS;
+		/* First try to check whether we can succeed without resolving anything */
+		ZEND_TYPE_FOREACH(fe_type, single_type) {
+			inheritance_status status;
+			if (ZEND_TYPE_HAS_NAME(*single_type)) {
+				zend_string *fe_class_name =
+					resolve_class_name(fe_scope, ZEND_TYPE_NAME(*single_type));
+				status = zend_perform_covariant_class_type_check(
+					fe_scope, fe_class_name, NULL,
+					proto_scope, proto_type, /* register_unresolved */ 0);
+			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
+				zend_class_entry *fe_ce = ZEND_TYPE_CE(*single_type);
+				status = zend_perform_covariant_class_type_check(
+					fe_scope, fe_ce->name, fe_ce,
+					proto_scope, proto_type, /* register_unresolved */ 0);
 			} else {
+				continue;
+			}
+
+			if (status == INHERITANCE_ERROR) {
 				return INHERITANCE_ERROR;
 			}
-		}
-		if (status != INHERITANCE_SUCCESS) {
-			all_success = 0;
-		}
-	} ZEND_TYPE_FOREACH_END();
+			if (status != INHERITANCE_SUCCESS) {
+				all_success = 0;
+			}
+		} ZEND_TYPE_FOREACH_END();
 	}
 
 	/* All individual checks succeeded, overall success */

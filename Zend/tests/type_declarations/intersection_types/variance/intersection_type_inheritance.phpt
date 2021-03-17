@@ -11,20 +11,30 @@ class Test implements A, B, C {}
 
 class Foo {
     public function foo(): A {
-        return new Test;
+        return new Test();
     }
 }
 
-class Child extends Foo {
+class FooChild extends Foo {
     public function foo(): A&B {
         return new Test();
     }
 }
 
-$o = new Child();
+class FooSecondChild extends FooChild {
+    public function foo(): A&B&C {
+        return new Test();
+    }
+}
+
+$o = new FooChild();
+var_dump($o->foo());
+$o = new FooSecondChild();
 var_dump($o->foo());
 
 ?>
---EXPECT--
-object(ArrayLike)#1 (0) {
+--EXPECTF--
+object(Test)#%d (0) {
+}
+object(Test)#%d (0) {
 }
