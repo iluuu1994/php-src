@@ -64,6 +64,11 @@ const T_STRING_VARNAME = UNKNOWN;
 const T_NUM_STRING = UNKNOWN;
 /**
  * @var int
+ * @cvalue T_PARENT_ACCESSOR_NAME
+ */
+const T_PARENT_ACCESSOR_NAME = UNKNOWN;
+/**
+ * @var int
  * @cvalue T_INCLUDE
  */
 const T_INCLUDE = UNKNOWN;

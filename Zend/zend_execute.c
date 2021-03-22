@@ -3170,18 +3170,24 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 				}
 				return;
 			}
-		} else if (EXPECTED(zobj->properties != NULL)) {
-			if (UNEXPECTED(GC_REFCOUNT(zobj->properties) > 1)) {
-				if (EXPECTED(!(GC_FLAGS(zobj->properties) & IS_ARRAY_IMMUTABLE))) {
-					GC_DELREF(zobj->properties);
+		} else if (EXPECTED(IS_DYNAMIC_PROPERTY_OFFSET(prop_offset))) {
+			if (EXPECTED(zobj->properties != NULL)) {
+				if (UNEXPECTED(GC_REFCOUNT(zobj->properties) > 1)) {
+					if (EXPECTED(!(GC_FLAGS(zobj->properties) & IS_ARRAY_IMMUTABLE))) {
+						GC_DELREF(zobj->properties);
+					}
+					zobj->properties = zend_array_dup(zobj->properties);
+				}
+				ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
+				if (EXPECTED(ptr)) {
+					ZVAL_INDIRECT(result, ptr);
+					return;
 				}
 				zobj->properties = zend_array_dup(zobj->properties);
 			}
-			ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
-			if (EXPECTED(ptr)) {
-				ZVAL_INDIRECT(result, ptr);
-				return;
-			}
+		} else {
+			/* Fall through to read_property for accessors. */
+			ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
 		}
 	}
 
@@ -3215,7 +3221,7 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 
 		if (prop_op_type == IS_CONST) {
 			prop_info = CACHED_PTR_EX(cache_slot + 2);
-			if (prop_info) {
+			if (prop_info && ZEND_TYPE_IS_SET(prop_info->type)) {
 				if (UNEXPECTED(!zend_handle_fetch_obj_flags(result, ptr, NULL, prop_info, flags))) {
 					goto end;
 				}
@@ -4297,6 +4303,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 			opline->opcode == ZEND_INIT_USER_CALL ||
 			opline->opcode == ZEND_INIT_METHOD_CALL ||
 			opline->opcode == ZEND_INIT_STATIC_METHOD_CALL ||
+			opline->opcode == ZEND_INIT_PARENT_ACCESSOR_CALL ||
 			opline->opcode == ZEND_NEW)) {
 			ZEND_ASSERT(op_num);
 			opline--;
@@ -4324,6 +4331,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 					case ZEND_INIT_USER_CALL:
 					case ZEND_INIT_METHOD_CALL:
 					case ZEND_INIT_STATIC_METHOD_CALL:
+					case ZEND_INIT_PARENT_ACCESSOR_CALL:
 					case ZEND_NEW:
 						if (level == 0) {
 							ZEND_CALL_NUM_ARGS(call) = 0;
@@ -4379,6 +4387,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 						case ZEND_INIT_USER_CALL:
 						case ZEND_INIT_METHOD_CALL:
 						case ZEND_INIT_STATIC_METHOD_CALL:
+						case ZEND_INIT_PARENT_ACCESSOR_CALL:
 						case ZEND_NEW:
 							if (level == 0) {
 								do_exit = 1;
