@@ -209,14 +209,11 @@ typedef struct _zend_oparray_context {
 /* Static method or property                              |     |     |     */
 #define ZEND_ACC_STATIC                  (1 <<  4) /*     |  X  |  X  |     */
 /*                                                        |     |     |     */
-/* Promoted property / parameter                          |     |     |     */
-#define ZEND_ACC_PROMOTED                (1 <<  5) /*     |     |  X  |  X  */
-/*                                                        |     |     |     */
 /* Final class or method                                  |     |     |     */
-#define ZEND_ACC_FINAL                   (1 <<  5) /*  X  |  X  |     |     */
+#define ZEND_ACC_FINAL                   (1 <<  5) /*  X  |  X  |  X  |     */
 /*                                                        |     |     |     */
 /* Abstract method                                        |     |     |     */
-#define ZEND_ACC_ABSTRACT                (1 <<  6) /*  X  |  X  |     |     */
+#define ZEND_ACC_ABSTRACT                (1 <<  6) /*  X  |  X  |  X  |     */
 #define ZEND_ACC_EXPLICIT_ABSTRACT_CLASS (1 <<  6) /*  X  |     |     |     */
 /*                                                        |     |     |     */
 /* Readonly property                                      |     |     |     */
@@ -239,6 +236,15 @@ typedef struct _zend_oparray_context {
 /* Must not conflict with ZEND_ACC_ visibility flags      |     |     |     */
 /* or IS_CONSTANT_VISITED_MARK                            |     |     |     */
 #define ZEND_CLASS_CONST_IS_CASE         (1 << 6)  /*     |     |     |  X  */
+/*                                                        |     |     |     */
+/* Property Flags (unused: 9...)                          |     |     |     */
+/* ===========                                            |     |     |     */
+/*                                                        |     |     |     */
+/* Promoted property / parameter                          |     |     |     */
+#define ZEND_ACC_PROMOTED                (1 <<  7) /*     |     |  X  |     */
+/*                                                        |     |     |     */
+/* Virtual property without backing storage               |     |     |     */
+#define ZEND_ACC_VIRTUAL                 (1 <<  8) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Class Flags (unused: 21,30,31)                         |     |     |     */
 /* ===========                                            |     |     |     */
@@ -304,7 +310,7 @@ typedef struct _zend_oparray_context {
 /* Class cannot be serialized or unserialized             |     |     |     */
 #define ZEND_ACC_NOT_SERIALIZABLE        (1 << 29) /*  X  |     |     |     */
 /*                                                        |     |     |     */
-/* Function Flags (unused: 28-30)                         |     |     |     */
+/* Function Flags (unused: 29-30)                         |     |     |     */
 /* ==============                                         |     |     |     */
 /*                                                        |     |     |     */
 /* deprecation flag                                       |     |     |     */
@@ -363,6 +369,9 @@ typedef struct _zend_oparray_context {
 /* supports opcache compile-time evaluation (funcs)       |     |     |     */
 #define ZEND_ACC_COMPILE_TIME_EVAL       (1 << 27) /*     |  X  |     |     */
 /*                                                        |     |     |     */
+/* accessor method is automatically implemented           |     |     |     */
+#define ZEND_ACC_AUTO_PROP               (1 << 28) /*     |  X  |     |     */
+/*                                                        |     |     |     */
 /* op_array uses strict mode types                        |     |     |     */
 #define ZEND_ACC_STRICT_TYPES            (1U << 31) /*    |  X  |     |     */
 
@@ -382,6 +391,11 @@ typedef struct _zend_oparray_context {
 
 char *zend_visibility_string(uint32_t fn_flags);
 
+#define ZEND_ACCESSOR_GET 0
+#define ZEND_ACCESSOR_SET 1
+#define ZEND_ACCESSOR_COUNT 2
+#define ZEND_ACCESSOR_STRUCT_SIZE (sizeof(zend_function) * ZEND_ACCESSOR_COUNT)
+
 typedef struct _zend_property_info {
 	uint32_t offset; /* property offset for object properties or
 	                      property index for static properties */
@@ -391,6 +405,7 @@ typedef struct _zend_property_info {
 	HashTable *attributes;
 	zend_class_entry *ce;
 	zend_type type;
+	zend_function **accessors;
 } zend_property_info;
 
 #define OBJ_PROP(obj, offset) \
