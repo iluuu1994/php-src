@@ -163,6 +163,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_TRAIT         "'trait'"
 %token <ident> T_INTERFACE     "'interface'"
 %token <ident> T_ENUM          "'enum'"
+%token <ident> T_TYPEALIAS     "'typealias'"
 %token <ident> T_EXTENDS       "'extends'"
 %token <ident> T_IMPLEMENTS    "'implements'"
 %token <ident> T_NAMESPACE     "'namespace'"
@@ -270,6 +271,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
+%type <ast> typealias_declaration_statement
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier optional_visibility_modifier
@@ -369,6 +371,7 @@ attributed_statement:
 	|	trait_declaration_statement			{ $$ = $1; }
 	|	interface_declaration_statement		{ $$ = $1; }
 	|	enum_declaration_statement			{ $$ = $1; }
+	|	typealias_declaration_statement		{ $$ = $1; }
 ;
 
 top_statement:
@@ -629,6 +632,11 @@ interface_extends_list:
 implements_list:
 		%empty		        		{ $$ = NULL; }
 	|	T_IMPLEMENTS class_name_list	{ $$ = $2; }
+;
+
+typealias_declaration_statement:
+		T_TYPEALIAS T_STRING { $<num>$ = CG(zend_lineno); } '=' type_expr ';'
+			{ $$ = zend_ast_create_decl(ZEND_AST_TYPEALIAS, 0, $<num>3, NULL, zend_ast_get_str($2), $5, NULL, NULL, NULL, NULL); }
 ;
 
 foreach_variable:

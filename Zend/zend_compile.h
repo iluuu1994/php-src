@@ -238,7 +238,7 @@ typedef struct _zend_oparray_context {
 /* ZEND_ACC_ visibility flags or IS_CONSTANT_VISITED_MARK |     |     |     */
 #define ZEND_CLASS_CONST_IS_CASE         (1 << 6)  /*     |     |     |  X  */
 /*                                                        |     |     |     */
-/* Class Flags (unused: 29...)                            |     |     |     */
+/* Class Flags (unused: 30...)                            |     |     |     */
 /* ===========                                            |     |     |     */
 /*                                                        |     |     |     */
 /* Special class types                                    |     |     |     */
@@ -246,6 +246,7 @@ typedef struct _zend_oparray_context {
 #define ZEND_ACC_TRAIT                   (1 <<  1) /*  X  |     |     |     */
 #define ZEND_ACC_ANON_CLASS              (1 <<  2) /*  X  |     |     |     */
 #define ZEND_ACC_ENUM                    (1 << 28) /*  X  |     |     |     */
+#define ZEND_ACC_TYPEALIAS               (1 << 29) /*  X  |     |     |     */
 /*                                                        |     |     |     */
 /* Class linked with parent, interfaces and traits        |     |     |     */
 #define ZEND_ACC_LINKED                  (1 <<  3) /*  X  |     |     |     */
@@ -947,6 +948,7 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 
 #define ZEND_INTERNAL_CLASS         1
 #define ZEND_USER_CLASS             2
+#define ZEND_TYPEDEF_CLASS          3
 
 #define ZEND_EVAL				(1<<0)
 #define ZEND_INCLUDE			(1<<1)

@@ -1538,6 +1538,10 @@ NEWLINE ("\r"|"\n"|"\r\n")
 	RETURN_TOKEN_WITH_IDENT(T_TRAIT);
 }
 
+<ST_IN_SCRIPTING>"typealias" {
+	RETURN_TOKEN_WITH_IDENT(T_TYPEALIAS);
+}
+
 /*
  * The enum keyword must be followed by whitespace and another identifier.
  * This avoids the BC break of using enum in classes, namespaces, functions and constants.

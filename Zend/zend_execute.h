@@ -420,6 +420,7 @@ ZEND_API int ZEND_FASTCALL zend_handle_undef_args(zend_execute_data *call);
 
 ZEND_API bool zend_verify_property_type(zend_property_info *info, zval *property, bool strict);
 ZEND_COLD void zend_verify_property_type_error(zend_property_info *info, zval *property);
+ZEND_API void zend_type_resolve_typealias(zend_type *old_type, bool release_old_type);
 
 #define ZEND_REF_ADD_TYPE_SOURCE(ref, source) \
 	zend_ref_add_type_source(&ZEND_REF_TYPE_SOURCES(ref), source)

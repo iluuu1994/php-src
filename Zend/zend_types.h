@@ -149,8 +149,10 @@ typedef struct {
 #define _ZEND_TYPE_CACHE_BIT (1u << 21)
 /* Whether the type list is arena allocated */
 #define _ZEND_TYPE_ARENA_BIT (1u << 20)
+/* Whether typealiases were replaced with the concrete types */
+#define _ZEND_TYPE_RESOLVED (1u << 19)
 /* Type mask excluding the flags above. */
-#define _ZEND_TYPE_MAY_BE_MASK ((1u << 20) - 1)
+#define _ZEND_TYPE_MAY_BE_MASK ((1u << 19) - 1)
 /* Must have same value as MAY_BE_NULL */
 #define _ZEND_TYPE_NULLABLE_BIT 0x2u
 
@@ -174,6 +176,9 @@ typedef struct {
 
 #define ZEND_TYPE_USES_ARENA(t) \
 	((((t).type_mask) & _ZEND_TYPE_ARENA_BIT) != 0)
+
+#define ZEND_TYPE_RESOLVED(t) \
+	((((t).type_mask) & _ZEND_TYPE_RESOLVED) != 0)
 
 #define ZEND_TYPE_IS_ONLY_MASK(t) \
 	(ZEND_TYPE_IS_SET(t) && (t).ptr == NULL)

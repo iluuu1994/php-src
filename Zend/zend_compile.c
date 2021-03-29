@@ -1877,6 +1877,8 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 	ce->enum_backing_type = IS_UNDEF;
 	ce->backed_enum_table = NULL;
 
+	ce->typealias_type = (zend_type) ZEND_TYPE_INIT_NONE(0);
+
 	if (nullify_handlers) {
 		ce->constructor = NULL;
 		ce->destructor = NULL;
@@ -4613,7 +4615,7 @@ void zend_compile_static_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 }
 /* }}} */
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel);
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel);
 
 void zend_compile_new(znode *result, zend_ast *ast) /* {{{ */
 {
@@ -7452,7 +7454,7 @@ static void zend_compile_enum_backing_type(zend_class_entry *ce, zend_ast *enum_
 	zend_hash_init(ce->backed_enum_table, 0, NULL, ZVAL_PTR_DTOR, 0);
 }
 
-void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{ */
+zend_class_entry *zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
 	zend_ast *extends_ast = decl->child[0];
@@ -7578,7 +7580,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 					if (zend_try_early_bind(ce, parent_ce, lcname, NULL)) {
 						CG(zend_lineno) = ast->lineno;
 						zend_string_release(lcname);
-						return;
+						return ce;
 					}
 					CG(zend_lineno) = ast->lineno;
 				}
@@ -7586,7 +7588,7 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 				zend_string_release(lcname);
 				zend_build_properties_info_table(ce);
 				ce->ce_flags |= ZEND_ACC_LINKED;
-				return;
+				return ce;
 			}
 		} else if (!extends_ast) {
 			/* Link unbound simple class */
@@ -7640,8 +7642,59 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 			opline->result.opline_num = -1;
 		}
 	}
+
+	return ce;
 }
 /* }}} */
+
+void zend_typealias_string_disallow_name(zend_string *name, zend_string *disallowed_name)
+{
+	if (zend_string_equals_ci(name, disallowed_name)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "%s cannot be used in typealiases", ZSTR_VAL(disallowed_name));
+	}
+}
+
+void zend_typealias_type_disallow_name(zend_type type, zend_string *disallowed_name)
+{
+	if (!ZEND_TYPE_HAS_CLASS(type)) {
+		return;
+	}
+
+	if (ZEND_TYPE_HAS_LIST(type)) {
+		zend_type *list_type;
+		ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
+			zend_typealias_string_disallow_name(ZEND_TYPE_NAME(*list_type), disallowed_name);
+		} ZEND_TYPE_LIST_FOREACH_END();
+	} else {
+		zend_typealias_string_disallow_name(ZEND_TYPE_NAME(type), disallowed_name);
+	}
+}
+
+void zend_compile_typealias_decl(zend_ast *ast)
+{
+	zend_ast_decl *decl = (zend_ast_decl *) ast;
+	zend_ast *type_ast = decl->child[0];
+
+	// Remove type AST to avoid conflict with class AST
+	decl->child[0] = NULL;
+
+	zend_class_entry *ce = zend_compile_class_decl(NULL, ast, 1);
+	ce->ce_flags |= ZEND_ACC_TYPEALIAS|ZEND_ACC_FINAL|ZEND_ACC_ABSTRACT;
+	ce->typealias_type = zend_compile_typename(type_ast, 0);
+
+	if (ZEND_TYPE_FULL_MASK(ce->typealias_type) & MAY_BE_VOID) {
+		zend_error_noreturn(E_COMPILE_ERROR, "void cannot be used in typealiases");
+	}
+	if (ZEND_TYPE_FULL_MASK(ce->typealias_type) & MAY_BE_STATIC) {
+		zend_error_noreturn(E_COMPILE_ERROR, "static cannot be used in typealiases");
+	}
+	// FIXME: Add never once merged into master
+
+	zend_typealias_type_disallow_name(ce->typealias_type, ZSTR_KNOWN(ZEND_STR_SELF));
+	zend_typealias_type_disallow_name(ce->typealias_type, ZSTR_KNOWN(ZEND_STR_PARENT));
+
+	decl->child[0] = type_ast;
+}
 
 static void zend_compile_enum_case(zend_ast *ast)
 {
@@ -9719,6 +9772,9 @@ void zend_compile_stmt(zend_ast *ast) /* {{{ */
 			break;
 		case ZEND_AST_CLASS:
 			zend_compile_class_decl(NULL, ast, 0);
+			break;
+		case ZEND_AST_TYPEALIAS:
+			zend_compile_typealias_decl(ast);
 			break;
 		case ZEND_AST_GROUP_USE:
 			zend_compile_group_use(ast);

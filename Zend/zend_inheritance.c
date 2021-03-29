@@ -459,6 +459,13 @@ static inheritance_status zend_perform_covariant_type_check(
 		zend_class_entry *fe_scope, zend_type fe_type,
 		zend_class_entry *proto_scope, zend_type proto_type) /* {{{ */
 {
+	if (fe_scope->type == ZEND_USER_CLASS) {
+		zend_type_resolve_typealias(&fe_type, 0);
+	}
+	if (proto_scope->type == ZEND_USER_CLASS) {
+		zend_type_resolve_typealias(&proto_type, 0);
+	}
+
 	ZEND_ASSERT(ZEND_TYPE_IS_SET(fe_type) && ZEND_TYPE_IS_SET(proto_type));
 
 	/* Builtin types may be removed, but not added */

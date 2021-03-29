@@ -557,6 +557,8 @@ EMPTY_SWITCH_DEFAULT_CASE()
 	_(ZEND_STR_FROM,                   "from") \
 	_(ZEND_STR_TRYFROM,                "tryFrom") \
 	_(ZEND_STR_TRYFROM_LOWERCASE,      "tryfrom") \
+	_(ZEND_STR_SELF,                   "self") \
+	_(ZEND_STR_PARENT,                 "parent") \
 
 
 typedef enum _zend_known_string_id {

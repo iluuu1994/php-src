@@ -359,6 +359,9 @@ ZEND_API void destroy_zend_class(zval *zv)
 				if (ce->backed_enum_table) {
 					zend_hash_release(ce->backed_enum_table);
 				}
+				if (ce->ce_flags & ZEND_ACC_TYPEALIAS) {
+					zend_type_release(ce->typealias_type, 1);
+				}
 
 				if (ce->num_interfaces > 0 && !(ce->ce_flags & ZEND_ACC_RESOLVED_INTERFACES)) {
 					uint32_t i;
