@@ -95,6 +95,7 @@ ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_invalid_class_const
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_object_released_while_assigning_to_property_error(const zend_property_info *info);
 
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_cannot_add_element(void);
+ZEND_API ZEND_COLD void ZEND_FASTCALL zend_undefined_offset_delayed(zend_long lval);
 
 ZEND_API bool ZEND_FASTCALL zend_asymmetric_property_has_set_access(const zend_property_info *prop_info);
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_asymmetric_visibility_property_modification_error(const zend_property_info *prop_info, const char *operation);

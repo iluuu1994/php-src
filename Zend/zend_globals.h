@@ -264,6 +264,7 @@ struct _zend_executor_globals {
 	zend_object *exception;
 	const zend_op *opline_before_exception;
 	zend_op exception_op[3];
+	zend_op delayed_error_op[3];
 
 	struct _zend_module_entry *current_module;
 
@@ -321,6 +322,7 @@ struct _zend_executor_globals {
 	pid_t pid;
 	struct sigaction oldact;
 #endif
+	HashTable delayed_errors;
 
 	zend_strtod_state strtod_state;
 
