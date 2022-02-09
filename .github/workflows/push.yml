@@ -1,0 +1,30 @@
+name: Push
+on:
+  push:
+    ignore-paths:
+    - docs/*
+    - NEWS
+    - UPGRADING
+    - UPGRADING.INTERNALS
+    - README.md
+    - CONTRIBUTING.md
+    - CODING_STANDARDS.md
+jobs:
+  generate-matrix:
+    name: Generate Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generate Build Matrix
+        id: set-matrix
+        run: php .github/matrix.php "${{ github.event_name }}"
+  test:
+    needs: generate-matrix
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: false
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix['runs-on'] }}
+    steps: ${{ matrix.steps }}
