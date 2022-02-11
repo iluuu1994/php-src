@@ -1,35 +1,32 @@
-name: Push
+name: Nightly
+# Update to only run on a schedule
 on:
   push:
     ignore-paths:
-      - docs/*
-      - NEWS
-      - UPGRADING
-      - UPGRADING.INTERNALS
-      - README.md
-      - CONTRIBUTING.md
-      - CODING_STANDARDS.md
-    # Ignore while testing nightly
-    branches-ignore:
-      - '**'
+    - docs/*
+    - NEWS
+    - UPGRADING
+    - UPGRADING.INTERNALS
+    - README.md
+    - CONTRIBUTING.md
+    - CODING_STANDARDS.md
 jobs:
+  generate-matrix:
+    name: Generate Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Generate Build Matrix
+        id: set-matrix
+        run: php .github/nightly_matrix.php
   test:
+    needs: generate-matrix
     strategy:
-      matrix:
-        include:
-          - name: LINUX_X64_DEBUG_NTS
-            arch: linux-x64
-            configurationParameters: --enable-debug --disable-zts
-          - name: LINUX_X64_RELEASE_ZTS
-            arch: linux-x64
-            configurationParameters: --disable-debug --enable-zts
-          # apt broken, not sure why
-          # - name: LINUX_I386_DEBUG_ZTS
-          #   arch: linux-i386
-          #   configurationParameters: --enable-debug --disable-zts
-          - name: MACOS_DEBUG_NTS
-            arch: macos
-            configurationParameters: --enable-debug --disable-zts
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
     name: ${{ matrix.name }}
     runs-on: ${{ startsWith(matrix['arch'], 'linux-') && 'ubuntu-20.04' || 'macOS-10.15' }}
@@ -38,6 +35,9 @@ jobs:
     steps:
       - name: git checkout
         uses: actions/checkout@v2
+        # Only test on current branch until merged
+        # with:
+        #   ref: ${{ matrix.branch }}
       - name: Create mssql container
         if: ${{ env.ARCH != 'macos' }}
         uses: ./.github/actions/mssql
@@ -53,7 +53,7 @@ jobs:
           if [ "$ARCH" == "macos" ]; then
             export PATH="/usr/local/opt/bison/bin:$PATH"
           fi
-          make ${{ env.ARCH != 'macos' && '-j$(/usr/bin/nproc)' || '-j$(sysctl -n hw.logicalcpu)' }} >/dev/null
+          make -j$(${{ env.ARCH != 'macos' && '/usr/bin/nproc' || 'sysctl -n hw.logicalcpu' }}) >/dev/null
       - name: make install
         uses: ./.github/actions/install
       - name: Setup

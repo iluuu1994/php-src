@@ -14,14 +14,14 @@ runs:
     - name: Tracing JIT
       uses: ./.github/actions/test
       with:
-        runTestsParameters: '${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }} -d opcache.jit_buffer_size=16M'
+        runTestsParameters: "${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }} -d opcache.jit_buffer_size=16M"
     - name: OpCache
       if: ${{ inputs.extended }}
       uses: ./.github/actions/test
       with:
-        runTestsParameters: '${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }}'
+        runTestsParameters: "${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }}"
     - name: Function JIT
       if: ${{ inputs.extended }}
       uses: ./.github/actions/test
       with:
-        runTestsParameters: '${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }} -d opcache.jit_buffer_size=16M -d opcache.jit=1205'
+        runTestsParameters: "${{ inputs.runTestsParameters }} -d zend_extension=opcache.so ${{ env.ARCH == 'macos' && '-d opcache.protect_memory=1' }} -d opcache.jit_buffer_size=16M -d opcache.jit=1205"
