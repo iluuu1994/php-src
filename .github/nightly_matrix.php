@@ -73,11 +73,11 @@ function get_branch_matrix($branches) {
         $branch_key = strtoupper(str_replace('.', '', $branch));
         return [
             'name' => $branch_key,
-            'branch' => $branch,
+            'ref' => $branch,
         ];
     }, $branches);
 
-    return ['branches' => $result];
+    return ['branch' => $result];
 }
 
 $branches = get_branches();

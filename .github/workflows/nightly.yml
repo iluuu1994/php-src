@@ -65,20 +65,20 @@ jobs:
   #         extended: ${{ inputs.extendedTests }}
   #         runTestsParameters: ${{ inputs.runTestsParameters }}
   debug_zts_msan:
-    needs: generate_matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-      fail-fast: false
-    name: ${{ matrix.name }}
+    # needs: generate_matrix
+    # strategy:
+    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+    #   fail-fast: false
+    # name: ${{ matrix.branch.name }}
     runs-on: ubuntu-20.04
     env:
-      arch: linux-x64
+      ARCH: linux-x64
     steps:
       - name: git checkout
         uses: actions/checkout@v2
         # Only test on current branch until merged
         # with:
-        #   ref: ${{ matrix.branch }}
+        #   ref: ${{ matrix.branch.ref }}
       - name: Install dependencies
         uses: ./.github/actions/deps
       - name: ./configure
@@ -91,7 +91,7 @@ jobs:
           # so we should avoiding linking against anything but libc here
           ./configure \
             --enable-debug \
-            --enable-zts
+            --enable-zts \
             --enable-option-checking=fatal \
             --prefix=/usr \
             --without-sqlite3 \
@@ -143,20 +143,20 @@ jobs:
           extended: false
           runTestsParameters: '--msan'
   community:
-    needs: generate_matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-      fail-fast: false
-    name: ${{ matrix.name }}
+    # needs: generate_matrix
+    # strategy:
+    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+    #   fail-fast: false
+    # name: ${{ matrix.branch.name }}
     runs-on: ubuntu-20.04
     env:
-      arch: linux-x64
+      ARCH: linux-x64
     steps:
       - name: git checkout
         uses: actions/checkout@v2
         # Only test on current branch until merged
         # with:
-        #   ref: ${{ matrix.branch }}
+        #   ref: ${{ matrix.branch.ref }}
       - name: Install dependencies
         uses: ./.github/actions/deps
       - name: ./configure
@@ -179,11 +179,6 @@ jobs:
         run: |
           sudo service mysql start
           mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
-      - name: Test
-        uses: ./.github/actions/tests
-        with:
-          extended: false
-          runTestsParameters: '--msan'
       - name: Test Laravel
         run: |
           git clone https://github.com/laravel/framework.git --branch=master --depth=1
@@ -253,20 +248,20 @@ jobs:
           sed -i 's/PHP_SAPI/"cli-server"/g' var/cache/dev/App_KernelDevDebugContainer.preload.php
           php -d opcache.preload=var/cache/dev/App_KernelDevDebugContainer.preload.php public/index.php
   coverage:
-    needs: generate_matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-      fail-fast: false
-    name: ${{ matrix.name }}
+    # needs: generate_matrix
+    # strategy:
+    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+    #   fail-fast: false
+    # name: ${{ matrix.branch.name }}
     runs-on: ubuntu-20.04
     env:
-      arch: linux-x64
+      ARCH: linux-x64
     steps:
       - name: git checkout
         uses: actions/checkout@v2
         # Only test on current branch until merged
         # with:
-        #   ref: ${{ matrix.branch }}
+        #   ref: ${{ matrix.branch.ref }}
       - name: Create mssql container
         uses: ./.github/actions/mssql
       - name: Install dependencies
@@ -303,20 +298,20 @@ jobs:
       #     codeCoverageTool: 'Cobertura'
       #     summaryFileLocation: coverage.xml
   opcache_variation:
-    needs: generate_matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-      fail-fast: false
-    name: ${{ matrix.name }}
+    # needs: generate_matrix
+    # strategy:
+    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+    #   fail-fast: false
+    # name: ${{ matrix.branch.name }}
     runs-on: ubuntu-20.04
     env:
-      arch: linux-x64
+      ARCH: linux-x64
     steps:
       - name: git checkout
         uses: actions/checkout@v2
         # Only test on current branch until merged
         # with:
-        #   ref: ${{ matrix.branch }}
+        #   ref: ${{ matrix.branch.ref }}
       - name: Create mssql container
         uses: ./.github/actions/mssql
       - name: Install dependencies
@@ -331,57 +326,53 @@ jobs:
         uses: ./.github/actions/install
       - name: Setup
         uses: ./.github/actions/setup
-      - name: Test
+      - name: Test File Cache (prime shm)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-prime
-      - name: Test
+      - name: Test File Cache (prime shm, use shm)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-use
-      - name: Test
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-use
-      - name: Test
+      - name: Test File Cache (prime shm, use file)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
-      - name: Test
+      - name: Test File Cache (prime file)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-prime -d opcache.file_cache_only=1
-      - name: Test
+      - name: Test File Cache (prime file, use file)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
-      - name: Test
+      - name: Test File Cache (prime file, use shm)
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --file-cache-use
-      - name: Test
+      - name: Test Without interned strings
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so -d opcache.interned_strings_buffer=0
-      - name: Test
+      - name: Test Preload
         uses: ./.github/actions/test
         with:
           runTestsParameters: -d zend_extension=opcache.so --preload
   libmysqlclient_debug_nts:
-    needs: generate_matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-      fail-fast: false
-    name: ${{ matrix.name }}
+    # needs: generate_matrix
+    # strategy:
+    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+    #   fail-fast: false
+    # name: ${{ matrix.branch.name }}
     runs-on: ubuntu-20.04
     env:
-      arch: linux-x64
+      ARCH: linux-x64
     steps:
       - name: git checkout
         uses: actions/checkout@v2
         # Only test on current branch until merged
         # with:
-        #   ref: ${{ matrix.branch }}
+        #   ref: ${{ matrix.branch.ref }}
       - name: Install dependencies
         run: |
           sudo apt-get update -y | true
@@ -400,11 +391,9 @@ jobs:
       #     libmysql: mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz
       - uses: ./.github/actions/libmysql-test
         with:
-          runTestsParameters: -d zend_extension=opcache.so --preload
-      - uses: ./.github/actions/libmysql-test
-        with:
           configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 5.7.35
           libmysql: mysql-5.7.35-linux-glibc2.12-x86_64.tar.gz
+          configurationParameters: --enable-debug --disable-zts
       - uses: ./.github/actions/libmysql-test
         with:
           configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 8.0.27
