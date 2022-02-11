@@ -15,23 +15,52 @@ jobs:
       matrix:
         include:
           - name: LINUX_X64_DEBUG_NTS
-            action: linux-x64
+            arch: linux-x64
+            runs-on: ubuntu-20.04
             configurationParameters: --enable-debug --disable-zts
           - name: LINUX_X64_RELEASE_ZTS
-            action: linux-x64
+            arch: linux-x64
+            runs-on: ubuntu-20.04
             configurationParameters: --disable-debug --enable-zts
           # apt broken, not sure why
           # - name: LINUX_I386_DEBUG_ZTS
-          #   action: linux-i386
+          #   arch: linux-i386
+          #   runs-on: ubuntu-20.04
           #   configurationParameters: --enable-debug --disable-zts
           - name: MACOS_DEBUG_NTS
-            action: macos
+            arch: macos
+            runs-on: macOS-10.15
             configurationParameters: --enable-debug --disable-zts
       fail-fast: false
     name: ${{ matrix.name }}
     runs-on: ${{ matrix['runs-on'] }}
+    env:
+      ARCH: ${{ matrix.arch }}
     steps:
-      - uses: ${{ matrix.action }}
+      - name: git checkout
+        uses: actions/checkout@v2
+      - name: Create mssql container
+        if: ${{ env.ARCH != 'macos' }}
+        uses: ./.github/actions/mssql
+      - name: Install dependencies
+        uses: ./.github/actions/deps
+      - name: ./configure
+        uses: ./.github/actions/configure
         with:
           configurationParameters: ${{ matrix.configurationParameters }}
-          extendedTests: false
+      - name: make
+        shell: bash
+        run: |
+          if [ "$ARCH" == "macos" ]; then
+            export PATH="/usr/local/opt/bison/bin:$PATH"
+          fi
+          make ${{ env.ARCH != 'macos' && '-j$(/usr/bin/nproc)' || '-j$(sysctl -n hw.logicalcpu)' }} >/dev/null
+      - name: make install
+        uses: ./.github/actions/install
+      - name: Setup
+        if: ${{ env.ARCH != 'macos' }}
+        uses: ./.github/actions/setup
+      - name: Test
+        uses: ./.github/actions/tests
+        with:
+          extended: ${{ inputs.extendedTests }}
