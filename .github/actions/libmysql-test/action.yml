@@ -1,0 +1,64 @@
+name: libmysqlclient test
+inputs:
+  configurationName:
+    default: ''
+    required: false
+  configurationParameters:
+    default: ''
+    required: false
+  libmysql:
+    default: ''
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Build ${{ inputs.configurationName }}
+      if: always()
+      shell: bash
+      run: |
+        set -e
+        LIBMYSQL=${{ inputs.libmysql }}
+        MYSQL_BASE=${LIBMYSQL%%-linux-*}
+        MYSQL_VERSION=${MYSQL_BASE#*-}
+        MYSQL_DIR=$HOME/$MYSQL_BASE
+        mkdir -p $MYSQL_DIR
+        URL=https://cdn.mysql.com/Downloads/MySQL-${MYSQL_VERSION%.*}/$LIBMYSQL
+        wget -nv $URL
+        tar -xf $LIBMYSQL --strip-components=1 -C $MYSQL_DIR
+        PDO_MYSQL=${MYSQL_DIR}
+        MYSQLI=${MYSQL_DIR}/bin/mysql_config
+        ./buildconf --force
+        ./configure ${{ inputs.configurationParameters }} \
+          --enable-option-checking=fatal \
+          --disable-all \
+          --enable-pdo \
+          --with-pdo-mysql=${PDO_MYSQL} \
+          --with-mysqli=${MYSQLI}
+        make clean
+        make -j$(/usr/bin/nproc) >/dev/null
+    - name: Test ${{ inputs.configurationName }}
+      if: always()
+      shell: bash
+      run: |
+        export MYSQL_TEST_USER=root
+        export MYSQL_TEST_PASSWD=root
+        export PDO_MYSQL_TEST_DSN="mysql:host=127.0.0.1;dbname=test"
+        export PDO_MYSQL_TEST_HOST=127.0.0.1
+        export PDO_MYSQL_TEST_USER=root
+        export PDO_MYSQL_TEST_PASS=root
+        export TEST_PHP_JUNIT=junit.xml
+        export REPORT_EXIT_STATUS=no
+        rm -rf junit.xml | true
+        sapi/cli/php run-tests.php -P -q \
+          -g FAIL,XFAIL,BORK,WARN,LEAK,XLEAK,SKIP \
+          --offline --show-diff --show-slow 1000 --set-timeout 120 \
+          ext/pdo_mysql
+    # FIXME
+    # - task: PublishTestResults@2
+    #   inputs:
+    #     testResultsFormat: 'JUnit'
+    #     testResultsFiles: junit.xml
+    #     testRunTitle: '${{ inputs.configurationName }}'
+    #     failTaskOnFailedTests: true
+    #   displayName: 'Export ${{ inputs.configurationName }} Results'
+    #   condition: or(succeeded(), failed())

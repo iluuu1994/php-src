@@ -13,14 +13,15 @@ function get_branches() {
     });
 }
 
-function get_matrix() {
+function get_test_matrix($branches) {
     $result = [];
 
-    foreach (get_branches() as $branch) {
+    foreach ($branches as $branch) {
+        $branch_key = strtoupper(str_replace('.', '', $branch));
+
         foreach (ARCHES as $arch) {
             foreach ([true, false] as $debug) {
                 foreach ([true, false] as $zts) {
-                    $branch_key = strtoupper(str_replace('.', '', $branch));
                     $arch_key = strtoupper($arch);
                     $debug_key = $debug ? 'DEBUG' : 'RELEASE';
                     $zts_key = $zts ? 'ZTS' : 'NTS';
@@ -39,9 +40,46 @@ function get_matrix() {
                 }
             }
         }
+
+        $result[] = [
+            'name' => $branch_key . '_LINUX_X64_DEBUG_ZTS_ASAN_UBSAN',
+            'branch' => $branch,
+            'arch' => 'linux-x64',
+            'configurationParameters' => '--enable-debug --enable-zts --enable-address-sanitizer --enable-undefined-sanitizer',
+            'runTestsParameters' => '--asan',
+        ];
+
+        $result[] = [
+            'name' => $branch_key . '_LINUX_X64_DEBUG_NTS_REPEAT',
+            'branch' => $branch,
+            'arch' => 'linux-x64',
+            'configurationParameters' => '--enable-debug --disable-zts',
+            'runTestsParameters' => '--repeat 2',
+        ];
+
+        $result[] = [
+            'name' => $branch_key . '_LINUX_X64_VARIATION_DEBUG_ZTS',
+            'branch' => $branch,
+            'arch' => 'linux-x64',
+            'configurationParameters' => '--enable-debug --enable-zts CFLAGS="-DZEND_RC_DEBUG=1 -DPROFITABILITY_CHECKS=0 -DZEND_VERIFY_FUNC_INFO=1"',
+        ];
     }
 
     return ['include' => $result];
 }
 
-echo '::set-output name=matrix::' . json_encode(get_matrix(), JSON_UNESCAPED_SLASHES) . "\n";
+function get_branch_matrix($branches) {
+    $result = array_map(function ($branch) {
+        $branch_key = strtoupper(str_replace('.', '', $branch));
+        return [
+            'name' => $branch_key,
+            'branch' => $branch,
+        ];
+    }, $branches);
+
+    return ['branches' => $result];
+}
+
+$branches = get_branches();
+echo '::set-output name=branch_matrix::' . json_encode(get_branch_matrix($branches), JSON_UNESCAPED_SLASHES) . "\n";
+echo '::set-output name=test_matrix::' . json_encode(get_test_matrix($branches), JSON_UNESCAPED_SLASHES) . "\n";
