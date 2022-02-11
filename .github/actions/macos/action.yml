@@ -1,0 +1,31 @@
+name: macos
+inputs:
+  configurationParameters:
+    required: true
+  extendedTests:
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: git checkout
+      uses: actions/checkout@v2
+    - name: brew
+      uses: ./.github/actions/brew
+    - name: ./configure
+      uses: ./.github/actions/configure-macos
+      with:
+        configurationParameters: ${{ inputs.configurationParameters }}
+    - name: make
+      shell: bash
+      run: |
+        export PATH="/usr/local/opt/bison/bin:$PATH"
+        make -j$(sysctl -n hw.logicalcpu) >/dev/null
+    - name: make
+      shell: bash
+      run: sudo make install
+    - name: Setup
+      uses: ./.github/actions/setup-x64
+    - name: Test
+      uses: ./.github/actions/tests-linux
+      with:
+        extended: ${{ inputs.extendedTests }}

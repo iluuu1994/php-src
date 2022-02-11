@@ -10,21 +10,28 @@ on:
     - CONTRIBUTING.md
     - CODING_STANDARDS.md
 jobs:
-  generate-matrix:
-    name: Generate Build Matrix
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Generate Build Matrix
-        id: set-matrix
-        run: php .github/matrix.php "${{ github.event_name }}"
   test:
-    needs: generate-matrix
     strategy:
-      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      matrix:
+        include:
+          - name: LINUX_X64_DEBUG_NTS
+            action: linux-x64
+            configurationParameters: --enable-debug --disable-zts
+          - name: LINUX_X64_RELEASE_ZTS
+            action: linux-x64
+            configurationParameters: --disable-debug --enable-zts
+          # apt broken, not sure why
+          # - name: LINUX_I386_DEBUG_ZTS
+          #   action: linux-i386
+          #   configurationParameters: --enable-debug --disable-zts
+          - name: MACOS_DEBUG_NTS
+            action: macos
+            configurationParameters: --enable-debug --disable-zts
       fail-fast: false
     name: ${{ matrix.name }}
     runs-on: ${{ matrix['runs-on'] }}
-    steps: ${{ matrix.steps }}
+    steps:
+      - uses: ${{ matrix.action }}
+        with:
+          configurationParameters: ${{ matrix.configurationParameters }}
+          extendedTests: false
