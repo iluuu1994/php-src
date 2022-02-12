@@ -1,0 +1,118 @@
+name: ./configure
+inputs:
+  configuration-parameters:
+    required: false
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        if [ "$ARCH" == "macos" ]; then
+          export PATH="/usr/local/opt/bison/bin:$PATH"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/krb5/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libffi/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libxml2/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libxslt/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/zlib/lib/pkgconfig"
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/icu4c/lib/pkgconfig"
+        fi
+
+        ./buildconf --force
+
+        configureParameters=(
+          --enable-bcmath
+          --enable-calendar
+          --enable-dba
+          --enable-exif
+          --enable-fpm
+          --enable-ftp
+          --enable-gd
+          --enable-intl
+          --enable-mbstring
+          --enable-option-checking=fatal
+          --enable-pcntl
+          --enable-shmop
+          --enable-soap
+          --enable-sockets
+          --enable-sysvmsg
+          --enable-sysvsem
+          --enable-sysvshm
+          --enable-werror
+          --enable-xmlreader
+          --enable-zend-test
+          --prefix=${{ env.ARCH != 'macos' && '/usr' || '/usr/local' }}
+          --with-bz2${{ env.ARCH == 'macos' && '=/usr/local/opt/bzip2' || '' }}
+          --with-config-file-path=/etc
+          --with-config-file-scan-dir=/etc/php.d
+          --with-curl
+          --with-ffi
+          --with-freetype
+          --with-gettext${{ env.ARCH == 'macos' && '=/usr/local/opt/gettext' || '' }}
+          --with-gmp${{ env.ARCH == 'macos' && '=/usr/local/opt/gmp' || '' }}
+          --with-jpeg
+          --with-kerberos
+          --with-mhash
+          --with-mysqli=mysqlnd
+          --with-openssl
+          --with-pdo-mysql=mysqlnd
+          --with-pdo-pgsql${{ env.ARCH == 'macos' && '=/usr/local/opt/libpq' || '' }}
+          --with-pdo-sqlite
+          --with-pgsql${{ env.ARCH == 'macos' && '=/usr/local/opt/libpq' || '' }}
+          --with-pspell=${{ env.ARCH != 'macos' && '/usr' || '/usr/local/opt/aspell' }}
+          --with-readline${{ env.ARCH == 'macos' && '=/usr/local/opt/readline' || '' }}
+          --with-sodium
+          --with-tidy${{ env.ARCH == 'macos' && '=/usr/local/opt/tidyp' || '' }}
+          --with-webp
+          --with-xsl
+          --with-zip
+          --with-zlib
+          --without-pear
+          ${{ inputs.configuration-parameters }}
+        )
+
+        if [ "$ARCH" == "linux-x64" ]; then
+          configureParameters+=(
+            --enable-flatfile
+            --enable-inifile
+            --with-cdb
+            --with-enchant=/usr
+            --with-imap
+            --with-imap-ssl
+            --with-kerberos
+            --with-ldap
+            --with-ldap-sasl
+            --with-lmdb
+            --with-oci8=shared,instantclient,/opt/oracle/instantclient
+            --with-password-argon2
+            --with-pdo-dblib
+            --with-pdo-firebird
+            --with-pdo-oci=shared,instantclient,/opt/oracle/instantclient
+            --with-pdo-odbc=unixODBC,/usr
+            --with-qdbm
+            --with-snmp
+            --with-tcadb
+            --with-unixODBC
+          )
+        fi
+
+        if [ "$ARCH" == "linux-i386" ]; then
+          configureParameters+=(--build=i686-pc-linux-gnu)
+        fi
+
+        if [ "$ARCH" != "macos" ]; then
+          configureParameters+=(
+            --enable-phpdbg
+            --with-xpm
+            --with-zlib-dir=/usr
+          )
+        fi
+
+        if [ "$ARCH" == "macos" ]; then
+          configureParameters+=(
+            --with-iconv=/usr/local/opt/libiconv
+            --with-libxml
+          )
+        fi
+
+        ./configure "${configureParameters[@]}"
