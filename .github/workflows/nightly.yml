@@ -11,19 +11,19 @@ on:
     - CONTRIBUTING.md
     - CODING_STANDARDS.md
 jobs:
-  generate_matrix:
-    name: Generate Build Matrix
-    runs-on: ubuntu-latest
-    outputs:
-      test_matrix: ${{ steps.set-matrix.outputs.test_matrix }}
-      branch_matrix: ${{ steps.set-matrix.outputs.branch_matrix }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Generate Matrix
-        id: set_matrix
-        run: php .github/nightly_matrix.php
+  # generate_matrix:
+  #   name: Generate Build Matrix
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     test_matrix: ${{ steps.set-matrix.outputs.test_matrix }}
+  #     branch_matrix: ${{ steps.set-matrix.outputs.branch_matrix }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Generate Matrix
+  #       id: set_matrix
+  #       run: php .github/nightly_matrix.php
   # run_tests:
   #   needs: generate_matrix
   #   strategy:
@@ -64,189 +64,187 @@ jobs:
   #       with:
   #         extended: ${{ inputs.extendedTests }}
   #         runTestsParameters: ${{ inputs.runTestsParameters }}
-  debug_zts_msan:
-    # needs: generate_matrix
-    # strategy:
-    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-    #   fail-fast: false
-    # name: ${{ matrix.branch.name }}
-    runs-on: ubuntu-20.04
-    env:
-      ARCH: linux-x64
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v2
-        # Only test on current branch until merged
-        # with:
-        #   ref: ${{ matrix.branch.ref }}
-      - name: Install dependencies
-        uses: ./.github/actions/deps
-      - name: ./configure
-        run: |
-          export CC=clang
-          export CXX=clang++
-          export CFLAGS="-DZEND_TRACK_ARENA_ALLOC"
-          ./buildconf --force
-          # msan requires all used libraries to be instrumented,
-          # so we should avoiding linking against anything but libc here
-          ./configure \
-            --enable-debug \
-            --enable-zts \
-            --enable-option-checking=fatal \
-            --prefix=/usr \
-            --without-sqlite3 \
-            --without-pdo-sqlite \
-            --without-libxml \
-            --disable-dom \
-            --disable-simplexml \
-            --disable-xml \
-            --disable-xmlreader \
-            --disable-xmlwriter \
-            --without-pcre-jit \
-            --disable-opcache-jit \
-            --enable-phpdbg \
-            --enable-fpm \
-            --with-pdo-mysql=mysqlnd \
-            --with-mysqli=mysqlnd \
-            --disable-mysqlnd-compression-support \
-            --without-pear \
-            --enable-exif \
-            --enable-sysvsem \
-            --enable-sysvshm \
-            --enable-shmop \
-            --enable-pcntl \
-            --enable-mbstring \
-            --disable-mbregex \
-            --enable-sockets \
-            --enable-bcmath \
-            --enable-calendar \
-            --enable-ftp \
-            --enable-zend-test \
-            --enable-werror \
-            --enable-memory-sanitizer \
-            --with-config-file-path=/etc \
-            --with-config-file-scan-dir=/etc/php.d
-      - name: make
-        run: make -j$(/usr/bin/nproc) >/dev/null
-      - name: make install
-        uses: ./.github/actions/install
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: mysql
-        # FIXME: Can we reuse the setup action?
-        run: |
-          sudo service mysql start
-          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
-      - name: Test
-        uses: ./.github/actions/tests
-        with:
-          extended: false
-          runTestsParameters: '--msan'
-  community:
-    # needs: generate_matrix
-    # strategy:
-    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-    #   fail-fast: false
-    # name: ${{ matrix.branch.name }}
-    runs-on: ubuntu-20.04
-    env:
-      ARCH: linux-x64
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v2
-        # Only test on current branch until merged
-        # with:
-        #   ref: ${{ matrix.branch.ref }}
-      - name: Install dependencies
-        uses: ./.github/actions/deps
-      - name: ./configure
-        uses: ./.github/actions/configure
-        with:
-          configurationParameters: >-
-            --enable-debug --enable-zts --enable-address-sanitizer --enable-undefined-sanitizer
-            CFLAGS="-fno-sanitize-recover"
-      - name: make
-        run: make -j$(/usr/bin/nproc) >/dev/null
-      - name: make install
-        uses: ./.github/actions/install
-      - name: Enable OpCache and JIT
-        run: |
-          # Run with opcache to also catch optimizer bugs.
-          echo zend_extension=opcache.so > /etc/php.d/opcache.ini
-          echo opcache.jit_buffer_size=1G >> /etc/php.d/opcache.ini
-      - name: mysql
-        # FIXME: Can we reuse the setup action?
-        run: |
-          sudo service mysql start
-          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
-      - name: Test Laravel
-        run: |
-          git clone https://github.com/laravel/framework.git --branch=master --depth=1
-          cd framework
-          git rev-parse HEAD
-          php8.0 /usr/bin/composer install --no-progress
-          # Hack to disable a test that hangs on azure
-          sed -i 's/PHP_OS/"Darwin"/' tests/Filesystem/FilesystemTest.php
-          export USE_ZEND_ALLOC=0
-          export ASAN_OPTIONS=exitcode=139
-          php vendor/bin/phpunit
-          if [ $? -gt 128 ]; then
-            exit 1
-          fi
-      - name: Test Symfony
-        if: always()
-        run: |
-          git clone https://github.com/symfony/symfony.git --depth=1
-          cd symfony
-          git rev-parse HEAD
-          php8.0 /usr/bin/composer install --no-progress
-          php8.0 ./phpunit install
-          export USE_ZEND_ALLOC=0
-          export USE_TRACKED_ALLOC=1
-          export ASAN_OPTIONS=exitcode=139
-          export SYMFONY_DEPRECATIONS_HELPER=max[total]=999
-          X=0
-          for component in $(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist -printf '%h\n'); do
-            php ./phpunit $component --exclude-group tty,benchmark,intl-data,transient;
-            if [ $? -gt 128 ]; then
-              X=1;
-            fi
-          done
-          exit $X
-      - name: Test Amphp
-        if: always()
-        run: |
-          git clone https://github.com/amphp/amp.git --branch=master --depth=1
-          cd amp
-          git rev-parse HEAD
-          php /usr/bin/composer install --no-progress --ignore-platform-reqs
-          export USE_ZEND_ALLOC=0
-          sed -i 's/$exit = true/$exit = false/g' vendor/phpunit/phpunit/src/TextUI/Command.php
-          php vendor/bin/phpunit
-      - name: Test PHPUnit
-        if: always()
-        run: |
-          git clone https://github.com/sebastianbergmann/phpunit.git --branch=master --depth=1
-          cd phpunit
-          git rev-parse HEAD
-          export USE_ZEND_ALLOC=0
-          export USE_TRACKED_ALLOC=1
-          export ASAN_OPTIONS=exitcode=139
-          php8.0 /usr/bin/composer install --no-progress
-          php ./phpunit
-          if [ $? -gt 128 ]; then
-            exit 1
-          fi
-      - name: Symfony Preloading
-        if: always()
-        run: |
-          php8.0 /usr/bin/composer create-project symfony/symfony-demo symfony_demo --no-progress
-          cd symfony_demo
-          git rev-parse HEAD
-          export USE_ZEND_ALLOC=0
-          export USE_TRACKED_ALLOC=1
-          sed -i 's/PHP_SAPI/"cli-server"/g' var/cache/dev/App_KernelDevDebugContainer.preload.php
-          php -d opcache.preload=var/cache/dev/App_KernelDevDebugContainer.preload.php public/index.php
+  # debug_zts_msan:
+  #   # needs: generate_matrix
+  #   # strategy:
+  #   #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+  #   #   fail-fast: false
+  #   # name: ${{ matrix.branch.name }}
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     ARCH: linux-x64
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #       # Only test on current branch until merged
+  #       # with:
+  #       #   ref: ${{ matrix.branch.ref }}
+  #     - name: Install dependencies
+  #       uses: ./.github/actions/deps
+  #     - name: ./configure
+  #       run: |
+  #         export CC=clang
+  #         export CXX=clang++
+  #         export CFLAGS="-DZEND_TRACK_ARENA_ALLOC"
+  #         ./buildconf --force
+  #         # msan requires all used libraries to be instrumented,
+  #         # so we should avoiding linking against anything but libc here
+  #         ./configure \
+  #           --enable-debug \
+  #           --enable-zts \
+  #           --enable-option-checking=fatal \
+  #           --prefix=/usr \
+  #           --without-sqlite3 \
+  #           --without-pdo-sqlite \
+  #           --without-libxml \
+  #           --disable-dom \
+  #           --disable-simplexml \
+  #           --disable-xml \
+  #           --disable-xmlreader \
+  #           --disable-xmlwriter \
+  #           --without-pcre-jit \
+  #           --disable-opcache-jit \
+  #           --enable-phpdbg \
+  #           --enable-fpm \
+  #           --with-pdo-mysql=mysqlnd \
+  #           --with-mysqli=mysqlnd \
+  #           --disable-mysqlnd-compression-support \
+  #           --without-pear \
+  #           --enable-exif \
+  #           --enable-sysvsem \
+  #           --enable-sysvshm \
+  #           --enable-shmop \
+  #           --enable-pcntl \
+  #           --enable-mbstring \
+  #           --disable-mbregex \
+  #           --enable-sockets \
+  #           --enable-bcmath \
+  #           --enable-calendar \
+  #           --enable-ftp \
+  #           --enable-zend-test \
+  #           --enable-werror \
+  #           --enable-memory-sanitizer \
+  #           --with-config-file-path=/etc \
+  #           --with-config-file-scan-dir=/etc/php.d
+  #     - name: make
+  #       run: make -j$(/usr/bin/nproc) >/dev/null
+  #     - name: make install
+  #       uses: ./.github/actions/install
+  #     - name: Setup
+  #       # FIXME: Can we reuse the setup action?
+  #       run: |
+  #         sudo service mysql start
+  #         mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
+  #     - name: Test
+  #       uses: ./.github/actions/tests
+  #       with:
+  #         extended: false
+  #         runTestsParameters: '--msan'
+  # community:
+  #   # needs: generate_matrix
+  #   # strategy:
+  #   #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+  #   #   fail-fast: false
+  #   # name: ${{ matrix.branch.name }}
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     ARCH: linux-x64
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #       # Only test on current branch until merged
+  #       # with:
+  #       #   ref: ${{ matrix.branch.ref }}
+  #     - name: Install dependencies
+  #       uses: ./.github/actions/deps
+  #     - name: ./configure
+  #       uses: ./.github/actions/configure
+  #       with:
+  #         configurationParameters: >-
+  #           --enable-debug --enable-zts --enable-address-sanitizer --enable-undefined-sanitizer
+  #           CFLAGS="-fno-sanitize-recover"
+  #     - name: make
+  #       run: make -j$(/usr/bin/nproc) >/dev/null
+  #     - name: make install
+  #       uses: ./.github/actions/install
+  #     - name: Enable OpCache and JIT
+  #       run: |
+  #         # Run with opcache to also catch optimizer bugs.
+  #         echo zend_extension=opcache.so > /etc/php.d/opcache.ini
+  #         echo opcache.jit_buffer_size=1G >> /etc/php.d/opcache.ini
+  #     - name: mysql
+  #       # FIXME: Can we reuse the setup action?
+  #       run: |
+  #         sudo service mysql start
+  #         mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
+  #     - name: Test Laravel
+  #       run: |
+  #         git clone https://github.com/laravel/framework.git --branch=master --depth=1
+  #         cd framework
+  #         git rev-parse HEAD
+  #         php8.0 /usr/bin/composer install --no-progress
+  #         # Hack to disable a test that hangs on azure
+  #         sed -i 's/PHP_OS/"Darwin"/' tests/Filesystem/FilesystemTest.php
+  #         export USE_ZEND_ALLOC=0
+  #         export ASAN_OPTIONS=exitcode=139
+  #         php vendor/bin/phpunit
+  #         if [ $? -gt 128 ]; then
+  #           exit 1
+  #         fi
+  #     - name: Test Symfony
+  #       if: always()
+  #       run: |
+  #         git clone https://github.com/symfony/symfony.git --depth=1
+  #         cd symfony
+  #         git rev-parse HEAD
+  #         php8.0 /usr/bin/composer install --no-progress
+  #         php8.0 ./phpunit install
+  #         export USE_ZEND_ALLOC=0
+  #         export USE_TRACKED_ALLOC=1
+  #         export ASAN_OPTIONS=exitcode=139
+  #         export SYMFONY_DEPRECATIONS_HELPER=max[total]=999
+  #         X=0
+  #         for component in $(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist -printf '%h\n'); do
+  #           php ./phpunit $component --exclude-group tty,benchmark,intl-data,transient;
+  #           if [ $? -gt 128 ]; then
+  #             X=1;
+  #           fi
+  #         done
+  #         exit $X
+  #     - name: Test Amphp
+  #       if: always()
+  #       run: |
+  #         git clone https://github.com/amphp/amp.git --branch=master --depth=1
+  #         cd amp
+  #         git rev-parse HEAD
+  #         php /usr/bin/composer install --no-progress --ignore-platform-reqs
+  #         export USE_ZEND_ALLOC=0
+  #         sed -i 's/$exit = true/$exit = false/g' vendor/phpunit/phpunit/src/TextUI/Command.php
+  #         php vendor/bin/phpunit
+  #     - name: Test PHPUnit
+  #       if: always()
+  #       run: |
+  #         git clone https://github.com/sebastianbergmann/phpunit.git --branch=master --depth=1
+  #         cd phpunit
+  #         git rev-parse HEAD
+  #         export USE_ZEND_ALLOC=0
+  #         export USE_TRACKED_ALLOC=1
+  #         export ASAN_OPTIONS=exitcode=139
+  #         php8.0 /usr/bin/composer install --no-progress
+  #         php ./phpunit
+  #         if [ $? -gt 128 ]; then
+  #           exit 1
+  #         fi
+  #     - name: Symfony Preloading
+  #       if: always()
+  #       run: |
+  #         php8.0 /usr/bin/composer create-project symfony/symfony-demo symfony_demo --no-progress
+  #         cd symfony_demo
+  #         git rev-parse HEAD
+  #         export USE_ZEND_ALLOC=0
+  #         export USE_TRACKED_ALLOC=1
+  #         sed -i 's/PHP_SAPI/"cli-server"/g' var/cache/dev/App_KernelDevDebugContainer.preload.php
+  #         php -d opcache.preload=var/cache/dev/App_KernelDevDebugContainer.preload.php public/index.php
   coverage:
     # needs: generate_matrix
     # strategy:
@@ -297,105 +295,105 @@ jobs:
       #   inputs:
       #     codeCoverageTool: 'Cobertura'
       #     summaryFileLocation: coverage.xml
-  opcache_variation:
-    # needs: generate_matrix
-    # strategy:
-    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-    #   fail-fast: false
-    # name: ${{ matrix.branch.name }}
-    runs-on: ubuntu-20.04
-    env:
-      ARCH: linux-x64
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v2
-        # Only test on current branch until merged
-        # with:
-        #   ref: ${{ matrix.branch.ref }}
-      - name: Create mssql container
-        uses: ./.github/actions/mssql
-      - name: Install dependencies
-        uses: ./.github/actions/deps
-      - name: ./configure
-        uses: ./.github/actions/configure
-        with:
-          configurationParameters: --enable-debug --disable-zts
-      - name: make
-        run: make -j$(/usr/bin/nproc) >/dev/null
-      - name: make install
-        uses: ./.github/actions/install
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Test File Cache (prime shm)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-prime
-      - name: Test File Cache (prime shm, use shm)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-use
-      - name: Test File Cache (prime shm, use file)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
-      - name: Test File Cache (prime file)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-prime -d opcache.file_cache_only=1
-      - name: Test File Cache (prime file, use file)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
-      - name: Test File Cache (prime file, use shm)
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --file-cache-use
-      - name: Test Without interned strings
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so -d opcache.interned_strings_buffer=0
-      - name: Test Preload
-        uses: ./.github/actions/test
-        with:
-          runTestsParameters: -d zend_extension=opcache.so --preload
-  libmysqlclient_debug_nts:
-    # needs: generate_matrix
-    # strategy:
-    #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
-    #   fail-fast: false
-    # name: ${{ matrix.branch.name }}
-    runs-on: ubuntu-20.04
-    env:
-      ARCH: linux-x64
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v2
-        # Only test on current branch until merged
-        # with:
-        #   ref: ${{ matrix.branch.ref }}
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -y | true
-          sudo apt install bison re2c
-      - name: Setup MySQL server
-        run: |
-          set -o
-          sudo service mysql start
-          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
-          # Ensure local_infile tests can run.
-          mysql -uroot -proot -e "SET GLOBAL local_infile = true"
-      # Does not support caching_sha2_auth :(
-      # - uses: ./.github/actions/libmysql-test
-      #   with:
-      #     configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 5.6.49
-      #     libmysql: mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz
-      - uses: ./.github/actions/libmysql-test
-        with:
-          configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 5.7.35
-          libmysql: mysql-5.7.35-linux-glibc2.12-x86_64.tar.gz
-          configurationParameters: --enable-debug --disable-zts
-      - uses: ./.github/actions/libmysql-test
-        with:
-          configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 8.0.27
-          libmysql: mysql-8.0.27-linux-glibc2.12-x86_64.tar.xz
-          configurationParameters: --enable-debug --disable-zts --enable-werror
+  # opcache_variation:
+  #   # needs: generate_matrix
+  #   # strategy:
+  #   #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+  #   #   fail-fast: false
+  #   # name: ${{ matrix.branch.name }}
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     ARCH: linux-x64
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #       # Only test on current branch until merged
+  #       # with:
+  #       #   ref: ${{ matrix.branch.ref }}
+  #     - name: Create mssql container
+  #       uses: ./.github/actions/mssql
+  #     - name: Install dependencies
+  #       uses: ./.github/actions/deps
+  #     - name: ./configure
+  #       uses: ./.github/actions/configure
+  #       with:
+  #         configurationParameters: --enable-debug --disable-zts
+  #     - name: make
+  #       run: make -j$(/usr/bin/nproc) >/dev/null
+  #     - name: make install
+  #       uses: ./.github/actions/install
+  #     - name: Setup
+  #       uses: ./.github/actions/setup
+  #     - name: Test File Cache (prime shm)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-prime
+  #     - name: Test File Cache (prime shm, use shm)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-use
+  #     - name: Test File Cache (prime shm, use file)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
+  #     - name: Test File Cache (prime file)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-prime -d opcache.file_cache_only=1
+  #     - name: Test File Cache (prime file, use file)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-use -d opcache.file_cache_only=1
+  #     - name: Test File Cache (prime file, use shm)
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --file-cache-use
+  #     - name: Test Without interned strings
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so -d opcache.interned_strings_buffer=0
+  #     - name: Test Preload
+  #       uses: ./.github/actions/test
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so --preload
+  # libmysqlclient_debug_nts:
+  #   # needs: generate_matrix
+  #   # strategy:
+  #   #   matrix: ${{ fromJson(needs.generate_matrix.outputs.branch_matrix) }}
+  #   #   fail-fast: false
+  #   # name: ${{ matrix.branch.name }}
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     ARCH: linux-x64
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #       # Only test on current branch until merged
+  #       # with:
+  #       #   ref: ${{ matrix.branch.ref }}
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get update -y | true
+  #         sudo apt install bison re2c
+  #     - name: Setup MySQL server
+  #       run: |
+  #         set -o
+  #         sudo service mysql start
+  #         mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
+  #         # Ensure local_infile tests can run.
+  #         mysql -uroot -proot -e "SET GLOBAL local_infile = true"
+  #     # Does not support caching_sha2_auth :(
+  #     # - uses: ./.github/actions/libmysql-test
+  #     #   with:
+  #     #     configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 5.6.49
+  #     #     libmysql: mysql-5.6.49-linux-glibc2.12-x86_64.tar.gz
+  #     - uses: ./.github/actions/libmysql-test
+  #       with:
+  #         configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 5.7.35
+  #         libmysql: mysql-5.7.35-linux-glibc2.12-x86_64.tar.gz
+  #         configurationParameters: --enable-debug --disable-zts
+  #     - uses: ./.github/actions/libmysql-test
+  #       with:
+  #         configurationName: LIBMYSQLCLIENT_DEBUG_NTS - MySQL 8.0.27
+  #         libmysql: mysql-8.0.27-linux-glibc2.12-x86_64.tar.xz
+  #         configurationParameters: --enable-debug --disable-zts --enable-werror
