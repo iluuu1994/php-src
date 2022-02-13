@@ -38,7 +38,7 @@ runs:
           --enable-sysvmsg
           --enable-sysvsem
           --enable-sysvshm
-          --enable-werror
+          #--enable-werror
           --enable-xmlreader
           --enable-zend-test
           --prefix=${{ env.ARCH != 'macos' && '/usr' || '/usr/local' }}

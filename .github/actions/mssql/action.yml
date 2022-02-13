@@ -4,6 +4,16 @@ runs:
   steps:
     - shell: bash
       run: |
+        apt-get update
+        apt-get -y install sudo 
+
+        # Install docker to when running inside a container
+        echo $DOCKER_CONTAINER
+
+        apt-get update
+        apt install -y curl
+        curl https://gitlab.com/docker-32bit/ubuntu/raw/master/build-image.sh | bash
+
         docker run \
           -e "ACCEPT_EULA=Y" \
           -e "SA_PASSWORD=<YourStrong@Passw0rd>" \

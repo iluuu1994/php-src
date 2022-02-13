@@ -39,34 +39,37 @@ function generate_push(): void {
                     'matrix' => [
                         'include' => [
                             // [
-                            //     'arch' => 'linux-x64',
+                            //     'arch' => ['name' => 'linux-x64', 'container' => null],
                             //     'debug' => true,
                             //     'zts' => false,
                             // ],
                             // [
-                            //     'arch' => 'linux-x64',
+                            //     'arch' => ['name' => 'linux-x64', 'container' => null],
                             //     'debug' => false,
                             //     'zts' => true,
                             // ],
-                            // apt broken, not sure why
-                            // [
-                            //     'arch' => 'linux-i386',
-                            //     'debug' => true,
-                            //     'zts' => true,
-                            // ],
                             [
-                                'arch' => 'macos',
+                                'arch' => ['name' => 'linux-i386', 'container' => 'i386/ubuntu:latest'],
                                 'debug' => true,
-                                'zts' => false,
+                                'zts' => true,
                             ],
+                            // [
+                            //     'arch' => ['name' => 'macos', 'container' => null],
+                            //     'debug' => true,
+                            //     'zts' => false,
+                            // ],
                         ]
                     ],
                     'fail-fast' => false,
                 ],
                 // Generate
-                'name' => "\${{ matrix.arch }}-\${{ matrix.debug && 'debug' || 'release' }}-\${{ matrix.zts && 'zts' || 'nts' }}",
-                'runs-on' => "\${{ startsWith(matrix.arch, 'linux-') && 'ubuntu-20.04' || 'macOS-10.15' }}",
-                'env' => ['ARCH' => '${{ matrix.arch }}'],
+                'name' => "\${{ matrix.arch.name }}-\${{ matrix.debug && 'debug' || 'release' }}-\${{ matrix.zts && 'zts' || 'nts' }}",
+                'runs-on' => "\${{ startsWith(matrix.arch.name, 'linux-') && 'ubuntu-20.04' || 'macOS-10.15' }}",
+                'container' => '${{ matrix.arch.container }}',
+                'env' => [
+                    'ARCH' => '${{ matrix.arch.name }}',
+                    'DOCKER_CONTAINER' => '${{ matrix.arch.container }}',
+                ],
                 'steps' => [
                     step_checkout(),
                     step_mssql(),
@@ -85,7 +88,9 @@ function generate_push(): void {
 }
 
 function step_checkout(?string $branch = null): array {
-    $step = ['name' => 'git checkout', 'uses' => 'actions/checkout@v2'];
+    // actions/checkout@v2 doesn't work in docker containers which is used for i386 builds
+    // https://github.com/actions/checkout/issues/334
+    $step = ['name' => 'git checkout', 'uses' => 'actions/checkout@v1', 'with' => ['fetch-depth' => 1]];
     if ($branch !== null) $step['with']['ref'] = $branch;
     return $step;
 }
@@ -121,7 +126,7 @@ function step_make_install(): array {
 }
 
 function step_setup(): array {
-    return ['name' => 'Setup', 'uses' => './.github/actions/setup'];
+    return ['name' => 'Setup', 'if' => "env.ARCH != 'macos'", 'uses' => './.github/actions/setup'];
 }
 
 function step_tests(bool $extended = false): array {

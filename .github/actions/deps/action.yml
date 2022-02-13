@@ -4,8 +4,12 @@ runs:
   steps:
     - shell: bash
       run: |
-        if [ "$ARCH" == "linux-x64" ]; then
-          sudo apt install bison \
+        if [[ "$ARCH" == linux-* ]]; then
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y \
+            autoconf \
+            bison \
+            build-essential \
+            pkg-config \
             re2c \
             locales \
             ldap-utils \
@@ -21,6 +25,7 @@ runs:
             libsasl2-dev \
             libxpm-dev \
             libzip-dev \
+            libbz2-dev \
             libsqlite3-dev \
             libwebp-dev \
             libonig-dev \
@@ -55,7 +60,8 @@ runs:
             libqdbm-dev \
             libjpeg-dev \
             libpng-dev \
-            libfreetype6-dev
+            libfreetype6-dev \
+            unzip
           mkdir /opt/oracle
           wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
           unzip instantclient-basiclite-linuxx64.zip
@@ -65,47 +71,47 @@ runs:
           # Interferes with libldap2 headers.
           rm /opt/oracle/instantclient/sdk/include/ldap.h
         fi
-        if [ "$ARCH" == "linux-i386" ]; then
-          sudo dpkg --add-architecture i386
-          sudo apt-get update -y | true
-          sudo apt-get install -y gcc-multilib
-          sudo apt-get install -y g++-multilib
-          sudo apt-get purge -y libxml2
-          # TODO: Reenable postgresql + postgresql-contrib packages once they work again.
-          sudo apt-get purge -y libpq5
-          sudo apt-get install -y libc6:i386
-          sudo apt-get install -y bison \
-            re2c \
-            locales \
-            language-pack-de \
-            libssl-dev:i386 \
-            zlib1g-dev:i386 \
-            libxml2-dev:i386 \
-            libgmp-dev:i386 \
-            libicu-dev:i386 \
-            libtidy-dev:i386 \
-            libaspell-dev:i386 \
-            libpspell-dev:i386 \
-            libsasl2-dev:i386 \
-            libxpm-dev:i386 \
-            libjpeg-dev:i386 \
-            libpng-dev:i386 \
-            libzip-dev:i386 \
-            libbz2-dev:i386 \
-            libsqlite3-dev:i386 \
-            libwebp-dev:i386 \
-            libonig-dev:i386 \
-            libkrb5-dev:i386 \
-            libgssapi-krb5-2:i386 \
-            libcurl4-openssl-dev:i386 \
-            libxml2-dev:i386 \
-            libxslt1-dev:i386 \
-            libpq-dev:i386 \
-            libreadline-dev:i386 \
-            libffi-dev:i386 \
-            libfreetype6-dev:i386 \
-            libsodium-dev:i386
-        fi
+        #if [ "$ARCH" == "linux-i386" ]; then
+        #  sudo dpkg --add-architecture i386
+        #  sudo apt-get update -y | true
+        #  sudo apt-get install -y gcc-multilib
+        #  sudo apt-get install -y g++-multilib
+        #  sudo apt-get purge -y libxml2
+        #  # TODO: Reenable postgresql + postgresql-contrib packages once they work again.
+        #  sudo apt-get purge -y libpq5
+        #  sudo apt-get install -y libc6:i386
+        #  sudo apt-get install -y bison \
+        #    re2c \
+        #    locales \
+        #    language-pack-de \
+        #    libssl-dev:i386 \
+        #    zlib1g-dev:i386 \
+        #    libxml2-dev:i386 \
+        #    libgmp-dev:i386 \
+        #    libicu-dev:i386 \
+        #    libtidy-dev:i386 \
+        #    libaspell-dev:i386 \
+        #    libpspell-dev:i386 \
+        #    libsasl2-dev:i386 \
+        #    libxpm-dev:i386 \
+        #    libjpeg-dev:i386 \
+        #    libpng-dev:i386 \
+        #    libzip-dev:i386 \
+        #    libbz2-dev:i386 \
+        #    libsqlite3-dev:i386 \
+        #    libwebp-dev:i386 \
+        #    libonig-dev:i386 \
+        #    libkrb5-dev:i386 \
+        #    libgssapi-krb5-2:i386 \
+        #    libcurl4-openssl-dev:i386 \
+        #    libxml2-dev:i386 \
+        #    libxslt1-dev:i386 \
+        #    libpq-dev:i386 \
+        #    libreadline-dev:i386 \
+        #    libffi-dev:i386 \
+        #    libfreetype6-dev:i386 \
+        #    libsodium-dev:i386
+        #fi
         if [ "$ARCH" == "macos" ]; then
           brew install pkg-config \
             autoconf \
