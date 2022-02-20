@@ -329,9 +329,13 @@ string(31) "$$$$$$!!!!@@@@@@@ ABCDEF !!!***"
 string(13) "ABCD%0ABCDABCD"
 
 -- Iteration 6 --
+
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 string(1) "1"
 
 -- Iteration 7 --
+
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 string(0) ""
 
 -- Iteration 8 --

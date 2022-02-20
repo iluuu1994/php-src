@@ -10,5 +10,6 @@ namespace Foo;
 var_dump(call_user_func('strlen', false));
 
 ?>
---EXPECT--
+--EXPECTF--
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 int(0)

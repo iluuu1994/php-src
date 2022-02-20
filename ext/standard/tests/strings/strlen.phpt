@@ -142,8 +142,12 @@ String length of '0' is => int(1)
 String length of '0' is => int(1)
 String length of '	' is => int(1)
 String length of '\t' is => int(2)
-String length of '1' is => int(1)
-String length of '' is => int(0)
+String length of '1' is => 
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
+int(1)
+String length of '' is => 
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
+int(0)
 String length of 'Hello, World%0' is => int(13)
 String length of 'Hello%0World' is => int(11)
 String length of 'Hello, World\0' is => int(14)

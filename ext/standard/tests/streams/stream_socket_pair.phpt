@@ -10,6 +10,7 @@ var_dump(fread($sockets[1], strlen("foo")));
 fclose($sockets[0]);
 ?>
 --EXPECTF--
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 array(2) {
   [0]=>
   resource(%d) of type (stream)
