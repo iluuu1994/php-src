@@ -22,8 +22,9 @@ $variations = array(
 foreach($variations as $input) {
   echo "\n--- str_repeat() of '$input' ---\n" ;
   for($n=0; $n<4; $n++) {
+    $result = str_repeat($input, $n);
     echo "-- after repeating $n times is => ";
-    echo str_repeat($input, $n)."\n";
+    echo $result."\n";
   }
 }
 
@@ -69,18 +70,18 @@ try {
 -- after repeating 3 times is => \0\0\0
 
 --- str_repeat() of '1' ---
--- after repeating 0 times is => 
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
--- after repeating 1 times is => 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-1
--- after repeating 2 times is => 
+-- after repeating 0 times is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-11
--- after repeating 3 times is => 
+-- after repeating 1 times is => 1
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-111
+-- after repeating 2 times is => 11
+
+Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
+-- after repeating 3 times is => 111
 
 --- str_repeat() of '4' ---
 -- after repeating 0 times is => 

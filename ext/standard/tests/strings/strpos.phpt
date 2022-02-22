@@ -59,8 +59,9 @@ $needles = array(
 
 /* loop through to get the "needle" position in $string */
 for( $i = 0; $i < count($needles); $i++ ) {
+  $result = strpos($string, $needles[$i]);
   echo "Position of '$needles[$i]' is => ";
-  var_dump( strpos($string, $needles[$i]) );
+  var_dump($result);
 }
 
 
@@ -205,15 +206,15 @@ Position of '-3.344' is => int(19)
 Position of 'NULL' is => int(31)
 Position of '0' is => int(12)
 Position of '0' is => int(12)
-Position of '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(13)
+Position of '1' is => int(13)
 Position of 'TRUE' is => int(36)
 Position of '1' is => int(13)
 Position of '1' is => int(13)
-Position of '' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
+Position of '' is => int(0)
 Position of 'FALSE' is => int(41)
 Position of ' ' is => int(5)
 Position of '     ' is => int(26)

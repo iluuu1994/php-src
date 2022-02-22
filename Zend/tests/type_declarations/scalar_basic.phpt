@@ -197,11 +197,11 @@ string(%d) "%d"
 string(3) "NAN"
 
 *** Trying bool(true)
-E_DEPRECATED: Implicit bool to string coercion is deprecated on line 16
+E_DEPRECATED: Implicit bool to string coercion is deprecated on line %d
 string(1) "1"
 
 *** Trying bool(false)
-E_DEPRECATED: Implicit bool to string coercion is deprecated on line 16
+E_DEPRECATED: Implicit bool to string coercion is deprecated on line %d
 string(0) ""
 
 *** Trying NULL

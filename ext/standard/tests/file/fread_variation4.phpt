@@ -23,7 +23,7 @@ function check_read($file_handle, $read_size, $expect_size) {
   $data_from_file = fread($file_handle, $read_size);
 
   // check if data read is of expected size
-  if ( strlen($data_from_file) == $expect_size)
+  if ( strlen((string) $data_from_file) == $expect_size)
     echo "OK\n";
   else
     echo "Error reading file, total number of bytes read = ".strlen($data_from_file)."\n";
@@ -103,8 +103,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -113,8 +111,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -124,8 +120,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -134,8 +128,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -145,8 +137,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -155,8 +145,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -166,8 +154,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -176,8 +162,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -187,8 +171,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -197,8 +179,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -208,8 +188,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -218,8 +196,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -229,8 +205,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -239,8 +213,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -250,8 +222,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -260,8 +230,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -271,8 +239,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -281,8 +247,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -294,8 +258,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -304,8 +266,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -315,8 +275,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -325,8 +283,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -336,8 +292,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -346,8 +300,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -357,8 +309,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -367,8 +317,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -378,8 +326,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -388,8 +334,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -399,8 +343,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -409,8 +351,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -420,8 +360,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -430,8 +368,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -441,8 +377,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -451,8 +385,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -462,8 +394,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -472,8 +402,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -485,8 +413,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -495,8 +421,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -506,8 +430,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -516,8 +438,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -527,8 +447,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -537,8 +455,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -548,8 +464,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -558,8 +472,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -569,8 +481,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -579,8 +489,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -590,20 +498,16 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
 -- Reading beyond filesize when file pointer pointing to EOF, expected : 0 bytes --
-int(1024)
+int(%r1024|1137%r)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
-int(1024)
+int(%r1024|1137%r)
 bool(false)
 -- File opened in mode x --
 -- Reading beyond filesize, expected : 1024 bytes --
@@ -611,8 +515,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -621,8 +523,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -632,8 +532,6 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
@@ -642,8 +540,6 @@ int(1024)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(1024)
 bool(false)
@@ -653,19 +549,15 @@ int(0)
 bool(false)
 Reading 1030 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
 int(0)
 bool(false)
 -- Reading beyond filesize when file pointer pointing to EOF, expected : 0 bytes --
-int(1024)
+int(%r1024|1137%r)
 bool(false)
 Reading 10 bytes from file, expecting 0 bytes ... 
 Notice: fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor in %s on line %d
-
-Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 OK
-int(1024)
+int(%r1024|1137%r)
 bool(false)
 Done

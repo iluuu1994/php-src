@@ -23,8 +23,9 @@ foreach($arrays as $str1_arr){
   for ($i=0; $i<count($str1_arr); $i++){
     echo "\nIteration $i\n";
     for($j=0; $j<count($str1_arr); $j++){
+      $result = strcasecmp($str1_arr[$i], $str1_arr[$j]);
       echo "- strcasecmp of '$str1_arr[$i]' and '$str1_arr[$j]' is => ";
-      var_dump(strcasecmp($str1_arr[$i], $str1_arr[$j]));
+      var_dump($result);
     }
   }
 }
@@ -294,15 +295,15 @@ Iteration 0
 - strcasecmp of '1' and '-1' is => int(%d)
 - strcasecmp of '1' and '-1' is => int(%d)
 - strcasecmp of '1' and '' is => int(%d)
-- strcasecmp of '1' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '1' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
+- strcasecmp of '1' and '' is => int(%d)
 - strcasecmp of '1' and 'string' is => int(-%d)
 
 Iteration 1
@@ -312,15 +313,15 @@ Iteration 1
 - strcasecmp of '0' and '-1' is => int(%d)
 - strcasecmp of '0' and '-1' is => int(%d)
 - strcasecmp of '0' and '' is => int(%d)
-- strcasecmp of '0' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '0' and '1' is => 
+- strcasecmp of '0' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '0' and '' is => 
+- strcasecmp of '0' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
+- strcasecmp of '0' and '' is => int(%d)
 - strcasecmp of '0' and 'string' is => int(-%d)
 
 Iteration 2
@@ -330,15 +331,15 @@ Iteration 2
 - strcasecmp of '0' and '-1' is => int(%d)
 - strcasecmp of '0' and '-1' is => int(%d)
 - strcasecmp of '0' and '' is => int(%d)
-- strcasecmp of '0' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '0' and '1' is => 
+- strcasecmp of '0' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '0' and '' is => 
+- strcasecmp of '0' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
+- strcasecmp of '0' and '' is => int(%d)
 - strcasecmp of '0' and 'string' is => int(-%d)
 
 Iteration 3
@@ -348,15 +349,15 @@ Iteration 3
 - strcasecmp of '-1' and '-1' is => int(0)
 - strcasecmp of '-1' and '-1' is => int(0)
 - strcasecmp of '-1' and '' is => int(%d)
-- strcasecmp of '-1' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-4)
-- strcasecmp of '-1' and '1' is => 
+- strcasecmp of '-1' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-4)
-- strcasecmp of '-1' and '' is => 
+- strcasecmp of '-1' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(2)
+- strcasecmp of '-1' and '' is => int(%d)
 - strcasecmp of '-1' and 'string' is => int(-%d)
 
 Iteration 4
@@ -366,15 +367,15 @@ Iteration 4
 - strcasecmp of '-1' and '-1' is => int(0)
 - strcasecmp of '-1' and '-1' is => int(0)
 - strcasecmp of '-1' and '' is => int(%d)
-- strcasecmp of '-1' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-4)
-- strcasecmp of '-1' and '1' is => 
+- strcasecmp of '-1' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-4)
-- strcasecmp of '-1' and '' is => 
+- strcasecmp of '-1' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(2)
+- strcasecmp of '-1' and '' is => int(%d)
 - strcasecmp of '-1' and 'string' is => int(-%d)
 
 Iteration 5
@@ -384,130 +385,130 @@ Iteration 5
 - strcasecmp of '' and '-1' is => int(-%d)
 - strcasecmp of '' and '-1' is => int(-%d)
 - strcasecmp of '' and '' is => int(0)
-- strcasecmp of '' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '1' is => 
+- strcasecmp of '' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '' is => 
+- strcasecmp of '' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
+- strcasecmp of '' and '' is => int(0)
 - strcasecmp of '' and 'string' is => int(-%d)
 
 Iteration 6
-- strcasecmp of '1' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '0' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '0' is => 
+- strcasecmp of '1' and '0' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '-1' is => 
+- strcasecmp of '1' and '0' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(4)
-- strcasecmp of '1' and '-1' is => 
+- strcasecmp of '1' and '-1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(4)
-- strcasecmp of '1' and '' is => 
+- strcasecmp of '1' and '-1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '1' is => 
+- strcasecmp of '1' and '' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '1' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and 'string' is => 
+- strcasecmp of '1' and '' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-66)
+- strcasecmp of '1' and 'string' is => int(-%d)
 
 Iteration 7
-- strcasecmp of '1' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '0' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '0' is => 
+- strcasecmp of '1' and '0' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '-1' is => 
+- strcasecmp of '1' and '0' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(4)
-- strcasecmp of '1' and '-1' is => 
+- strcasecmp of '1' and '-1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(4)
-- strcasecmp of '1' and '' is => 
+- strcasecmp of '1' and '-1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and '1' is => 
+- strcasecmp of '1' and '' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '1' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '1' and '' is => 
+- strcasecmp of '1' and '1' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(1)
-- strcasecmp of '1' and 'string' is => 
+- strcasecmp of '1' and '' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-66)
+- strcasecmp of '1' and 'string' is => int(-%d)
 
 Iteration 8
-- strcasecmp of '' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '0' is => 
+- strcasecmp of '' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '0' is => 
+- strcasecmp of '' and '0' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '-1' is => 
+- strcasecmp of '' and '0' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-2)
-- strcasecmp of '' and '-1' is => 
+- strcasecmp of '' and '-1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-2)
-- strcasecmp of '' and '' is => 
+- strcasecmp of '' and '-1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '' and '1' is => 
+- strcasecmp of '' and '' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '1' is => 
+- strcasecmp of '' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-1)
-- strcasecmp of '' and '' is => 
+- strcasecmp of '' and '1' is => int(-%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
 
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(0)
-- strcasecmp of '' and 'string' is => 
+- strcasecmp of '' and '' is => int(0)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(-6)
+- strcasecmp of '' and 'string' is => int(-%d)
 
 Iteration 9
 - strcasecmp of 'string' and '1' is => int(%d)
@@ -516,15 +517,15 @@ Iteration 9
 - strcasecmp of 'string' and '-1' is => int(%d)
 - strcasecmp of 'string' and '-1' is => int(%d)
 - strcasecmp of 'string' and '' is => int(%d)
-- strcasecmp of 'string' and '1' is => 
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(66)
-- strcasecmp of 'string' and '1' is => 
+- strcasecmp of 'string' and '1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(66)
-- strcasecmp of 'string' and '' is => 
+- strcasecmp of 'string' and '1' is => int(%d)
+
 Deprecated: Implicit bool to string coercion is deprecated in %s on line %d
-int(6)
+- strcasecmp of 'string' and '' is => int(%d)
 - strcasecmp of 'string' and 'string' is => int(0)
 
 *** comparing the strings in an 
