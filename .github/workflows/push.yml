@@ -20,6 +20,7 @@ on:
 jobs:
   LINUX_X64:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - debug: true
