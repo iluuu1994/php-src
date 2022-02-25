@@ -19,10 +19,10 @@ class PDOTest {
     // create an instance of the PDO driver, based on
     // the current environment
     static function factory($classname = 'PDO', $drop_test_tables = true) {
-        $dsn = getenv('PDOTEST_DSN');
-        $user = getenv('PDOTEST_USER');
-        $pass = getenv('PDOTEST_PASS');
-        $attr = getenv('PDOTEST_ATTR');
+        $dsn = getenv('PDOTEST_DSN') ?: '';
+        $user = getenv('PDOTEST_USER') ?: '';
+        $pass = getenv('PDOTEST_PASS') ?: '';
+        $attr = getenv('PDOTEST_ATTR') ?: '';
         if (is_string($attr) && strlen($attr)) {
             $attr = unserialize($attr);
         } else {

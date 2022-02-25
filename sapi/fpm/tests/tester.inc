@@ -748,7 +748,7 @@ class Tester
         $write = null;
         $except = null;
         if (stream_select($read, $write, $except, $timeout=3)) {
-            return fgets($this->outDesc);
+            return fgets($this->outDesc) ?: null;
         } else {
             return null;
         }
