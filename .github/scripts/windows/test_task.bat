@@ -116,12 +116,12 @@ nmake test TESTS="%OPCACHE_OPTS% -q --offline --show-diff --show-slow 1000 --set
 
 set EXIT_CODE=%errorlevel%
 
-appveyor PushArtifact %TEST_PHP_JUNIT%
+@REM appveyor PushArtifact %TEST_PHP_JUNIT%
 
-if %EXIT_CODE% GEQ 1 (
-	git checkout ext\pgsql\tests\config.inc
-	git diff > bless_tests.patch
-	appveyor PushArtifact bless_tests.patch
-)
+@REM if %EXIT_CODE% GEQ 1 (
+@REM 	git checkout ext\pgsql\tests\config.inc
+@REM 	git diff > bless_tests.patch
+@REM 	appveyor PushArtifact bless_tests.patch
+@REM )
 
 exit /b %EXIT_CODE%

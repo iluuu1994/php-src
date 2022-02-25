@@ -18,65 +18,97 @@ on:
     branches:
       - '**'
 jobs:
-  LINUX_X64:
+  # LINUX_X64:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - debug: true
+  #           zts: false
+  #         - debug: false
+  #           zts: true
+  #   name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #     - name: Create mssql container
+  #       uses: ./.github/actions/mssql
+  #     - name: apt
+  #       uses: ./.github/actions/apt-x64
+  #     - name: ./configure
+  #       uses: ./.github/actions/configure-x64
+  #       with:
+  #         configurationParameters: >-
+  #           --${{ matrix.debug && 'enable' || 'disable' }}-debug
+  #           --${{ matrix.zts && 'enable' || 'disable' }}-zts
+  #     - name: make
+  #       run: make -j$(/usr/bin/nproc) >/dev/null
+  #     - name: make install
+  #       uses: ./.github/actions/install-linux
+  #     - name: Setup
+  #       uses: ./.github/actions/setup-x64
+  #     - name: Test
+  #       uses: ./.github/actions/test-linux
+  #     - name: Test Tracing JIT
+  #       uses: ./.github/actions/test-linux
+  #       with:
+  #         runTestsParameters: -d zend_extension=opcache.so -d opcache.jit_buffer_size=16M
+  # MACOS_DEBUG_NTS:
+  #   runs-on: macos-10.15
+  #   steps:
+  #     - name: git checkout
+  #       uses: actions/checkout@v2
+  #     - name: brew
+  #       uses: ./.github/actions/brew
+  #     - name: ./configure
+  #       uses: ./.github/actions/configure-macos
+  #       with:
+  #         configurationParameters: --enable-debug --disable-zts
+  #     - name: make
+  #       run: |-
+  #         export PATH="/usr/local/opt/bison/bin:$PATH"
+  #         make -j$(sysctl -n hw.logicalcpu) >/dev/null
+  #     - name: make install
+  #       run: sudo make install
+  #     - name: Test
+  #       uses: ./.github/actions/test-macos
+  #     - name: Test Tracing JIT
+  #       uses: ./.github/actions/test-macos
+  #       with:
+  #         runTestsParameters: >-
+  #           -d zend_extension=opcache.so
+  #           -d opcache.protect_memory=1
+  #           -d opcache.jit_buffer_size=16M
+  WINDOWS_X64:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - debug: true
-            zts: false
-          - debug: false
-            zts: true
-    name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
-    runs-on: ubuntu-20.04
+          - zts: false
+            opcache: false
+          - zts: true
+            opcache: true
+            intrinsics: AVX
+    runs-on: windows-2019
+    env:
+      PHP_BUILD_CACHE_BASE_DIR: c:\build-cache
+      PHP_BUILD_OBJ_DIR: c:\obj
+      PHP_BUILD_CACHE_SDK_DIR: c:\build-cache\sdk
+      PHP_BUILD_SDK_BRANCH: php-sdk-2.2.0
+      PHP_BUILD_CRT: vs16
+      THREAD_SAFE: ${{ matrix.zts && 1 || 0 }}
+      OPCACHE: ${{ matrix.opcache && 1 || 0 }}
+      PARALLEL: -j2
+      INTRINSICS: ${{ matrix.intrinsics }}
+      PLATFORM: x64
+      APPVEYOR: true
+      APPVEYOR_BUILD_FOLDER: ${{ github.workspace }}
+      APPVEYOR_REPO_BRANCH: ${{ github.base_ref }}
     steps:
       - name: git checkout
         uses: actions/checkout@v2
-      - name: Create mssql container
-        uses: ./.github/actions/mssql
-      - name: apt
-        uses: ./.github/actions/apt-x64
-      - name: ./configure
-        uses: ./.github/actions/configure-x64
-        with:
-          configurationParameters: >-
-            --${{ matrix.debug && 'enable' || 'disable' }}-debug
-            --${{ matrix.zts && 'enable' || 'disable' }}-zts
-      - name: make
-        run: make -j$(/usr/bin/nproc) >/dev/null
-      - name: make install
-        uses: ./.github/actions/install-linux
-      - name: Setup
-        uses: ./.github/actions/setup-x64
+      - name: Build
+        run: .\.github\scripts\windows\build.bat
       - name: Test
-        uses: ./.github/actions/test-linux
-      - name: Test Tracing JIT
-        uses: ./.github/actions/test-linux
-        with:
-          runTestsParameters: -d zend_extension=opcache.so -d opcache.jit_buffer_size=16M
-  MACOS_DEBUG_NTS:
-    runs-on: macos-10.15
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v2
-      - name: brew
-        uses: ./.github/actions/brew
-      - name: ./configure
-        uses: ./.github/actions/configure-macos
-        with:
-          configurationParameters: --enable-debug --disable-zts
-      - name: make
-        run: |-
-          export PATH="/usr/local/opt/bison/bin:$PATH"
-          make -j$(sysctl -n hw.logicalcpu) >/dev/null
-      - name: make install
-        run: sudo make install
-      - name: Test
-        uses: ./.github/actions/test-macos
-      - name: Test Tracing JIT
-        uses: ./.github/actions/test-macos
-        with:
-          runTestsParameters: >-
-            -d zend_extension=opcache.so
-            -d opcache.protect_memory=1
-            -d opcache.jit_buffer_size=16M
+        run: .\.github\scripts\windows\test.bat
