@@ -80,3 +80,33 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.protect_memory=1
             -d opcache.jit_buffer_size=16M
+  COVERAGE_DEBUG_ZTS:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v2
+      - name: Create mssql container
+        uses: ./.github/actions/mssql
+      - name: apt
+        uses: ./.github/actions/apt-x64
+      - name: Install gcovr
+        run: sudo -H pip install gcovr
+      - name: ./configure
+        uses: ./.github/actions/configure-x64
+        with:
+          configurationParameters: --enable-debug --enable-zts --enable-gcov
+      - name: make
+        run: make -j$(/usr/bin/nproc) >/dev/null
+      - name: make install
+        uses: ./.github/actions/install-linux
+      - name: Setup
+        uses: ./.github/actions/setup-x64
+      - name: Test
+        uses: ./.github/actions/test-linux
+      - name: Test OpCache
+        uses: ./.github/actions/test-linux
+        with:
+          runTestsParameters: -d zend_extension=opcache.so
+      - name: Upload Test Coverage to Codecov.io
+        if: always()
+        run: bash <(curl -s https://codecov.io/bash)
