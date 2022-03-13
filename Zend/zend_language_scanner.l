@@ -1365,6 +1365,7 @@ ONUM	"0o"[0-7]+(_[0-7]+)*
 LABEL	[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*
 WHITESPACE [ \n\r\t]+
 TABS_AND_SPACES [ \t]*
+ONE_OR_MORE_TABS_AND_SPACES [ \t]+
 TOKENS [;:,.|^&+-/*=%!~$<>?@]
 ANY_CHAR [^]
 NEWLINE ("\r"|"\n"|"\r\n")
@@ -2761,7 +2762,7 @@ skip_escape_conversion:
 }
 
 
-<ST_DOUBLE_QUOTES,ST_BACKQUOTE,ST_HEREDOC>"{$:" {
+<ST_DOUBLE_QUOTES,ST_BACKQUOTE,ST_HEREDOC>"{$"{ONE_OR_MORE_TABS_AND_SPACES} {
 	yy_push_state(ST_IN_SCRIPTING);
 	enter_nesting('{');
 	RETURN_TOKEN(T_CURLY_DOLLAR_COLON);
