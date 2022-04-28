@@ -1,5 +1,7 @@
 --TEST--
 Implementing abstract accessors
+--XFAIL--
+Normal property should satisfy { get; set; }
 --FILE--
 <?php
 

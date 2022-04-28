@@ -4,6 +4,10 @@ unserialize() with accessors
 <?php
 
 class Test {
+    public $prop2 {
+        get { echo __METHOD__, "\n"; }
+    }
+
     public $prop3 {
         get { echo __METHOD__, "\n"; }
         set { echo __METHOD__, "\n"; }
@@ -11,7 +15,6 @@ class Test {
 
     public function __construct(
         public $prop1 { get; set; },
-        public $prop2 { get; },
     ) {}
 }
 
@@ -43,12 +46,10 @@ var_dump(unserialize($s));
 
 ?>
 --EXPECTF--
-string(47) "O:4:"Test":2:{s:5:"prop1";i:1;s:5:"prop2";i:2;}"
-object(Test)#2 (2) {
+string(31) "O:4:"Test":1:{s:5:"prop1";i:1;}"
+object(Test)#2 (1) {
   ["prop1"]=>
   int(1)
-  ["prop2"]=>
-  int(2)
 }
 Test::$prop3::get
 Test::$prop3::set
@@ -58,12 +59,10 @@ Warning: unserialize(): Cannot unserialize value for property Test::$prop3 with 
 Notice: unserialize(): Error at offset 26 of 32 bytes in %s on line %d
 bool(false)
 
-string(48) "O:5:"Test2":2:{s:5:"prop1";i:1;s:5:"prop2";i:2;}"
-object(Test2)#4 (2) {
+string(32) "O:5:"Test2":1:{s:5:"prop1";i:1;}"
+object(Test2)#4 (1) {
   ["prop1"]=>
   int(1)
-  ["prop2"]=>
-  int(2)
 }
 Test2::$prop1::get
 object(Test2)#5 (1) {

@@ -4180,12 +4180,13 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 			}
 			ZVAL_COPY_VALUE(&ce->default_static_members_table[property_info->offset], property);
 			if (!ZEND_MAP_PTR(ce->static_members_table)) {
-				ZEND_ASSERT(ce->type == ZEND_INTERNAL_CLASS);
-				if (!EG(current_execute_data)) {
-					ZEND_MAP_PTR_NEW(ce->static_members_table);
-				} else {
-					/* internal class loaded by dl() */
-					ZEND_MAP_PTR_INIT(ce->static_members_table, &ce->default_static_members_table);
+				if (ce->type == ZEND_INTERNAL_CLASS) {
+					if (!EG(current_execute_data)) {
+						ZEND_MAP_PTR_NEW(ce->static_members_table);
+					} else {
+						/* internal class loaded by dl() */
+						ZEND_MAP_PTR_INIT(ce->static_members_table, &ce->default_static_members_table);
+					}
 				}
 			}
 		} else {

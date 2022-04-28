@@ -1,5 +1,5 @@
 --TEST--
-Abstract accessors
+Abstract accessors in non-abstract class
 --FILE--
 <?php
 

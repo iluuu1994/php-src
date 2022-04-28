@@ -3079,17 +3079,12 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 					}
 					zobj->properties = zend_array_dup(zobj->properties);
 				}
-				ptr = zend_hash_find_ex(zobj->properties, Z_STR_P(prop_ptr), 1);
+				ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
 				if (EXPECTED(ptr)) {
 					ZVAL_INDIRECT(result, ptr);
 					return;
 				}
 				zobj->properties = zend_array_dup(zobj->properties);
-			}
-			ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
-			if (EXPECTED(ptr)) {
-				ZVAL_INDIRECT(result, ptr);
-				return;
 			}
 		} else {
 			/* Fall through to read_property for accessors. */

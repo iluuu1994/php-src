@@ -4,10 +4,10 @@ Invalid type compatibility for read-only property
 <?php
 
 class A {
-    public int $a { get; }
+    public int $a { get {} }
 }
 class B extends A {
-    public int|float $a { get; }
+    public int|float $a { get {} }
 }
 
 ?>

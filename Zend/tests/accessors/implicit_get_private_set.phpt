@@ -1,5 +1,5 @@
 --TEST--
-Basic auto-generated accessors
+Implicit accessors get with private set
 --FILE--
 <?php
 

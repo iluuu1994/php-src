@@ -6,7 +6,7 @@ Test caching of accessor property kind
 class Test {
     private $_prop;
     public $prop {
-        &get { echo __METHOD__, "\n"; return $this->_prop; }
+        get { echo __METHOD__, "\n"; return $this->_prop; }
         set { echo __METHOD__, "\n"; $this->_prop = $value; }
     }
 }
@@ -16,7 +16,11 @@ function doTest(Test $test) {
     $test->prop = 1;
     $test->prop += 1;
     $test->prop = [];
-    $test->prop[] = 1;
+    try {
+        $test->prop[] = 1;
+    } catch (\Error $e) {
+        echo $e->getMessage(), "\n";
+    }
     isset($test->prop);
     isset($test->prop[0]);
     try {
@@ -33,13 +37,15 @@ echo "\n";
 doTest($test);
 
 ?>
---EXPECT--
+--EXPECTF--
+Deprecated: Creation of dynamic property Test::$dyn is deprecated in %s on line %d
 Test::$prop::get
 Test::$prop::set
 Test::$prop::get
 Test::$prop::set
 Test::$prop::set
 Test::$prop::get
+Cannot aquire reference to accessor property Test::$prop
 Test::$prop::get
 Test::$prop::get
 Cannot unset accessor property Test::$prop
@@ -50,6 +56,7 @@ Test::$prop::get
 Test::$prop::set
 Test::$prop::set
 Test::$prop::get
+Cannot aquire reference to accessor property Test::$prop
 Test::$prop::get
 Test::$prop::get
 Cannot unset accessor property Test::$prop

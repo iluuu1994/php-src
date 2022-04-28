@@ -1,10 +1,12 @@
 --TEST--
-Test the case where the initializing property assignment fails
+Cannot have implicit get without set
 --FILE--
 <?php
+
 class Test {
-    public string $prop { get; }
+    public $prop { get; }
 }
+
 ?>
 --EXPECTF--
 Fatal error: Cannot have implicit get without set in %s on line %d

@@ -5,31 +5,26 @@ Get by reference with generated accessors
 
 class Test {
     public $byVal = [] { get; set; }
-    public $byRef = [] { &get; set; }
 }
 
 $test = new Test;
 
-$test->byRef[] = 42;
-var_dump($test->byRef);
-
-$test->byVal[] = 42;
+try {
+    $test->byVal[] = 42;
+} catch (\Error $e) {
+    echo get_class($e) . ': ' . $e->getMessage() . "\n";
+}
 var_dump($test->byVal);
 
 try {
-    $test->byRef =& $ref;
+    $test->byVal =& $ref;
 } catch (Error $e) {
-    echo $e->getMessage(), "\n";
+    echo get_class($e) . ': ' . $e->getMessage() . "\n";
 }
 
 ?>
---EXPECTF--
-array(1) {
-  [0]=>
-  int(42)
-}
-
-Notice: Indirect modification of accessor property Test::$byVal has no effect (did you mean to use "&get"?) in %s on line %d
+--EXPECT--
+Error: Cannot aquire reference to accessor property Test::$byVal
 array(0) {
 }
-Cannot assign by reference to overloaded object
+Error: Cannot aquire reference to accessor property Test::$byVal

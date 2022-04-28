@@ -754,7 +754,8 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 					if (!Z_ISREF_P(rv) &&
 						(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
 						if (UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
-							zend_error(E_NOTICE, "Indirect modification of accessor property %s::$%s has no effect (did you mean to use \"&get\"?)", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+							zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
+								ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 						}
 					}
 				} else {
@@ -782,14 +783,10 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 			}
 
 			if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-				if (UNEXPECTED(!(get->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)
-						&& Z_TYPE_P(retval) != IS_OBJECT)) {
-					zend_error(E_NOTICE, "Indirect modification of accessor property %s::$%s has no effect (did you mean to use \"&get\"?)", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-				} else if (!Z_ISREF_P(retval)) {
-					ZVAL_NEW_REF(retval, retval);
-					if (ZEND_TYPE_IS_SET(prop_info->type)) {
-						ZEND_REF_ADD_TYPE_SOURCE(Z_REF_P(retval), prop_info);
-					}
+				if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
+					zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
+						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+					goto exit;
 				}
 				ZVAL_COPY(rv, retval);
 				retval = rv;
@@ -990,20 +987,6 @@ found:
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *set = prop_info->accessors[ZEND_ACCESSOR_SET];
 		if (!set) {
-			zend_function *get = prop_info->accessors[ZEND_ACCESSOR_GET];
-			if (get && (get->common.fn_flags & ZEND_ACC_AUTO_PROP)) {
-				/* Auto-property with only get allows initialization assignment. */
-				property_offset = prop_info->offset;
-				variable_ptr = OBJ_PROP(zobj, property_offset);
-				if (Z_TYPE_P(variable_ptr) == IS_UNDEF) {
-					ZEND_ASSERT(Z_PROP_FLAG_P(variable_ptr) == IS_PROP_UNINIT);
-					if (!ZEND_TYPE_IS_SET(prop_info->type)) {
-						prop_info = NULL;
-					}
-					goto write_std_property;
-				}
-			}
-
 			zend_throw_error(NULL, "Property %s::$%s is read-only",
 				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 			return &EG(error_zval);

@@ -1234,13 +1234,6 @@ static void inherit_accessor(
 			(parent_flags & ZEND_ACC_PUBLIC) ? "" : " or higher",
 			ZSTR_VAL(parent->common.scope->name));
 	}
-	if ((child_flags & ZEND_ACC_RETURN_REFERENCE) < (parent_flags & ZEND_ACC_RETURN_REFERENCE)) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"%s::%s() must return by reference (as in class %s)",
-			ZSTR_VAL(child->common.scope->name),
-			ZSTR_VAL(child->common.function_name),
-			ZSTR_VAL(parent->common.scope->name));
-	}
 
 	/* Other signature compatibility issues should already be covered either by the
 	 * properties being compatible (types), or certain signatures being forbidden by the
@@ -1314,13 +1307,27 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 						"Cannot override plain property %s::$%s with accessor property in class %s",
 						ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key), ZSTR_VAL(ce->name));
 				}
-
 				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
+					zend_function *parent_accessor = parent_accessors[i];
+					zend_function *child_accessor = child_accessors[i];
+
+					if (
+						child_accessor != NULL
+						&& parent_accessor != NULL
+						&& (child_accessor->common.fn_flags & ZEND_ACC_AUTO_PROP)
+						&& !(parent_accessor->common.fn_flags & (ZEND_ACC_AUTO_PROP|ZEND_ACC_ABSTRACT))
+					) {
+						zend_error_noreturn(E_COMPILE_ERROR,
+							"Implicit property accessor %s::%s() cannot override explicit property accessor %s::%s()",
+							ZSTR_VAL(child_info->ce->name), ZSTR_VAL(child_accessor->common.function_name),
+							ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(parent_accessor->common.function_name));
+					}
+
 					inherit_accessor(ce, &parent_accessors[i], &child_accessors[i]);
 				}
 			}
 
-			prop_variance variance = prop_get_variance(parent_info);
+			prop_variance variance = prop_get_variance(child_info);
 			if (UNEXPECTED(ZEND_TYPE_IS_SET(parent_info->type))) {
 				inheritance_status status = property_types_compatible(
 					parent_info, child_info, variance);
@@ -2444,20 +2451,6 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 		}
 	} ZEND_HASH_FOREACH_END();
 
-	if (!is_explicit_abstract) {
-		zend_property_info *prop_info;
-		ZEND_HASH_FOREACH_PTR(&ce->properties_info, prop_info) {
-			if (prop_info->accessors) {
-				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-					zend_function *fn = prop_info->accessors[i];
-					if (fn && (fn->common.fn_flags & ZEND_ACC_ABSTRACT)) {
-						zend_verify_abstract_class_function(fn, &ai);
-					}
-				}
-			}
-		} ZEND_HASH_FOREACH_END();
-	}
-
 	if (ai.cnt) {
 		zend_error_noreturn(E_ERROR, !is_explicit_abstract && can_be_abstract
 			? "%s %s contains %d abstract method%s and must therefore be declared abstract or implement the remaining methods (" MAX_ABSTRACT_INFO_FMT MAX_ABSTRACT_INFO_FMT MAX_ABSTRACT_INFO_FMT ")"
@@ -2475,6 +2468,33 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 	}
 }
 /* }}} */
+
+void zend_verify_property_accessor_visibility(zend_class_entry *ce)
+{
+	zend_property_info *property_info;
+
+	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property_info) {
+		zend_function **accessors = property_info->accessors;
+		if (!accessors) {
+			continue;
+		}
+
+		uint32_t property_visibility = property_info->flags & ZEND_ACC_PPP_MASK;
+		uint32_t highest_accessor_visibility = ZEND_ACC_PRIVATE;
+		for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
+			zend_function *accessor = accessors[i];
+			if (!accessor) {
+				continue;
+			}
+			highest_accessor_visibility = MIN(highest_accessor_visibility, accessor->common.fn_flags & ZEND_ACC_PPP_MASK);
+		}
+
+		if (property_visibility < highest_accessor_visibility) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"At least one accessor must match the visibility of the property");
+		}
+	} ZEND_HASH_FOREACH_END();
+}
 
 typedef struct {
 	enum {
@@ -2687,12 +2707,12 @@ static zend_op_array *zend_lazy_method_load(
 
 	void ***run_time_cache_ptr = (void***)(new_op_array + 1);
 	*run_time_cache_ptr = NULL;
-	ZEND_MAP_PTR_INIT(new_op_array->run_time_cache, run_time_cache_ptr);
+	ZEND_MAP_PTR_INIT(new_op_array->run_time_cache, *run_time_cache_ptr);
 
 	if (op_array->static_variables) {
 		HashTable **static_variables_ptr = (HashTable **) (run_time_cache_ptr + 1);
 		*static_variables_ptr = NULL;
-		ZEND_MAP_PTR_INIT(new_op_array->static_variables_ptr, static_variables_ptr);
+		ZEND_MAP_PTR_INIT(new_op_array->static_variables_ptr, *static_variables_ptr);
 	}
 
 	return new_op_array;
@@ -3006,6 +3026,7 @@ ZEND_API zend_class_entry *zend_do_link_class(zend_class_entry *ce, zend_string 
 		if (ce->ce_flags & ZEND_ACC_ENUM) {
 			zend_verify_enum(ce);
 		}
+		zend_verify_property_accessor_visibility(ce);
 
 		/* Normally Stringable is added during compilation. However, if it is imported from a trait,
 		 * we need to explicilty add the interface here. */
@@ -3211,6 +3232,7 @@ ZEND_API zend_class_entry *zend_try_early_bind(zend_class_entry *ce, zend_class_
 			if ((ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) == ZEND_ACC_IMPLICIT_ABSTRACT_CLASS) {
 				zend_verify_abstract_class(ce);
 			}
+			zend_verify_property_accessor_visibility(ce);
 			ZEND_ASSERT(!(ce->ce_flags & ZEND_ACC_UNRESOLVED_VARIANCE));
 			ce->ce_flags |= ZEND_ACC_LINKED;
 

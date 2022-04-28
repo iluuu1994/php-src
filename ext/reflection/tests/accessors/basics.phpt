@@ -84,12 +84,11 @@ object(ReflectionMethod)#5 (2) {
   string(4) "Test"
 }
 float(3.141)
-Trying to invoke private method Test::$prop2::set() from scope ReflectionMethod
 int(42)
 Final: false false
 Abstract: false false
 
-object(ReflectionMethod)#8 (2) {
+object(ReflectionMethod)#7 (2) {
   ["name"]=>
   string(11) "$prop3::get"
   ["class"]=>

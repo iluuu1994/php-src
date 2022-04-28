@@ -7,8 +7,7 @@ class A {
     abstract public $prop { get; set; }
 }
 
-class B extends A {
-}
+class B extends A {}
 
 ?>
 --EXPECTF--

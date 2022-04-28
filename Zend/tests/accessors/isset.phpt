@@ -10,7 +10,7 @@ class Test {
         set { $this->_prop1 = $value; }
     }
 
-    public array $prop2 { private get; }
+    public array $prop2 { private get {} }
 }
 
 $test = new Test;

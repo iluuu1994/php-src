@@ -12,4 +12,4 @@ class Test {
 
 ?>
 --EXPECTF--
-Fatal error: Cannot redeclare accessor "get" in %s on line %d
+Fatal error: Cannot redeclare accessor "$prop::get" in %s on line %d

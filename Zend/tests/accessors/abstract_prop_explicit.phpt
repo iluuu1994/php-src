@@ -1,5 +1,5 @@
 --TEST--
-Whole property can be marked abstract, but must use accessors
+Explicit accessor property satisfies abstract property
 --FILE--
 <?php
 
@@ -8,7 +8,7 @@ abstract class A {
 }
 
 class B extends A {
-    public $prop { get; set; }
+    public $prop { get {} set {} }
 }
 
 ?>

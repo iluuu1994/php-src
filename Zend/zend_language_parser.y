@@ -278,10 +278,10 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
-%type <ast> accessor accessor_list accessor_property optional_parameter_list optional_accessor_list
+%type <ast> accessor accessor_list accessor_property optional_accessor_list
 
 %type <num> returns_ref function fn is_reference is_variadic variable_modifiers
-%type <num> method_modifiers non_empty_member_modifiers member_modifier optional_visibility_modifier
+%type <num> method_modifiers non_empty_member_modifiers member_modifier
 %type <num> optional_property_modifiers property_modifier
 %type <num> class_modifiers class_modifier use_type backup_fn_flags accessor_modifiers
 
@@ -1043,6 +1043,9 @@ accessor_property:
 accessor_list:
 		%empty { $$ = zend_ast_create_list(0, ZEND_AST_STMT_LIST); }
 	|	accessor_list accessor { $$ = zend_ast_list_add($1, $2); }
+	|	accessor_list attributes accessor {
+			$$ = zend_ast_list_add($1, zend_ast_with_attributes($3, $2));
+		}
 ;
 
 accessor_modifiers:
@@ -1051,22 +1054,17 @@ accessor_modifiers:
 ;
 
 accessor:
-		accessor_modifiers returns_ref T_STRING
+		accessor_modifiers T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); }
-		optional_parameter_list return_type '{' inner_statement_list '}'
+		'{' inner_statement_list '}'
 			{ $$ = zend_ast_create_decl(
-					ZEND_AST_ACCESSOR, $1 | $2, $<num>5, $4, zend_ast_get_str($3),
-					$6, NULL, $9, $7, NULL); }
-	|	accessor_modifiers returns_ref T_STRING
+					ZEND_AST_ACCESSOR, $1, $<num>4, $3, zend_ast_get_str($2),
+					NULL, NULL, $6, NULL, NULL); }
+	|	accessor_modifiers T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); } ';'
 			{ $$ = zend_ast_create_decl(
-					ZEND_AST_ACCESSOR, $1 | $2, $<num>5, $4, zend_ast_get_str($3),
+					ZEND_AST_ACCESSOR, $1, $<num>4, $3, zend_ast_get_str($2),
 					NULL, NULL, NULL, NULL, NULL); }
-;
-
-optional_parameter_list:
-		%empty { $$ = NULL; }
-	|	'(' parameter_list ')' { $$ = $2; }
 ;
 
 class_const_list:

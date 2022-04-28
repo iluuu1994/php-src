@@ -7195,6 +7195,10 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 		zend_class_entry *ce = CG(active_class_entry);
 		op_array->scope = ce;
 		op_array->function_name = zend_string_copy(decl->name);
+		if (zend_hash_add_ptr(&ce->function_table, op_array->function_name, op_array) == NULL) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Cannot redeclare accessor \"%s\"", ZSTR_VAL(op_array->function_name));
+		}
 	} else if (is_method) {
 		bool has_body = stmt_ast != NULL;
 		method_lcname = zend_begin_method_decl(op_array, decl->name, has_body);
@@ -7281,20 +7285,6 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 }
 /* }}} */
 
-static bool is_valid_set_param(zend_ast *param) {
-	zend_ast *type_ast = param->child[0];
-	zend_ast *default_ast = param->child[2];
-	if (param->attr || default_ast) {
-		return false;
-	}
-	if (type_ast) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"Accessor \"set\" may not have a parameter type "
-			"(accessor types are determined by the property type)");
-	}
-	return true;
-}
-
 static void zend_compile_accessors(
 		zend_property_info *prop_info, zend_string *prop_name,
 		zend_ast *prop_type_ast, zend_ast_list *accessors)
@@ -7311,8 +7301,6 @@ static void zend_compile_accessors(
 	for (uint32_t i = 0; i < accessors->children; i++) {
 		zend_ast_decl *accessor = (zend_ast_decl *) accessors->child[i];
 		zend_string *name = accessor->name;
-		zend_ast_list *param_list =
-			accessor->child[0] ? zend_ast_get_list(accessor->child[0]) : NULL;
 		zend_ast **stmt_ast_ptr = &accessor->child[2];
 		zend_ast **return_ast_ptr = &accessor->child[3];
 		zend_ast *orig_stmt_ast = *stmt_ast_ptr;
@@ -7398,14 +7386,7 @@ static void zend_compile_accessors(
 		bool explicit_prop = orig_stmt_ast && !(accessor->flags & ZEND_ACC_ABSTRACT);
 		if (zend_string_equals_literal_ci(name, "get")) {
 			accessor_kind = ZEND_ACCESSOR_GET;
-			if (param_list) {
-				if (param_list->children != 0) {
-					zend_error_noreturn(E_COMPILE_ERROR,
-						"Accessor \"get\" may not have parameters");
-				}
-			} else {
-				accessor->child[0] = zend_ast_create_list(0, ZEND_AST_PARAM_LIST);
-			}
+			accessor->child[0] = zend_ast_create_list(0, ZEND_AST_PARAM_LIST);
 
 			reset_return_ast = true;
 			*return_ast_ptr = prop_type_ast;
@@ -7421,26 +7402,15 @@ static void zend_compile_accessors(
 			}
 		} else if (zend_string_equals_literal_ci(name, "set")) {
 			accessor_kind = ZEND_ACCESSOR_SET;
-			if (param_list) {
-				if (param_list->children != 1 || !is_valid_set_param(param_list->child[0])) {
-					zend_error_noreturn(E_COMPILE_ERROR,
-						"Accessor \"set\" must have exactly one required by-value parameter");
-				}
-			} else {
-				zend_string *param_name = zend_string_init("value", sizeof("value")-1, 0);
-				zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
-				zend_ast *param = zend_ast_create(
-					ZEND_AST_PARAM, prop_type_ast, param_name_ast,
-					/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL,
-					/* accessors */ NULL);
-				accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
-				reset_param_type_ast = true;
-			}
+			zend_string *param_name = zend_string_init("value", sizeof("value")-1, 0);
+			zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
+			zend_ast *param = zend_ast_create(
+				ZEND_AST_PARAM, prop_type_ast, param_name_ast,
+				/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL,
+				/* accessors */ NULL);
+			accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
+			reset_param_type_ast = true;
 			*return_ast_ptr = zend_ast_create_ex(ZEND_AST_TYPE, IS_VOID);
-			if (accessor->flags & ZEND_ACC_RETURN_REFERENCE) {
-				zend_error_noreturn(E_COMPILE_ERROR,
-					"Accessor \"set\" cannot return by reference");
-			}
 
 			if (implicit_prop) {
 				has_implicit_set = true;
@@ -7497,15 +7467,12 @@ static void zend_compile_accessors(
 	}
 
 	zend_function *get = prop_info->accessors[ZEND_ACCESSOR_GET];
+	zend_function *set = prop_info->accessors[ZEND_ACCESSOR_SET];
+	if (has_implicit_get && !set) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Cannot have implicit get without set");
+	}
 	if (has_implicit_set && !get) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot have implicit set without get");
-	}
-
-	if (get && (get->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)
-			&& !prop_info->accessors[ZEND_ACCESSOR_SET]) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"Cannot have &get without set. "
-			"Either remove the \"&\" or add \"set\" accessor");
 	}
 }
 
@@ -7557,6 +7524,11 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Only accessor properties may be declared abstract");
 			}
+		}
+
+		if (accessors_ast && flags & ZEND_ACC_READONLY) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Accessor properties cannot be readonly");
 		}
 
 		if (type_ast) {

@@ -216,9 +216,6 @@ typedef struct _zend_oparray_context {
 #define ZEND_ACC_ABSTRACT                (1 <<  6) /*  X  |  X  |  X  |     */
 #define ZEND_ACC_EXPLICIT_ABSTRACT_CLASS (1 <<  6) /*  X  |     |     |     */
 /*                                                        |     |     |     */
-/* Readonly property                                      |     |     |     */
-#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
-/*                                                        |     |     |     */
 /* Immutable op_array and class_entries                   |     |     |     */
 /* (implemented only for lazy loading of op_arrays)       |     |     |     */
 #define ZEND_ACC_IMMUTABLE               (1 <<  7) /*  X  |  X  |     |     */
@@ -237,14 +234,17 @@ typedef struct _zend_oparray_context {
 /* or IS_CONSTANT_VISITED_MARK                            |     |     |     */
 #define ZEND_CLASS_CONST_IS_CASE         (1 << 6)  /*     |     |     |  X  */
 /*                                                        |     |     |     */
-/* Property Flags (unused: 9...)                          |     |     |     */
+/* Property Flags (unused: 10...)                         |     |     |     */
 /* ===========                                            |     |     |     */
 /*                                                        |     |     |     */
+/* Readonly property                                      |     |     |     */
+#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
+/*                                                        |     |     |     */
 /* Promoted property / parameter                          |     |     |     */
-#define ZEND_ACC_PROMOTED                (1 <<  7) /*     |     |  X  |     */
+#define ZEND_ACC_PROMOTED                (1 <<  8) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Virtual property without backing storage               |     |     |     */
-#define ZEND_ACC_VIRTUAL                 (1 <<  8) /*     |     |  X  |     */
+#define ZEND_ACC_VIRTUAL                 (1 <<  9) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Class Flags (unused: 21,30,31)                         |     |     |     */
 /* ===========                                            |     |     |     */
@@ -394,7 +394,7 @@ char *zend_visibility_string(uint32_t fn_flags);
 #define ZEND_ACCESSOR_GET 0
 #define ZEND_ACCESSOR_SET 1
 #define ZEND_ACCESSOR_COUNT 2
-#define ZEND_ACCESSOR_STRUCT_SIZE (sizeof(zend_function) * ZEND_ACCESSOR_COUNT)
+#define ZEND_ACCESSOR_STRUCT_SIZE (sizeof(zend_function*) * ZEND_ACCESSOR_COUNT)
 
 typedef struct _zend_property_info {
 	uint32_t offset; /* property offset for object properties or
