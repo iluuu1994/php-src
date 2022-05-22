@@ -44,16 +44,24 @@ function get_branches() {
 
 function get_asan_matrix(array $branches) {
     $jobs = [];
-    foreach ($branches as $branch) {
+    // foreach ($branches as $branch) {
+        // $jobs[] = [
+        //     'name' => '_ASAN_UBSAN',
+        //     'branch' => ['name' => 'PR'],
+        //     'debug' => true,
+        //     'zts' => true,
+        //     'configuration_parameters' => "CFLAGS='-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC' LDFLAGS='-fsanitize=undefined,address'",
+        //     'run_tests_parameters' => '--asan',
+        // ];
         $jobs[] = [
-            'name' => '_ASAN_UBSAN',
-            'branch' => $branch,
+            'name' => '_ASAN_UBSAN_CLANG',
+            'branch' => ['name' => 'PR'],
             'debug' => true,
             'zts' => true,
-            'configuration_parameters' => "CFLAGS='-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC' LDFLAGS='-fsanitize=undefined,address'",
+            'configuration_parameters' => "CC=clang CFLAGS='-fsanitize=undefined,address -fno-omit-frame-pointer -DZEND_TRACK_ARENA_ALLOC' LDFLAGS='-fsanitize=undefined,address' ASAN_OPTIONS=fast_unwind_on_malloc=0",
             'run_tests_parameters' => '--asan',
         ];
-    }
+    // }
     return $jobs;
 }
 
@@ -67,5 +75,5 @@ if ($discard_cache) {
 $branches = get_branches();
 $asan_matrix = get_asan_matrix($branches);
 
-echo '::set-output name=branches::' . json_encode($branches, JSON_UNESCAPED_SLASHES) . "\n";
+// echo '::set-output name=branches::' . json_encode($branches, JSON_UNESCAPED_SLASHES) . "\n";
 echo '::set-output name=asan-matrix::' . json_encode($asan_matrix, JSON_UNESCAPED_SLASHES) . "\n";

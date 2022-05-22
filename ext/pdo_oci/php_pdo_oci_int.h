@@ -14,7 +14,10 @@
   +----------------------------------------------------------------------+
 */
 
-#include <oci.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-prototypes"
+# include <oci.h>
+#pragma GCC diagnostic pop
 
 typedef struct {
 	const char *file;

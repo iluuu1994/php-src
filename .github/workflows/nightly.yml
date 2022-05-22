@@ -1,23 +1,26 @@
 name: Nightly
+# on:
+#   schedule:
+#    - cron: "0 1 * * *"
+#   workflow_dispatch: ~
 on:
-  schedule:
-   - cron: "0 1 * * *"
-  workflow_dispatch: ~
+  pull_request:
+    branches:
+      - '**'
 jobs:
   GENERATE_MATRIX:
     name: Generate Matrix
-    if: github.repository_owner == 'php' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
-      branches: ${{ steps.set-matrix.outputs.branches }}
+      # branches: ${{ steps.set-matrix.outputs.branches }}
       asan-matrix: ${{ steps.set-matrix.outputs.asan-matrix }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          # Set fetch-depth to 0 to clone the full repository
-          # including all branches. This is required to find
-          # the correct commit hashes.
-          fetch-depth: 0
+        # with:
+        #   # Set fetch-depth to 0 to clone the full repository
+        #   # including all branches. This is required to find
+        #   # the correct commit hashes.
+        #   fetch-depth: 0
       - name: Grab the commit mapping
         uses: actions/cache@v3
         with:
@@ -32,21 +35,21 @@ jobs:
         run: php .github/nightly_matrix.php "${{ github.event_name }}" "${{ github.run_attempt }}"
   LINUX_X64:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    # if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        branch: ${{ fromJson(needs.GENERATE_MATRIX.outputs.branches) }}
-        debug: [true, false]
-        zts: [true, false]
+        # branch: ${{ fromJson(needs.GENERATE_MATRIX.outputs.branches) }}
+        # debug: [true, false]
+        # zts: [true, false]
         include: ${{ fromJson(needs.GENERATE_MATRIX.outputs.asan-matrix) }}
-    name: "${{ matrix.branch.name }}_LINUX_X64${{ matrix.name }}_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
+    name: "PR_LINUX_X64${{ matrix.name }}_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
     runs-on: ubuntu-20.04
     steps:
       - name: git checkout
         uses: actions/checkout@v2
-        with:
-          ref: ${{ matrix.branch.ref }}
+        # with:
+        #   ref: ${{ matrix.branch.ref }}
       - name: Create mssql container
         uses: ./.github/actions/mssql
       - name: apt
@@ -97,7 +100,7 @@ jobs:
         uses: ./.github/actions/verify-generated-files
   MACOS:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
