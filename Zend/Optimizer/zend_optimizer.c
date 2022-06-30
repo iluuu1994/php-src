@@ -1414,6 +1414,7 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 	zend_class_entry *ce;
 	zend_string *key;
 	zend_op_array *op_array;
+	zend_property_info *property;
 
 	zend_foreach_op_array_helper(&script->main_op_array, func, context);
 
@@ -1431,6 +1432,17 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 					&& !(op_array->fn_flags & ZEND_ACC_ABSTRACT)
 					&& !(op_array->fn_flags & ZEND_ACC_TRAIT_CLONE)) {
 				zend_foreach_op_array_helper(op_array, func, context);
+			}
+		} ZEND_HASH_FOREACH_END();
+		ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property) {
+			zend_function **accessors = property->accessors;
+			if (accessors) {
+				if (accessors[ZEND_ACCESSOR_GET]) {
+					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_GET], func, context);
+				}
+				if (accessors[ZEND_ACCESSOR_SET]) {
+					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_SET], func, context);
+				}
 			}
 		} ZEND_HASH_FOREACH_END();
 	} ZEND_HASH_FOREACH_END();

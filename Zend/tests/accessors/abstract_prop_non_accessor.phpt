@@ -1,7 +1,5 @@
 --TEST--
 Non-accessor property satisfies abstract property
---XFAIL--
-Normal property should satisfy { get; set; }
 --FILE--
 <?php
 

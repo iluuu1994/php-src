@@ -24,5 +24,5 @@ try {
 
 ?>
 --EXPECT--
-get called
-set called with foo
+Call to undefined method Test::$prop::get()
+Call to undefined method Test::$prop::set()

@@ -2451,6 +2451,20 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 		}
 	} ZEND_HASH_FOREACH_END();
 
+	if (!is_explicit_abstract) {
+		zend_property_info *prop_info;
+		ZEND_HASH_FOREACH_PTR(&ce->properties_info, prop_info) {
+			if (prop_info->accessors) {
+				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
+					zend_function *fn = prop_info->accessors[i];
+					if (fn && (fn->common.fn_flags & ZEND_ACC_ABSTRACT)) {
+						zend_verify_abstract_class_function(fn, &ai);
+					}
+				}
+			}
+		} ZEND_HASH_FOREACH_END();
+	}
+
 	if (ai.cnt) {
 		zend_error_noreturn(E_ERROR, !is_explicit_abstract && can_be_abstract
 			? "%s %s contains %d abstract method%s and must therefore be declared abstract or implement the remaining methods (" MAX_ABSTRACT_INFO_FMT MAX_ABSTRACT_INFO_FMT MAX_ABSTRACT_INFO_FMT ")"

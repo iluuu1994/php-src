@@ -7195,10 +7195,6 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 		zend_class_entry *ce = CG(active_class_entry);
 		op_array->scope = ce;
 		op_array->function_name = zend_string_copy(decl->name);
-		if (zend_hash_add_ptr(&ce->function_table, op_array->function_name, op_array) == NULL) {
-			zend_error_noreturn(E_COMPILE_ERROR,
-				"Cannot redeclare accessor \"%s\"", ZSTR_VAL(op_array->function_name));
-		}
 	} else if (is_method) {
 		bool has_body = stmt_ast != NULL;
 		method_lcname = zend_begin_method_decl(op_array, decl->name, has_body);
