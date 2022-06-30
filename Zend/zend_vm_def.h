@@ -3599,6 +3599,45 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 	ZEND_VM_NEXT_OPCODE();
 }
 
+ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
+{
+	USE_OPLINE
+
+	zend_class_entry *ce = EX(func)->common.scope;
+	// FIXME: Make sure we're in object context
+	zend_class_entry *parent_ce = ce->parent;
+	// FIXME: Assert there's a parent class
+
+	SAVE_OPLINE();
+
+	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
+	// FIXME: Compile to constant
+	zend_string *accessor_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
+
+	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
+	// FIXME: Handle inexistent parent property
+
+	zend_function **accessors = prop_info->accessors;
+	zend_function *accessor;
+	if (zend_string_equals_literal_ci(accessor_name, "get")) {
+		accessor = accessors[ZEND_ACCESSOR_GET];
+	} else {
+		ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
+		accessor = accessors[ZEND_ACCESSOR_SET];
+	}
+	// FIXME: Handle non-accessor
+
+	zend_execute_data *call = zend_vm_stack_push_call_frame(
+		ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
+		accessor,
+		opline->extended_value,
+		ZEND_THIS);
+
+	call->prev_execute_data = EX(call);
+	EX(call) = call;
+	ZEND_VM_NEXT_OPCODE();
+}
+
 ZEND_VM_HANDLER(113, ZEND_INIT_STATIC_METHOD_CALL, UNUSED|CLASS_FETCH|CONST|VAR, CONST|TMPVAR|UNUSED|CONSTRUCTOR|CV, NUM|CACHE_SLOT)
 {
 	USE_OPLINE

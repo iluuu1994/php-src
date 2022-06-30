@@ -1991,6 +1991,8 @@ simple_list:
 			zend_ast_export_var(str, ast->child[1], 0, indent);
 			break;
 		case ZEND_AST_CALL:
+		// FIXME: This will contain whitespaces instead of being normalized of the original code does so
+		case ZEND_AST_PARENT_ACCESSOR_CALL:
 			zend_ast_export_ns_name(str, ast->child[0], 0, indent);
 			smart_str_appendc(str, '(');
 			zend_ast_export_ex(str, ast->child[1], 0, indent);

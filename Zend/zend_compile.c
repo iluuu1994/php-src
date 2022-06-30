@@ -4368,6 +4368,35 @@ static zend_result zend_try_compile_special_func(znode *result, zend_string *lcn
 }
 /* }}} */
 
+static void zend_compile_parent_accessor_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
+{
+	zend_class_entry *ce = CG(active_class_entry);
+	if (!ce) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use \"parent\" when no class scope is active");
+	}
+
+	zend_ast *name_ast = ast->child[0];
+	zend_ast *args_ast = ast->child[1];
+
+	zend_string *name = zend_ast_get_str(name_ast);
+	// Accessor names are always 3 characters at the moment (get, set)
+	zend_string *accessor_name = zend_string_init(ZSTR_VAL(name) + ZSTR_LEN(name) - 3, 3, /* persistent */ false);
+	zend_string *property_name = zend_string_init(ZSTR_VAL(name) + strlen("parent::$"), ZSTR_LEN(name) - strlen("parent::$") - strlen("::") - 3, /* persistent */ false);
+
+	// FIXME: Assert the handler has the same name
+	// FIXME: Assert the method is an accessor
+
+	zend_op *opline = get_next_op();
+	opline->opcode = ZEND_INIT_PARENT_ACCESSOR_CALL;
+	opline->op1_type = IS_CONST;
+	opline->op1.constant = zend_add_class_name_literal(property_name);
+	opline->op2_type = IS_CONST;
+	opline->op2.constant = zend_add_class_name_literal(accessor_name);
+
+	zend_function *fbc = NULL;
+	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
+}
+
 static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
 {
 	zend_ast *name_ast = ast->child[0];
@@ -10269,6 +10298,7 @@ static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 		case ZEND_AST_METHOD_CALL:
 		case ZEND_AST_NULLSAFE_METHOD_CALL:
 		case ZEND_AST_STATIC_CALL:
+		case ZEND_AST_PARENT_ACCESSOR_CALL:
 			zend_compile_var(result, ast, BP_VAR_R, 0);
 			return;
 		case ZEND_AST_ASSIGN:
@@ -10409,6 +10439,9 @@ static zend_op *zend_compile_var_inner(znode *result, zend_ast *ast, uint32_t ty
 			return zend_compile_static_prop(result, ast, type, by_ref, 0);
 		case ZEND_AST_CALL:
 			zend_compile_call(result, ast, type);
+			return NULL;
+		case ZEND_AST_PARENT_ACCESSOR_CALL:
+			zend_compile_parent_accessor_call(result, ast, type);
 			return NULL;
 		case ZEND_AST_METHOD_CALL:
 		case ZEND_AST_NULLSAFE_METHOD_CALL:

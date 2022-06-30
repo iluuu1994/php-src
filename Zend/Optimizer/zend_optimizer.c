@@ -337,6 +337,7 @@ bool zend_optimizer_update_op1_const(zend_op_array *op_array,
 			}
 			zend_optimizer_add_literal_string(op_array, zend_string_tolower(Z_STR_P(val)));
 			break;
+		// FIXME: Needs anything?
 		case ZEND_FETCH_CLASS_CONSTANT:
 			REQUIRES_STRING(val);
 			drop_leading_backslash(val);
@@ -530,6 +531,7 @@ bool zend_optimizer_update_op2_const(zend_op_array *op_array,
 				opline->result.num = alloc_cache_slots(op_array, 2);
 			}
 			break;
+		// FIXME: Needs anything?
 		case ZEND_ASSIGN_OBJ:
 		case ZEND_ASSIGN_OBJ_REF:
 		case ZEND_FETCH_OBJ_R:
@@ -879,6 +881,7 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
+		// FIXME: Needs anything?
 		case ZEND_INIT_METHOD_CALL:
 			if (opline->op1_type == IS_UNUSED
 					&& opline->op2_type == IS_CONST && Z_TYPE_P(CRT_CONSTANT(opline->op2)) == IS_STRING

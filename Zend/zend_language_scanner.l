@@ -1363,6 +1363,7 @@ HNUM	"0x"[0-9a-fA-F]+(_[0-9a-fA-F]+)*
 BNUM	"0b"[01]+(_[01]+)*
 ONUM	"0o"[0-7]+(_[0-7]+)*
 LABEL	[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*
+OPTIONAL_WHITESPACE [ \n\r\t]*
 WHITESPACE [ \n\r\t]+
 TABS_AND_SPACES [ \t]*
 TOKENS [;:,.|^&+-/*=%!~$<>?@]
@@ -2362,6 +2363,10 @@ inline_char_handler:
 
 <ST_IN_SCRIPTING>"namespace"("\\"{LABEL})+ {
 	RETURN_TOKEN_WITH_STR(T_NAME_RELATIVE, sizeof("namespace\\") - 1);
+}
+
+<ST_IN_SCRIPTING>"parent::"{OPTIONAL_WHITESPACE}"$"{LABEL}"::"("get"|"set") {
+	RETURN_TOKEN_WITH_STR(T_PARENT_ACCESSOR_NAME, 0);
 }
 
 <ST_IN_SCRIPTING>{LABEL}("\\"{LABEL})+ {

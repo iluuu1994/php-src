@@ -1,7 +1,5 @@
 --TEST--
-Allow calling parent in accessors
---XFAIL--
-Need syntax for accessing parent prop
+Allow calling parent get in accessors
 --FILE--
 <?php
 
@@ -16,7 +14,7 @@ class A {
 class B extends A {
     public int $prop {
         get {
-            return parent::$prop + 1;
+            return parent::$prop::get() + 1;
         }
     }
 }

@@ -98,6 +98,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ast> T_CONSTANT_ENCAPSED_STRING "quoted string"
 %token <ast> T_STRING_VARNAME "variable name"
 %token <ast> T_NUM_STRING "number"
+%token <ast> T_PARENT_ACCESSOR_NAME "parent accessor name"
 
 %token <ident> T_INCLUDE       "'include'"
 %token <ident> T_INCLUDE_ONCE  "'include_once'"
@@ -1310,6 +1311,8 @@ function_call:
 			$$ = zend_ast_create(ZEND_AST_CALL, $1, $3); 
 			$$->lineno = $<num>2;
 		}
+	|	T_PARENT_ACCESSOR_NAME argument_list
+			{ $$ = zend_ast_create(ZEND_AST_PARENT_ACCESSOR_CALL, $1, $2); }
 ;
 
 class_name:
