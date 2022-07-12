@@ -219,9 +219,6 @@ typedef struct _zend_oparray_context {
 #define ZEND_ACC_ABSTRACT                (1 <<  6) /*  X  |  X  |     |     */
 #define ZEND_ACC_EXPLICIT_ABSTRACT_CLASS (1 <<  6) /*  X  |     |     |     */
 /*                                                        |     |     |     */
-/* Readonly property                                      |     |     |     */
-#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
-/*                                                        |     |     |     */
 /* Immutable op_array and class_entries                   |     |     |     */
 /* (implemented only for lazy loading of op_arrays)       |     |     |     */
 #define ZEND_ACC_IMMUTABLE               (1 <<  7) /*  X  |  X  |     |     */
@@ -239,6 +236,16 @@ typedef struct _zend_oparray_context {
 /* Must not conflict with ZEND_ACC_ visibility flags      |     |     |     */
 /* or IS_CONSTANT_VISITED_MARK                            |     |     |     */
 #define ZEND_CLASS_CONST_IS_CASE         (1 << 6)  /*     |     |     |  X  */
+/*                                                        |     |     |     */
+/* Property Flags (unused: 9-31)                          |     |     |     */
+/* ===========                                            |     |     |     */
+/*                                                        |     |     |     */
+/* Readonly property                                      |     |     |     */
+#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
+/*                                                        |     |     |     */
+/* Asymmetric visibility                                  |     |     |     */
+#define ZEND_ACC_PROTECTED_SET           (1 <<  6) /*     |     |  X  |     */
+#define ZEND_ACC_PRIVATE_SET             (1 <<  8) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Class Flags (unused: 21,30,31)                         |     |     |     */
 /* ===========                                            |     |     |     */
@@ -368,6 +375,7 @@ typedef struct _zend_oparray_context {
 
 
 #define ZEND_ACC_PPP_MASK  (ZEND_ACC_PUBLIC | ZEND_ACC_PROTECTED | ZEND_ACC_PRIVATE)
+#define ZEND_ACC_PPP_SET_MASK  (ZEND_ACC_PROTECTED_SET | ZEND_ACC_PRIVATE_SET)
 
 /* call through internal function handler. e.g. Closure::invoke() */
 #define ZEND_ACC_CALL_VIA_HANDLER     ZEND_ACC_CALL_VIA_TRAMPOLINE
@@ -804,11 +812,23 @@ ZEND_API binary_op_type get_binary_op(int opcode);
 void zend_stop_lexing(void);
 void zend_emit_final_return(bool return_one);
 
+typedef enum {
+	ZEND_MODIFIER_TYPE_PROPERTY = 0,
+	ZEND_MODIFIER_TYPE_METHOD,
+	ZEND_MODIFIER_TYPE_CONSTANT,
+	ZEND_MODIFIER_TYPE_CPP,
+} zend_modifier_type;
+
 /* Used during AST construction */
 zend_ast *zend_ast_append_str(zend_ast *left, zend_ast *right);
 zend_ast *zend_negate_num_string(zend_ast *ast);
 uint32_t zend_add_class_modifier(uint32_t flags, uint32_t new_flag);
-uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag);
+uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag, zend_modifier_type modifier_type);
+
+uint32_t zend_modifier_token_to_flag(zend_modifier_type type, uint32_t flags);
+uint32_t zend_modifier_list_to_flags(zend_modifier_type type, zend_ast *modifiers);
+char *zend_modifier_to_string(uint32_t flags);
+
 bool zend_handle_encoding_declaration(zend_ast *ast);
 
 ZEND_API zend_class_entry *zend_bind_class_in_slot(
@@ -929,9 +949,9 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 #define ZEND_FETCH_CLASS_ALLOW_UNLINKED 0x0400
 #define ZEND_FETCH_CLASS_ALLOW_NEARLY_LINKED 0x0800
 
-/* These should not clash with ZEND_ACC_(PUBLIC|PROTECTED|PRIVATE) */
-#define ZEND_PARAM_REF      (1<<3)
-#define ZEND_PARAM_VARIADIC (1<<4)
+/* These should not clash with ZEND_ACC_PPP_MASK and ZEND_ACC_PPP_SET_MASK */
+#define ZEND_PARAM_REF      (1<<9)
+#define ZEND_PARAM_VARIADIC (1<<10)
 
 #define ZEND_NAME_FQ       0
 #define ZEND_NAME_NOT_FQ   1

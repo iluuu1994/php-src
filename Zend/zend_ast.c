@@ -1611,13 +1611,21 @@ static ZEND_COLD void zend_ast_export_attributes(smart_str *str, zend_ast *ast, 
 	}
 }
 
-static ZEND_COLD void zend_ast_export_visibility(smart_str *str, uint32_t flags) {
+static ZEND_COLD void zend_ast_export_visibility(smart_str *str, uint32_t flags, zend_modifier_type modifier_type) {
 	if (flags & ZEND_ACC_PUBLIC) {
 		smart_str_appends(str, "public ");
 	} else if (flags & ZEND_ACC_PROTECTED) {
 		smart_str_appends(str, "protected ");
 	} else if (flags & ZEND_ACC_PRIVATE) {
 		smart_str_appends(str, "private ");
+	}
+
+	if (modifier_type == ZEND_MODIFIER_TYPE_PROPERTY || modifier_type == ZEND_MODIFIER_TYPE_CPP) {
+		if (flags & ZEND_ACC_PRIVATE_SET) {
+			smart_str_appends(str, "private(set) ");
+		} else if (flags & ZEND_ACC_PROTECTED_SET) {
+			smart_str_appends(str, "protected(set) ");
+		}
 	}
 }
 
@@ -1729,7 +1737,7 @@ tail_call:
 				zend_ast_export_attributes(str, decl->child[4], indent, newlines);
 			}
 
-			zend_ast_export_visibility(str, decl->flags);
+			zend_ast_export_visibility(str, decl->flags, ZEND_MODIFIER_TYPE_METHOD);
 
 			if (decl->flags & ZEND_ACC_STATIC) {
 				smart_str_appends(str, "static ");
@@ -1855,7 +1863,7 @@ simple_list:
 				zend_ast_export_attributes(str, ast->child[2], indent, 1);
 			}
 
-			zend_ast_export_visibility(str, ast->attr);
+			zend_ast_export_visibility(str, ast->attr, ZEND_MODIFIER_TYPE_PROPERTY);
 
 			if (ast->attr & ZEND_ACC_STATIC) {
 				smart_str_appends(str, "static ");
@@ -1881,7 +1889,7 @@ simple_list:
 				zend_ast_export_attributes(str, ast->child[1], indent, 1);
 			}
 
-			zend_ast_export_visibility(str, ast->attr);
+			zend_ast_export_visibility(str, ast->attr, ZEND_MODIFIER_TYPE_CONSTANT);
 			smart_str_appends(str, "const ");
 
 			ast = ast->child[0];

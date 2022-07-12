@@ -860,6 +860,18 @@ ZEND_API ZEND_COLD void ZEND_FASTCALL zend_readonly_property_indirect_modificati
 		ZSTR_VAL(info->ce->name), zend_get_unmangled_property_name(info->name));
 }
 
+ZEND_API ZEND_COLD void ZEND_FASTCALL zend_asymmetric_visibility_property_modification_error(zend_property_info *prop_info) {
+	const char *visibility;
+	if (prop_info->flags & ZEND_ACC_PRIVATE_SET) {
+		visibility = "private";
+	} else {
+		ZEND_ASSERT(prop_info->flags & ZEND_ACC_PROTECTED_SET);
+		visibility = "protected";
+	}
+	zend_throw_error(NULL, "Cannot modify %s(set) property %s::$%s",
+		visibility, ZSTR_VAL(prop_info->ce->name), ZSTR_VAL(prop_info->name));
+}
+
 static zend_class_entry *resolve_single_class_type(zend_string *name, zend_class_entry *self_ce) {
 	if (zend_string_equals_literal_ci(name, "self")) {
 		return self_ce;
@@ -3105,6 +3117,24 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 							ZVAL_ERROR(result);
 						}
 						return;
+					}
+
+					if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
+						ZEND_ASSERT(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET);
+						zend_class_entry *scope = zend_get_executed_scope();
+						if (prop_info->ce != scope) {
+							if (UNEXPECTED((prop_info->flags & ZEND_ACC_PRIVATE_SET) || !zend_is_protected_compatible_scope(prop_info->ce, scope))) {
+								if (Z_TYPE_P(ptr) == IS_OBJECT) {
+									/* For objects, W/RW/UNSET fetch modes might not actually modify object.
+									* Similar as with magic __get() allow them, but return the value as a copy
+									* to make sure no actual modification is possible. */
+									ZVAL_COPY(result, ptr);
+								} else {
+									zend_asymmetric_visibility_property_modification_error(prop_info);
+								}
+								return;
+							}
+						}
 					}
 					flags &= ZEND_FETCH_OBJ_FLAGS;
 					if (flags) {

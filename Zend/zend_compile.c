@@ -787,6 +787,107 @@ static void zend_do_free(znode *op1) /* {{{ */
 }
 /* }}} */
 
+
+char *zend_modifier_to_string(uint32_t modifier)
+{
+	switch (modifier) {
+		case T_PUBLIC:
+			return "public";
+		case T_PROTECTED:
+			return "protected";
+		case T_PRIVATE:
+			return "private";
+		case T_STATIC:
+			return "static";
+		case T_FINAL:
+			return "final";
+		case T_READONLY:
+			return "readonly";
+		case T_ABSTRACT:
+			return "abstract";
+		case T_PROTECTED_SET:
+			return "protected(set)";
+		case T_PRIVATE_SET:
+			return "private(set)";
+		EMPTY_SWITCH_DEFAULT_CASE()
+	}
+}
+
+uint32_t zend_modifier_token_to_flag(zend_modifier_type type, uint32_t token)
+{
+	switch (token) {
+		case T_PUBLIC:
+			return ZEND_ACC_PUBLIC;
+		case T_PROTECTED:
+			return ZEND_ACC_PROTECTED;
+		case T_PRIVATE:
+			return ZEND_ACC_PRIVATE;
+		case T_READONLY:
+			return ZEND_ACC_READONLY;
+	}
+
+	if (type == ZEND_MODIFIER_TYPE_METHOD) {
+		switch (token) {
+			case T_ABSTRACT:
+				return ZEND_ACC_ABSTRACT;
+			case T_FINAL:
+				return ZEND_ACC_FINAL;
+		}
+	}
+
+	if (type == ZEND_MODIFIER_TYPE_PROPERTY || type == ZEND_MODIFIER_TYPE_CPP) {
+		switch (token) {
+			case T_PROTECTED_SET:
+				return ZEND_ACC_PROTECTED_SET;
+			case T_PRIVATE_SET:
+				return ZEND_ACC_PRIVATE_SET;
+		}
+	}
+
+	if (type != ZEND_MODIFIER_TYPE_CPP) {
+		switch (token) {
+			case T_STATIC:
+				return ZEND_ACC_STATIC;
+		}
+	}
+
+	char *member;
+	if (type == ZEND_MODIFIER_TYPE_PROPERTY) {
+		member = "property";
+	} else if (type == ZEND_MODIFIER_TYPE_METHOD) {
+		member = "method";
+	} else if (type == ZEND_MODIFIER_TYPE_CONSTANT) {
+		member = "class constant";
+	} else if (type == ZEND_MODIFIER_TYPE_CPP) {
+		member = "promoted property";
+	}else {
+		ZEND_UNREACHABLE();
+	}
+
+	zend_throw_exception_ex(zend_ce_compile_error, 0,
+		"Cannot use the %s modifier on a %s", zend_modifier_to_string(token), member);
+	return 0;
+}
+
+uint32_t zend_modifier_list_to_flags(zend_modifier_type type, zend_ast *modifiers)
+{
+	uint32_t flags = 0;
+	zend_ast_list *modifier_list = zend_ast_get_list(modifiers);
+
+	for (uint32_t i = 0; i < modifier_list->children; i++) {
+		uint32_t new_flag = zend_modifier_token_to_flag(type, (uint32_t) Z_LVAL_P(zend_ast_get_zval(modifier_list->child[i])));
+		if (!new_flag) {
+			return 0;
+		}
+		flags = zend_add_member_modifier(flags, new_flag, type);
+		if (!flags) {
+			return 0;
+		}
+	}
+
+	return flags;
+}
+
 uint32_t zend_add_class_modifier(uint32_t flags, uint32_t new_flag) /* {{{ */
 {
 	uint32_t new_flags = flags | new_flag;
@@ -812,10 +913,15 @@ uint32_t zend_add_class_modifier(uint32_t flags, uint32_t new_flag) /* {{{ */
 }
 /* }}} */
 
-uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag) /* {{{ */
+uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag, zend_modifier_type modifier_type) /* {{{ */
 {
 	uint32_t new_flags = flags | new_flag;
 	if ((flags & ZEND_ACC_PPP_MASK) && (new_flag & ZEND_ACC_PPP_MASK)) {
+		zend_throw_exception(zend_ce_compile_error,
+			"Multiple access type modifiers are not allowed", 0);
+		return 0;
+	}
+	if ((modifier_type == ZEND_MODIFIER_TYPE_PROPERTY || modifier_type == ZEND_MODIFIER_TYPE_CPP) && (flags & ZEND_ACC_PPP_SET_MASK) && (new_flag & ZEND_ACC_PPP_SET_MASK)) {
 		zend_throw_exception(zend_ce_compile_error,
 			"Multiple access type modifiers are not allowed", 0);
 		return 0;
@@ -837,10 +943,25 @@ uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag) /* {{{ */
 			"Multiple readonly modifiers are not allowed", 0);
 		return 0;
 	}
-	if ((new_flags & ZEND_ACC_ABSTRACT) && (new_flags & ZEND_ACC_FINAL)) {
+	if (modifier_type == ZEND_MODIFIER_TYPE_METHOD && (new_flags & ZEND_ACC_ABSTRACT) && (new_flags & ZEND_ACC_FINAL)) {
 		zend_throw_exception(zend_ce_compile_error,
 			"Cannot use the final modifier on an abstract class member", 0);
 		return 0;
+	}
+	if ((modifier_type == ZEND_MODIFIER_TYPE_PROPERTY || modifier_type == ZEND_MODIFIER_TYPE_CPP) && (new_flags & ZEND_ACC_PPP_MASK) && (new_flags & ZEND_ACC_PPP_SET_MASK)) {
+		uint32_t get_visibility = new_flags & ZEND_ACC_PPP_MASK;
+		uint32_t set_visibility;
+		if (new_flags & ZEND_ACC_PRIVATE_SET) {
+			set_visibility = ZEND_ACC_PRIVATE;
+		} else {
+			ZEND_ASSERT(new_flags & ZEND_ACC_PROTECTED_SET);
+			set_visibility = ZEND_ACC_PROTECTED;
+		}
+		if (get_visibility >= set_visibility) {
+			zend_throw_exception(zend_ce_compile_error,
+				"Get visibility must be higher than set visibility", 0);
+			return 0;
+		}
 	}
 	return new_flags;
 }
@@ -6686,7 +6807,7 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		zend_string *name = zval_make_interned_string(zend_ast_get_zval(var_ast));
 		bool is_ref = (param_ast->attr & ZEND_PARAM_REF) != 0;
 		bool is_variadic = (param_ast->attr & ZEND_PARAM_VARIADIC) != 0;
-		uint32_t property_flags = param_ast->attr & (ZEND_ACC_PPP_MASK | ZEND_ACC_READONLY);
+		uint32_t property_flags = param_ast->attr & (ZEND_ACC_PPP_MASK | ZEND_ACC_PPP_SET_MASK | ZEND_ACC_READONLY);
 
 		znode var_node, default_node;
 		zend_uchar opcode;
@@ -6866,6 +6987,11 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 			} else {
 				if (property_flags & ZEND_ACC_READONLY) {
 					zend_error_noreturn(E_COMPILE_ERROR, "Readonly property %s::$%s must have type",
+						ZSTR_VAL(scope->name), ZSTR_VAL(name));
+				}
+
+				if (property_flags & ZEND_ACC_PPP_SET_MASK) {
+					zend_error_noreturn(E_COMPILE_ERROR, "Property with asymmetric visibility %s::$%s must have type",
 						ZSTR_VAL(scope->name), ZSTR_VAL(name));
 				}
 
@@ -7403,10 +7529,6 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		zend_error_noreturn(E_COMPILE_ERROR, "Enums may not include properties");
 	}
 
-	if (flags & ZEND_ACC_ABSTRACT) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Properties cannot be declared abstract");
-	}
-
 	for (i = 0; i < children; ++i) {
 		zend_property_info *info;
 		zend_ast *prop_ast = list->child[i];
@@ -7432,12 +7554,6 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		/* Doc comment has been appended as last element in ZEND_AST_PROP_ELEM ast */
 		if (doc_comment_ast) {
 			doc_comment = zend_string_copy(zend_ast_get_str(doc_comment_ast));
-		}
-
-		if (flags & ZEND_ACC_FINAL) {
-			zend_error_noreturn(E_COMPILE_ERROR, "Cannot declare property %s::$%s final, "
-				"the final modifier is allowed only for methods, classes, and class constants",
-				ZSTR_VAL(ce->name), ZSTR_VAL(name));
 		}
 
 		if (zend_hash_exists(&ce->properties_info, name)) {
@@ -7489,6 +7605,13 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 			if (flags & ZEND_ACC_STATIC) {
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Static property %s::$%s cannot be readonly",
+					ZSTR_VAL(ce->name), ZSTR_VAL(name));
+			}
+		}
+
+		if (flags & ZEND_ACC_PPP_SET_MASK) {
+			if (!ZEND_TYPE_IS_SET(type)) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Property with asymmetric visibility %s::$%s must have type",
 					ZSTR_VAL(ce->name), ZSTR_VAL(name));
 			}
 		}
