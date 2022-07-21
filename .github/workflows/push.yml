@@ -14,9 +14,6 @@ on:
       - PHP-8.0
       - PHP-8.1
       - master
-  pull_request:
-    branches:
-      - '**'
 jobs:
   LINUX_X64:
     strategy:

@@ -53,6 +53,14 @@ function get_asan_matrix(array $branches) {
             'configuration_parameters' => "CFLAGS='-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC' LDFLAGS='-fsanitize=undefined,address'",
             'run_tests_parameters' => '--asan',
         ];
+        $jobs[] = [
+            'name' => '_MSAN',
+            'branch' => $branch,
+            'debug' => true,
+            'zts' => true,
+            'configuration_parameters' => "--enable-memory-sanitizer CFLAGS='-DZEND_TRACK_ARENA_ALLOC'",
+            'run_tests_parameters' => '--msan',
+        ];
     }
     return $jobs;
 }
