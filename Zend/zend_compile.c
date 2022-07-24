@@ -8406,6 +8406,10 @@ ZEND_API bool zend_binary_op_produces_error(uint32_t opcode, zval *op1, zval *op
 		/* Division by zero throws an error. */
 		return 1;
 	}
+	if ((opcode == ZEND_POW) && zval_get_long(op1) == 0 && zval_get_long(op2) <= 0) {
+		/* 0 ** (<=0) throws an error. */
+		return 1;
+	}
 	if ((opcode == ZEND_SL || opcode == ZEND_SR) && zval_get_long(op2) < 0) {
 		/* Shift by negative number throws an error. */
 		return 1;

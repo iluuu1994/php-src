@@ -12,6 +12,15 @@ function epsilon_equal($left, $right): bool {
     return abs(($left-$right) / $left) < 1e-12;
 }
 
+function powThrowsDivisionByZeroError($base, $exponent) {
+    try {
+        pow($base, $exponent);
+        return false;
+    } catch (DivisionByZeroError) {
+        return true;
+    }
+}
+
 var_dump(0.25 === pow(-2,-2));
 var_dump(-0.5 === pow(-2,-1));
 var_dump(1    === pow(-2, 0));
@@ -22,9 +31,9 @@ var_dump(-1.0 === pow(-1,-1));
 var_dump(1    === pow(-1, 0));
 var_dump(-1   === pow(-1, 1));
 var_dump(1    === pow(-1, 2));
-var_dump(TRUE === is_infinite(pow(0,-2)));
-var_dump(TRUE === is_infinite(pow(0,-1)));
-var_dump(1    === pow( 0, 0));
+var_dump(powThrowsDivisionByZeroError(0,-2));
+var_dump(powThrowsDivisionByZeroError(0,-1));
+var_dump(powThrowsDivisionByZeroError( 0, 0));
 var_dump(0    === pow( 0, 1));
 var_dump(0    === pow( 0, 2));
 var_dump(1.0  === pow( 1,-2));
@@ -47,9 +56,9 @@ var_dump(-1.0 === pow(-1,-1.0));
 var_dump(1.0  === pow(-1, 0.0));
 var_dump(-1.0 === pow(-1, 1.0));
 var_dump(1.0  === pow(-1, 2.0));
-var_dump(TRUE === is_infinite(pow(0,-2.0)));
-var_dump(TRUE === is_infinite(pow(0,-1.0)));
-var_dump(1.0  === pow( 0, 0.0));
+var_dump(powThrowsDivisionByZeroError(0,-2.0));
+var_dump(powThrowsDivisionByZeroError(0,-1.0));
+var_dump(powThrowsDivisionByZeroError( 0, 0.0));
 var_dump(0.0  === pow( 0, 1.0));
 var_dump(0.0  === pow( 0, 2.0));
 var_dump(1.0  === pow( 1,-2.0));
@@ -79,9 +88,9 @@ var_dump(-1.0 === pow(-1.0,-1.0));
 var_dump(1.0  === pow(-1.0, 0.0));
 var_dump(-1.0 === pow(-1.0, 1.0));
 var_dump(1.0  === pow(-1.0, 2.0));
-var_dump(TRUE === is_infinite(pow(0.0,-2.0)));
-var_dump(TRUE === is_infinite(pow(0.0,-1.0)));
-var_dump(1.0  === pow( 0.0, 0.0));
+var_dump(powThrowsDivisionByZeroError(0.0,-2.0));
+var_dump(powThrowsDivisionByZeroError(0.0,-1.0));
+var_dump(powThrowsDivisionByZeroError( 0.0, 0.0));
 var_dump(0.0  === pow( 0.0, 1.0));
 var_dump(0.0  === pow( 0.0, 2.0));
 var_dump(1.0  === pow( 1.0,-2.0));
@@ -104,9 +113,9 @@ var_dump(-1.0 === pow(-1.0,-1));
 var_dump(1.0  === pow(-1.0, 0));
 var_dump(-1.0 === pow(-1.0, 1));
 var_dump(1.0  === pow(-1.0, 2));
-var_dump(TRUE === is_infinite(pow( 0.0,-2)));
-var_dump(TRUE === is_infinite(pow( 0.0,-1)));
-var_dump(1.0  === pow( 0.0, 0));
+var_dump(powThrowsDivisionByZeroError( 0.0,-2));
+var_dump(powThrowsDivisionByZeroError( 0.0,-1));
+var_dump(powThrowsDivisionByZeroError( 0.0, 0));
 var_dump(0.0  === pow( 0.0, 1));
 var_dump(0.0  === pow( 0.0, 2));
 var_dump(1.0  === pow( 1.0,-2));
