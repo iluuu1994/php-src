@@ -57,7 +57,8 @@ runs:
           libqdbm-dev \
           libjpeg-dev \
           libpng-dev \
-          libfreetype6-dev
+          libfreetype6-dev \
+          valgrind
         mkdir /opt/oracle
         wget -nv https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
         unzip instantclient-basiclite-linuxx64.zip && rm instantclient-basiclite-linuxx64.zip

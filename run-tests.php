@@ -2445,7 +2445,7 @@ COMMAND $cmd
     $passed = false;
 
     if ($valgrind) { // leak check
-        $leaked = filesize($memcheck_filename) > 0;
+        $leaked = file_exists($memcheck_filename) && filesize($memcheck_filename) > 0;
 
         if (!$leaked) {
             @unlink($memcheck_filename);
