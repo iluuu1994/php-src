@@ -1331,7 +1331,7 @@ function run_all_tests(array $test_files, array $env, $redir_tested = null): voi
  */
 function run_all_tests_parallel(array $test_files, array $env, $redir_tested): void
 {
-    global $workers, $test_idx, $test_cnt, $test_results, $failed_tests_file, $result_tests_file, $PHP_FAILED_TESTS, $shuffle, $SHOW_ONLY_GROUPS, $valgrind;
+    global $workers, $test_idx, $test_cnt, $test_results, $failed_tests_file, $result_tests_file, $PHP_FAILED_TESTS, $shuffle, $SHOW_ONLY_GROUPS, $valgrind, $progress_output_time;
 
     global $junit;
 
@@ -1578,14 +1578,17 @@ escape:
                             }
                             $test_idx++;
 
-                            if (!$SHOW_ONLY_GROUPS) {
+                            $now = microtime(true);
+                            $show_progress = $progress_output_time === null || ($now - $progress_output_time) > 0.1;
+                            if ($show_progress) {
                                 clear_show_test();
                             }
 
                             echo $resultText;
 
-                            if (!$SHOW_ONLY_GROUPS) {
+                            if ($show_progress) {
                                 show_test($test_idx, count($workerProcs) . "/$workers concurrent test workers running");
+                                $progress_output_time = $now;
                             }
 
                             if (!is_array($name) && $result != 'REDIR') {
