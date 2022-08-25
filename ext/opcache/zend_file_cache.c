@@ -1083,8 +1083,9 @@ int zend_file_cache_script_store(zend_persistent_script *script, bool in_shm)
 
 	zend_string *const s = (zend_string*)ZCG(mem);
 
-	info.checksum = zend_adler32(ADLER32_INIT, buf, script->size);
-	info.checksum = zend_adler32(info.checksum, (unsigned char*)ZSTR_VAL(s), info.str_size);
+	uint32_t zero = 0;
+	info.checksum = zend_adler32(ADLER32_INIT, buf, script->size, &zero);
+	info.checksum = zend_adler32(info.checksum, (unsigned char*)ZSTR_VAL(s), info.str_size, &zero);
 
 #if __has_feature(memory_sanitizer)
 	/* The buffer may contain uninitialized regions. However, the uninitialized parts will not be
@@ -1816,8 +1817,9 @@ zend_persistent_script *zend_file_cache_script_load(zend_file_handle *file_handl
 	close(fd);
 
 	/* verify checksum */
+	uint32_t zero = 0;
 	if (ZCG(accel_directives).file_cache_consistency_checks &&
-	    (actual_checksum = zend_adler32(ADLER32_INIT, mem, info.mem_size + info.str_size)) != info.checksum) {
+	    (actual_checksum = zend_adler32(ADLER32_INIT, mem, info.mem_size + info.str_size, &zero)) != info.checksum) {
 		zend_accel_error(ACCEL_LOG_WARNING, "corrupted file '%s' excepted checksum: 0x%08x actual checksum: 0x%08x\n", filename, info.checksum, actual_checksum);
 		zend_file_cache_unlink(filename);
 		zend_arena_release(&CG(arena), checkpoint);
