@@ -471,9 +471,19 @@ static void spl_array_write_dimension_ex(int check_inherited, zend_object *objec
 		return;
 	}
 
+	// Unwrap nested arrays
+	while (intern->ar_flags & SPL_ARRAY_USE_OTHER) {
+		intern = Z_SPLARRAY_P(&intern->array);
+	}
 	ht = spl_array_get_hash_table(intern);
 	if (key.key) {
-		zend_hash_update_ind(ht, key.key, value);
+		// Use write_property handler for objects to avoid bypassing property type check
+		if (Z_TYPE(intern->array) == IS_OBJECT) {
+			zend_object *obj = Z_OBJ(intern->array);
+			obj->handlers->write_property(obj, key.key, value, NULL);
+		} else {
+			zend_hash_update_ind(ht, key.key, value);
+		}
 		spl_hash_key_release(&key);
 	} else {
 		zend_hash_index_update(ht, key.h, value);

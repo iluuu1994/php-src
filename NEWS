@@ -2,5 +2,8 @@ PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ?? ??? ????, PHP 8.3.0alpha1
 
+- SPL:
+  . Fixed bug GH-9434 (Fix ArrayObject::offsetSet bypassing property type
+    checks, readonly and undeclared property warnings). (ilutov)
 
 <<< NOTE: Insert NEWS from last stable release here prior to actual release! >>>

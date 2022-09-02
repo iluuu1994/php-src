@@ -16,19 +16,19 @@ class UsesMagic extends ArrayObject {
 
     function __get($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __set($name, $value) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __isset($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __unset($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
 
 }
@@ -72,6 +72,8 @@ var_dump($ao);
 ?>
 --EXPECTF--
 --> Write existent, non-existent and dynamic:
+
+Deprecated: Creation of dynamic property C::$dynamic is deprecated in %s on line %d
   Original wrapped object:
 object(C)#1 (5) {
   ["a"]=>

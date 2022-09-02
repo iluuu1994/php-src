@@ -11,19 +11,19 @@ class UsesMagic {
 
     function __get($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __set($name, $value) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __isset($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
     function __unset($name) {
         $args = func_get_args();
-        echo "In " . __METHOD__ . "(" . implode($args, ',') . ")\n";
+        echo "In " . __METHOD__ . "(" . implode(',', $args) . ")\n";
     }
 
 }
@@ -69,8 +69,10 @@ var_dump($ao);
 ?>
 --EXPECTF--
 --> Write existent, non-existent and dynamic:
+In UsesMagic::__set(dynamic,new)
+In UsesMagic::__set(dynamic,new.changed)
   Original wrapped object:
-object(UsesMagic)#1 (5) {
+object(UsesMagic)#1 (4) {
   ["a"]=>
   string(7) "changed"
   ["b"]=>
@@ -79,13 +81,11 @@ object(UsesMagic)#1 (5) {
   int(3)
   ["priv":"UsesMagic":private]=>
   string(6) "secret"
-  ["dynamic"]=>
-  string(11) "new.changed"
 }
   Wrapping ArrayObject:
 object(ArrayObject)#2 (1) {
   ["storage":"ArrayObject":private]=>
-  object(UsesMagic)#1 (5) {
+  object(UsesMagic)#1 (4) {
     ["a"]=>
     string(7) "changed"
     ["b"]=>
@@ -94,8 +94,6 @@ object(ArrayObject)#2 (1) {
     int(3)
     ["priv":"UsesMagic":private]=>
     string(6) "secret"
-    ["dynamic"]=>
-    string(11) "new.changed"
   }
 }
 
@@ -104,9 +102,11 @@ string(7) "changed"
 
 Warning: Undefined array key "nonexistent" in %s on line %d
 NULL
-string(11) "new.changed"
+
+Warning: Undefined array key "dynamic" in %s on line %d
+NULL
   Original wrapped object:
-object(UsesMagic)#1 (5) {
+object(UsesMagic)#1 (4) {
   ["a"]=>
   string(7) "changed"
   ["b"]=>
@@ -115,13 +115,11 @@ object(UsesMagic)#1 (5) {
   int(3)
   ["priv":"UsesMagic":private]=>
   string(6) "secret"
-  ["dynamic"]=>
-  string(11) "new.changed"
 }
   Wrapping ArrayObject:
 object(ArrayObject)#2 (1) {
   ["storage":"ArrayObject":private]=>
-  object(UsesMagic)#1 (5) {
+  object(UsesMagic)#1 (4) {
     ["a"]=>
     string(7) "changed"
     ["b"]=>
@@ -130,17 +128,15 @@ object(ArrayObject)#2 (1) {
     int(3)
     ["priv":"UsesMagic":private]=>
     string(6) "secret"
-    ["dynamic"]=>
-    string(11) "new.changed"
   }
 }
 
 --> isset existent, non-existent and dynamic:
 bool(true)
 bool(false)
-bool(true)
+bool(false)
   Original wrapped object:
-object(UsesMagic)#1 (5) {
+object(UsesMagic)#1 (4) {
   ["a"]=>
   string(7) "changed"
   ["b"]=>
@@ -149,13 +145,11 @@ object(UsesMagic)#1 (5) {
   int(3)
   ["priv":"UsesMagic":private]=>
   string(6) "secret"
-  ["dynamic"]=>
-  string(11) "new.changed"
 }
   Wrapping ArrayObject:
 object(ArrayObject)#2 (1) {
   ["storage":"ArrayObject":private]=>
-  object(UsesMagic)#1 (5) {
+  object(UsesMagic)#1 (4) {
     ["a"]=>
     string(7) "changed"
     ["b"]=>
@@ -164,8 +158,6 @@ object(ArrayObject)#2 (1) {
     int(3)
     ["priv":"UsesMagic":private]=>
     string(6) "secret"
-    ["dynamic"]=>
-    string(11) "new.changed"
   }
 }
 
