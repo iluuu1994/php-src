@@ -23,10 +23,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # FIXME: Revert before merging
+          # - debug: true
+          #   zts: false
+          # - debug: false
+          #   zts: true
           - debug: true
-            zts: false
-          - debug: false
             zts: true
+            configurationParameters: "CFLAGS='-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC' LDFLAGS='-fsanitize=undefined,address'"
+            runTestsParameters: '--asan'
     name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
     runs-on: ubuntu-20.04
     steps:
@@ -44,6 +49,7 @@ jobs:
           configurationParameters: >-
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
+            ${{ matrix.configurationParameters }}
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
       - name: make install
@@ -52,6 +58,9 @@ jobs:
         uses: ./.github/actions/setup-x64
       - name: Test
         uses: ./.github/actions/test-linux
+        with:
+          runTestsParameters: >-
+            ${{ matrix.runTestsParameters }}
       - name: Test Tracing JIT
         uses: ./.github/actions/test-linux
         with:
@@ -59,9 +68,11 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
             -d opcache.jit_buffer_size=16M
+            ${{ matrix.runTestsParameters }}
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-11
     steps:
       - name: git checkout
