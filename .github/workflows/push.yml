@@ -26,11 +26,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # - debug: true
+          #   zts: false
+          # - debug: false
+          #   zts: true
           - debug: true
-            zts: false
-          - debug: false
             zts: true
-    name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
+            asan: true
+    name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}${{ matrix.asan && '_ASAN' }}"
     runs-on: ubuntu-20.04
     steps:
       - name: git checkout
@@ -44,30 +47,36 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-x64
         with:
+          asan: ${{ matrix.asan }}
           configurationParameters: >-
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
+            ${{ matrix.asan && 'CFLAGS="-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC" LDFLAGS="-fsanitize=undefined,address"' }}
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
       - name: make install
         uses: ./.github/actions/install-linux
+        with:
+          asan: ${{ matrix.asan }}
       - name: Setup
         uses: ./.github/actions/setup-x64
       - name: Test
+        if: matrix.asan != true
         uses: ./.github/actions/test-linux
         with:
           testArtifacts: ${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}
-      - name: Test Tracing JIT
+      - name: Test OpCache
         uses: ./.github/actions/test-linux
         with:
           testArtifacts: ${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }} Tracing JIT
           runTestsParameters: >-
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
-            -d opcache.jit_buffer_size=16M
+            ${{ matrix.asan && '--asan -x' }}
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-11
     steps:
       - name: git checkout
