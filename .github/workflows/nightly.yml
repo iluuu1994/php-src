@@ -47,7 +47,7 @@ jobs:
         zts: [true, false]
         include: ${{ fromJson(needs.GENERATE_MATRIX.outputs.matrix-include) }}
     name: "${{ matrix.branch.name }}_LINUX_X64${{ matrix.name }}_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: git checkout
         uses: actions/checkout@v3
@@ -246,7 +246,7 @@ jobs:
         uses: ./.github/actions/verify-generated-files
   COVERAGE_DEBUG_NTS:
     if: github.repository_owner == 'php' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: git checkout
         uses: actions/checkout@v3
