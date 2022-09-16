@@ -53,7 +53,15 @@
 /* }}} */
 
 #include "ext/standard/php_string.h"
+
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 #include <oci.h>
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 
 #if !defined(OCI_MAJOR_VERSION) || OCI_MAJOR_VERSION < 11 || ((OCI_MAJOR_VERSION == 11) && (OCI_MINOR_VERSION < 2))
 #error This version of PHP OCI8 requires Oracle Client libraries from 11.2 or later.

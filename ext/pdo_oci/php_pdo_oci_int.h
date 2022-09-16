@@ -14,7 +14,14 @@
   +----------------------------------------------------------------------+
 */
 
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wstrict-prototypes"
+#endif
 #include <oci.h>
+#ifdef __GNUC__
+# pragma GCC diagnostic pop
+#endif
 
 typedef struct {
 	const char *file;

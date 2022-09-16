@@ -47,7 +47,14 @@
 # endif
 
  /* these are used for quota support */
+# ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wstrict-prototypes"
+# endif
 # include "c-client.h"	/* includes mail.h and rfc822.h */
+# ifdef __GNUC__
+#  pragma GCC diagnostic pop
+# endif
 # include "imap4r1.h"	/* location of c-client quota functions */
 #else
 # include "mail.h"
