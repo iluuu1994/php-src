@@ -22,6 +22,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -73,6 +74,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     container:
@@ -119,6 +121,7 @@ jobs:
             -d opcache.enable_cli=1
             -d opcache.jit_buffer_size=16M
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-11
     steps:
       - name: git checkout
@@ -152,3 +155,46 @@ jobs:
             -d opcache.jit_buffer_size=16M
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
+  WINDOWS:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - x64: true
+            zts: false
+          - x64: false
+            zts: true
+    name: "WINDOWS_${{ matrix.x64 && 'X64' || 'X86' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
+    runs-on: windows-2019
+    env:
+      PHP_BUILD_CACHE_BASE_DIR: C:\build-cache
+      PHP_BUILD_OBJ_DIR: C:\obj
+      PHP_BUILD_CACHE_SDK_DIR: C:\build-cache\sdk
+      PHP_BUILD_SDK_BRANCH: php-sdk-2.2.0
+      PHP_BUILD_CRT: vs16
+      PLATFORM: ${{ matrix.x64 && 'x64' || 'x86' }}
+      THREAD_SAFE: "${{ matrix.zts && '1' || '0' }}"
+      INTRINSICS: "${{ matrix.zts && 'AVX2' || '' }}"
+    steps:
+      - name: git checkout 1/2
+        run: git config --global core.autocrlf false && git config --global core.eol lf
+      - name: git checkout 2/2
+        uses: actions/checkout@v2
+      - name: Setup MySQL
+        run: |
+          choco install mysql -y --no-progress --params="/port:3307"
+          mysql.exe --port=3307 --user=root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'mysql_Pass11'; FLUSH PRIVILEGES;"
+          mysql.exe --port=3307 --user=root --password="mysql_Pass11" -e "SELECT 1;"
+      - name: Setup MSSQL
+        run: |
+          choco install sql-server-express -y --no-progress --install-arguments="/SECURITYMODE=SQL /SAPWD=mssql_Pass11"
+          sqlcmd -S "(local)\SQLEXPRESS" -U sa -P "mssql_Pass11" -Q "SELECT 1;"
+      - name: Setup PostgreSQL
+        run: |
+          Set-Service -Name "postgresql-x64-14" -StartupType manual -Status Running
+          pwsh -Command { $env:PGPASSWORD="root"; & "$env:PGBIN\psql" -U postgres -c "ALTER USER postgres WITH PASSWORD 'postgresql_Pass11';" }
+          pwsh -Command { $env:PGPASSWORD="postgresql_Pass11"; & "$env:PGBIN\psql" -U postgres -c "SELECT 1;" }
+      - name: Build
+        run: .github/scripts/windows/build.bat
+      - name: Test
+        run: .github/scripts/windows/test.bat

@@ -12,3 +12,7 @@ if (PHP_OS_FAMILY === 'Windows') {
 if (!file_exists($path)) {
     die(sprintf('skip dl_test extension is not built (tried %s)', $path));
 }
+
+if (extension_loaded('dl_test')) {
+    exit('skip dl_test is already loaded');
+}

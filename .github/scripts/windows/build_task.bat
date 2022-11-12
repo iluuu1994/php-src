@@ -1,37 +1,41 @@
 @echo off
 
-if "%APPVEYOR%" equ "True" rmdir /s /q C:\cygwin >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q C:\cygwin64 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q C:\mingw >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q C:\mingw-w64 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q C:\msys64 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-Win32 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-Win64 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-v11-Win32 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-v11-Win64 >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" del /f /q C:\Windows\System32\libcrypto-1_1-x64.dll >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-if "%APPVEYOR%" equ "True" del /f /q C:\Windows\System32\libssl-1_1-x64.dll >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-
-cd /D %APPVEYOR_BUILD_FOLDER%
-if %errorlevel% neq 0 exit /b 3
-
-if /i "%APPVEYOR_REPO_BRANCH:~0,4%" equ "php-" (
-	set BRANCH=%APPVEYOR_REPO_BRANCH:~4,3%
-) else (
-	set BRANCH=master
+if /i "%APPVEYOR%%GITHUB_ACTIONS%" neq "True" (
+    echo for CI only
+    exit /b 3
 )
+
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\cygwin >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\cygwin64 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\mingw >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\mingw-w64 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\msys64 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\OpenSSL-Win32 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\OpenSSL-Win64 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\OpenSSL-v11-Win32 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+if /i "%APPVEYOR%" equ "True" rmdir /s /q C:\OpenSSL-v11-Win64 >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+rem rmdir takes several minutes rename instead only
+pushd C:\
+if /i "%GITHUB_ACTIONS%" equ "True" ren msys64 msys64-del
+if %errorlevel% neq 0 exit /b 3
+popd
+del /f /q C:\Windows\System32\libcrypto-1_1-x64.dll >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+del /f /q C:\Windows\System32\libssl-1_1-x64.dll >nul 2>&1
+if %errorlevel% neq 0 exit /b 3
+
+call %~dp0find-target-branch.bat
 set STABILITY=staging
+
 set DEPS_DIR=%PHP_BUILD_CACHE_BASE_DIR%\deps-%BRANCH%-%PHP_SDK_VS%-%PHP_SDK_ARCH%
 rem SDK is cached, deps info is cached as well
 echo Updating dependencies in %DEPS_DIR%
@@ -48,10 +52,14 @@ if %errorlevel% neq 0 exit /b 3
 cmd /c buildconf.bat --force
 if %errorlevel% neq 0 exit /b 3
 
-if "%THREAD_SAFE%" equ "0" set ADD_CONF=%ADD_CONF% --disable-zts
+if "%THREAD_SAFE%" equ "" set ADD_CONF=%ADD_CONF% --disable-zts
 if "%INTRINSICS%" neq "" set ADD_CONF=%ADD_CONF% --enable-native-intrinsics=%INTRINSICS%
 
-set CFLAGS=/W1 /WX
+if "%PLATFORM%" == "x86" (
+	set CFLAGS=/W1
+) else (
+	set CFLAGS=/W1 /WX
+)
 
 cmd /c configure.bat ^
 	--enable-snapshot-build ^
@@ -61,10 +69,7 @@ cmd /c configure.bat ^
 	--enable-object-out-dir=%PHP_BUILD_OBJ_DIR% ^
 	--with-php-build=%DEPS_DIR% ^
 	%ADD_CONF% ^
-	--disable-test-ini
+	--with-test-ini-ext-exclude=snmp,oci8_12c,pdo_oci,pdo_firebird,ldap,imap,ftp
 if %errorlevel% neq 0 exit /b 3
 
-nmake /NOLOGO
-if %errorlevel% neq 0 exit /b 3
-
-exit /b 0
+nmake /NOLOGO /S
