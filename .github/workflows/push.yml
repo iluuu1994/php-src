@@ -187,9 +187,14 @@ jobs:
           export ASAN_OPTIONS=exitcode=139
           php /usr/bin/composer install --no-progress --ignore-platform-reqs
           cp wp-tests-config-sample.php wp-tests-config.php
-          php -r '$c = file_get_contents("wp-tests-config.php"); $c = str_replace("define( 'DB_NAME', 'youremptytestdbnamehere' );", "define( 'DB_NAME', 'test' );", $c); file_put_contents("wp-tests-config.php", $c);'
-          php -r '$c = file_get_contents("wp-tests-config.php"); $c = str_replace("define( 'DB_USER', 'yourusernamehere' );", "define( 'DB_USER', 'root' );", $c); file_put_contents("wp-tests-config.php", $c);'
-          php -r '$c = file_get_contents("wp-tests-config.php"); $c = str_replace("define( 'DB_PASSWORD', 'yourpasswordhere' );", "define( 'DB_PASSWORD', 'root' );", $c); file_put_contents("wp-tests-config.php", $c);'
+          php -r "$(cat <<- 'PHP'
+            $c = file_get_contents('wp-tests-config.php');
+            $c = str_replace('youremptytestdbnamehere', 'test', $c);
+            $c = str_replace('yourusernamehere', 'root', $c);
+            $c = str_replace('yourpasswordhere', 'root', $c);
+            file_put_contents('wp-tests-config.php', $c);
+          PHP
+          )"
           php vendor/bin/phpunit || EXIT_CODE=$?
           if [ $EXIT_CODE -gt 128 ]; then
             exit 1
