@@ -74,6 +74,8 @@ char *get_token_type_name(int token_type)
 		case T_CASE: return "T_CASE";
 		case T_DEFAULT: return "T_DEFAULT";
 		case T_MATCH: return "T_MATCH";
+		case T_IS: return "T_IS";
+		case T_UNDERSCORE: return "T_UNDERSCORE";
 		case T_BREAK: return "T_BREAK";
 		case T_CONTINUE: return "T_CONTINUE";
 		case T_GOTO: return "T_GOTO";
@@ -170,6 +172,8 @@ char *get_token_type_name(int token_type)
 		case T_COALESCE: return "T_COALESCE";
 		case T_POW: return "T_POW";
 		case T_POW_EQUAL: return "T_POW_EQUAL";
+		case T_RANGE_EXCLUSIVE_END: return "T_RANGE_EXCLUSIVE_END";
+		case T_RANGE_INCLUSIVE_END: return "T_RANGE_INCLUSIVE_END";
 		case T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG: return "T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG";
 		case T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG: return "T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG";
 		case T_BAD_CHARACTER: return "T_BAD_CHARACTER";

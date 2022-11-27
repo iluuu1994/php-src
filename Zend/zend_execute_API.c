@@ -198,6 +198,7 @@ void init_executor(void) /* {{{ */
 
 	EG(filename_override) = NULL;
 	EG(lineno_override) = -1;
+	EG(pattern_matching_bailout) = false;
 
 	zend_max_execution_timer_init();
 	zend_fiber_init();

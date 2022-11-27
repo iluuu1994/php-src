@@ -9207,6 +9207,17 @@ ZEND_VM_C_LABEL(default_branch):
 	}
 }
 
+ZEND_VM_HANDLER(204, ZEND_IS, ANY, CONST)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+	zval *expr = GET_OP1_ZVAL_PTR(BP_VAR_R);
+	zval *pattern = GET_OP2_ZVAL_PTR(BP_VAR_R);
+	bool result = zend_pattern_match(expr, Z_ASTVAL_P(pattern));
+	ZVAL_BOOL(EX_VAR(opline->result.var), result);
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+}
+
 ZEND_VM_COLD_CONST_HANDLER(197, ZEND_MATCH_ERROR, CONST|TMPVARCV, UNUSED)
 {
 	USE_OPLINE

@@ -304,6 +304,9 @@ struct _zend_executor_globals {
 	struct sigaction oldact;
 #endif
 
+	/* Whether the last bailout was triggered while pattern matching */
+	bool pattern_matching_bailout;
+
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
 

@@ -5,4 +5,4 @@ Invalid use: trailing underscore
 100_;
 ?>
 --EXPECTF--
-Parse error: syntax error, unexpected identifier "_" in %s on line %d
+Parse error: syntax error, unexpected token "_" in %s on line %d
