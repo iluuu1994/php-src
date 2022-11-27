@@ -1756,6 +1756,7 @@ PHP_ADD_SOURCES(Zend, \
     zend_max_execution_timer.c \
     zend_hrtime.c \
     zend_frameless_function.c \
+    zend_pattern_matching.c \
 	Optimizer/zend_optimizer.c \
 	Optimizer/pass1.c \
 	Optimizer/pass3.c \

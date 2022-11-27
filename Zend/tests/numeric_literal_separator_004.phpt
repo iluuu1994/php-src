@@ -5,4 +5,4 @@ Invalid use: underscore left of period
 100_.0;
 ?>
 --EXPECTF--
-Parse error: syntax error, unexpected identifier "_" in %s on line %d
+Parse error: syntax error, unexpected token "_" in %s on line %d

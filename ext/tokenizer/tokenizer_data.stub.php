@@ -239,6 +239,16 @@ const T_DEFAULT = UNKNOWN;
 const T_MATCH = UNKNOWN;
 /**
  * @var int
+ * @cvalue T_IS
+ */
+const T_IS = UNKNOWN;
+/**
+ * @var int
+ * @cvalue T_UNDERSCORE
+ */
+const T_UNDERSCORE = UNKNOWN;
+/**
+ * @var int
  * @cvalue T_BREAK
  */
 const T_BREAK = UNKNOWN;
@@ -717,6 +727,16 @@ const T_POW = UNKNOWN;
  * @cvalue T_POW_EQUAL
  */
 const T_POW_EQUAL = UNKNOWN;
+/**
+ * @var int
+ * @cvalue T_RANGE_EXCLUSIVE_END
+ */
+const T_RANGE_EXCLUSIVE_END = UNKNOWN;
+/**
+ * @var int
+ * @cvalue T_RANGE_INCLUSIVE_END
+ */
+const T_RANGE_INCLUSIVE_END = UNKNOWN;
 /**
  * @var int
  * @cvalue T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG
