@@ -43,6 +43,7 @@
 #include "zend_max_execution_timer.h"
 #include "zend_strtod.h"
 #include "zend_lazy_objects.h"
+#include "zend_pattern_matching.h"
 
 /* Define ZTS if you want a thread-safe Zend */
 /*#undef ZTS*/
@@ -313,6 +314,8 @@ struct _zend_executor_globals {
 #endif
 
 	zend_strtod_state strtod_state;
+	zend_pm_context *pm_context;
+	zend_pm_context pm_context_spare;
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
