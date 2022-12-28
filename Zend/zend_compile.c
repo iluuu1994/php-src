@@ -5947,6 +5947,13 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 	efree(jmp_end_opnums);
 }
 
+static void zend_compile_not_null_assertion(znode *result, zend_ast *ast)
+{
+	znode value;
+	zend_compile_expr(&value, ast->child[0]);
+	zend_emit_op(result, ZEND_NOT_NULL_ASSERTION, &value, NULL);
+}
+
 static void zend_compile_try(zend_ast *ast) /* {{{ */
 {
 	zend_ast *try_ast = ast->child[0];
@@ -10417,6 +10424,9 @@ static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 			return;
 		case ZEND_AST_MATCH:
 			zend_compile_match(result, ast);
+			return;
+		case ZEND_AST_NOT_NULL_ASSERTION:
+			zend_compile_not_null_assertion(result, ast);
 			return;
 		default:
 			ZEND_ASSERT(0 /* not supported */);

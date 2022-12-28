@@ -589,6 +589,11 @@ const T_INC = UNKNOWN;
 const T_DEC = UNKNOWN;
 /**
  * @var int
+ * @cvalue T_EXCLAMATION_MARK
+ */
+const T_EXCLAMATION_MARK = UNKNOWN;
+/**
+ * @var int
  * @cvalue T_INT_CAST
  */
 const T_INT_CAST = UNKNOWN;

@@ -75,7 +75,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %left T_SL T_SR
 %left '+' '-'
 %left '*' '/' '%'
-%precedence '!'
+%precedence T_EXCLAMATION_MARK
 %precedence T_INSTANCEOF
 %precedence '~' T_INT_CAST T_DOUBLE_CAST T_STRING_CAST T_ARRAY_CAST T_OBJECT_CAST T_BOOL_CAST T_UNSET_CAST '@'
 %right T_POW
@@ -206,6 +206,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_SR "'>>'"
 %token T_INC "'++'"
 %token T_DEC "'--'"
+%token T_EXCLAMATION_MARK "'!'"
 %token T_INT_CAST    "'(int)'"
 %token T_DOUBLE_CAST "'(double)'"
 %token T_STRING_CAST "'(string)'"
@@ -1155,6 +1156,7 @@ expr:
 	|	T_INC variable { $$ = zend_ast_create(ZEND_AST_PRE_INC, $2); }
 	|	variable T_DEC { $$ = zend_ast_create(ZEND_AST_POST_DEC, $1); }
 	|	T_DEC variable { $$ = zend_ast_create(ZEND_AST_PRE_DEC, $2); }
+	|	variable T_EXCLAMATION_MARK { $$ = zend_ast_create(ZEND_AST_NOT_NULL_ASSERTION, $1); }
 	|	expr T_BOOLEAN_OR expr
 			{ $$ = zend_ast_create(ZEND_AST_OR, $1, $3); }
 	|	expr T_BOOLEAN_AND expr
@@ -1180,7 +1182,7 @@ expr:
 	|	expr T_SR expr	{ $$ = zend_ast_create_binary_op(ZEND_SR, $1, $3); }
 	|	'+' expr %prec '~' { $$ = zend_ast_create(ZEND_AST_UNARY_PLUS, $2); }
 	|	'-' expr %prec '~' { $$ = zend_ast_create(ZEND_AST_UNARY_MINUS, $2); }
-	|	'!' expr { $$ = zend_ast_create_ex(ZEND_AST_UNARY_OP, ZEND_BOOL_NOT, $2); }
+	|	T_EXCLAMATION_MARK expr { $$ = zend_ast_create_ex(ZEND_AST_UNARY_OP, ZEND_BOOL_NOT, $2); }
 	|	'~' expr { $$ = zend_ast_create_ex(ZEND_AST_UNARY_OP, ZEND_BW_NOT, $2); }
 	|	expr T_IS_IDENTICAL expr
 			{ $$ = zend_ast_create_binary_op(ZEND_IS_IDENTICAL, $1, $3); }

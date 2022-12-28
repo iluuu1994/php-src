@@ -144,6 +144,7 @@ char *get_token_type_name(int token_type)
 		case T_SR: return "T_SR";
 		case T_INC: return "T_INC";
 		case T_DEC: return "T_DEC";
+		case T_EXCLAMATION_MARK: return "T_EXCLAMATION_MARK";
 		case T_INT_CAST: return "T_INT_CAST";
 		case T_DOUBLE_CAST: return "T_DOUBLE_CAST";
 		case T_STRING_CAST: return "T_STRING_CAST";
