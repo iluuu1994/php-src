@@ -8708,7 +8708,7 @@ ZEND_VM_HANDLER(158, ZEND_CALL_TRAMPOLINE, ANY, ANY, SPEC(OBSERVER))
 
 	call->func = (fbc->op_array.fn_flags & ZEND_ACC_STATIC) ? fbc->op_array.scope->__callstatic : fbc->op_array.scope->__call;
 	ZEND_ASSERT(zend_vm_calc_used_stack(2, call->func) <= (size_t)(((char*)EG(vm_stack_end)) - (char*)call));
-	ZEND_CALL_NUM_ARGS(call) = 2;
+	ZEND_CALL_NUM_ARGS(call) = 3;
 
 	ZVAL_STR(ZEND_CALL_ARG(call, 1), fbc->common.function_name);
 
@@ -8718,6 +8718,14 @@ ZEND_VM_HANDLER(158, ZEND_CALL_TRAMPOLINE, ANY, ANY, SPEC(OBSERVER))
 	} else {
 		ZVAL_EMPTY_ARRAY(call_args);
 	}
+
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	if (scope != NULL) {
+		ZVAL_STR_COPY(ZEND_CALL_ARG(call, 3), scope->name);
+	} else {
+		ZVAL_NULL(ZEND_CALL_ARG(call, 3));
+	}
+
 	if (UNEXPECTED(call_info & ZEND_CALL_HAS_EXTRA_NAMED_PARAMS)) {
 		if (zend_hash_num_elements(Z_ARRVAL_P(call_args)) == 0) {
 			GC_ADDREF(call->extra_named_params);

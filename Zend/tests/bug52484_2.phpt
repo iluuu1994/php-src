@@ -18,6 +18,6 @@ $a->$prop = 2;
 --EXPECTF--
 Fatal error: Uncaught Error: Cannot access property starting with "\0" in %s:%d
 Stack trace:
-#0 %s(%d): A->__set('\x00', 2)
+#0 %s(%d): A->__set('\x00', 2, NULL)
 #1 {main}
   thrown in %s on line %d

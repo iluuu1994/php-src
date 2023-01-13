@@ -18,6 +18,6 @@ var_dump($a->$prop);
 --EXPECTF--
 Fatal error: Uncaught Error: Cannot access property starting with "\0" in %s:%d
 Stack trace:
-#0 %s(%d): A->__get('\x00')
+#0 %s(%d): A->__get('\x00', NULL)
 #1 {main}
   thrown in %s on line %d

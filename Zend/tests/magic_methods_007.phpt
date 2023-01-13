@@ -9,4 +9,4 @@ abstract class b {
 
 ?>
 --EXPECTF--
-Fatal error: Method b::__set() must take exactly 2 arguments in %s on line %d
+Fatal error: Method b::__set() must take between 2 and 3 arguments in %s on line %d

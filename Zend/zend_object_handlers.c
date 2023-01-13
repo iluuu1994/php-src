@@ -193,16 +193,30 @@ static void zend_std_call_getter(zend_object *zobj, zend_string *prop_name, zval
 {
 	zval member;
 	ZVAL_STR(&member, prop_name);
-	zend_call_known_instance_method_with_1_params(zobj->ce->__get, zobj, retval, &member);
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	zval scope_name;
+	if (scope != NULL) {
+		ZVAL_STR(&scope_name, scope->name);
+	} else {
+		ZVAL_NULL(&scope_name);
+	}
+	zend_call_known_instance_method_with_2_params(zobj->ce->__get, zobj, retval, &member, &scope_name);
 }
 /* }}} */
 
 static void zend_std_call_setter(zend_object *zobj, zend_string *prop_name, zval *value) /* {{{ */
 {
-	zval args[2];
+	zval args[3];
 	ZVAL_STR(&args[0], prop_name);
 	ZVAL_COPY_VALUE(&args[1], value);
-	zend_call_known_instance_method(zobj->ce->__set, zobj, NULL, 2, args);
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	if (scope != NULL) {
+		ZVAL_STR_COPY(&args[2], scope->name);
+	} else {
+		ZVAL_NULL(&args[2]);
+	}
+
+	zend_call_known_instance_method(zobj->ce->__set, zobj, NULL, 3, args);
 }
 /* }}} */
 
@@ -345,11 +359,7 @@ dynamic:
 	flags = property_info->flags;
 
 	if (flags & (ZEND_ACC_CHANGED|ZEND_ACC_PRIVATE|ZEND_ACC_PROTECTED)) {
-		if (UNEXPECTED(EG(fake_scope))) {
-			scope = EG(fake_scope);
-		} else {
-			scope = zend_get_executed_scope();
-		}
+		scope = zend_get_fake_or_executed_scope();
 
 		if (property_info->ce != scope) {
 			if (flags & ZEND_ACC_CHANGED) {
@@ -441,11 +451,7 @@ dynamic:
 	flags = property_info->flags;
 
 	if (flags & (ZEND_ACC_CHANGED|ZEND_ACC_PRIVATE|ZEND_ACC_PROTECTED)) {
-		if (UNEXPECTED(EG(fake_scope))) {
-			scope = EG(fake_scope);
-		} else {
-			scope = zend_get_executed_scope();
-		}
+		scope = zend_get_fake_or_executed_scope();
 		if (property_info->ce != scope) {
 			if (flags & ZEND_ACC_CHANGED) {
 				zend_property_info *p = zend_get_parent_private_property(scope, ce, member);
@@ -769,11 +775,7 @@ static bool verify_readonly_initialization_access(
 		const zend_property_info *prop_info, const zend_class_entry *ce,
 		zend_string *name, const char *operation) {
 	zend_class_entry *scope;
-	if (UNEXPECTED(EG(fake_scope))) {
-		scope = EG(fake_scope);
-	} else {
-		scope = zend_get_executed_scope();
-	}
+	scope = zend_get_fake_or_executed_scope();
 	if (prop_info->ce == scope) {
 		return true;
 	}
@@ -1286,7 +1288,7 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 	ZEND_MAP_PTR_INIT(func->run_time_cache, (void**)dummy);
 	func->scope = fbc->common.scope;
 	/* reserve space for arguments, local and temporary variables */
-	func->T = (fbc->type == ZEND_USER_FUNCTION)? MAX(fbc->op_array.last_var + fbc->op_array.T, 2) : 2;
+	func->T = (fbc->type == ZEND_USER_FUNCTION)? MAX(fbc->op_array.last_var + fbc->op_array.T, 3) : 3;
 	func->filename = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.filename : ZSTR_EMPTY_ALLOC();
 	func->line_start = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.line_start : 0;
 	func->line_end = (fbc->type == ZEND_USER_FUNCTION)? fbc->op_array.line_end : 0;
@@ -1516,11 +1518,7 @@ ZEND_API zval *zend_std_get_static_property_with_info(zend_class_entry *ce, zend
 	}
 
 	if (!(property_info->flags & ZEND_ACC_PUBLIC)) {
-		if (UNEXPECTED(EG(fake_scope))) {
-			scope = EG(fake_scope);
-		} else {
-			scope = zend_get_executed_scope();
-		}
+		scope = zend_get_fake_or_executed_scope();
 		if (property_info->ce != scope) {
 			if (UNEXPECTED(property_info->flags & ZEND_ACC_PRIVATE)
 			 || UNEXPECTED(!is_protected_compatible_scope(property_info->ce, scope))) {
@@ -1605,11 +1603,7 @@ ZEND_API zend_function *zend_std_get_constructor(zend_object *zobj) /* {{{ */
 
 	if (constructor) {
 		if (UNEXPECTED(!(constructor->op_array.fn_flags & ZEND_ACC_PUBLIC))) {
-			if (UNEXPECTED(EG(fake_scope))) {
-				scope = EG(fake_scope);
-			} else {
-				scope = zend_get_executed_scope();
-			}
+			scope = zend_get_fake_or_executed_scope();
 			if (UNEXPECTED(constructor->common.scope != scope)) {
 				if (UNEXPECTED(constructor->op_array.fn_flags & ZEND_ACC_PRIVATE)
 				 || UNEXPECTED(!zend_check_protected(zend_get_function_root_class(constructor), scope))) {

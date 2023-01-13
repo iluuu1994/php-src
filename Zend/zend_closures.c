@@ -280,7 +280,7 @@ ZEND_METHOD(Closure, bindTo)
 static ZEND_NAMED_FUNCTION(zend_closure_call_magic) /* {{{ */ {
 	zend_fcall_info fci;
 	zend_fcall_info_cache fcc;
-	zval params[2];
+	zval params[3];
 
 	memset(&fci, 0, sizeof(zend_fcall_info));
 	memset(&fcc, 0, sizeof(zend_fcall_info_cache));
@@ -292,13 +292,19 @@ static ZEND_NAMED_FUNCTION(zend_closure_call_magic) /* {{{ */ {
 		EX(func)->internal_function.scope->__callstatic : EX(func)->internal_function.scope->__call;
 	fci.named_params = NULL;
 	fci.params = params;
-	fci.param_count = 2;
+	fci.param_count = 3;
 	ZVAL_STR(&fci.params[0], EX(func)->common.function_name);
 	if (ZEND_NUM_ARGS()) {
 		array_init_size(&fci.params[1], ZEND_NUM_ARGS());
 		zend_copy_parameters_array(ZEND_NUM_ARGS(), &fci.params[1]);
 	} else {
 		ZVAL_EMPTY_ARRAY(&fci.params[1]);
+	}
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	if (scope != NULL) {
+		ZVAL_STR_COPY(&fci.params[2], scope->name);
+	} else {
+		ZVAL_NULL(&fci.params[2]);
 	}
 
 	fcc.object = fci.object = Z_OBJ_P(ZEND_THIS);

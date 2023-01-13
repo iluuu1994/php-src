@@ -10,4 +10,4 @@ class Test {
 
 ?>
 --EXPECTF--
-Fatal error: Method Test::__call() must take exactly 2 arguments in %s__call_002.php on line %d
+Fatal error: Method Test::__call() must take between 2 and 3 arguments in %s on line %d

@@ -24,6 +24,6 @@ echo "Done\n";
 --EXPECTF--
 Fatal error: Uncaught Error: Cannot access private property ExtOperation::$x in %s:%d
 Stack trace:
-#0 %s(%d): Operation->__set('x', 'test')
+#0 %s(%d): Operation->__set('x', 'test', NULL)
 #1 {main}
   thrown in %s on line %d

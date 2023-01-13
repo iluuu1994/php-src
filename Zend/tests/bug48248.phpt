@@ -23,6 +23,6 @@ var_dump($b->test);
 --EXPECTF--
 Fatal error: Uncaught Error: Cannot access private property B::$test in %s:%d
 Stack trace:
-#0 %s(%d): A->__get('test')
+#0 %s(%d): A->__get('test', NULL)
 #1 {main}
   thrown in %s on line %d

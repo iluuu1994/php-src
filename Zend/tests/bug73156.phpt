@@ -39,12 +39,14 @@ array(2) {
     ["type"]=>
     string(2) "->"
     ["args"]=>
-    array(2) {
+    array(3) {
       [0]=>
       string(4) "test"
       [1]=>
       array(0) {
       }
+      [2]=>
+      NULL
     }
   }
 }

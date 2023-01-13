@@ -28,7 +28,7 @@ echo "Done\n";
 --EXPECTF--
 Fatal error: Uncaught Exception: doesn't work in %s:%d
 Stack trace:
-#0 %s(%d): impl->__get('counter')
+#0 %s(%d): impl->__get('counter', 'impl')
 #1 %s(%d): impl->__construct()
 #2 {main}
   thrown in %s on line %d

@@ -40,13 +40,13 @@ try {
 --EXPECTF--
 Exception in %s:%d
 Stack trace:
-#0 %s(%d): Obj->__get('x')
+#0 %s(%d): Obj->__get('x', NULL)
 #1 {main}
 Exception in %s:%d
 Stack trace:
-#0 %s(%d): Obj->__get('x')
+#0 %s(%d): Obj->__get('x', NULL)
 #1 {main}
 Exception in %s:%d
 Stack trace:
-#0 %s(%d): Obj->__get('x')
+#0 %s(%d): Obj->__get('x', NULL)
 #1 {main}

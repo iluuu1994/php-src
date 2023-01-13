@@ -9,4 +9,4 @@ class Test {
 
 ?>
 --EXPECTF--
-Fatal error: Method Test::__set() must take exactly 2 arguments in %s__set__get_003.php on line %d
+Fatal error: Method Test::__set() must take between 2 and 3 arguments in %s on line %d

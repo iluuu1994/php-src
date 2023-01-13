@@ -2442,22 +2442,25 @@ ZEND_API zend_module_entry* zend_register_internal_module(zend_module_entry *mod
 /* }}} */
 
 static void zend_check_magic_method_args(
-		uint32_t num_args, const zend_class_entry *ce, const zend_function *fptr, int error_type)
+		uint32_t min_num_args, uint32_t max_num_args, const zend_class_entry *ce, const zend_function *fptr, int error_type)
 {
-	if (fptr->common.num_args != num_args) {
-		if (num_args == 0) {
+	if (fptr->common.num_args < min_num_args || fptr->common.num_args > max_num_args) {
+		if (max_num_args == 0) {
 			zend_error(error_type, "Method %s::%s() cannot take arguments",
 				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name));
-		} else if (num_args == 1) {
+		} else if (min_num_args == 1 && max_num_args == 1) {
 			zend_error(error_type, "Method %s::%s() must take exactly 1 argument",
 				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name));
-		} else {
+		} else if (min_num_args == max_num_args) {
 			zend_error(error_type, "Method %s::%s() must take exactly %" PRIu32 " arguments",
-				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name), num_args);
+				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name), min_num_args);
+		} else {
+			zend_error(error_type, "Method %s::%s() must take between %" PRIu32 " and %" PRIu32 " arguments",
+				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name), min_num_args, max_num_args);
 		}
 		return;
 	}
-	for (uint32_t i = 0; i < num_args; i++) {
+	for (uint32_t i = 0; i < max_num_args; i++) {
 		if (QUICK_ARG_SHOULD_BE_SENT_BY_REF(fptr, i + 1)) {
 			zend_error(error_type, "Method %s::%s() cannot take arguments by reference",
 				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name));
@@ -2469,8 +2472,9 @@ static void zend_check_magic_method_args(
 static void zend_check_magic_method_arg_type(uint32_t arg_num, const zend_class_entry *ce, const zend_function *fptr, int error_type, int arg_type)
 {
 		if (
-			ZEND_TYPE_IS_SET(fptr->common.arg_info[arg_num].type)
-			 && !(ZEND_TYPE_FULL_MASK(fptr->common.arg_info[arg_num].type) & arg_type)
+			fptr->common.num_args > arg_num
+			&& ZEND_TYPE_IS_SET(fptr->common.arg_info[arg_num].type)
+			&& (ZEND_TYPE_FULL_MASK(fptr->common.arg_info[arg_num].type) & arg_type) != arg_type
 		) {
 			zend_error(error_type, "%s::%s(): Parameter #%d ($%s) must be of type %s when declared",
 				ZSTR_VAL(ce->name), ZSTR_VAL(fptr->common.function_name),
@@ -2553,71 +2557,75 @@ ZEND_API void zend_check_magic_method_implementation(const zend_class_entry *ce,
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_no_return_type(ce, fptr, error_type);
 	} else if (zend_string_equals_literal(lcname, ZEND_DESTRUCTOR_FUNC_NAME)) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_no_return_type(ce, fptr, error_type);
 	} else if (zend_string_equals_literal(lcname, ZEND_CLONE_FUNC_NAME)) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);
 	} else if (zend_string_equals_literal(lcname, ZEND_GET_FUNC_NAME)) {
-		zend_check_magic_method_args(1, ce, fptr, error_type);
+		zend_check_magic_method_args(1, 2, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
+		zend_check_magic_method_arg_type(1, ce, fptr, error_type, MAY_BE_STRING|MAY_BE_NULL);
 	} else if (zend_string_equals_literal(lcname, ZEND_SET_FUNC_NAME)) {
-		zend_check_magic_method_args(2, ce, fptr, error_type);
+		zend_check_magic_method_args(2, 3, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
+		zend_check_magic_method_arg_type(2, ce, fptr, error_type, MAY_BE_STRING|MAY_BE_NULL);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);
 	} else if (zend_string_equals_literal(lcname, ZEND_UNSET_FUNC_NAME)) {
-		zend_check_magic_method_args(1, ce, fptr, error_type);
+		zend_check_magic_method_args(1, 1, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);
 	} else if (zend_string_equals_literal(lcname, ZEND_ISSET_FUNC_NAME)) {
-		zend_check_magic_method_args(1, ce, fptr, error_type);
+		zend_check_magic_method_args(1, 1, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_BOOL);
 	} else if (zend_string_equals_literal(lcname, ZEND_CALL_FUNC_NAME)) {
-		zend_check_magic_method_args(2, ce, fptr, error_type);
+		zend_check_magic_method_args(2, 3, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
 		zend_check_magic_method_arg_type(1, ce, fptr, error_type, MAY_BE_ARRAY);
+		zend_check_magic_method_arg_type(2, ce, fptr, error_type, MAY_BE_STRING|MAY_BE_NULL);
 	} else if (zend_string_equals_literal(lcname, ZEND_CALLSTATIC_FUNC_NAME)) {
-		zend_check_magic_method_args(2, ce, fptr, error_type);
+		zend_check_magic_method_args(2, 3, ce, fptr, error_type);
 		zend_check_magic_method_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_STRING);
 		zend_check_magic_method_arg_type(1, ce, fptr, error_type, MAY_BE_ARRAY);
+		zend_check_magic_method_arg_type(2, ce, fptr, error_type, MAY_BE_STRING|MAY_BE_NULL);
 	} else if (zend_string_equals_literal(lcname, ZEND_TOSTRING_FUNC_NAME)) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_STRING);
 	} else if (zend_string_equals_literal(lcname, ZEND_DEBUGINFO_FUNC_NAME)) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, (MAY_BE_ARRAY | MAY_BE_NULL));
 	} else if (zend_string_equals_literal(lcname, "__serialize")) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_ARRAY);
 	} else if (zend_string_equals_literal(lcname, "__unserialize")) {
-		zend_check_magic_method_args(1, ce, fptr, error_type);
+		zend_check_magic_method_args(1, 1, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_ARRAY);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);
 	} else if (zend_string_equals_literal(lcname, "__set_state")) {
-		zend_check_magic_method_args(1, ce, fptr, error_type);
+		zend_check_magic_method_args(1, 1, ce, fptr, error_type);
 		zend_check_magic_method_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_arg_type(0, ce, fptr, error_type, MAY_BE_ARRAY);
@@ -2626,12 +2634,12 @@ ZEND_API void zend_check_magic_method_implementation(const zend_class_entry *ce,
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 	} else if (zend_string_equals_literal(lcname, "__sleep")) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_ARRAY);
 	} else if (zend_string_equals_literal(lcname, "__wakeup")) {
-		zend_check_magic_method_args(0, ce, fptr, error_type);
+		zend_check_magic_method_args(0, 0, ce, fptr, error_type);
 		zend_check_magic_method_non_static(ce, fptr, error_type);
 		zend_check_magic_method_public(ce, fptr, error_type);
 		zend_check_magic_method_return_type(ce, fptr, error_type, MAY_BE_VOID);

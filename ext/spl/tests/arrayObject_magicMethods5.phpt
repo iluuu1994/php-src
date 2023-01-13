@@ -72,9 +72,9 @@ var_dump($ao);
 ?>
 --EXPECT--
 --> Write existent, non-existent and dynamic:
-In UsesMagic::__set(a,changed)
-In UsesMagic::__set(dynamic,new)
-In UsesMagic::__set(dynamic,new.changed)
+In UsesMagic::__set(a,changed,)
+In UsesMagic::__set(dynamic,new,)
+In UsesMagic::__set(dynamic,new.changed,)
   Original wrapped object:
 object(C)#1 (4) {
   ["a"]=>
@@ -104,11 +104,11 @@ object(UsesMagic)#2 (2) {
 }
 
 --> Read existent, non-existent and dynamic:
-In UsesMagic::__get(a)
+In UsesMagic::__get(a,)
 NULL
-In UsesMagic::__get(nonexistent)
+In UsesMagic::__get(nonexistent,)
 NULL
-In UsesMagic::__get(dynamic)
+In UsesMagic::__get(dynamic,)
 NULL
   Original wrapped object:
 object(C)#1 (4) {

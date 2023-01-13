@@ -54,6 +54,16 @@ ZEND_API zend_result zend_eval_string(const char *str, zval *retval_ptr, const c
 ZEND_API zend_result zend_eval_stringl(const char *str, size_t str_len, zval *retval_ptr, const char *string_name);
 ZEND_API zend_result zend_eval_string_ex(const char *str, zval *retval_ptr, const char *string_name, bool handle_exceptions);
 ZEND_API zend_result zend_eval_stringl_ex(const char *str, size_t str_len, zval *retval_ptr, const char *string_name, bool handle_exceptions);
+ZEND_API zend_class_entry *zend_get_executed_scope(void);
+
+static zend_always_inline zend_class_entry *zend_get_fake_or_executed_scope(void)
+{
+	if (EG(fake_scope)) {
+		return EG(fake_scope);
+	} else {
+		return zend_get_executed_scope();
+	}
+}
 
 /* export zend_pass_function to allow comparisons against it */
 extern ZEND_API const zend_internal_function zend_pass_function;
