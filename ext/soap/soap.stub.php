@@ -557,7 +557,7 @@ class SoapClient
     public function __construct(?string $wsdl, array $options = []) {}
 
     /** @tentative-return-type */
-    public function __call(string $name, array $args): mixed {}
+    public function __call(string $name, array $args, ?string $scope = null): mixed {}
 
     /**
      * @param SoapHeader|array|null $inputHeaders

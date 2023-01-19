@@ -13,6 +13,6 @@ var_dump($res);
 --EXPECTF--
 Fatal error: Uncaught SoapFault exception: [Client] SOAP-ERROR: Encoding: object has no 'intB' property in %s:%d
 Stack trace:
-#0 %s(%d): SoapClient->__call('Add', Array)
+#0 %s(%d): SoapClient->__call('Add', Array, NULL)
 #1 {main}
   thrown in %s on line %d

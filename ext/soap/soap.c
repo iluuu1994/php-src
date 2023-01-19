@@ -2379,7 +2379,8 @@ void soap_client_call_impl(INTERNAL_FUNCTION_PARAMETERS, bool is_soap_call)
 			RETURN_THROWS();
 		}
 	} else {
-		if (zend_parse_parameters(ZEND_NUM_ARGS(), "sa", &function, &function_len, &args) == FAILURE) {
+		zval *scope;
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), "sa|z", &function, &function_len, &args, &scope) == FAILURE) {
 			RETURN_THROWS();
 		}
 	}
