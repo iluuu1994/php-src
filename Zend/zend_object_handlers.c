@@ -224,7 +224,14 @@ static void zend_std_call_unsetter(zend_object *zobj, zend_string *prop_name) /*
 {
 	zval member;
 	ZVAL_STR(&member, prop_name);
-	zend_call_known_instance_method_with_1_params(zobj->ce->__unset, zobj, NULL, &member);
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	zval scope_name;
+	if (scope != NULL) {
+		ZVAL_STR(&scope_name, scope->name);
+	} else {
+		ZVAL_NULL(&scope_name);
+	}
+	zend_call_known_instance_method_with_2_params(zobj->ce->__unset, zobj, NULL, &member, &scope_name);
 }
 /* }}} */
 
@@ -232,7 +239,14 @@ static void zend_std_call_issetter(zend_object *zobj, zend_string *prop_name, zv
 {
 	zval member;
 	ZVAL_STR(&member, prop_name);
-	zend_call_known_instance_method_with_1_params(zobj->ce->__isset, zobj, retval, &member);
+	zend_class_entry *scope = zend_get_fake_or_executed_scope();
+	zval scope_name;
+	if (scope != NULL) {
+		ZVAL_STR(&scope_name, scope->name);
+	} else {
+		ZVAL_NULL(&scope_name);
+	}
+	zend_call_known_instance_method_with_2_params(zobj->ce->__isset, zobj, retval, &member, &scope_name);
 }
 /* }}} */
 
