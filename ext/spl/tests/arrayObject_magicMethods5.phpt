@@ -139,11 +139,11 @@ object(UsesMagic)#2 (2) {
 }
 
 --> isset existent, non-existent and dynamic:
-In UsesMagic::__isset(a)
+In UsesMagic::__isset(a,)
 bool(false)
-In UsesMagic::__isset(nonexistent)
+In UsesMagic::__isset(nonexistent,)
 bool(false)
-In UsesMagic::__isset(dynamic)
+In UsesMagic::__isset(dynamic,)
 bool(false)
   Original wrapped object:
 object(C)#1 (4) {
@@ -174,9 +174,9 @@ object(UsesMagic)#2 (2) {
 }
 
 --> Unset existent, non-existent and dynamic:
-In UsesMagic::__unset(a)
-In UsesMagic::__unset(nonexistent)
-In UsesMagic::__unset(dynamic)
+In UsesMagic::__unset(a,)
+In UsesMagic::__unset(nonexistent,)
+In UsesMagic::__unset(dynamic,)
   Original wrapped object:
 object(C)#1 (4) {
   ["a"]=>

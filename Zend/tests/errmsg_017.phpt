@@ -11,4 +11,4 @@ class test {
 echo "Done\n";
 ?>
 --EXPECTF--
-Fatal error: Method test::__unset() must take exactly 1 argument in %s on line %d
+Fatal error: Method test::__unset() must take between 1 and 2 arguments in %s on line %d
