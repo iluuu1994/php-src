@@ -43,7 +43,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 }
 
 %define api.prefix {zend}
-%define api.pure full
+%define api.pure true
 %define api.value.type {zend_parser_stack_elem}
 %define parse.error verbose
 %expect 0
@@ -68,7 +68,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %left T_BOOLEAN_AND
 %left '|'
 %left '^'
-%left T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG
+%left T_AMPERSAND
 %nonassoc T_IS_EQUAL T_IS_NOT_EQUAL T_IS_IDENTICAL T_IS_NOT_IDENTICAL T_SPACESHIP
 %nonassoc '<' T_IS_SMALLER_OR_EQUAL '>' T_IS_GREATER_OR_EQUAL
 %left '.'
@@ -232,13 +232,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_COALESCE        "'??'"
 %token T_POW             "'**'"
 %token T_POW_EQUAL       "'**='"
-/* We need to split the & token in two to avoid a shift/reduce conflict. For T1&$v and T1&T2,
- * with only one token lookahead, bison does not know whether to reduce T1 as a complete type,
- * or shift to continue parsing an intersection type. */
-%token T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG     "'&'"
-/* Bison warns on duplicate token literals, so use a different dummy value here.
- * It will be fixed up by zend_yytnamerr() later. */
-%token T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG "amp"
+%token T_AMPERSAND       "'&'"
 %token T_BAD_CHARACTER   "invalid character"
 
 /* Token used to force a parse error from the lexer */
@@ -289,6 +283,9 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 
 %type <ident> reserved_non_modifiers semi_reserved
 
+%glr-parser 
+%expect 2
+
 %% /* Rules */
 
 start:
@@ -308,11 +305,6 @@ reserved_non_modifiers:
 semi_reserved:
 	  reserved_non_modifiers
 	| T_STATIC | T_ABSTRACT | T_FINAL | T_PRIVATE | T_PROTECTED | T_PUBLIC | T_READONLY
-;
-
-ampersand:
-		T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG
-	|	T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG
 ;
 
 identifier:
@@ -578,7 +570,7 @@ function_declaration_statement:
 
 is_reference:
 		%empty	{ $$ = 0; }
-	|	T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG	{ $$ = ZEND_PARAM_REF; }
+	|	T_AMPERSAND	{ $$ = ZEND_PARAM_REF; }
 ;
 
 is_variadic:
@@ -657,7 +649,7 @@ implements_list:
 
 foreach_variable:
 		variable			{ $$ = $1; }
-	|	ampersand variable	{ $$ = zend_ast_create(ZEND_AST_REF, $2); }
+	|	T_AMPERSAND variable	{ $$ = zend_ast_create(ZEND_AST_REF, $2); }
 	|	T_LIST '(' array_pair_list ')' { $$ = $3; $$->attr = ZEND_ARRAY_SYNTAX_LIST; }
 	|	'[' array_pair_list ']' { $$ = $2; $$->attr = ZEND_ARRAY_SYNTAX_SHORT; }
 ;
@@ -831,8 +823,8 @@ union_type:
 ;
 
 intersection_type:
-		type T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG type       { $$ = zend_ast_create_list(2, ZEND_AST_TYPE_INTERSECTION, $1, $3); }
-	|	intersection_type T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG type { $$ = zend_ast_list_add($1, $3); }
+		type T_AMPERSAND type       { $$ = zend_ast_create_list(2, ZEND_AST_TYPE_INTERSECTION, $1, $3); }
+	|	intersection_type T_AMPERSAND type { $$ = zend_ast_list_add($1, $3); }
 ;
 
 /* Duplicate the type rules without "static",
@@ -864,9 +856,9 @@ union_type_without_static:
 ;
 
 intersection_type_without_static:
-		type_without_static T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG type_without_static
+		type_without_static T_AMPERSAND type_without_static
 			{ $$ = zend_ast_create_list(2, ZEND_AST_TYPE_INTERSECTION, $1, $3); }
-	|	intersection_type_without_static T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG type_without_static
+	|	intersection_type_without_static T_AMPERSAND type_without_static
 			{ $$ = zend_ast_list_add($1, $3); }
 ;
 
@@ -1122,7 +1114,7 @@ expr:
 			{ $2->attr = ZEND_ARRAY_SYNTAX_SHORT; $$ = zend_ast_create(ZEND_AST_ASSIGN, $2, $5); }
 	|	variable '=' expr
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN, $1, $3); }
-	|	variable '=' ampersand variable
+	|	variable '=' T_AMPERSAND variable
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_REF, $1, $4); }
 	|	T_CLONE expr { $$ = zend_ast_create(ZEND_AST_CLONE, $2); }
 	|	variable T_PLUS_EQUAL expr
@@ -1166,8 +1158,7 @@ expr:
 	|	expr T_LOGICAL_XOR expr
 			{ $$ = zend_ast_create_binary_op(ZEND_BOOL_XOR, $1, $3); }
 	|	expr '|' expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_OR, $1, $3); }
-	|	expr T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $3); }
-	|	expr T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $3); }
+	|	expr T_AMPERSAND expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $3); }
 	|	expr '^' expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_XOR, $1, $3); }
 	|	expr '.' expr 	{ $$ = zend_ast_create_concat_op($1, $3); }
 	|	expr '+' expr 	{ $$ = zend_ast_create_binary_op(ZEND_ADD, $1, $3); }
@@ -1275,7 +1266,7 @@ backup_lex_pos:
 
 returns_ref:
 		%empty	{ $$ = 0; }
-	|	ampersand	{ $$ = ZEND_ACC_RETURN_REFERENCE; }
+	|	T_AMPERSAND	{ $$ = ZEND_ACC_RETURN_REFERENCE; }
 ;
 
 lexical_vars:
@@ -1290,7 +1281,7 @@ lexical_var_list:
 
 lexical_var:
 		T_VARIABLE		{ $$ = $1; }
-	|	ampersand T_VARIABLE	{ $$ = $2; $$->attr = ZEND_BIND_REF; }
+	|	T_AMPERSAND T_VARIABLE	{ $$ = $2; $$->attr = ZEND_BIND_REF; }
 ;
 
 function_call:
@@ -1501,9 +1492,9 @@ array_pair:
 			{ $$ = zend_ast_create(ZEND_AST_ARRAY_ELEM, $3, $1); }
 	|	expr
 			{ $$ = zend_ast_create(ZEND_AST_ARRAY_ELEM, $1, NULL); }
-	|	expr T_DOUBLE_ARROW ampersand variable
+	|	expr T_DOUBLE_ARROW T_AMPERSAND variable
 			{ $$ = zend_ast_create_ex(ZEND_AST_ARRAY_ELEM, 1, $4, $1); }
-	|	ampersand variable
+	|	T_AMPERSAND variable
 			{ $$ = zend_ast_create_ex(ZEND_AST_ARRAY_ELEM, 1, $2, NULL); }
 	|	T_ELLIPSIS expr
 			{ $$ = zend_ast_create(ZEND_AST_UNPACK, $2); }
@@ -1626,14 +1617,6 @@ static YYSIZE_T zend_yytnamerr(char *yyres, const char *yystr)
 				yystpcpy(yyres, "token \"\\\"");
 			}
 			return sizeof("token \"\\\"")-1;
-		}
-
-		/* We used "amp" as a dummy label to avoid a duplicate token literal warning. */
-		if (strcmp(toktype, "\"amp\"") == 0) {
-			if (yyres) {
-				yystpcpy(yyres, "token \"&\"");
-			}
-			return sizeof("token \"&\"")-1;
 		}
 
 		/* Avoid unreadable """ */

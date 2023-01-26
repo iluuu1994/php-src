@@ -719,14 +719,9 @@ const T_POW = UNKNOWN;
 const T_POW_EQUAL = UNKNOWN;
 /**
  * @var int
- * @cvalue T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG
+ * @cvalue T_AMPERSAND
  */
-const T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG = UNKNOWN;
-/**
- * @var int
- * @cvalue T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG
- */
-const T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG = UNKNOWN;
+const T_AMPERSAND = UNKNOWN;
 /**
  * @var int
  * @cvalue T_BAD_CHARACTER
