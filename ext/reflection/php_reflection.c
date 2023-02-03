@@ -97,6 +97,7 @@ PHPAPI zend_class_entry *reflection_enum_ptr;
 PHPAPI zend_class_entry *reflection_enum_unit_case_ptr;
 PHPAPI zend_class_entry *reflection_enum_backed_case_ptr;
 PHPAPI zend_class_entry *reflection_fiber_ptr;
+PHPAPI zend_class_entry *reflection_generic_type_ptr;
 
 /* Exception throwing macro */
 #define _DO_THROW(msg) \
@@ -1322,7 +1323,8 @@ static void reflection_parameter_factory(zend_function *fptr, zval *closure_obje
 typedef enum {
 	NAMED_TYPE = 0,
 	UNION_TYPE = 1,
-	INTERSECTION_TYPE = 2
+	INTERSECTION_TYPE = 2,
+	GENERIC_TYPE = 3,
 } reflection_type_kind;
 
 /* For backwards compatibility reasons, we need to return T|null style unions
@@ -1335,9 +1337,12 @@ static reflection_type_kind get_type_kind(zend_type type) {
 	if (ZEND_TYPE_HAS_LIST(type)) {
 		if (ZEND_TYPE_IS_INTERSECTION(type)) {
 			return INTERSECTION_TYPE;
+		} else if (ZEND_TYPE_IS_UNION(type)) {
+			return UNION_TYPE;
+		} else {
+			// FIXME: ASSERT once we disambiguate the generic type list flag
+			return GENERIC_TYPE;
 		}
-		ZEND_ASSERT(ZEND_TYPE_IS_UNION(type));
-		return UNION_TYPE;
 	}
 
 	if (ZEND_TYPE_IS_COMPLEX(type)) {
@@ -1378,6 +1383,9 @@ static void reflection_type_factory(zend_type type, zval *object, bool legacy_be
 			break;
 		case NAMED_TYPE:
 			reflection_instantiate(reflection_named_type_ptr, object);
+			break;
+		case GENERIC_TYPE:
+			reflection_instantiate(reflection_generic_type_ptr, object);
 			break;
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
@@ -3204,6 +3212,36 @@ ZEND_METHOD(ReflectionIntersectionType, getTypes)
 	} ZEND_TYPE_LIST_FOREACH_END();
 }
 /* }}} */
+
+ZEND_METHOD(ReflectionGenericType, getMainType)
+{
+	reflection_instantiate(reflection_named_type_ptr, return_value);
+	reflection_object *intern = Z_REFLECTION_P(return_value);
+	type_reference *reference = (type_reference*) emalloc(sizeof(type_reference));
+	reference->type = (zend_type) ZEND_TYPE_INIT_CODE(IS_ARRAY, 0, 0);
+	reference->legacy_behavior = false;
+	intern->ptr = reference;
+	intern->ref_type = REF_TYPE_TYPE;
+}
+
+ZEND_METHOD(ReflectionGenericType, getTypes)
+{
+	reflection_object *intern;
+	type_reference *param;
+	zend_type *list_type;
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
+	}
+	GET_REFLECTION_OBJECT_PTR(param);
+
+	ZEND_ASSERT(ZEND_TYPE_HAS_LIST(param->type));
+
+	array_init(return_value);
+	ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(param->type), list_type) {
+		append_type(return_value, *list_type);
+	} ZEND_TYPE_LIST_FOREACH_END();
+}
 
 /* {{{ Constructor. Throws an Exception in case the given method does not exist */
 ZEND_METHOD(ReflectionMethod, __construct)
@@ -7232,6 +7270,10 @@ PHP_MINIT_FUNCTION(reflection) /* {{{ */
 	reflection_fiber_ptr = register_class_ReflectionFiber();
 	reflection_fiber_ptr->create_object = reflection_objects_new;
 	reflection_fiber_ptr->default_object_handlers = &reflection_object_handlers;
+
+	reflection_generic_type_ptr = register_class_ReflectionGenericType(reflection_type_ptr);
+	reflection_generic_type_ptr->create_object = reflection_objects_new;
+	reflection_generic_type_ptr->default_object_handlers = &reflection_object_handlers;
 
 	REFLECTION_G(key_initialized) = 0;
 

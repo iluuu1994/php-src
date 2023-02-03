@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 0b548ff454b1a3deb531092355c456f5dd62d97c */
+ * Stub hash: 97f5d64cd0a8243e9ecdc37503eb76b18cb5750d */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -478,6 +478,11 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_class_ReflectionIntersectionType_getTypes arginfo_class_ReflectionFunctionAbstract_getClosureUsedVariables
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_ReflectionGenericType_getMainType, 0, 0, ReflectionNamedType, 0)
+ZEND_END_ARG_INFO()
+
+#define arginfo_class_ReflectionGenericType_getTypes arginfo_class_ReflectionFunctionAbstract_getClosureUsedVariables
+
 #define arginfo_class_ReflectionExtension___clone arginfo_class_ReflectionFunctionAbstract___clone
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_ReflectionExtension___construct, 0, 0, 1)
@@ -786,6 +791,8 @@ ZEND_METHOD(ReflectionNamedType, getName);
 ZEND_METHOD(ReflectionNamedType, isBuiltin);
 ZEND_METHOD(ReflectionUnionType, getTypes);
 ZEND_METHOD(ReflectionIntersectionType, getTypes);
+ZEND_METHOD(ReflectionGenericType, getMainType);
+ZEND_METHOD(ReflectionGenericType, getTypes);
 ZEND_METHOD(ReflectionExtension, __construct);
 ZEND_METHOD(ReflectionExtension, __toString);
 ZEND_METHOD(ReflectionExtension, getName);
@@ -1099,6 +1106,13 @@ static const zend_function_entry class_ReflectionUnionType_methods[] = {
 
 static const zend_function_entry class_ReflectionIntersectionType_methods[] = {
 	ZEND_ME(ReflectionIntersectionType, getTypes, arginfo_class_ReflectionIntersectionType_getTypes, ZEND_ACC_PUBLIC)
+	ZEND_FE_END
+};
+
+
+static const zend_function_entry class_ReflectionGenericType_methods[] = {
+	ZEND_ME(ReflectionGenericType, getMainType, arginfo_class_ReflectionGenericType_getMainType, ZEND_ACC_PUBLIC)
+	ZEND_ME(ReflectionGenericType, getTypes, arginfo_class_ReflectionGenericType_getTypes, ZEND_ACC_PUBLIC)
 	ZEND_FE_END
 };
 
@@ -1530,6 +1544,16 @@ static zend_class_entry *register_class_ReflectionIntersectionType(zend_class_en
 	zend_class_entry ce, *class_entry;
 
 	INIT_CLASS_ENTRY(ce, "ReflectionIntersectionType", class_ReflectionIntersectionType_methods);
+	class_entry = zend_register_internal_class_ex(&ce, class_entry_ReflectionType);
+
+	return class_entry;
+}
+
+static zend_class_entry *register_class_ReflectionGenericType(zend_class_entry *class_entry_ReflectionType)
+{
+	zend_class_entry ce, *class_entry;
+
+	INIT_CLASS_ENTRY(ce, "ReflectionGenericType", class_ReflectionGenericType_methods);
 	class_entry = zend_register_internal_class_ex(&ce, class_entry_ReflectionType);
 
 	return class_entry;

@@ -152,8 +152,10 @@ typedef struct {
 #define _ZEND_TYPE_INTERSECTION_BIT (1u << 19)
 /* Whether the type is a union type */
 #define _ZEND_TYPE_UNION_BIT (1u << 18)
+/* Whether the type list is a generic type list */
+#define _ZEND_TYPE_GENERIC_TYPE_LIST_BIT (1u << 17)
 /* Type mask excluding the flags above. */
-#define _ZEND_TYPE_MAY_BE_MASK ((1u << 18) - 1)
+#define _ZEND_TYPE_MAY_BE_MASK ((1u << 17) - 1)
 /* Must have same value as MAY_BE_NULL */
 #define _ZEND_TYPE_NULLABLE_BIT 0x2u
 

@@ -1250,6 +1250,13 @@ ZEND_API zend_result do_bind_class(zval *lcname, zend_string *lc_parent_name) /*
 }
 /* }}} */
 
+static zend_string *type_string_append(zend_string *type, char *append, size_t append_length) {
+	ZEND_ASSERT(type != NULL);
+	zend_string *result = zend_string_concat2(ZSTR_VAL(type), ZSTR_LEN(type), append, append_length);
+	zend_string_release(type);
+	return result;
+}
+
 static zend_string *add_type_string(zend_string *type, zend_string *new_type, bool is_intersection) {
 	zend_string *result;
 	if (type == NULL) {
@@ -1323,20 +1330,41 @@ zend_string *zend_type_to_string_resolved(zend_type type, zend_class_entry *scop
 		ZEND_ASSERT(!ZEND_TYPE_IS_UNION(type));
 		str = add_intersection_type(str, ZEND_TYPE_LIST(type), scope, /* is_bracketed */ false);
 	} else if (ZEND_TYPE_HAS_LIST(type)) {
-		/* A union type might not be a list */
-		zend_type *list_type;
-		ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
-			if (ZEND_TYPE_IS_INTERSECTION(*list_type)) {
-				str = add_intersection_type(str, ZEND_TYPE_LIST(*list_type), scope, /* is_bracketed */ true);
-				continue;
+		if (ZEND_TYPE_IS_UNION(type) || ZEND_TYPE_IS_INTERSECTION(type)) {
+			/* A union type might not be a list */
+			zend_type *list_type;
+			ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
+				if (ZEND_TYPE_IS_INTERSECTION(*list_type)) {
+					str = add_intersection_type(str, ZEND_TYPE_LIST(*list_type), scope, /* is_bracketed */ true);
+					continue;
+				}
+				ZEND_ASSERT(!ZEND_TYPE_HAS_LIST(*list_type));
+				ZEND_ASSERT(ZEND_TYPE_HAS_NAME(*list_type));
+				zend_string *name = ZEND_TYPE_NAME(*list_type);
+				zend_string *resolved = resolve_class_name(name, scope);
+				str = add_type_string(str, resolved, /* is_intersection */ false);
+				zend_string_release(resolved);
+			} ZEND_TYPE_LIST_FOREACH_END();
+		} else {
+			if (str) {
+				str = type_string_append(str, "array", strlen("array"));
+			} else {
+				str = zend_string_init("array", strlen("array"), false);
 			}
-			ZEND_ASSERT(!ZEND_TYPE_HAS_LIST(*list_type));
-			ZEND_ASSERT(ZEND_TYPE_HAS_NAME(*list_type));
-			zend_string *name = ZEND_TYPE_NAME(*list_type);
-			zend_string *resolved = resolve_class_name(name, scope);
-			str = add_type_string(str, resolved, /* is_intersection */ false);
-			zend_string_release(resolved);
-		} ZEND_TYPE_LIST_FOREACH_END();
+			str = type_string_append(str, "<", 1);
+			zend_type *list_type;
+			zend_type *last_list_type = ZEND_TYPE_LIST(type)->types + (ZEND_TYPE_LIST(type)->num_types - 1);
+			ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
+				zend_string *sub_type_str = zend_type_to_string_resolved(*list_type, /* is_intersection */ false);
+				str = type_string_append(str, ZSTR_VAL(sub_type_str), ZSTR_LEN(sub_type_str));
+				if (list_type != last_list_type) {
+					str = type_string_append(str, ", ", 2);
+				}
+				zend_string_release_ex(sub_type_str, false);
+			} ZEND_TYPE_LIST_FOREACH_END();
+			str = type_string_append(str, ">", 1);
+			return str;
+		}
 	} else if (ZEND_TYPE_HAS_NAME(type)) {
 		str = resolve_class_name(ZEND_TYPE_NAME(type), scope);
 	}
@@ -2476,7 +2504,7 @@ static size_t zend_type_get_num_classes(zend_type type) {
 		if (ZEND_TYPE_IS_INTERSECTION(type)) {
 			return ZEND_TYPE_LIST(type)->num_types;
 		}
-		ZEND_ASSERT(ZEND_TYPE_IS_UNION(type));
+		// ZEND_ASSERT(ZEND_TYPE_IS_UNION(type));
 		size_t count = 0;
 		zend_type *list_type;
 
@@ -2484,7 +2512,7 @@ static size_t zend_type_get_num_classes(zend_type type) {
 			if (ZEND_TYPE_IS_INTERSECTION(*list_type)) {
 				count += ZEND_TYPE_LIST(*list_type)->num_types;
 			} else {
-				ZEND_ASSERT(!ZEND_TYPE_HAS_LIST(*list_type));
+				// ZEND_ASSERT(!ZEND_TYPE_HAS_LIST(*list_type));
 				count += 1;
 			}
 		} ZEND_TYPE_LIST_FOREACH_END();
@@ -6634,6 +6662,24 @@ static zend_type zend_compile_typename(
 			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_INTERSECTION_BIT;
 			ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ARENA_BIT;
 		}
+	} else if (ast->kind == ZEND_AST_TYPE_GENERIC_ARRAY) {
+		zend_ast_list *list = zend_ast_get_list(ast->child[0]);
+		ZEND_ASSERT(list->kind == ZEND_AST_GENERIC_ARG_LIST);
+
+		zend_type_list *type_list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(list->children));
+		type_list->num_types = 0;
+		for (uint32_t i = 0; i < list->children; i++) {
+			zend_ast *type_ast = list->child[i];
+			zend_type single_type = zend_compile_typename(type_ast, false);
+			type_list->types[type_list->num_types++] = single_type;
+		}
+
+		zend_type type = ZEND_TYPE_INIT_CODE(IS_ARRAY, 0, 0);
+		ZEND_TYPE_SET_LIST(type, type_list);
+		// FIXME: This clashes with MAY_BE_NEVER :(
+		// ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_GENERIC_TYPE_LIST_BIT;
+		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ARENA_BIT;
+		return type;
 	} else {
 		type = zend_compile_single_typename(ast);
 	}

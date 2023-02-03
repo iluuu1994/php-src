@@ -278,7 +278,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
-%type <ast> function_name non_empty_member_modifiers
+%type <ast> function_name non_empty_member_modifiers generic_arg_list
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
@@ -847,8 +847,18 @@ type_expr_without_static:
 
 type_without_static:
 		T_ARRAY		{ $$ = zend_ast_create_ex(ZEND_AST_TYPE, IS_ARRAY); }
+	|	T_ARRAY '<' generic_arg_list '>' { $$ = zend_ast_create(ZEND_AST_TYPE_GENERIC_ARRAY, $3); }
+	|	T_ARRAY '<' T_ARRAY '<' generic_arg_list T_SR { $$ = zend_ast_create(ZEND_AST_TYPE_GENERIC_ARRAY, zend_ast_create_list(1, ZEND_AST_GENERIC_ARG_LIST, zend_ast_create(ZEND_AST_TYPE_GENERIC_ARRAY, $5))); }
+	|	T_ARRAY '<' generic_arg_list ',' T_ARRAY '<' generic_arg_list T_SR { $$ = zend_ast_create(ZEND_AST_TYPE_GENERIC_ARRAY, zend_ast_list_add($3, zend_ast_create(ZEND_AST_TYPE_GENERIC_ARRAY, $7))); }
 	|	T_CALLABLE	{ $$ = zend_ast_create_ex(ZEND_AST_TYPE, IS_CALLABLE); }
 	|	name		{ $$ = $1; }
+;
+
+generic_arg_list:
+		type_expr
+			{ $$ = zend_ast_create_list(1, ZEND_AST_GENERIC_ARG_LIST, $1); }
+	|	generic_arg_list ',' type_expr
+			{ $$ = zend_ast_list_add($1, $3); }
 ;
 
 union_type_without_static_element:
