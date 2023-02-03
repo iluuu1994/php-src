@@ -4,11 +4,11 @@ Property itself may be marked final (accessor)
 <?php
 
 class A {
-    public final $prop { get; set; }
+    public final $prop { get {} set {} }
 }
 
 class B extends A {
-    public $prop { get; set; }
+    public $prop { get {} set {} }
 }
 
 ?>

@@ -8,7 +8,7 @@ interface I {
 }
 
 class A implements I {
-    public $prop { get; set; }
+    public $prop;
 }
 
 ?>

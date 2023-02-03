@@ -1,13 +1,10 @@
 --TEST--
-Implicit accessors can be overridden by explicit accessors
+Property can be overridden by explicit accessors
 --FILE--
 <?php
 
 class A {
-    public $prop {
-        get;
-        set;
-    }
+    public $prop;
 }
 
 class B extends A {

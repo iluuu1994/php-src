@@ -280,9 +280,9 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
 %type <ast> function_name non_empty_member_modifiers
-%type <ast> accessor accessor_list accessor_property optional_accessor_list accessor_modifiers
+%type <ast> accessor accessor_list accessor_property optional_accessor_list
 
-%type <num> returns_ref function fn is_reference is_variadic property_modifiers
+%type <num> returns_ref function fn is_reference is_variadic property_modifiers accessor_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
 %type <num> class_modifiers class_modifier anonymous_class_modifiers anonymous_class_modifiers_optional use_type backup_fn_flags
 

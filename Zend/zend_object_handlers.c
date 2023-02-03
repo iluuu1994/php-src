@@ -739,70 +739,69 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *get = prop_info->accessors[ZEND_ACCESSOR_GET];
 		if (!get) {
-			zend_throw_error(NULL, "Property %s::$%s is write-only",
-				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			return &EG(uninitialized_zval);
+			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+				zend_throw_error(NULL, "Property %s::$%s is write-only",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return &EG(uninitialized_zval);
+			} else {
+				if (cache_slot) {
+					/* Cache the fact that this accessor has trivial read. This only applies to
+					* BP_VAR_R and BP_VAR_IS fetches. */
+					CACHE_PTR_EX(cache_slot + 1,
+						(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_READ_BIT));
+				}
+
+				retval = OBJ_PROP(zobj, prop_info->offset);
+				if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
+					/* As accessor properties can't be unset, the only way to end up with an undef
+					* value is via an uninitialized property. */
+					ZEND_ASSERT(Z_PROP_FLAG_P(retval) == IS_PROP_UNINIT);
+					goto uninit_error;
+				}
+
+				if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
+					if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
+						zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
+							ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+						goto exit;
+					}
+					ZVAL_COPY(rv, retval);
+					retval = rv;
+				}
+				goto exit;
+			}
 		}
 
 		bool silent = type == BP_VAR_IS || zobj->ce->__get != NULL;
-		zend_property_info *orig_prop_info = prop_info;
 		get = check_accessor_visibility(&prop_info, zobj->ce, name, get, silent);
 		if (get) {
-			if (!(get->op_array.fn_flags & ZEND_ACC_AUTO_PROP)) {
-				guard = zend_get_property_guard(zobj, name);
-				if (UNEXPECTED((*guard) & IN_GET)) {
-					zend_throw_error(NULL, "Cannot recursively read %s::$%s in accessor",
-						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-					return &EG(uninitialized_zval);
-				}
-
-				GC_ADDREF(zobj);
-				*guard |= IN_GET;
-				zend_call_known_instance_method_with_0_params(get, zobj, rv);
-				*guard &= ~IN_GET;
-
-				if (Z_TYPE_P(rv) != IS_UNDEF) {
-					retval = rv;
-					if (!Z_ISREF_P(rv) &&
-						(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-						if (UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
-							zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
-								ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-						}
-					}
-				} else {
-					retval = &EG(uninitialized_zval);
-				}
-
-				/* The return type is already enforced through the method return type. */
-				OBJ_RELEASE(zobj);
-				goto exit;
+			guard = zend_get_property_guard(zobj, name);
+			if (UNEXPECTED((*guard) & IN_GET)) {
+				zend_throw_error(NULL, "Cannot recursively read %s::$%s in accessor",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return &EG(uninitialized_zval);
 			}
 
-			if (cache_slot && prop_info == orig_prop_info) {
-				/* Cache the fact that this accessor has trivial read. This only applies to
-				 * BP_VAR_R and BP_VAR_IS fetches. */
-				CACHE_PTR_EX(cache_slot + 1,
-					(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_READ_BIT));
-			}
+			GC_ADDREF(zobj);
+			*guard |= IN_GET;
+			zend_call_known_instance_method_with_0_params(get, zobj, rv);
+			*guard &= ~IN_GET;
 
-			retval = OBJ_PROP(zobj, prop_info->offset);
-			if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
-				/* As accessor properties can't be unset, the only way to end up with an undef
-				 * value is via an uninitialized property. */
-				ZEND_ASSERT(Z_PROP_FLAG_P(retval) == IS_PROP_UNINIT);
-				goto uninit_error;
-			}
-
-			if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-				if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
-					zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
-						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-					goto exit;
-				}
-				ZVAL_COPY(rv, retval);
+			if (Z_TYPE_P(rv) != IS_UNDEF) {
 				retval = rv;
+				if (!Z_ISREF_P(rv) &&
+					(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
+					if (UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
+						zend_throw_error(NULL, "Cannot aquire reference to accessor property %s::$%s",
+							ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+					}
+				}
+			} else {
+				retval = &EG(uninitialized_zval);
 			}
+
+			/* The return type is already enforced through the method return type. */
+			OBJ_RELEASE(zobj);
 			goto exit;
 		} else if (!silent) {
 			return &EG(uninitialized_zval);
@@ -1031,42 +1030,41 @@ found:;
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *set = prop_info->accessors[ZEND_ACCESSOR_SET];
 		if (!set) {
-			zend_throw_error(NULL, "Property %s::$%s is read-only",
-				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			return &EG(error_zval);
+			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+				zend_throw_error(NULL, "Property %s::$%s is read-only",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return &EG(error_zval);
+			} else {
+				if (cache_slot) {
+					/* Cache the fact that this accessor has trivial write. */
+					CACHE_PTR_EX(cache_slot + 1,
+						(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_WRITE_BIT));
+				}
+
+				property_offset = prop_info->offset;
+				if (!ZEND_TYPE_IS_SET(prop_info->type)) {
+					prop_info = NULL;
+				}
+				goto try_again;
+			}
 		}
 
 		bool silent = zobj->ce->__set != NULL;
-		zend_property_info *orig_prop_info = prop_info;
 		set = check_accessor_visibility(&prop_info, zobj->ce, name, set, silent);
 		if (set) {
-			if (!(set->common.fn_flags & ZEND_ACC_AUTO_PROP)) {
-				uint32_t *guard = zend_get_property_guard(zobj, name);
-				if (UNEXPECTED((*guard) & IN_SET)) {
-					zend_throw_error(NULL, "Cannot recursively write %s::$%s in accessor",
-						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-					return &EG(error_zval);
-				}
-
-				GC_ADDREF(zobj);
-				(*guard) |= IN_SET;
-				zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
-				(*guard) &= ~IN_SET;
-				OBJ_RELEASE(zobj);
-				return value;
+			uint32_t *guard = zend_get_property_guard(zobj, name);
+			if (UNEXPECTED((*guard) & IN_SET)) {
+				zend_throw_error(NULL, "Cannot recursively write %s::$%s in accessor",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return &EG(error_zval);
 			}
 
-			if (cache_slot && prop_info == orig_prop_info) {
-				/* Cache the fact that this accessor has trivial write. */
-				CACHE_PTR_EX(cache_slot + 1,
-					(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_WRITE_BIT));
-			}
-
-			property_offset = prop_info->offset;
-			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
-				prop_info = NULL;
-			}
-			goto try_again;
+			GC_ADDREF(zobj);
+			(*guard) |= IN_SET;
+			zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
+			(*guard) &= ~IN_SET;
+			OBJ_RELEASE(zobj);
+			return value;
 		} else if (!silent) {
 			return &EG(error_zval);
 		}
@@ -2060,9 +2058,14 @@ found:
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *get = prop_info->accessors[ZEND_ACCESSOR_GET];
 		if (!get) {
-			zend_throw_error(NULL, "Property %s::$%s is write-only",
-				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			return 0;
+			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+				zend_throw_error(NULL, "Property %s::$%s is write-only",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return 0;
+			} else {
+				property_offset = prop_info->offset;
+				goto try_again;
+			}
 		}
 
 		get = check_accessor_visibility(&prop_info, zobj->ce, name, get, /* silent */ true);
@@ -2071,34 +2074,29 @@ found:
 				return 1;
 			}
 
-			if (!(get->common.fn_flags & ZEND_ACC_AUTO_PROP)) {
-				uint32_t *guard = zend_get_property_guard(zobj, name);
-				if (UNEXPECTED(*guard & IN_GET)) {
-					zend_throw_error(NULL, "Cannot recursively read %s::$%s in accessor",
-						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-					return 0;
-				}
-
-				zval rv;
-				GC_ADDREF(zobj);
-				*guard |= IN_GET;
-				zend_call_known_instance_method_with_0_params(get, zobj, &rv);
-				*guard &= ~IN_GET;
-				OBJ_RELEASE(zobj);
-
-				if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
-					result = zend_is_true(&rv);
-				} else {
-					ZEND_ASSERT(has_set_exists == ZEND_PROPERTY_ISSET);
-					result = Z_TYPE(rv) != IS_NULL
-						&& (Z_TYPE(rv) != IS_REFERENCE || Z_TYPE_P(Z_REFVAL(rv)) != IS_NULL);
-				}
-				zval_ptr_dtor(&rv);
-				return result;
+			uint32_t *guard = zend_get_property_guard(zobj, name);
+			if (UNEXPECTED(*guard & IN_GET)) {
+				zend_throw_error(NULL, "Cannot recursively read %s::$%s in accessor",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return 0;
 			}
 
-			property_offset = prop_info->offset;
-			goto try_again;
+			zval rv;
+			GC_ADDREF(zobj);
+			*guard |= IN_GET;
+			zend_call_known_instance_method_with_0_params(get, zobj, &rv);
+			*guard &= ~IN_GET;
+			OBJ_RELEASE(zobj);
+
+			if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
+				result = zend_is_true(&rv);
+			} else {
+				ZEND_ASSERT(has_set_exists == ZEND_PROPERTY_ISSET);
+				result = Z_TYPE(rv) != IS_NULL
+					&& (Z_TYPE(rv) != IS_REFERENCE || Z_TYPE_P(Z_REFVAL(rv)) != IS_NULL);
+			}
+			zval_ptr_dtor(&rv);
+			return result;
 		}
 	} else if (UNEXPECTED(EG(exception))) {
 		result = 0;

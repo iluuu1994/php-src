@@ -8,7 +8,7 @@ abstract class A {
 }
 
 class B extends A {
-    public $prop { get; set; }
+    public $prop;
 }
 
 ?>

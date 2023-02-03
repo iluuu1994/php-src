@@ -4,7 +4,7 @@ Class with abstract accessor not declared abstract (inherited 2)
 <?php
 
 abstract class A {
-    public $prop { abstract get; set; }
+    public $prop { abstract get; }
 }
 
 class B extends A {

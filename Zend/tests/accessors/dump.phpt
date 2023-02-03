@@ -3,12 +3,9 @@ Dumping object with accessors
 --FILE--
 <?php
 
-// The dump always only shows the contents of backing properties,
-// not any computed properties.
 class Test {
     public $prop = 1;
-    public $prop2 = 2 { get; set; }
-    public $prop3 {
+    public $prop2 {
         get { return 42; }
     }
 }
@@ -24,23 +21,16 @@ foreach ($test as $prop => $value) {
 
 ?>
 --EXPECT--
-object(Test)#1 (2) {
+object(Test)#1 (1) {
   ["prop"]=>
   int(1)
-  ["prop2"]=>
-  int(2)
 }
-array(2) {
+array(1) {
   ["prop"]=>
   int(1)
-  ["prop2"]=>
-  int(2)
 }
-array(2) {
+array(1) {
   ["prop"]=>
   int(1)
-  ["prop2"]=>
-  int(2)
 }
 prop => 1
-prop2 => 2

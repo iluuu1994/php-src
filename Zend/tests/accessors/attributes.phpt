@@ -11,8 +11,8 @@ class B {}
 
 class C {
     public $prop { 
-        #[A] get;
-        #[B] set;
+        #[A] get {}
+        #[B] set {}
     }
 }
 

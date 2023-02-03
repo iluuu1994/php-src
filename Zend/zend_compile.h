@@ -369,9 +369,6 @@ typedef struct _zend_oparray_context {
 /* supports opcache compile-time evaluation (funcs)       |     |     |     */
 #define ZEND_ACC_COMPILE_TIME_EVAL       (1 << 27) /*     |  X  |     |     */
 /*                                                        |     |     |     */
-/* accessor method is automatically implemented           |     |     |     */
-#define ZEND_ACC_AUTO_PROP               (1 << 28) /*     |  X  |     |     */
-/*                                                        |     |     |     */
 /* op_array uses strict mode types                        |     |     |     */
 #define ZEND_ACC_STRICT_TYPES            (1U << 31) /*    |  X  |     |     */
 

@@ -17,9 +17,10 @@ class A implements ArrayAccess {
 }
 
 class C {
+    public $_a;
     public $a {
-        get;
-        set;
+        get { return $this->_a; }
+        set { $this->_a = $value; }
     }
 }
 

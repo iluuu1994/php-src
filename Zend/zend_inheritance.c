@@ -1353,15 +1353,13 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 
 			if (UNEXPECTED((child_info->flags & ZEND_ACC_PPP_MASK) > (parent_info->flags & ZEND_ACC_PPP_MASK))) {
 				zend_error_noreturn(E_COMPILE_ERROR, "Access level to %s::$%s must be %s (as in class %s)%s", ZSTR_VAL(ce->name), ZSTR_VAL(key), zend_visibility_string(parent_info->flags), ZSTR_VAL(parent_info->ce->name), (parent_info->flags&ZEND_ACC_PUBLIC) ? "" : " or weaker");
-			} else if ((child_info->flags & ZEND_ACC_STATIC) == 0
-					&& !(parent_info->flags & ZEND_ACC_VIRTUAL)) {
+			} else if (!(child_info->flags & ZEND_ACC_STATIC) && !(parent_info->flags & ZEND_ACC_VIRTUAL)) {
 				if (!(child_info->flags & ZEND_ACC_VIRTUAL)) {
 					int parent_num = OBJ_PROP_TO_NUM(parent_info->offset);
 					int child_num = OBJ_PROP_TO_NUM(child_info->offset);
 					/* Don't keep default properties in GC (they may be freed by opcache) */
 					zval_ptr_dtor_nogc(&(ce->default_properties_table[parent_num]));
-					ce->default_properties_table[parent_num] =
-						ce->default_properties_table[child_num];
+					ce->default_properties_table[parent_num] = ce->default_properties_table[child_num];
 					ZVAL_UNDEF(&ce->default_properties_table[child_num]);
 				}
 
@@ -1374,21 +1372,6 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 			if (child_accessors) {
 				if (parent_accessors) {
 					for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-						zend_function *parent_accessor = parent_accessors[i];
-						zend_function *child_accessor = child_accessors[i];
-
-						if (
-							child_accessor != NULL
-							&& parent_accessor != NULL
-							&& (child_accessor->common.fn_flags & ZEND_ACC_AUTO_PROP)
-							&& !(parent_accessor->common.fn_flags & (ZEND_ACC_AUTO_PROP|ZEND_ACC_ABSTRACT))
-						) {
-							zend_error_noreturn(E_COMPILE_ERROR,
-								"Implicit property accessor %s::%s() cannot override explicit property accessor %s::%s()",
-								ZSTR_VAL(child_info->ce->name), ZSTR_VAL(child_accessor->common.function_name),
-								ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(parent_accessor->common.function_name));
-						}
-
 						inherit_accessor(ce, &parent_accessors[i], &child_accessors[i]);
 					}
 				}

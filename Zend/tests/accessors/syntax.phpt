@@ -4,12 +4,10 @@ Basic accessor syntax
 <?php
 
 class Test {
-    public $prop1 { get; set; }
-    public $prop2 {
+    public $prop {
         get { }
-        private set { }
+        set { }
     }
-    public $prop3 = 1 { get; private set; }
 }
 
 ?>

@@ -4,7 +4,7 @@ Get by reference with generated accessors
 <?php
 
 class Test {
-    public $byVal = [] { get; set; }
+    public $byVal { get { return []; } }
 }
 
 $test = new Test;
@@ -27,4 +27,4 @@ try {
 Error: Cannot aquire reference to accessor property Test::$byVal
 array(0) {
 }
-Error: Cannot aquire reference to accessor property Test::$byVal
+Error: Cannot assign by reference to overloaded object

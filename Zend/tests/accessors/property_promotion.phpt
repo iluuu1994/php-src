@@ -3,26 +3,19 @@ Generated accessors in property promotion
 --FILE--
 <?php
 
-class ImmVec {
+class Test {
     public function __construct(
-        public float $x = 0.0 { get; private set; },
-        public float $y = 0.0 { get; private set; },
-        public float $z = 0.0 { get; private set; },
+        public $prop {
+            get { echo "get\n"; }
+            set { echo "set($value)\n"; }
+        },
     ) {}
 }
 
-$vec = new ImmVec(0.0, 1.0, 2.0);
-var_dump($vec->x, $vec->y, $vec->z);
-
-try {
-    $vec->x = 42.0;
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
+$test = new Test(42);
+echo $test->prop;
 
 ?>
 --EXPECT--
-float(0)
-float(1)
-float(2)
-Call to private accessor ImmVec::$x::set() from global scope
+set(42)
+get

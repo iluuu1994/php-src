@@ -14,7 +14,7 @@ class Test {
     }
 
     public function __construct(
-        public $prop1 { get; set; },
+        public $prop1,
     ) {}
 }
 
