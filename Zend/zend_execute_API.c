@@ -196,6 +196,9 @@ void init_executor(void) /* {{{ */
 	EG(filename_override) = NULL;
 	EG(lineno_override) = -1;
 
+	EG(delay_assignment_garbage) = false;
+	EG(delayed_assignment_garbage) = NULL;
+
 	zend_fiber_init();
 	zend_weakrefs_init();
 

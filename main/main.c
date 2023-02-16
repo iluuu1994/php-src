@@ -1594,6 +1594,9 @@ static void php_free_request_globals(void)
 
 	EG(filename_override) = NULL;
 	EG(lineno_override) = -1;
+
+	EG(delay_assignment_garbage) = false;
+	EG(delayed_assignment_garbage) = NULL;
 }
 /* }}} */
 

@@ -287,6 +287,9 @@ struct _zend_executor_globals {
 	zend_ulong reserved_stack_size;
 #endif
 
+	bool delay_assignment_garbage;
+	zend_refcounted *delayed_assignment_garbage;
+
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
 

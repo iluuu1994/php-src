@@ -23410,7 +23410,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23548,7 +23557,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23686,7 +23704,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23824,7 +23851,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26356,7 +26392,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26494,7 +26539,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26632,7 +26686,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26770,7 +26833,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30716,7 +30788,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30854,7 +30935,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30992,7 +31082,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -31130,7 +31229,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33393,7 +33501,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33531,7 +33648,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33669,7 +33795,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33807,7 +33942,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35443,7 +35587,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35581,7 +35734,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35719,7 +35881,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35857,7 +36028,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -37949,7 +38129,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38087,7 +38276,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38225,7 +38423,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38363,7 +38570,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42158,7 +42374,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42296,7 +42521,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42434,7 +42668,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42572,7 +42815,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46037,7 +46289,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46175,7 +46436,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46313,7 +46583,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46451,7 +46730,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51522,7 +51810,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51660,7 +51957,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51798,7 +52104,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51936,7 +52251,16 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
+	bool previous_delay_assignment_garbage = EG(delay_assignment_garbage);
+	zend_refcounted *previous_delayed_assignment_garbage = EG(delayed_assignment_garbage);
+	EG(delay_assignment_garbage) = true;
+	EG(delayed_assignment_garbage) = NULL;
 	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (EG(delayed_assignment_garbage)) {
+		garbage = EG(delayed_assignment_garbage);
+	}
+	EG(delay_assignment_garbage) = previous_delay_assignment_garbage;
+	EG(delayed_assignment_garbage) = previous_delayed_assignment_garbage;
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);

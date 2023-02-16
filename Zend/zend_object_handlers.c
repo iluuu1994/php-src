@@ -836,9 +836,22 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 				value = &tmp;
 			}
 
-found:
-			variable_ptr = zend_assign_to_variable(
-				variable_ptr, value, IS_TMP_VAR, property_uses_strict_types());
+found:;
+			zend_refcounted *garbage = NULL;
+			variable_ptr = zend_assign_to_variable_ex(
+				variable_ptr, value, IS_TMP_VAR, property_uses_strict_types(), &garbage);
+			if (garbage) {
+				if (EG(delay_assignment_garbage)) {
+					EG(delay_assignment_garbage) = false;
+					EG(delayed_assignment_garbage) = garbage;
+				} else {
+					if (GC_DELREF(garbage) == 0) {
+						rc_dtor_func(garbage);
+					} else {
+						gc_check_possible_root_no_ref(garbage);
+					}
+				}
+			}
 			goto exit;
 		}
 		if (Z_PROP_FLAG_P(variable_ptr) == IS_PROP_UNINIT) {
