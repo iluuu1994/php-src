@@ -2036,7 +2036,7 @@ static zend_never_inline void zend_post_incdec_overloaded_property(zend_object *
 	} else {
 		decrement_function(&z_copy);
 	}
-	object->handlers->write_property(object, name, &z_copy, cache_slot);
+	object->handlers->write_property(object, name, &z_copy, cache_slot, NULL);
 	OBJ_RELEASE(object);
 	zval_ptr_dtor(&z_copy);
 	if (z == &rv) {
@@ -2069,7 +2069,7 @@ static zend_never_inline void zend_pre_incdec_overloaded_property(zend_object *o
 	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), &z_copy);
 	}
-	object->handlers->write_property(object, name, &z_copy, cache_slot);
+	object->handlers->write_property(object, name, &z_copy, cache_slot, NULL);
 	OBJ_RELEASE(object);
 	zval_ptr_dtor(&z_copy);
 	if (z == &rv) {
@@ -2092,7 +2092,7 @@ static zend_never_inline void zend_assign_op_overloaded_property(zend_object *ob
 		return;
 	}
 	if (zend_binary_op(&res, z, value OPLINE_CC) == SUCCESS) {
-		object->handlers->write_property(object, name, &res, cache_slot);
+		object->handlers->write_property(object, name, &res, cache_slot, NULL);
 	}
 	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), &res);

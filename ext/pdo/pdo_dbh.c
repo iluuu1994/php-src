@@ -462,7 +462,7 @@ static void pdo_stmt_construct(zend_execute_data *execute_data, pdo_stmt_t *stmt
 
 	ZVAL_STR(&query_string, stmt->query_string);
 	key = zend_string_init("queryString", sizeof("queryString") - 1, 0);
-	zend_std_write_property(Z_OBJ_P(object), key, &query_string, NULL);
+	zend_std_write_property(Z_OBJ_P(object), key, &query_string, NULL, NULL);
 	zend_string_release_ex(key, 0);
 
 	if (dbstmt_ce->constructor) {

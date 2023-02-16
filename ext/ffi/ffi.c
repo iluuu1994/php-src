@@ -1115,7 +1115,7 @@ static zval *zend_ffi_cdata_get(zend_object *obj, zend_string *member, int read_
 }
 /* }}} */
 
-static zval *zend_ffi_cdata_set(zend_object *obj, zend_string *member, zval *value, void **cache_slot) /* {{{ */
+static zval *zend_ffi_cdata_set(zend_object *obj, zend_string *member, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zend_ffi_cdata *cdata = (zend_ffi_cdata*)obj;
 	zend_ffi_type  *type = ZEND_FFI_TYPE(cdata->type);
@@ -1288,7 +1288,7 @@ static zval *zend_ffi_cdata_read_field(zend_object *obj, zend_string *field_name
 }
 /* }}} */
 
-static zval *zend_ffi_cdata_write_field(zend_object *obj, zend_string *field_name, zval *value, void **cache_slot) /* {{{ */
+static zval *zend_ffi_cdata_write_field(zend_object *obj, zend_string *field_name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zend_ffi_cdata *cdata = (zend_ffi_cdata*)obj;
 	zend_ffi_type  *type = ZEND_FFI_TYPE(cdata->type);
@@ -2496,7 +2496,7 @@ static zval *zend_ffi_read_var(zend_object *obj, zend_string *var_name, int read
 }
 /* }}} */
 
-static zval *zend_ffi_write_var(zend_object *obj, zend_string *var_name, zval *value, void **cache_slot) /* {{{ */
+static zval *zend_ffi_write_var(zend_object *obj, zend_string *var_name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zend_ffi        *ffi = (zend_ffi*)obj;
 	zend_ffi_symbol *sym = NULL;
@@ -5069,7 +5069,7 @@ static ZEND_COLD zval *zend_fake_read_property(zend_object *obj, zend_string *me
 }
 /* }}} */
 
-static ZEND_COLD zval *zend_fake_write_property(zend_object *obj, zend_string *member, zval *value, void **cache_slot) /* {{{ */
+static ZEND_COLD zval *zend_fake_write_property(zend_object *obj, zend_string *member, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zend_bad_array_access(obj->ce);
 	return value;
@@ -5174,7 +5174,7 @@ static ZEND_COLD zval *zend_ffi_free_read_property(zend_object *obj, zend_string
 }
 /* }}} */
 
-static ZEND_COLD zval *zend_ffi_free_write_property(zend_object *obj, zend_string *member, zval *value, void **cache_slot) /* {{{ */
+static ZEND_COLD zval *zend_ffi_free_write_property(zend_object *obj, zend_string *member, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zend_ffi_use_after_free();
 	return value;

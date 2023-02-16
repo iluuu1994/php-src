@@ -162,7 +162,7 @@ zval *xmlreader_read_property(zend_object *object, zend_string *name, int type, 
 /* }}} */
 
 /* {{{ xmlreader_write_property */
-zval *xmlreader_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+zval *xmlreader_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	xmlreader_object *obj;
 	xmlreader_prop_handler *hnd = NULL;
@@ -175,7 +175,7 @@ zval *xmlreader_write_property(zend_object *object, zend_string *name, zval *val
 	if (hnd != NULL) {
 		zend_throw_error(NULL, "Cannot write to read-only property");
 	} else {
-		value = zend_std_write_property(object, name, value, cache_slot);
+		value = zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 	}
 
 	return value;

@@ -23410,7 +23410,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23548,7 +23548,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23686,7 +23686,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -23824,7 +23824,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26356,7 +26356,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26494,7 +26494,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26632,7 +26632,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -26770,7 +26770,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30716,7 +30716,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30854,7 +30854,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -30992,7 +30992,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -31130,7 +31130,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33393,7 +33393,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33531,7 +33531,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33669,7 +33669,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -33807,7 +33807,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35443,7 +35443,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35581,7 +35581,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35719,7 +35719,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -35857,7 +35857,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -37949,7 +37949,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38087,7 +38087,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38225,7 +38225,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -38363,7 +38363,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42158,7 +42158,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42296,7 +42296,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42434,7 +42434,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -42572,7 +42572,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CONST != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46037,7 +46037,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46175,7 +46175,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46313,7 +46313,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -46451,7 +46451,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51522,7 +51522,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51660,7 +51660,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51798,7 +51798,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
@@ -51936,7 +51936,7 @@ fast_assign_obj:
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (IS_CV != IS_CONST) {
 		zend_tmp_string_release(tmp_name);

@@ -258,7 +258,7 @@ zval *mysqli_read_property(zend_object *object, zend_string *name, int type, voi
 /* }}} */
 
 /* {{{ mysqli_write_property */
-zval *mysqli_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+zval *mysqli_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	mysqli_object *obj = php_mysqli_fetch_object(object);
 	if (obj->prop_handler) {
@@ -287,7 +287,7 @@ zval *mysqli_write_property(zend_object *object, zend_string *name, zval *value,
 			return value;
 		}
 	}
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 /* }}} */
 

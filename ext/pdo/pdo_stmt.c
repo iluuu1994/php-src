@@ -2017,7 +2017,7 @@ PHP_METHOD(PDOStatement, getIterator)
 }
 
 /* {{{ overloaded handlers for PDOStatement class */
-static zval *dbstmt_prop_write(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *dbstmt_prop_write(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	if (zend_string_equals_literal(name, "queryString")) {
 		zval *query_string = OBJ_PROP_NUM(object, 0);
@@ -2026,7 +2026,7 @@ static zval *dbstmt_prop_write(zend_object *object, zend_string *name, zval *val
 			return value;
 		}
 	}
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 
 static void dbstmt_prop_delete(zend_object *object, zend_string *name, void **cache_slot)
@@ -2324,7 +2324,7 @@ static zval *row_dim_read(zend_object *object, zval *member, int type, zval *rv)
 	return rv;
 }
 
-static zval *row_prop_write(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *row_prop_write(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	zend_throw_error(NULL, "Cannot write to PDORow property");
 	return value;

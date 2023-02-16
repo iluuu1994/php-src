@@ -889,7 +889,7 @@ static zval *php_zip_get_property_ptr_ptr(zend_object *object, zend_string *name
 /* }}} */
 
 
-static zval *php_zip_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *php_zip_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	ze_zip_object *obj;
 	zip_prop_handler *hnd = NULL;
@@ -905,7 +905,7 @@ static zval *php_zip_write_property(zend_object *object, zend_string *name, zval
 		return &EG(error_zval);
 	}
 
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 
 static zval *php_zip_read_property(zend_object *object, zend_string *name, int type, void **cache_slot, zval *rv) /* {{{ */

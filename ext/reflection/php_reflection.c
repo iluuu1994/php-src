@@ -7073,7 +7073,7 @@ ZEND_METHOD(ReflectionFiber, getCallable)
 }
 
 /* {{{ _reflection_write_property */
-static zval *_reflection_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *_reflection_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	if (zend_hash_exists(&object->ce->properties_info, name)
 		&& (zend_string_equals_literal(name, "name") || zend_string_equals_literal(name, "class")))
@@ -7084,7 +7084,7 @@ static zval *_reflection_write_property(zend_object *object, zend_string *name, 
 	}
 	else
 	{
-		return zend_std_write_property(object, name, value, cache_slot);
+		return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 	}
 }
 /* }}} */

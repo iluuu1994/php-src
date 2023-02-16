@@ -1709,7 +1709,7 @@ zval *php_snmp_read_property(zend_object *object, zend_string *name, int type, v
 /* }}} */
 
 /* {{{ Generic object property writer */
-zval *php_snmp_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+zval *php_snmp_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	php_snmp_object *obj = php_snmp_fetch_object(object);
 	php_snmp_prop_handler *hnd = zend_hash_find_ptr(&php_snmp_properties, name);
@@ -1737,7 +1737,7 @@ zval *php_snmp_write_property(zend_object *object, zend_string *name, zval *valu
 		return value;
 	}
 
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 /* }}} */
 

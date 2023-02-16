@@ -1328,7 +1328,7 @@ ZEND_API void zend_merge_properties(zval *obj, HashTable *properties) /* {{{ */
 	EG(fake_scope) = Z_OBJCE_P(obj);
 	ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(properties, key, value) {
 		if (key) {
-			write_property(zobj, key, value, NULL);
+			write_property(zobj, key, value, NULL, NULL);
 		}
 	} ZEND_HASH_FOREACH_END();
 	EG(fake_scope) = old_scope;
@@ -2208,7 +2208,7 @@ ZEND_API void add_property_zval_ex(zval *arg, const char *key, size_t key_len, z
 	zend_string *str;
 
 	str = zend_string_init(key, key_len, 0);
-	Z_OBJ_HANDLER_P(arg, write_property)(Z_OBJ_P(arg), str, value, NULL);
+	Z_OBJ_HANDLER_P(arg, write_property)(Z_OBJ_P(arg), str, value, NULL, NULL);
 	zend_string_release_ex(str, 0);
 }
 /* }}} */
@@ -4643,7 +4643,7 @@ ZEND_API void zend_update_property_ex(zend_class_entry *scope, zend_object *obje
 
 	EG(fake_scope) = scope;
 
-	object->handlers->write_property(object, name, value, NULL);
+	object->handlers->write_property(object, name, value, NULL, NULL);
 
 	EG(fake_scope) = old_scope;
 }
@@ -4657,7 +4657,7 @@ ZEND_API void zend_update_property(zend_class_entry *scope, zend_object *object,
 	EG(fake_scope) = scope;
 
 	property = zend_string_init(name, name_length, 0);
-	object->handlers->write_property(object, property, value, NULL);
+	object->handlers->write_property(object, property, value, NULL, NULL);
 	zend_string_release_ex(property, 0);
 
 	EG(fake_scope) = old_scope;

@@ -795,7 +795,7 @@ static bool verify_readonly_initialization_access(
 	return false;
 }
 
-ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zval *value, void **cache_slot) /* {{{ */
+ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	zval *variable_ptr, tmp;
 	uintptr_t property_offset;
@@ -837,8 +837,11 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 			}
 
 found:
-			variable_ptr = zend_assign_to_variable(
-				variable_ptr, value, IS_TMP_VAR, property_uses_strict_types());
+			if (garbage_ptr) {
+				variable_ptr = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, property_uses_strict_types(), garbage_ptr);
+			} else {
+				variable_ptr = zend_assign_to_variable(variable_ptr, value, IS_TMP_VAR, property_uses_strict_types());
+			}
 			goto exit;
 		}
 		if (Z_PROP_FLAG_P(variable_ptr) == IS_PROP_UNINIT) {

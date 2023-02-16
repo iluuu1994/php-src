@@ -792,7 +792,7 @@ static zval *spl_array_read_property(zend_object *object, zend_string *name, int
 	return zend_std_read_property(object, name, type, cache_slot, rv);
 } /* }}} */
 
-static zval *spl_array_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot) /* {{{ */
+static zval *spl_array_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr) /* {{{ */
 {
 	spl_array_object *intern = spl_array_from_obj(object);
 
@@ -803,7 +803,7 @@ static zval *spl_array_write_property(zend_object *object, zend_string *name, zv
 		spl_array_write_dimension(object, &member, value);
 		return value;
 	}
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 } /* }}} */
 
 static zval *spl_array_get_property_ptr_ptr(zend_object *object, zend_string *name, int type, void **cache_slot) /* {{{ */

@@ -617,7 +617,7 @@ next_iter:
 /* }}} */
 
 /* {{{ sxe_property_write() */
-static zval *sxe_property_write(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *sxe_property_write(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	zval member;
 	ZVAL_STR(&member, name);

@@ -2487,7 +2487,7 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	value = zobj->handlers->write_property(zobj, name, value, (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, &garbage);
 
 	if (OP2_TYPE != IS_CONST) {
 		zend_tmp_string_release(tmp_name);

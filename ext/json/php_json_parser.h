@@ -33,7 +33,7 @@ typedef int (*php_json_parser_func_array_end_t)(
 typedef int (*php_json_parser_func_object_create_t)(
 		php_json_parser *parser, zval *object);
 typedef int (*php_json_parser_func_object_update_t)(
-		php_json_parser *parser, zval *object, zend_string *key, zval *zvalue);
+		php_json_parser *parser, zval *object, zend_string *key, zval *zvalue, zend_refcounted **garbage_ptr);
 typedef int (*php_json_parser_func_object_start_t)(
 		php_json_parser *parser);
 typedef int (*php_json_parser_func_object_end_t)(

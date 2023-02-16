@@ -128,13 +128,13 @@ member:
 		key ':' value
 			{
 				parser->methods.object_create(parser, &$$);
-				if (parser->methods.object_update(parser, &$$, Z_STR($1), &$3) == FAILURE) {
+				if (parser->methods.object_update(parser, &$$, Z_STR($1), &$3, NULL) == FAILURE) {
 					YYERROR;
 				}
 			}
 	|	member ',' key ':' value
 			{
-				if (parser->methods.object_update(parser, &$1, Z_STR($3), &$5) == FAILURE) {
+				if (parser->methods.object_update(parser, &$1, Z_STR($3), &$5, NULL) == FAILURE) {
 					YYERROR;
 				}
 				ZVAL_COPY_VALUE(&$$, &$1);
@@ -234,7 +234,7 @@ static int php_json_parser_object_create(php_json_parser *parser, zval *object)
 	return SUCCESS;
 }
 
-static int php_json_parser_object_update(php_json_parser *parser, zval *object, zend_string *key, zval *zvalue)
+static int php_json_parser_object_update(php_json_parser *parser, zval *object, zend_string *key, zval *zvalue, zend_refcounted **garbage_ptr)
 {
 	/* if JSON_OBJECT_AS_ARRAY is set */
 	if (Z_TYPE_P(object) == IS_ARRAY) {
@@ -247,7 +247,7 @@ static int php_json_parser_object_update(php_json_parser *parser, zval *object, 
 			zval_ptr_dtor_nogc(object);
 			return FAILURE;
 		}
-		zend_std_write_property(Z_OBJ_P(object), key, zvalue, NULL);
+		zend_std_write_property(Z_OBJ_P(object), key, zvalue, NULL, garbage_ptr);
 		Z_TRY_DELREF_P(zvalue);
 	}
 	zend_string_release_ex(key, 0);
@@ -272,7 +272,7 @@ static int php_json_parser_object_create_validate(php_json_parser *parser, zval 
 	return SUCCESS;
 }
 
-static int php_json_parser_object_update_validate(php_json_parser *parser, zval *object, zend_string *key, zval *zvalue)
+static int php_json_parser_object_update_validate(php_json_parser *parser, zval *object, zend_string *key, zval *zvalue, zend_refcounted **garbage_ptr)
 {
 	return SUCCESS;
 }

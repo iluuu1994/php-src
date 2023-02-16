@@ -359,10 +359,10 @@ static void php_timezone_to_string(php_timezone_obj *tzobj, zval *zv);
 
 static int date_interval_compare_objects(zval *o1, zval *o2);
 static zval *date_interval_read_property(zend_object *object, zend_string *member, int type, void **cache_slot, zval *rv);
-static zval *date_interval_write_property(zend_object *object, zend_string *member, zval *value, void **cache_slot);
+static zval *date_interval_write_property(zend_object *object, zend_string *member, zval *value, void **cache_slot, zend_refcounted **garbage_ptr);
 static zval *date_interval_get_property_ptr_ptr(zend_object *object, zend_string *member, int type, void **cache_slot);
 static zval *date_period_read_property(zend_object *object, zend_string *name, int type, void **cache_slot, zval *rv);
-static zval *date_period_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot);
+static zval *date_period_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr);
 static zval *date_period_get_property_ptr_ptr(zend_object *object, zend_string *name, int type, void **cache_slot);
 
 static int date_object_compare_timezone(zval *tz1, zval *tz2);
@@ -1465,11 +1465,11 @@ static void create_date_period_interval(timelib_rel_time *interval, zval *zv)
 	}
 }
 
-static void write_date_period_property(zend_object *obj, const char *name, const size_t name_len, zval *zv)
+static void write_date_period_property(zend_object *obj, const char *name, const size_t name_len, zval *zv, zend_refcounted **garbage_ptr)
 {
 	zend_string *property_name = zend_string_init(name, name_len, 0);
 
-	zend_std_write_property(obj, property_name, zv, NULL);
+	zend_std_write_property(obj, property_name, zv, NULL, garbage_ptr);
 
 	zval_ptr_dtor(zv);
 	zend_string_release(property_name);
@@ -1484,25 +1484,25 @@ static void initialize_date_period_properties(php_period_obj *period_obj)
 	}
 
 	create_date_period_datetime(period_obj->start, period_obj->start_ce, &zv);
-	write_date_period_property(&period_obj->std, "start", sizeof("start") - 1, &zv);
+	write_date_period_property(&period_obj->std, "start", sizeof("start") - 1, &zv, NULL);
 
 	create_date_period_datetime(period_obj->current, period_obj->start_ce, &zv);
-	write_date_period_property(&period_obj->std, "current", sizeof("current") - 1, &zv);
+	write_date_period_property(&period_obj->std, "current", sizeof("current") - 1, &zv, NULL);
 
 	create_date_period_datetime(period_obj->end, period_obj->start_ce, &zv);
-	write_date_period_property(&period_obj->std, "end", sizeof("end") - 1, &zv);
+	write_date_period_property(&period_obj->std, "end", sizeof("end") - 1, &zv, NULL);
 
 	create_date_period_interval(period_obj->interval, &zv);
-	write_date_period_property(&period_obj->std, "interval", sizeof("interval") - 1, &zv);
+	write_date_period_property(&period_obj->std, "interval", sizeof("interval") - 1, &zv, NULL);
 
 	ZVAL_LONG(&zv, (zend_long) period_obj->recurrences);
-	write_date_period_property(&period_obj->std, "recurrences", sizeof("recurrences") - 1, &zv);
+	write_date_period_property(&period_obj->std, "recurrences", sizeof("recurrences") - 1, &zv, NULL);
 
 	ZVAL_BOOL(&zv, period_obj->include_start_date);
-	write_date_period_property(&period_obj->std, "include_start_date", sizeof("include_start_date") - 1, &zv);
+	write_date_period_property(&period_obj->std, "include_start_date", sizeof("include_start_date") - 1, &zv, NULL);
 
 	ZVAL_BOOL(&zv, period_obj->include_end_date);
-	write_date_period_property(&period_obj->std, "include_end_date", sizeof("include_end_date") - 1, &zv);
+	write_date_period_property(&period_obj->std, "include_end_date", sizeof("include_end_date") - 1, &zv, NULL);
 }
 
 /* define an overloaded iterator structure */
@@ -1622,7 +1622,7 @@ static void date_period_it_move_forward(zend_object_iterator *iter)
 
 	create_date_period_datetime(object->current, object->start_ce, &current_zv);
 	zend_string *property_name = zend_string_init("current", sizeof("current") - 1, 0);
-	zend_std_write_property(&object->std, property_name, &current_zv, NULL);
+	zend_std_write_property(&object->std, property_name, &current_zv, NULL, NULL);
 	zval_ptr_dtor(&current_zv);
 	zend_string_release(property_name);
 
@@ -4284,14 +4284,14 @@ static zval *date_interval_read_property(zend_object *object, zend_string *name,
 /* }}} */
 
 /* {{{ date_interval_write_property */
-static zval *date_interval_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *date_interval_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	php_interval_obj *obj;
 
 	obj = php_interval_obj_from_obj(object);
 
 	if (!obj->initialized) {
-		return zend_std_write_property(object, name, value, cache_slot);
+		return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 	}
 
 #define SET_VALUE_FROM_STRUCT(n,m) \
@@ -4313,7 +4313,7 @@ static zval *date_interval_write_property(zend_object *object, zend_string *name
 		}
 		SET_VALUE_FROM_STRUCT(invert, "invert");
 		/* didn't find any */
-		value = zend_std_write_property(object, name, value, cache_slot);
+		value = zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 	} while(0);
 
 	return value;
@@ -5611,14 +5611,14 @@ static zval *date_period_read_property(zend_object *object, zend_string *name, i
 }
 /* }}} */
 
-static zval *date_period_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+static zval *date_period_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	if (date_period_is_internal_property(name)) {
 		zend_throw_error(NULL, "Cannot modify readonly property DatePeriod::$%s", ZSTR_VAL(name));
 		return value;
 	}
 
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 
 static zval *date_period_get_property_ptr_ptr(zend_object *object, zend_string *name, int type, void **cache_slot)

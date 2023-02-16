@@ -318,7 +318,7 @@ zval *dom_read_property(zend_object *object, zend_string *name, int type, void *
 }
 /* }}} */
 
-zval *dom_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot)
+zval *dom_write_property(zend_object *object, zend_string *name, zval *value, void **cache_slot, zend_refcounted **garbage_ptr)
 {
 	dom_object *obj = php_dom_obj_from_obj(object);
 	dom_prop_handler *hnd = NULL;
@@ -350,7 +350,7 @@ zval *dom_write_property(zend_object *object, zend_string *name, zval *value, vo
 		return value;
 	}
 
-	return zend_std_write_property(object, name, value, cache_slot);
+	return zend_std_write_property(object, name, value, cache_slot, garbage_ptr);
 }
 
 /* {{{ dom_property_exists */

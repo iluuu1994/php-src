@@ -2495,7 +2495,7 @@ static void ZEND_FASTCALL zend_jit_assign_obj_helper(zend_object *zobj, zend_str
 	}
 
 	ZVAL_DEREF(value);
-	value = zobj->handlers->write_property(zobj, name, value, cache_slot);
+	value = zobj->handlers->write_property(zobj, name, value, cache_slot, NULL);
 	if (result) {
 		ZVAL_COPY_DEREF(result, value);
 	}
@@ -2553,7 +2553,7 @@ static zend_never_inline void _zend_jit_assign_op_overloaded_property(zend_objec
 		return;
 	}
 	if (binary_op(&res, z, value) == SUCCESS) {
-		object->handlers->write_property(object, name, &res, cache_slot);
+		object->handlers->write_property(object, name, &res, cache_slot, NULL);
 	}
 //???	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 //???		ZVAL_COPY(EX_VAR(opline->result.var), &res);
@@ -2823,7 +2823,7 @@ static void ZEND_FASTCALL zend_jit_pre_inc_obj_helper(zend_object *zobj, zend_st
 		if (UNEXPECTED(result)) {
 			ZVAL_COPY(result, &z_copy);
 		}
-		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot);
+		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot, NULL);
 		OBJ_RELEASE(zobj);
 		zval_ptr_dtor(&z_copy);
 		if (z == &rv) {
@@ -2893,7 +2893,7 @@ static void ZEND_FASTCALL zend_jit_pre_dec_obj_helper(zend_object *zobj, zend_st
 		if (UNEXPECTED(result)) {
 			ZVAL_COPY(result, &z_copy);
 		}
-		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot);
+		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot, NULL);
 		OBJ_RELEASE(zobj);
 		zval_ptr_dtor(&z_copy);
 		if (z == &rv) {
@@ -2954,7 +2954,7 @@ static void ZEND_FASTCALL zend_jit_post_inc_obj_helper(zend_object *zobj, zend_s
 		ZVAL_COPY_DEREF(&z_copy, z);
 		ZVAL_COPY(result, &z_copy);
 		increment_function(&z_copy);
-		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot);
+		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot, NULL);
 		OBJ_RELEASE(zobj);
 		zval_ptr_dtor(&z_copy);
 		if (z == &rv) {
@@ -3015,7 +3015,7 @@ static void ZEND_FASTCALL zend_jit_post_dec_obj_helper(zend_object *zobj, zend_s
 		ZVAL_COPY_DEREF(&z_copy, z);
 		ZVAL_COPY(result, &z_copy);
 		decrement_function(&z_copy);
-		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot);
+		zobj->handlers->write_property(zobj, name, &z_copy, cache_slot, NULL);
 		OBJ_RELEASE(zobj);
 		zval_ptr_dtor(&z_copy);
 		if (z == &rv) {
