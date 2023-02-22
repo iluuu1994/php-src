@@ -53,9 +53,9 @@ rem setup ODBC related exts
 set ODBC_TEST_USER=sa
 set ODBC_TEST_PASS=Password12!
 if /i "%APPVEYOR%" equ "True" (
-    set ODBC_TEST_DSN=Driver={ODBC Driver 13 for SQL Server};Server=^(local^)\SQL2017;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
+    set ODBC_TEST_DSN=Driver={ODBC Driver 13 for SQL Server};Server=(local)\SQL2017;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
 ) else (
-    set ODBC_TEST_DSN=Driver={ODBC Driver 17 for SQL Server};Server=^(local^)\SQLEXPRESS;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
+    set ODBC_TEST_DSN=Driver={ODBC Driver 17 for SQL Server};Server=(local)\SQLEXPRESS;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
 )
 set PDOTEST_DSN=odbc:%ODBC_TEST_DSN%
 
@@ -131,7 +131,7 @@ mkdir c:\tests_tmp
 
 set TEST_PHP_JUNIT=c:\junit.out.xml
 
-nmake test TESTS="%OPCACHE_OPTS% -q --offline -g FAIL,BORK,WARN,LEAK,XLEAK --color --show-diff --show-slow 1000 --set-timeout 120 --temp-source c:\tests_tmp --temp-target c:\tests_tmp -j2 --bless %PARALLEL%"
+nmake test TESTS="%OPCACHE_OPTS% -q --offline -g FAIL,BORK,WARN,LEAK,XLEAK --color --show-diff --show-slow 1000 --set-timeout 120 --temp-source c:\tests_tmp --temp-target c:\tests_tmp --bless %PARALLEL%"
 
 set EXIT_CODE=%errorlevel%
 
