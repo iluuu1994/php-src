@@ -18,19 +18,18 @@ if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-v11-Win32 >NUL 2>NUL
 if %errorlevel% neq 0 exit /b 3
 if "%APPVEYOR%" equ "True" rmdir /s /q c:\OpenSSL-v11-Win64 >NUL 2>NUL
 if %errorlevel% neq 0 exit /b 3
+del /f /q C:\Windows\System32\libcrypto-1_1-x64.dll >NUL 2>NUL
+if %errorlevel% neq 0 exit /b 3
+del /f /q C:\Windows\System32\libssl-1_1-x64.dll >NUL 2>NUL
+if %errorlevel% neq 0 exit /b 3
 rem rmdir takes several minutes rename instead only
 pushd c:\
 if "%GITHUB_ACTIONS%" equ "True" ren msys64 msys64-del
 if %errorlevel% neq 0 exit /b 3
 popd
-del /f /q c:\Windows\System32\libcrypto-1_1-x64.dll >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
-del /f /q c:\Windows\System32\libssl-1_1-x64.dll >NUL 2>NUL
-if %errorlevel% neq 0 exit /b 3
 
 call %~dp0find-target-branch.bat
 set STABILITY=staging
-
 set DEPS_DIR=%PHP_BUILD_CACHE_BASE_DIR%\deps-%BRANCH%-%PHP_SDK_VS%-%PHP_SDK_ARCH%
 rem SDK is cached, deps info is cached as well
 echo Updating dependencies in %DEPS_DIR%
@@ -50,11 +49,7 @@ if %errorlevel% neq 0 exit /b 3
 if "%THREAD_SAFE%" equ "0" set ADD_CONF=%ADD_CONF% --disable-zts
 if "%INTRINSICS%" neq "" set ADD_CONF=%ADD_CONF% --enable-native-intrinsics=%INTRINSICS%
 
-if "%PLATFORM%" == "x86" (
-	set CFLAGS=/W1
-) else (
-	set CFLAGS=/W1 /WX
-)
+set CFLAGS=/W1 /WX
 
 cmd /c configure.bat ^
 	--enable-snapshot-build ^
@@ -65,6 +60,10 @@ cmd /c configure.bat ^
 	--with-php-build=%DEPS_DIR% ^
 	%ADD_CONF% ^
 	--with-test-ini-ext-exclude=snmp,oci8_12c,pdo_oci,pdo_firebird,ldap,imap,ftp
+
 if %errorlevel% neq 0 exit /b 3
 
 nmake /NOLOGO /S
+if %errorlevel% neq 0 exit /b 3
+
+exit /b 0
