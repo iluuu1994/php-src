@@ -1,10 +1,5 @@
 @echo off
 
-if /i "%APPVEYOR%%GITHUB_ACTIONS%" neq "True" (
-    echo for CI only
-    exit /b 3
-)
-
 set NO_INTERACTION=1
 set REPORT_EXIT_STATUS=1
 set SKIP_IO_CAPTURE_TESTS=1
@@ -44,8 +39,8 @@ if %errorlevel% neq 0 exit /b 3
 rem setup PostgreSQL related exts
 set PGUSER=postgres
 set PGPASSWORD=Password12!
-rem set PGSQL_TEST_CONNSTR=host=127.0.0.1 dbname=test port=5432 user=%PGUSER% password=%PGPASSWORD%
-echo ^<?php $conn_str = "host=127.0.0.1 dbname=test port=5432 user=%PGUSER% password=%PGPASSWORD%"; ?^> >> ext\pgsql\tests\config.inc
+rem set PGSQL_TEST_CONNSTR=host=127.0.0.1 dbname=test port=5432 user=postgres password=Password12!
+echo ^<?php $conn_str = "host=127.0.0.1 dbname=test port=5432 user=%PGUSER% password=%PGPASSWORD%"; ?^> >> "./ext/pgsql/tests/config.inc"
 set PDO_PGSQL_TEST_DSN=pgsql:host=127.0.0.1 port=5432 dbname=test user=%PGUSER% password=%PGPASSWORD%
 if /i "%APPVEYOR%" equ "True" (
     set TMP_POSTGRESQL_BIN=%ProgramFiles%\PostgreSQL\10\bin
@@ -64,15 +59,14 @@ if /i "%APPVEYOR%" equ "True" (
     set ODBC_TEST_DSN=Driver={ODBC Driver 17 for SQL Server};Server=^(local^)\SQLEXPRESS;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
 )
 set PDOTEST_DSN=odbc:%ODBC_TEST_DSN%
-if %errorlevel% neq 0 exit /b 3
 
 rem prepare for ext/openssl
-rmdir /s /q C:\OpenSSL-Win32 >nul 2>&1
-rmdir /s /q C:\OpenSSL-Win64 >nul 2>&1
-if "%PLATFORM%" == "x86" (
-	set OPENSSLDIR="C:\Program Files (x86)\Common Files\SSL"
-) else (
+rmdir /s /q C:\OpenSSL-Win32 >NUL 2>NUL
+rmdir /s /q C:\OpenSSL-Win64 >NUL 2>NUL
+if "%PLATFORM%" == "x64" (
 	set OPENSSLDIR="C:\Program Files\Common Files\SSL"
+) else (
+	set OPENSSLDIR="C:\Program Files (x86)\Common Files\SSL"
 )
 if /i "%GITHUB_ACTIONS%" equ "True" (
     rmdir /s /q %OPENSSLDIR% >nul 2>&1
@@ -81,9 +75,16 @@ mkdir %OPENSSLDIR%
 if %errorlevel% neq 0 exit /b 3
 copy %DEPS_DIR%\template\ssl\openssl.cnf %OPENSSLDIR%
 if %errorlevel% neq 0 exit /b 3
+rem set OPENSSL_CONF=%OPENSSLDIR%\openssl.cnf
 if /i "%APPVEYOR%" equ "True" (
     set OPENSSL_CONF=
 )
+rem set SSLEAY_CONF=
+
+rem prepare for OPcache
+if "%OPCACHE%" equ "1" set OPCACHE_OPTS=-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.protect_memory=1 -d opcache.jit_buffer_size=16M
+rem work-around for failing to dl(mysqli) with OPcache (https://github.com/php/php-src/issues/8508)
+if "%OPCACHE%" equ "1" set OPCACHE_OPTS=%OPCACHE_OPTS% -d extension=mysqli
 
 rem prepare for enchant
 mkdir %~d0\usr\local\lib\enchant-2
@@ -100,14 +101,29 @@ del /q dict.zip
 popd
 
 set PHP_BUILD_DIR=%PHP_BUILD_OBJ_DIR%\Release
-if "%THREAD_SAFE%" neq "0" set PHP_BUILD_DIR=%PHP_BUILD_DIR%_TS
+if "%THREAD_SAFE%" equ "1" set PHP_BUILD_DIR=%PHP_BUILD_DIR%_TS
 
 set TEST_PHPDBG_EXECUTABLE=%PHP_BUILD_DIR%\phpdbg.exe
 
-mkdir C:\tests_tmp
+mkdir c:\tests_tmp
 
-set TEST_PHP_JUNIT=C:\junit.out.xml
+set TEST_PHP_JUNIT=c:\junit.out.xml
 
 set OPCACHE_OPTS=-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.protect_memory=1 -d opcache.jit_buffer_size=16M
-nmake test TESTS="%OPCACHE_OPTS% -q --offline -g FAIL,BORK,WARN,LEAK,XLEAK --color --show-diff --show-slow 1000 --set-timeout 120 --temp-source C:\tests_tmp --temp-target C:\tests_tmp -j2"
-if %errorlevel% neq 0 exit /b %errorlevel%
+nmake test TESTS="%OPCACHE_OPTS% -q --offline -g FAIL,BORK,WARN,LEAK,XLEAK --color --show-diff --show-slow 1000 --set-timeout 120 --temp-source c:\tests_tmp --temp-target c:\tests_tmp -j2"
+
+set EXIT_CODE=%errorlevel%
+
+if %EXIT_CODE% GEQ 1 (
+	git checkout ext\pgsql\tests\config.inc
+	git diff > bless_tests.patch
+)
+
+if /i "%APPVEYOR%" equ "True" (
+	appveyor PushArtifact %TEST_PHP_JUNIT%
+	if %EXIT_CODE% GEQ 1 (
+		appveyor PushArtifact bless_tests.patch
+	)
+)
+
+exit /b %EXIT_CODE%

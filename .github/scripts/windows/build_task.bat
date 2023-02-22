@@ -49,7 +49,12 @@ if %errorlevel% neq 0 exit /b 3
 if "%THREAD_SAFE%" equ "0" set ADD_CONF=%ADD_CONF% --disable-zts
 if "%INTRINSICS%" neq "" set ADD_CONF=%ADD_CONF% --enable-native-intrinsics=%INTRINSICS%
 
-set CFLAGS=/W1 /WX
+rem Some undefined behavior is reported on 32-bit, this should be fixed
+if "%PLATFORM%" == "x86" (
+	set CFLAGS=/W1
+) else (
+	set CFLAGS=/W1 /WX
+)
 
 cmd /c configure.bat ^
 	--enable-snapshot-build ^
