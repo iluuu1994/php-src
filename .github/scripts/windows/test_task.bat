@@ -118,7 +118,6 @@ mkdir c:\tests_tmp
 
 set TEST_PHP_JUNIT=c:\junit.out.xml
 
-set OPCACHE_OPTS=-d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.protect_memory=1 -d opcache.jit_buffer_size=16M
 nmake test TESTS="%OPCACHE_OPTS% -q --offline -g FAIL,BORK,WARN,LEAK,XLEAK --color --show-diff --show-slow 1000 --set-timeout 120 --temp-source c:\tests_tmp --temp-target c:\tests_tmp -j2 --bless %PARALLEL%"
 
 set EXIT_CODE=%errorlevel%
