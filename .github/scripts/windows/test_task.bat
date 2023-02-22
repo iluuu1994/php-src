@@ -22,26 +22,14 @@ if not exist "%DEPS_DIR%" (
 	exit /b 3
 )
 
-if /i "%APPVEYOR%" equ "True" (
-    set MYSQL_TEST_HOST=127.0.0.1
-    set MYSQL_TEST_PORT=3306
-    set MYSQL_TEST_USER=root
-    set MYSQL_TEST_PASSWD=Password12!
-    set PGUSER=postgres
-    set PGPASSWORD=Password12!
-    set ODBC_TEST_USER=sa
-    set ODBC_TEST_PASS=Password12!
-)
-if /i "%GITHUB_ACTIONS%" equ "True" (
-    set MYSQL_TEST_HOST=127.0.0.1
-    set MYSQL_TEST_PORT=3307
-    set MYSQL_TEST_USER=root
-    set MYSQL_TEST_PASSWD=mysql_Pass11
-    set PGUSER=postgres
-    set PGPASSWORD=postgresql_Pass11
-    set ODBC_TEST_USER=sa
-    set ODBC_TEST_PASS=mssql_Pass11
-)
+set MYSQL_TEST_HOST=127.0.0.1
+set MYSQL_TEST_PORT=3306
+set MYSQL_TEST_USER=root
+set MYSQL_TEST_PASSWD=Password12!
+set PGUSER=postgres
+set PGPASSWORD=Password12!
+set ODBC_TEST_USER=sa
+set ODBC_TEST_PASS=Password12!
 set PDO_MYSQL_TEST_HOST=%MYSQL_TEST_HOST%
 set PDO_MYSQL_TEST_PORT=%MYSQL_TEST_PORT%
 set PDO_MYSQL_TEST_USER=%MYSQL_TEST_USER%
