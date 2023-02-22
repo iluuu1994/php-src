@@ -75,9 +75,7 @@ if %errorlevel% neq 0 exit /b 3
 copy %DEPS_DIR%\template\ssl\openssl.cnf %OPENSSLDIR%
 if %errorlevel% neq 0 exit /b 3
 rem set OPENSSL_CONF=%OPENSSLDIR%\openssl.cnf
-if /i "%APPVEYOR%" equ "True" (
-    set OPENSSL_CONF=
-)
+set OPENSSL_CONF=
 rem set SSLEAY_CONF=
 
 rem prepare for OPcache
