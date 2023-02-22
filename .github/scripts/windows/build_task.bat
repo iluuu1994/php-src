@@ -22,11 +22,6 @@ del /f /q C:\Windows\System32\libcrypto-1_1-x64.dll >NUL 2>NUL
 if %errorlevel% neq 0 exit /b 3
 del /f /q C:\Windows\System32\libssl-1_1-x64.dll >NUL 2>NUL
 if %errorlevel% neq 0 exit /b 3
-rem rmdir takes several minutes rename instead only
-pushd c:\
-if "%GITHUB_ACTIONS%" equ "True" ren msys64 msys64-del
-if %errorlevel% neq 0 exit /b 3
-popd
 
 call %~dp0find-target-branch.bat
 set STABILITY=staging
