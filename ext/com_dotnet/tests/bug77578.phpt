@@ -3,7 +3,7 @@ Bug #77578 (Crash when php unload)
 --EXTENSIONS--
 com_dotnet
 --SKIPIF--
-<?php if (getenv('GITHUB_ACTIONS')) die('skip on GitHub actions'); ?>
+<?php if (PHP_OS_FAMILY === 'Windows' && getenv('GITHUB_ACTIONS')) die('skip on Windows on GitHub actions'); ?>
 --FILE--
 <?php
 // To actually be able to verify the crash during shutdown on Windows, we have

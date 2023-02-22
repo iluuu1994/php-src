@@ -13,6 +13,6 @@ if (!file_exists($path)) {
     die(sprintf('skip dl_test extension is not built (tried %s)', $path));
 }
 
-if (getenv('GITHUB_ACTIONS')) {
-    die('skip on GitHub actions');
+if (PHP_OS_FAMILY === 'Windows' && getenv('GITHUB_ACTIONS')) {
+    die('skip on Windows on GitHub actions');
 }
