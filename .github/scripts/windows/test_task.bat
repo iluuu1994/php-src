@@ -53,9 +53,9 @@ rem setup ODBC related exts
 set ODBC_TEST_USER=sa
 set ODBC_TEST_PASS=Password12!
 if /i "%APPVEYOR%" equ "True" (
-    set ODBC_TEST_DSN=Driver={ODBC Driver 13 for SQL Server};Server=(local)\SQL2017;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
+    set ODBC_TEST_DSN=Driver={ODBC Driver 13 for SQL Server};Server=^(local^)\SQL2017;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
 ) else (
-    set ODBC_TEST_DSN=Driver={ODBC Driver 17 for SQL Server};Server=(local)\SQLEXPRESS;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
+    set ODBC_TEST_DSN=Driver={ODBC Driver 17 for SQL Server};Server=^(local^)\SQLEXPRESS;Database=master;uid=%ODBC_TEST_USER%;pwd=%ODBC_TEST_PASS%
 )
 set PDOTEST_DSN=odbc:%ODBC_TEST_DSN%
 
