@@ -182,9 +182,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Setup MySQL
         run: |
-          choco install mysql -y --no-progress --params="/port:3307"
-          mysql.exe --port=3307 --user=root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Password12!'; FLUSH PRIVILEGES;"
-          mysql.exe --port=3307 --user=root --password="Password12!" -e "SELECT 1;"
+          choco install mysql -y --no-progress --params="/port:3306"
+          mysql.exe --port=3306 --user=root --password="" -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Password12!'; FLUSH PRIVILEGES;"
+          mysql.exe --port=3306 --user=root --password="Password12!" -e "SELECT 1;"
       - name: Setup MSSQL
         run: |
           choco install sql-server-express -y --no-progress --install-arguments="/SECURITYMODE=SQL /SAPWD=Password12!"
