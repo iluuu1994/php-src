@@ -47,7 +47,7 @@ if %errorlevel% neq 0 exit /b 3
 cmd /c buildconf.bat --force
 if %errorlevel% neq 0 exit /b 3
 
-if "%THREAD_SAFE%" equ "" set ADD_CONF=%ADD_CONF% --disable-zts
+if "%THREAD_SAFE%" equ "0" set ADD_CONF=%ADD_CONF% --disable-zts
 if "%INTRINSICS%" neq "" set ADD_CONF=%ADD_CONF% --enable-native-intrinsics=%INTRINSICS%
 
 if "%PLATFORM%" == "x86" (

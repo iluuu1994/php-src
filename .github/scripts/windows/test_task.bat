@@ -101,7 +101,7 @@ del /q dict.zip
 popd
 
 set PHP_BUILD_DIR=%PHP_BUILD_OBJ_DIR%\Release
-if "%THREAD_SAFE%" neq "" set PHP_BUILD_DIR=%PHP_BUILD_DIR%_TS
+if "%THREAD_SAFE%" neq "0" set PHP_BUILD_DIR=%PHP_BUILD_DIR%_TS
 
 set TEST_PHPDBG_EXECUTABLE=%PHP_BUILD_DIR%\phpdbg.exe
 
