@@ -2476,6 +2476,7 @@ void pdo_stmt_init(void)
 	pdo_dbstmt_object_handlers.offset = XtOffsetOf(pdo_stmt_t, std);
 	pdo_dbstmt_object_handlers.free_obj = pdo_dbstmt_free_storage;
 	pdo_dbstmt_object_handlers.write_property = dbstmt_prop_write;
+	pdo_dbstmt_object_handlers.write_property_ex = NULL;
 	pdo_dbstmt_object_handlers.unset_property = dbstmt_prop_delete;
 	pdo_dbstmt_object_handlers.get_method = dbstmt_method_get;
 	pdo_dbstmt_object_handlers.compare = zend_objects_not_comparable;
@@ -2491,6 +2492,7 @@ void pdo_stmt_init(void)
 	pdo_row_object_handlers.get_property_ptr_ptr = NULL;
 	pdo_row_object_handlers.read_property = row_prop_read;
 	pdo_row_object_handlers.write_property = row_prop_write;
+	pdo_row_object_handlers.write_property_ex = NULL;
 	pdo_row_object_handlers.has_property = row_prop_exists;
 	pdo_row_object_handlers.unset_property = row_prop_delete;
 	pdo_row_object_handlers.read_dimension = row_dim_read;

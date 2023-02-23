@@ -48,6 +48,10 @@ typedef zval *(*zend_object_read_dimension_t)(zend_object *object, zval *offset,
 */
 typedef zval *(*zend_object_write_property_t)(zend_object *object, zend_string *member, zval *value, void **cache_slot);
 
+/* Like write_property, but takes an additional, optional zval *result parameter
+ * that is assigned the resulting value of the assignment expression */
+typedef zval *(*zend_object_write_property_ex_t)(zend_object *object, zend_string *member, zval *value, void **cache_slot, zval *result);
+
 /* Used to set dimension of the object */
 typedef void (*zend_object_write_dimension_t)(zend_object *object, zval *offset, zval *value);
 
@@ -184,6 +188,7 @@ struct _zend_object_handlers {
 	zend_object_do_operation_t				do_operation;         /* optional */
 	zend_object_compare_t					compare;              /* required */
 	zend_object_get_properties_for_t		get_properties_for;   /* optional */
+	zend_object_write_property_ex_t			write_property_ex;    /* optional */
 };
 
 BEGIN_EXTERN_C()
@@ -213,6 +218,7 @@ ZEND_API zend_result zend_std_cast_object_tostring(zend_object *object, zval *wr
 ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *object, zend_string *member, int type, void **cache_slot);
 ZEND_API zval *zend_std_read_property(zend_object *object, zend_string *member, int type, void **cache_slot, zval *rv);
 ZEND_API zval *zend_std_write_property(zend_object *object, zend_string *member, zval *value, void **cache_slot);
+ZEND_API zval *zend_std_write_property_ex(zend_object *zobj, zend_string *name, zval *value, void **cache_slot, zval *result);
 ZEND_API int zend_std_has_property(zend_object *object, zend_string *member, int has_set_exists, void **cache_slot);
 ZEND_API void zend_std_unset_property(zend_object *object, zend_string *member, void **cache_slot);
 ZEND_API zval *zend_std_read_dimension(zend_object *object, zval *offset, int type, zval *rv);

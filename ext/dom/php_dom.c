@@ -560,6 +560,7 @@ PHP_MINIT_FUNCTION(dom)
 	dom_object_handlers.free_obj = dom_objects_free_storage;
 	dom_object_handlers.read_property = dom_read_property;
 	dom_object_handlers.write_property = dom_write_property;
+	dom_object_handlers.write_property_ex = NULL;
 	dom_object_handlers.get_property_ptr_ptr = dom_get_property_ptr_ptr;
 	dom_object_handlers.clone_obj = dom_objects_store_clone_obj;
 	dom_object_handlers.has_property = dom_property_exists;

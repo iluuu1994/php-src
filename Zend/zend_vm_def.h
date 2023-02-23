@@ -2487,14 +2487,18 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 		ZVAL_DEREF(value);
 	}
 
-	value = zobj->handlers->write_property(zobj, name, value, (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	if (UNEXPECTED(RETURN_VALUE_USED(opline)) && EXPECTED(zobj->handlers->write_property_ex)) {
+		value = zobj->handlers->write_property_ex(zobj, name, value, (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL, EX_VAR(opline->result.var));
+	} else {
+		value = zobj->handlers->write_property(zobj, name, value, (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : NULL);
+	}
 
 	if (OP2_TYPE != IS_CONST) {
 		zend_tmp_string_release(tmp_name);
 	}
 
 ZEND_VM_C_LABEL(free_and_exit_assign_obj):
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(opline)) && UNEXPECTED(value)) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	FREE_OP_DATA();

@@ -7096,6 +7096,7 @@ PHP_MINIT_FUNCTION(reflection) /* {{{ */
 	reflection_object_handlers.free_obj = reflection_free_objects_storage;
 	reflection_object_handlers.clone_obj = NULL;
 	reflection_object_handlers.write_property = _reflection_write_property;
+	reflection_object_handlers.write_property_ex = NULL;
 	reflection_object_handlers.get_gc = reflection_get_gc;
 
 	reflection_exception_ptr = register_class_ReflectionException(zend_ce_exception);

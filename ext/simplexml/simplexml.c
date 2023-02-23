@@ -2681,6 +2681,7 @@ PHP_MINIT_FUNCTION(simplexml)
 	sxe_object_handlers.clone_obj = sxe_object_clone;
 	sxe_object_handlers.read_property = sxe_property_read;
 	sxe_object_handlers.write_property = sxe_property_write;
+	sxe_object_handlers.write_property_ex = NULL;
 	sxe_object_handlers.read_dimension = sxe_dimension_read;
 	sxe_object_handlers.write_dimension = sxe_dimension_write;
 	sxe_object_handlers.get_property_ptr_ptr = sxe_property_get_adr;

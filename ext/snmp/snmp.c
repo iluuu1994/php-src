@@ -2014,6 +2014,7 @@ PHP_MINIT_FUNCTION(snmp)
 	memcpy(&php_snmp_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	php_snmp_object_handlers.read_property = php_snmp_read_property;
 	php_snmp_object_handlers.write_property = php_snmp_write_property;
+	php_snmp_object_handlers.write_property_ex = NULL;
 	php_snmp_object_handlers.get_property_ptr_ptr = php_snmp_get_property_ptr_ptr;
 	php_snmp_object_handlers.has_property = php_snmp_has_property;
 	php_snmp_object_handlers.get_properties = php_snmp_get_properties;

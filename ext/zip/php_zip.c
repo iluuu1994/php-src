@@ -3097,6 +3097,7 @@ static PHP_MINIT_FUNCTION(zip)
 	zip_object_handlers.read_property	= php_zip_read_property;
 	zip_object_handlers.has_property	= php_zip_has_property;
 	zip_object_handlers.write_property = php_zip_write_property;
+	zip_object_handlers.write_property_ex = NULL;
 
 	zip_class_entry = register_class_ZipArchive(zend_ce_countable);
 	zip_class_entry->create_object = php_zip_object_new;

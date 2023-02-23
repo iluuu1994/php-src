@@ -795,7 +795,7 @@ static bool verify_readonly_initialization_access(
 	return false;
 }
 
-ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zval *value, void **cache_slot) /* {{{ */
+ZEND_API zval *zend_std_write_property_ex(zend_object *zobj, zend_string *name, zval *value, void **cache_slot, zval *result)
 {
 	zval *variable_ptr, tmp;
 	uintptr_t property_offset;
@@ -837,8 +837,23 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 			}
 
 found:
-			variable_ptr = zend_assign_to_variable(
-				variable_ptr, value, IS_TMP_VAR, property_uses_strict_types());
+			if (UNEXPECTED(result)) {
+				zend_refcounted *garbage = NULL;
+				variable_ptr = zend_assign_to_variable_ex(
+					variable_ptr, value, IS_TMP_VAR, property_uses_strict_types(), &garbage);
+				ZVAL_COPY_DEREF(result, variable_ptr);
+				variable_ptr = NULL;
+				if (garbage) {
+					if (GC_DELREF(garbage) == 0) {
+						rc_dtor_func(garbage);
+					} else {
+						gc_check_possible_root_no_ref(garbage);
+					}
+				}
+			} else {
+				variable_ptr = zend_assign_to_variable(
+					variable_ptr, value, IS_TMP_VAR, property_uses_strict_types());
+			}
 			goto exit;
 		}
 		if (Z_PROP_FLAG_P(variable_ptr) == IS_PROP_UNINIT) {
@@ -944,6 +959,11 @@ exit:
 	return variable_ptr;
 }
 /* }}} */
+
+ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zval *value, void **cache_slot) /* {{{ */
+{
+	return zend_std_write_property_ex(zobj, name, value, cache_slot, NULL);
+}
 
 static ZEND_COLD zend_never_inline void zend_bad_array_access(zend_class_entry *ce) /* {{{ */
 {
@@ -1991,4 +2011,5 @@ ZEND_API const zend_object_handlers std_object_handlers = {
 	NULL,									/* do_operation */
 	zend_std_compare_objects,				/* compare */
 	NULL,									/* get_properties_for */
+	.write_property_ex = zend_std_write_property_ex,
 };

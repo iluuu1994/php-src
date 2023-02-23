@@ -481,6 +481,7 @@ PHP_MINIT_FUNCTION(mysqli)
 	mysqli_object_handlers.clone_obj = NULL;
 	mysqli_object_handlers.read_property = mysqli_read_property;
 	mysqli_object_handlers.write_property = mysqli_write_property;
+	mysqli_object_handlers.write_property_ex = NULL;
 	mysqli_object_handlers.has_property = mysqli_object_has_property;
 	mysqli_object_handlers.get_debug_info = mysqli_object_get_debug_info;
 	memcpy(&mysqli_object_driver_handlers, &mysqli_object_handlers, sizeof(zend_object_handlers));

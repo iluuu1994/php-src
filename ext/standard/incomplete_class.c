@@ -115,6 +115,7 @@ PHPAPI void php_register_incomplete_class_handlers(void)
 	php_incomplete_object_handlers.has_property = incomplete_class_has_property;
 	php_incomplete_object_handlers.unset_property = incomplete_class_unset_property;
 	php_incomplete_object_handlers.write_property = incomplete_class_write_property;
+	php_incomplete_object_handlers.write_property_ex = NULL;
 	php_incomplete_object_handlers.get_property_ptr_ptr = incomplete_class_get_property_ptr_ptr;
 	php_incomplete_object_handlers.get_method = incomplete_class_get_method;
 

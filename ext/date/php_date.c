@@ -1780,6 +1780,7 @@ static void date_register_classes(void) /* {{{ */
 	date_object_handlers_interval.has_property = date_interval_has_property;
 	date_object_handlers_interval.read_property = date_interval_read_property;
 	date_object_handlers_interval.write_property = date_interval_write_property;
+	date_object_handlers_interval.write_property_ex = NULL;
 	date_object_handlers_interval.get_properties = date_object_get_properties_interval;
 	date_object_handlers_interval.get_property_ptr_ptr = date_interval_get_property_ptr_ptr;
 	date_object_handlers_interval.get_gc = date_object_get_gc_interval;
@@ -1797,6 +1798,7 @@ static void date_register_classes(void) /* {{{ */
 	date_object_handlers_period.get_property_ptr_ptr = date_period_get_property_ptr_ptr;
 	date_object_handlers_period.read_property = date_period_read_property;
 	date_object_handlers_period.write_property = date_period_write_property;
+	date_object_handlers_interval.write_property_ex = NULL;
 
 	date_ce_date_error = register_class_DateError(zend_ce_error);
 	date_ce_date_object_error = register_class_DateObjectError(date_ce_date_error);

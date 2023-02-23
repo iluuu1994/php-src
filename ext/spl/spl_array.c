@@ -1809,6 +1809,7 @@ PHP_MINIT_FUNCTION(spl_array)
 	spl_handler_ArrayObject.get_gc = spl_array_get_gc;
 	spl_handler_ArrayObject.read_property = spl_array_read_property;
 	spl_handler_ArrayObject.write_property = spl_array_write_property;
+	spl_handler_ArrayObject.write_property_ex = NULL;
 	spl_handler_ArrayObject.get_property_ptr_ptr = spl_array_get_property_ptr_ptr;
 	spl_handler_ArrayObject.has_property = spl_array_has_property;
 	spl_handler_ArrayObject.unset_property = spl_array_unset_property;
