@@ -25,6 +25,7 @@
 #include "zend_exceptions.h"
 #include "zend_closures.h"
 #include "main/SAPI.h"
+#include "Zend/zend_bit_enum.h"
 
 #include <ffi.h>
 
@@ -98,11 +99,11 @@ typedef enum _zend_ffi_type_kind {
 
 #include "ffi_arginfo.h"
 
-typedef enum _zend_ffi_flags {
-	ZEND_FFI_FLAG_CONST      = (1 << 0),
-	ZEND_FFI_FLAG_OWNED      = (1 << 1),
-	ZEND_FFI_FLAG_PERSISTENT = (1 << 2),
-} zend_ffi_flags;
+#define ZEND_FFI_FLAGS_CASES(_) \
+	_(ZEND_FFI_FLAG_CONST, 1 << 0) \
+	_(ZEND_FFI_FLAG_OWNED, 1 << 1) \
+	_(ZEND_FFI_FLAG_PERSISTENT, 1 << 2)
+ZEND_BIT_ENUM(zend_ffi_flags, ZEND_FFI_FLAGS_CASES);
 
 struct _zend_ffi_type {
 	zend_ffi_type_kind     kind;
@@ -261,7 +262,7 @@ static zend_object *zend_ffi_cdata_new(zend_class_entry *class_type) /* {{{ */
 
 	cdata->type = NULL;
 	cdata->ptr = NULL;
-	cdata->flags = (zend_ffi_flags)0;
+	cdata->flags = zend_ffi_flags_init(0);
 
 	return &cdata->std;
 }
@@ -1110,7 +1111,7 @@ static zval *zend_ffi_cdata_get(zend_object *obj, zend_string *member, int read_
 		return &EG(uninitialized_zval);
 	}
 
-	zend_ffi_cdata_to_zval(cdata, cdata->ptr, type, BP_VAR_R, rv, (zend_ffi_flags)0, 0, 0);
+	zend_ffi_cdata_to_zval(cdata, cdata->ptr, type, BP_VAR_R, rv, zend_ffi_flags_init(0), 0, 0);
 	return rv;
 }
 /* }}} */
@@ -2833,7 +2834,7 @@ static ZEND_FUNCTION(ffi_trampoline) /* {{{ */
 	}
 
 	if (ZEND_FFI_TYPE(type->func.ret_type)->kind != ZEND_FFI_TYPE_VOID) {
-		zend_ffi_cdata_to_zval(NULL, ret, ZEND_FFI_TYPE(type->func.ret_type), BP_VAR_R, return_value, (zend_ffi_flags)0, 1, 0);
+		zend_ffi_cdata_to_zval(NULL, ret, ZEND_FFI_TYPE(type->func.ret_type), BP_VAR_R, return_value, zend_ffi_flags_init(0), 1, 0);
 	} else {
 		ZVAL_NULL(return_value);
 	}
@@ -3868,7 +3869,7 @@ ZEND_METHOD(FFI, free) /* {{{ */
 	} else if (!(cdata->flags & ZEND_FFI_FLAG_OWNED)) {
 		pefree(cdata->ptr, cdata->flags & ZEND_FFI_FLAG_PERSISTENT);
 		cdata->ptr = NULL;
-		cdata->flags = (zend_ffi_flags)(cdata->flags & ~(ZEND_FFI_FLAG_OWNED|ZEND_FFI_FLAG_PERSISTENT));
+		cdata->flags = zend_ffi_flags_init(cdata->flags & ~(ZEND_FFI_FLAG_OWNED|ZEND_FFI_FLAG_PERSISTENT));
 		cdata->std.handlers = &zend_ffi_cdata_free_handlers;
 	} else {
 		zend_throw_error(zend_ffi_exception_ce, "free() non a C pointer");
@@ -4042,7 +4043,7 @@ ZEND_METHOD(FFI, cast) /* {{{ */
 	if (old_cdata->flags & ZEND_FFI_FLAG_OWNED) {
 		if (GC_REFCOUNT(&old_cdata->std) == 1 && Z_REFCOUNT_P(arg) == 1) {
 			/* transfer ownership */
-			old_cdata->flags = (zend_ffi_flags)(old_cdata->flags & ~ZEND_FFI_FLAG_OWNED);
+			old_cdata->flags = zend_ffi_flags_init(old_cdata->flags & ~ZEND_FFI_FLAG_OWNED);
 			cdata->flags |= ZEND_FFI_FLAG_OWNED;
 		} else {
 			//???zend_throw_error(zend_ffi_exception_ce, "Attempt to cast owned C pointer");
@@ -4279,7 +4280,7 @@ ZEND_METHOD(FFI, addr) /* {{{ */
 		}
 		if (cdata->flags & ZEND_FFI_FLAG_OWNED) {
 			/* transfer ownership */
-			cdata->flags = (zend_ffi_flags)(cdata->flags & ~ZEND_FFI_FLAG_OWNED);
+			cdata->flags = zend_ffi_flags_init(cdata->flags & ~ZEND_FFI_FLAG_OWNED);
 			new_cdata->flags |= ZEND_FFI_FLAG_OWNED;
 		}
 	}
