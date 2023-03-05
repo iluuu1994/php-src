@@ -423,21 +423,17 @@ typedef struct _zend_internal_arg_info {
 
 /* arg_info for user functions */
 typedef struct _zend_arg_info {
-	zend_string *name;
+	union {
+		zend_string *name;
+		/* Used only for internal functions. */
+		uintptr_t required_num_args;
+	};
 	zend_type type;
 	zend_string *default_value;
 } zend_arg_info;
 
-/* the following structure repeats the layout of zend_internal_arg_info,
- * but its fields have different meaning. It's used as the first element of
- * arg_info array to define properties of internal functions.
- * It's also used for the return type.
- */
-typedef struct _zend_internal_function_info {
-	uintptr_t required_num_args;
-	zend_type type;
-	const char *default_value;
-} zend_internal_function_info;
+/* Alias for BC compatibility. */
+typedef zend_arg_info zend_internal_function_info;
 
 struct _zend_op_array {
 	/* Common elements */
