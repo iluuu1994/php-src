@@ -61,7 +61,11 @@
 # endif
 #endif
 
-#ifdef __SANITIZE_ADDRESS__
+#if defined(__SANITIZE_ADDRESS__) && !defined(_MSC_VER)
+# define SANITIZER_SWITCH_FIBER
+#endif
+
+#ifdef SANITIZER_SWITCH_FIBER
 # include <sanitizer/common_interface_defs.h>
 #endif
 
@@ -84,7 +88,7 @@ struct _zend_fiber_stack {
 	unsigned int valgrind_stack_id;
 #endif
 
-#ifdef __SANITIZE_ADDRESS__
+#ifdef SANITIZER_SWITCH_FIBER
 	const void *asan_pointer;
 	size_t asan_size;
 #endif
@@ -282,7 +286,7 @@ static zend_fiber_stack *zend_fiber_stack_allocate(size_t size)
 	stack->valgrind_stack_id = VALGRIND_STACK_REGISTER(base, base + stack->size);
 #endif
 
-#ifdef __SANITIZE_ADDRESS__
+#ifdef SANITIZER_SWITCH_FIBER
 	stack->asan_pointer = stack->pointer;
 	stack->asan_size = stack->size;
 #endif
@@ -352,7 +356,7 @@ static ZEND_NORETURN void zend_fiber_trampoline(boost_context_data data)
 
 	zend_fiber_context *from = transfer.context;
 
-#ifdef __SANITIZE_ADDRESS__
+#ifdef SANITIZER_SWITCH_FIBER
 	__sanitizer_finish_switch_fiber(NULL, &from->stack->asan_pointer, &from->stack->asan_size);
 #endif
 
@@ -487,7 +491,7 @@ ZEND_API void zend_fiber_switch_context(zend_fiber_transfer *transfer)
 
 	EG(current_fiber_context) = to;
 
-#ifdef __SANITIZE_ADDRESS__
+#ifdef SANITIZER_SWITCH_FIBER
 	void *fake_stack = NULL;
 	__sanitizer_start_switch_fiber(
 		from->status != ZEND_FIBER_STATUS_DEAD ? &fake_stack : NULL,
@@ -516,7 +520,7 @@ ZEND_API void zend_fiber_switch_context(zend_fiber_transfer *transfer)
 	to->handle = data.handle;
 #endif
 
-#ifdef __SANITIZE_ADDRESS__
+#ifdef SANITIZER_SWITCH_FIBER
 	__sanitizer_finish_switch_fiber(fake_stack, &to->stack->asan_pointer, &to->stack->asan_size);
 #endif
 
@@ -1050,7 +1054,7 @@ void zend_fiber_init(void)
 
 void zend_fiber_shutdown(void)
 {
-#if defined(__SANITIZE_ADDRESS__) || defined(ZEND_FIBER_UCONTEXT)
+#if defined(SANITIZER_SWITCH_FIBER) || defined(ZEND_FIBER_UCONTEXT)
 	efree(EG(main_fiber_context)->stack);
 #endif
 

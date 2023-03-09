@@ -50,7 +50,11 @@
 /* needed for ssize_t definition */
 #include <sys/types.h>
 
-#ifdef __SANITIZE_ADDRESS__
+#if defined(__SANITIZE_ADDRESS__) && !defined(_MSC_VER)
+# define HAS_SANITIZER_ASAN_INTERFACE
+#endif
+
+#ifdef HAS_SANITIZER_ASAN_INTERFACE
 # include <sanitizer/asan_interface.h>
 #endif
 
@@ -2043,7 +2047,7 @@ static zend_always_inline bool ptr_offset_overflows(char *ptr, size_t offset) {
 static inline void exif_offset_info_init(
 		exif_offset_info *info, char *offset_base, char *valid_start, size_t valid_length) {
 	ZEND_ASSERT(!ptr_offset_overflows(valid_start, valid_length));
-#ifdef __SANITIZE_ADDRESS__
+#ifdef HAS_SANITIZER_ASAN_INTERFACE
 	ZEND_ASSERT(!__asan_region_is_poisoned(valid_start, valid_length));
 #endif
 	info->offset_base = offset_base;
