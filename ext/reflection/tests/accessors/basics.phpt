@@ -5,7 +5,7 @@ Accessor reflection
 
 class Test {
     public $prop1;
-    public $prop2 = 3.141 { get; private set; }
+    public $prop2 { get {} private set {} }
     final public $prop3 {
         get { echo "get\n"; }
         set { echo "set($value)\n"; }
@@ -83,8 +83,8 @@ object(ReflectionMethod)#5 (2) {
   ["class"]=>
   string(4) "Test"
 }
-float(3.141)
-int(42)
+NULL
+NULL
 Final: false false
 Abstract: false false
 

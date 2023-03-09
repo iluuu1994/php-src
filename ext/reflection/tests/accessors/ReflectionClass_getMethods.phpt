@@ -4,7 +4,7 @@ ReflectionClass::getMethods() does not contain accessors
 <?php
 
 class Test {
-    public $a { get; private set; }
+    public $a { get {} private set {} }
 }
 
 var_dump((new ReflectionClass(Test::class))->getMethods());
