@@ -6,6 +6,7 @@ runs:
       run: |
         set -x
 
+        echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries
         sudo apt-get update
         sudo apt-get install \
           bison \

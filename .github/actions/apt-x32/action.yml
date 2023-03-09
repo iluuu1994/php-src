@@ -7,6 +7,7 @@ runs:
         set -x
 
         export DEBIAN_FRONTEND=noninteractive
+        echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries
         dpkg --add-architecture i386
         apt-get update -y | true
         # TODO: Reenable postgresql + postgresql-contrib packages once they work again.

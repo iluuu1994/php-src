@@ -563,6 +563,7 @@ jobs:
           ref: ${{ matrix.branch.ref }}
       - name: apt
         run: |
+          echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries
           sudo apt-get update -y | true
           sudo apt install bison re2c
       - name: Setup
