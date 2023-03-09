@@ -3183,7 +3183,6 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 					ZVAL_INDIRECT(result, ptr);
 					return;
 				}
-				zobj->properties = zend_array_dup(zobj->properties);
 			}
 		} else {
 			/* Fall through to read_property for accessors. */
