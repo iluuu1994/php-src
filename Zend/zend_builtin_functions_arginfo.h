@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 73e9ef76bde5ab44254185175d4d8dae2e797d12 */
+ * Stub hash: 8f6a6ace0746ebcd54af4daaa92c4466acf600cf */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_zend_version, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -55,6 +55,9 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_get_parent_class, 0, 0, MAY_BE_STRING|MAY_BE_FALSE)
 	ZEND_ARG_TYPE_MASK(0, object_or_class, MAY_BE_OBJECT|MAY_BE_STRING, NULL)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_magic_method_get_calling_scope, 0, 0, IS_STRING, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_is_subclass_of, 0, 2, _IS_BOOL, 0)
@@ -233,6 +236,7 @@ ZEND_FUNCTION(defined);
 ZEND_FUNCTION(get_class);
 ZEND_FUNCTION(get_called_class);
 ZEND_FUNCTION(get_parent_class);
+ZEND_FUNCTION(magic_method_get_calling_scope);
 ZEND_FUNCTION(is_subclass_of);
 ZEND_FUNCTION(is_a);
 ZEND_FUNCTION(get_class_vars);
@@ -294,6 +298,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(get_class, arginfo_get_class)
 	ZEND_FE(get_called_class, arginfo_get_called_class)
 	ZEND_FE(get_parent_class, arginfo_get_parent_class)
+	ZEND_FE(magic_method_get_calling_scope, arginfo_magic_method_get_calling_scope)
 	ZEND_FE(is_subclass_of, arginfo_is_subclass_of)
 	ZEND_FE(is_a, arginfo_is_a)
 	ZEND_FE(get_class_vars, arginfo_get_class_vars)

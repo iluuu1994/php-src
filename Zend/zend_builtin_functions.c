@@ -601,6 +601,74 @@ ZEND_FUNCTION(get_parent_class)
 }
 /* }}} */
 
+static zend_always_inline bool is_magic_method(zend_string *name)
+{
+	if (ZSTR_LEN(name) < 5) {
+		return false;
+	}
+
+	char *name_val = ZSTR_VAL(name);
+	if (name_val[0] != '_' || name_val[1] != '_') {
+		return false;
+	}
+
+	return zend_string_equals_literal_ci(name, "__call")
+		|| zend_string_equals_literal_ci(name, "__callStatic")
+		|| zend_string_equals_literal_ci(name, "__clone")
+		|| zend_string_equals_literal_ci(name, "__get")
+		|| zend_string_equals_literal_ci(name, "__isset")
+		|| zend_string_equals_literal_ci(name, "__set")
+		|| zend_string_equals_literal_ci(name, "__unset");
+}
+
+ZEND_FUNCTION(magic_method_get_calling_scope)
+{
+	ZEND_PARSE_PARAMETERS_NONE();
+
+	if (EG(fake_scope)) {
+		RETURN_STR_COPY(EG(fake_scope)->name);
+	}
+
+	zend_execute_data *call = EX(prev_execute_data);
+	ZEND_ASSERT(call != NULL);
+
+	if (!call->func || !is_magic_method(call->func->common.function_name)) {
+		zend_throw_error(NULL, "magic_method_get_calling_scope() must be called from one of __get(), __set(), __isset(), __unset(), __clone(), __call() or __callStatic() magic methods.");
+		RETURN_THROWS();
+	}
+
+	zval *obj = &call->This;
+	zend_string *method = call->func->common.function_name;
+	bool is_clone = zend_string_equals_literal_ci(call->func->common.function_name, "__clone");
+	zend_string *first_prop = !is_clone
+		? Z_STR_P(ZEND_CALL_ARG(call, 1))
+		: NULL;
+
+	while ((call = call->prev_execute_data) != NULL) {
+		bool same_object = Z_TYPE_P(obj) == IS_OBJECT && Z_TYPE(call->This) == IS_OBJECT
+			? Z_OBJ_P(obj) == Z_OBJ(call->This)
+			: (Z_TYPE_P(obj)|Z_TYPE(call->This)) == IS_NULL;
+
+		if (!same_object
+		 || !call->func
+		 || !zend_string_equals_ci(method, call->func->common.function_name)
+		 || (!is_clone && !zend_string_equals(first_prop, Z_STR_P(ZEND_CALL_ARG(call, 1))))) {
+			break;
+		}
+	}
+
+	zend_class_entry *scope = call && call->func
+		? call->func->op_array.scope
+		: NULL;
+	if (scope) {
+		RETURN_STR_COPY(scope->name);
+	} else {
+		RETURN_NULL();
+	}
+
+	RETURN_NULL();
+}
+
 static void is_a_impl(INTERNAL_FUNCTION_PARAMETERS, bool only_subclass) /* {{{ */
 {
 	zval *obj;
