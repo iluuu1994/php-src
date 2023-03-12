@@ -38,33 +38,6 @@
 # include "ssa_integrity.c"
 #endif
 
-#ifdef ZEND_VERIFY_TYPE_INFERENCE
-static void propagate_inferred_types(zend_op_array *op_array, zend_ssa *ssa)
-{
-	for (uint32_t i = 0; i < ssa->vars_count; i++) {
-		zend_ssa_var *var = &ssa->vars[i];
-		zend_ssa_var_info *var_info = &ssa->var_info[i];
-		if (var->definition > 0) {
-			zend_op *opline = &op_array->opcodes[var->definition];
-			opline->result_inferred_type = var_info->type;
-		}
-		if (var->use_chain > 0) {
-			int use;
-			FOREACH_USE(var, use) {
-				zend_op *opline = &op_array->opcodes[use];
-				zend_ssa_op *ssa_op = &ssa->ops[use];
-				if (ssa_op->op1_use == use) {
-					opline->op1_inferred_type = var_info->type;
-				} else {
-					//ZEND_ASSERT(ssa_op->op2_use == use);
-					opline->op2_inferred_type = var_info->type;
-				}
-			} FOREACH_USE_END();
-		}
-	}
-}
-#endif
-
 zend_result zend_dfa_analyze_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx, zend_ssa *ssa)
 {
 	uint32_t build_flags;
@@ -133,10 +106,6 @@ zend_result zend_dfa_analyze_op_array(zend_op_array *op_array, zend_optimizer_ct
 	if (ctx->debug_level & ZEND_DUMP_DFA_SSA_VARS) {
 		zend_dump_ssa_variables(op_array, ssa, 0);
 	}
-
-#ifdef ZEND_VERIFY_TYPE_INFERENCE
-	propagate_inferred_types(op_array, ssa);
-#endif
 
 	return SUCCESS;
 }
