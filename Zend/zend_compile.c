@@ -124,6 +124,12 @@ static void init_op(zend_op *op)
 	MAKE_NOP(op);
 	op->extended_value = 0;
 	op->lineno = CG(zend_lineno);
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+	op->result_inferred_type = 0;
+	op->op1_inferred_type = 0;
+	op->op2_inferred_type = 0;
+	op->swapped_operands = false;
+#endif
 }
 
 static zend_always_inline uint32_t get_next_op_number(void)

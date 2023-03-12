@@ -114,7 +114,7 @@ jobs:
           configurationParameters: >-
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
-            ${{ matrix.asan && 'CFLAGS="-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC" LDFLAGS="-fsanitize=undefined,address" CC=clang-16 CXX=clang++-16 --disable-opcache-jit' || '' }}
+            ${{ matrix.asan && 'CFLAGS="-fsanitize=undefined,address -DZEND_TRACK_ARENA_ALLOC -DZEND_VERIFY_TYPE_INFERENCE" LDFLAGS="-fsanitize=undefined,address" CC=clang-16 CXX=clang++-16 --disable-opcache-jit' || '' }}
           skipSlow: ${{ matrix.asan }}
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
@@ -136,7 +136,7 @@ jobs:
           runTestsParameters: >-
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
-            ${{ matrix.asan && '--asan -x' || '' }}
+            ${{ matrix.asan && '--asan -x --verify-type-inference' || '' }}
       - name: Verify generated files are up to date
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files

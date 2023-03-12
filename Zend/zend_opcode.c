@@ -1178,6 +1178,10 @@ ZEND_API void pass_two(zend_op_array *op_array)
 			opline->result.var = EX_NUM_TO_VAR(op_array->last_var + opline->result.var);
 		}
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		// Type inference hasn't happened yet and so can determine operand order correctly
+		opline->swapped_operands = false;
+#endif
 		opline++;
 	}
 
