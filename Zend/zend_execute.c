@@ -5260,6 +5260,11 @@ static bool zend_verify_type_inference(uint32_t type_mask, zval *value)
 		return true;
 	}
 
+	// IS_PTR is used internally, skip for now
+	if (Z_TYPE_P(value) == IS_PTR) {
+		return true;
+	}
+
 	if (Z_TYPE_P(value) == IS_INDIRECT) {
 		if (!(type_mask & MAY_BE_INDIRECT)) {
 			return false;
@@ -5333,10 +5338,8 @@ static void zend_verify_result_type_inference(zend_execute_data *execute_data, c
 {
 	if (!RETURN_VALUE_USED(opline)
 	 || EG(exception)
-	 || opline->opcode == ZEND_DECLARE_ANON_CLASS
 	 || opline->opcode == ZEND_ROPE_INIT
-	 || opline->opcode == ZEND_ROPE_ADD
-	 || opline->opcode == ZEND_FETCH_CLASS) {
+	 || opline->opcode == ZEND_ROPE_ADD) {
 		return;
 	}
 
@@ -5356,19 +5359,47 @@ static void zend_verify_result_type_inference(zend_execute_data *execute_data, c
 		// zend_error_noreturn(E_CORE_ERROR, "Invalid return type inference");
 	}
 }
-static void zend_verify_operand_type_inference(zend_execute_data *execute_data, const zend_op *opline)
+static void zend_verify_op1_type_inference(zend_execute_data *execute_data, const zend_op *opline)
 {
-	if (opline->op1_type != IS_UNUSED && !zend_verify_type_inference(opline->op1_inferred_type, EX_VAR(opline->op1.var))) {
-		fprintf(stderr, "Invalid op1 type inference\n");
-		// zend_error_noreturn(E_CORE_ERROR, "Invalid op1 type inference");
+	if (opline->op1_type == IS_UNUSED) {
+		return;
 	}
-	if (opline->op2_type != IS_UNUSED && !zend_verify_type_inference(opline->op2_inferred_type, EX_VAR(opline->op2.var))) {
+
+	if (opline->opcode == ZEND_ROPE_ADD || opline->opcode == ZEND_ROPE_END) {
+		return;
+	}
+
+	zval *value = opline->op1_type == IS_CONST 
+		? RT_CONSTANT(opline, opline->op1)
+		: EX_VAR(opline->op1.var);
+
+	if (!zend_verify_type_inference(opline->op1_inferred_type, value)) {
+		fprintf(stderr, "Invalid op1 type inference\n");
+		// zend_error_noreturn(E_CORE_ERROR, "Invalid op2 type inference");
+	}
+}
+static void zend_verify_op2_type_inference(zend_execute_data *execute_data, const zend_op *opline)
+{
+	if (opline->op2_type == IS_UNUSED) {
+		return;
+	}
+
+	zval *value = opline->op2_type == IS_CONST 
+		? RT_CONSTANT(opline, opline->op2)
+		: EX_VAR(opline->op2.var);
+
+	if (!zend_verify_type_inference(opline->op2_inferred_type, value)) {
 		fprintf(stderr, "Invalid op2 type inference\n");
 		// zend_error_noreturn(E_CORE_ERROR, "Invalid op2 type inference");
 	}
 }
+static void zend_verify_operand_type_inference(zend_execute_data *execute_data, const zend_op *opline)
+{
+	zend_verify_op1_type_inference(execute_data, opline);
+	zend_verify_op2_type_inference(execute_data, opline);
+}
 # define ZEND_VERIFY_RESULT_TYPE_INFERENCE() zend_verify_result_type_inference(execute_data, OPLINE);
-# define ZEND_VERIFY_OPERAND_TYPE_INFERENCE() /*zend_verify_operand_type_inference(execute_data, OPLINE);*/
+# define ZEND_VERIFY_OPERAND_TYPE_INFERENCE() zend_verify_operand_type_inference(execute_data, OPLINE);
 #else
 # define ZEND_VERIFY_RESULT_TYPE_INFERENCE()
 # define ZEND_VERIFY_OPERAND_TYPE_INFERENCE()

@@ -1466,6 +1466,40 @@ static void zend_optimizer_call_registered_passes(zend_script *script, void *ctx
 	}
 }
 
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+static void propagate_ssa_inferred_types_to_oplines(zend_op_array *op_array, void *context)
+{
+	zend_func_info *func_info = ZEND_FUNC_INFO(op_array);
+	if (func_info == NULL) {
+		return;
+	}
+
+	zend_ssa *ssa = &func_info->ssa;
+
+	for (uint32_t i = 0; i < ssa->vars_count; i++) {
+		zend_ssa_var *var = &ssa->vars[i];
+		zend_ssa_var_info *var_info = &ssa->var_info[i];
+		if (var->definition > 0) {
+			zend_op *opline = &op_array->opcodes[var->definition];
+			opline->result_inferred_type = var_info->type;
+		}
+
+		int use;
+		FOREACH_USE(var, use) {
+			zend_op *opline = &op_array->opcodes[use];
+			zend_ssa_op *ssa_op = &ssa->ops[use];
+			if (ssa_op->op1_use == i) {
+				opline->op1_inferred_type = var_info->type;
+			} else if (ssa_op->op2_use == i) {
+				// FIXME: Assertion fails, e.g. sapi/fpm/tests/bug68458-pm-no-start-server.phpt
+				ZEND_ASSERT(ssa_op->op2_use == i);
+				opline->op2_inferred_type = var_info->type;
+			}
+		} FOREACH_USE_END();
+	}
+}
+#endif
+
 ZEND_API void zend_optimize_script(zend_script *script, zend_long optimization_level, zend_long debug_level)
 {
 	zend_op_array *op_array;
@@ -1586,6 +1620,10 @@ ZEND_API void zend_optimize_script(zend_script *script, zend_long optimization_l
 				}
 			}
 		}
+
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		zend_foreach_op_array(script, propagate_ssa_inferred_types_to_oplines, NULL);
+#endif
 
 		for (i = 0; i < call_graph.op_arrays_count; i++) {
 			ZEND_SET_FUNC_INFO(call_graph.op_arrays[i], NULL);

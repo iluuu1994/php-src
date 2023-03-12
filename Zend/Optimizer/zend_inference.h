@@ -157,6 +157,8 @@ static zend_always_inline uint32_t _const_op_type(const zval *zv) {
 		if (Z_REFCOUNTED_P(zv)) {
 			tmp |= MAY_BE_RC1 | MAY_BE_RCN;
 		} else if (Z_TYPE_P(zv) == IS_STRING) {
+			// FIXME: When can this happen?
+			// ZEND_UNREACHABLE();
 			tmp |= MAY_BE_RCN;
 		}
 		return tmp;
