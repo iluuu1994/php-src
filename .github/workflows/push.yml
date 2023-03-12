@@ -39,10 +39,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # - debug: true
+          #   zts: false
+          #   verifyTypeInference: false
+          # - debug: false
+          #   zts: true
+          #   verifyTypeInference: false
           - debug: true
-            zts: false
-          - debug: false
             zts: true
+            verifyTypeInference: true
     name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
     runs-on: ubuntu-22.04
     steps:
@@ -68,6 +73,8 @@ jobs:
           configurationParameters: >-
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
+            --disable-opcache-jit
+            CFLAGS="-DZEND_VERIFY_TYPE_INFERENCE"
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
       - name: make install
