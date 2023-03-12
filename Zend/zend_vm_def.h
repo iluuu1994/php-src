@@ -5861,6 +5861,10 @@ ZEND_VM_HOT_HANDLER(99, ZEND_FETCH_CONSTANT, UNUSED|CONST_FETCH, CONST, CACHE_SL
 	if (EXPECTED(c != NULL) && EXPECTED(!IS_SPECIAL_CACHE_VAL(c))) {
 		ZVAL_COPY_OR_DUP(EX_VAR(opline->result.var), &c->value);
 		ZEND_VM_NEXT_OPCODE();
+	} else {
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		ZVAL_UNDEF(EX_VAR(opline->result.var));
+#endif
 	}
 
 	SAVE_OPLINE();
@@ -7590,6 +7594,10 @@ ZEND_VM_COLD_CONST_HANDLER(152, ZEND_JMP_SET, CONST|TMP|VAR|CV, JMP_ADDR)
 			}
 		}
 		ZEND_VM_JMP_EX(OP_JMP_ADDR(opline, opline->op2), 0);
+	} else {
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		ZVAL_UNDEF(EX_VAR(opline->result.var));
+#endif
 	}
 
 	FREE_OP1();
@@ -7627,6 +7635,10 @@ ZEND_VM_COLD_CONST_HANDLER(169, ZEND_COALESCE, CONST|TMP|VAR|CV, JMP_ADDR)
 			}
 		}
 		ZEND_VM_JMP_EX(OP_JMP_ADDR(opline, opline->op2), 0);
+	} else {
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		ZVAL_UNDEF(EX_VAR(opline->result.var));
+#endif
 	}
 
 	if ((OP1_TYPE & IS_VAR) && ref) {
@@ -7653,6 +7665,9 @@ ZEND_VM_HOT_NOCONST_HANDLER(198, ZEND_JMP_NULL, CONST|TMP|VAR|CV, JMP_ADDR)
 					break;
 				}
 			}
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+			ZVAL_UNDEF(EX_VAR(opline->result.var));
+#endif
 			ZEND_VM_NEXT_OPCODE();
 		} while (0);
 	}
@@ -8657,6 +8672,11 @@ ZEND_VM_HANDLER(151, ZEND_ASSERT_CHECK, ANY, JMP_ADDR)
 		}
 		ZEND_VM_JMP_EX(target, 0);
 	} else {
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+		if (RETURN_VALUE_USED(opline)) {
+			ZVAL_UNDEF(EX_VAR(opline->result.var));
+		}
+#endif
 		ZEND_VM_NEXT_OPCODE();
 	}
 }

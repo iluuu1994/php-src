@@ -5253,7 +5253,129 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 # include "zend_vm_trace_map.h"
 #endif
 
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+static bool zend_verify_type_inference(uint32_t type_mask, zval *value)
+{
+	if (type_mask == 0) {
+		return true;
+	}
+
+	if (Z_TYPE_P(value) == IS_INDIRECT) {
+		if (!(type_mask & MAY_BE_INDIRECT)) {
+			return false;
+		}
+		value = Z_INDIRECT_P(value);
+	}
+
+	if (Z_REFCOUNTED_P(value)) {
+		if (Z_REFCOUNT_P(value) == 1 && !(type_mask & MAY_BE_RC1)) {
+			return false;
+			// zend_error_noreturn(E_CORE_ERROR, "%s() missing rc1", ZSTR_VAL(name));
+		}
+		if (Z_REFCOUNT_P(value) > 1 && !(type_mask & MAY_BE_RCN)) {
+			return false;
+			// zend_error_noreturn(E_CORE_ERROR, "%s() missing rcn", ZSTR_VAL(name));
+		}
+	}
+
+	if (Z_TYPE_P(value) == IS_REFERENCE) {
+		if (!(type_mask & MAY_BE_REF)) {
+			return false;
+		}
+		value = Z_REFVAL_P(value);
+	}
+
+	if (Z_TYPE_P(value) > _IS_NUMBER) {
+		ZEND_UNREACHABLE();
+	}
+
+	uint32_t type = 1u << Z_TYPE_P(value);
+	if (!(type_mask & type)) {
+		return false;
+		// zend_error_noreturn(E_CORE_ERROR, "%s() missing type %s", ZSTR_VAL(name), zend_get_type_by_const(Z_TYPE_P(value)));
+	}
+
+	if (Z_TYPE_P(value) == IS_ARRAY) {
+		HashTable *ht = Z_ARRVAL_P(value);
+		uint32_t num_checked = 0;
+		zend_string *str;
+		zval *val;
+		ZEND_HASH_FOREACH_STR_KEY_VAL(ht, str, val) {
+			if (str) {
+				if (!(type_mask & MAY_BE_ARRAY_KEY_STRING)) {
+					return false;
+					// zend_error_noreturn(E_CORE_ERROR, "%s() missing array_key_string", ZSTR_VAL(name));
+				}
+			} else {
+				if (!(type_mask & MAY_BE_ARRAY_KEY_LONG)) {
+					return false;
+					// zend_error_noreturn(E_CORE_ERROR, "%s() missing array_key_long", ZSTR_VAL(name));
+				}
+			}
+
+			uint32_t array_type = 1u << (Z_TYPE_P(val) + MAY_BE_ARRAY_SHIFT);
+			if (!(type_mask & array_type)) {
+				return false;
+				// zend_error_noreturn(E_CORE_ERROR, "%s() missing array element type %s", ZSTR_VAL(name), zend_get_type_by_const(Z_TYPE_P(retval)));
+			}
+
+			/* Don't check all elements of large arrays. */
+			if (++num_checked > 16) {
+				break;
+			}
+		} ZEND_HASH_FOREACH_END();
+	}
+
+	return true;
+}
+
+static void zend_verify_result_type_inference(zend_execute_data *execute_data, const zend_op *opline)
+{
+	if (!RETURN_VALUE_USED(opline)
+	 || EG(exception)
+	 || opline->opcode == ZEND_DECLARE_ANON_CLASS
+	 || opline->opcode == ZEND_ROPE_INIT
+	 || opline->opcode == ZEND_ROPE_ADD
+	 || opline->opcode == ZEND_FETCH_CLASS) {
+		return;
+	}
+
+	zval *value = EX_VAR(opline->result.var);
+
+	// Some jump opcode handlers don't set result when it's never read
+	if (Z_TYPE_P(value) == IS_UNDEF
+	 && (opline->opcode == ZEND_JMP_SET
+	  || opline->opcode == ZEND_JMP_NULL
+	  || opline->opcode == ZEND_COALESCE
+	  || opline->opcode == ZEND_ASSERT_CHECK)) {
+		return;
+	}
+
+	if (RETURN_VALUE_USED(opline) && !zend_verify_type_inference(opline->result_inferred_type, value)) {
+		fprintf(stderr, "Invalid return type inference\n");
+		// zend_error_noreturn(E_CORE_ERROR, "Invalid return type inference");
+	}
+}
+static void zend_verify_operand_type_inference(zend_execute_data *execute_data, const zend_op *opline)
+{
+	if (opline->op1_type != IS_UNUSED && !zend_verify_type_inference(opline->op1_inferred_type, EX_VAR(opline->op1.var))) {
+		fprintf(stderr, "Invalid op1 type inference\n");
+		// zend_error_noreturn(E_CORE_ERROR, "Invalid op1 type inference");
+	}
+	if (opline->op2_type != IS_UNUSED && !zend_verify_type_inference(opline->op2_inferred_type, EX_VAR(opline->op2.var))) {
+		fprintf(stderr, "Invalid op2 type inference\n");
+		// zend_error_noreturn(E_CORE_ERROR, "Invalid op2 type inference");
+	}
+}
+# define ZEND_VERIFY_RESULT_TYPE_INFERENCE() zend_verify_result_type_inference(execute_data, OPLINE);
+# define ZEND_VERIFY_OPERAND_TYPE_INFERENCE() /*zend_verify_operand_type_inference(execute_data, OPLINE);*/
+#else
+# define ZEND_VERIFY_RESULT_TYPE_INFERENCE()
+# define ZEND_VERIFY_OPERAND_TYPE_INFERENCE()
+#endif
+
 #define ZEND_VM_NEXT_OPCODE_EX(check_exception, skip) \
+	ZEND_VERIFY_RESULT_TYPE_INFERENCE() \
 	CHECK_SYMBOL_TABLES() \
 	if (check_exception) { \
 		OPLINE = EX(opline) + (skip); \
@@ -5261,6 +5383,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_ASSERT(!EG(exception)); \
 		OPLINE = opline + (skip); \
 	} \
+	ZEND_VERIFY_OPERAND_TYPE_INFERENCE() \
 	ZEND_VM_CONTINUE()
 
 #define ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION() \
