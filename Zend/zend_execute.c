@@ -4589,6 +4589,10 @@ static void zend_swap_operands(zend_op *op) /* {{{ */
 	op->op1_type = op->op2_type;
 	op->op2      = tmp;
 	op->op2_type = tmp_type;
+
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+	op->swapped_operands = true;
+#endif
 }
 /* }}} */
 #endif
@@ -5275,11 +5279,9 @@ static bool zend_verify_type_inference(uint32_t type_mask, zval *value)
 	if (Z_REFCOUNTED_P(value)) {
 		if (Z_REFCOUNT_P(value) == 1 && !(type_mask & MAY_BE_RC1)) {
 			return false;
-			// zend_error_noreturn(E_CORE_ERROR, "%s() missing rc1", ZSTR_VAL(name));
 		}
 		if (Z_REFCOUNT_P(value) > 1 && !(type_mask & MAY_BE_RCN)) {
 			return false;
-			// zend_error_noreturn(E_CORE_ERROR, "%s() missing rcn", ZSTR_VAL(name));
 		}
 	}
 
@@ -5290,14 +5292,9 @@ static bool zend_verify_type_inference(uint32_t type_mask, zval *value)
 		value = Z_REFVAL_P(value);
 	}
 
-	if (Z_TYPE_P(value) > _IS_NUMBER) {
-		ZEND_UNREACHABLE();
-	}
-
 	uint32_t type = 1u << Z_TYPE_P(value);
 	if (!(type_mask & type)) {
 		return false;
-		// zend_error_noreturn(E_CORE_ERROR, "%s() missing type %s", ZSTR_VAL(name), zend_get_type_by_const(Z_TYPE_P(value)));
 	}
 
 	if (Z_TYPE_P(value) == IS_ARRAY) {
@@ -5309,19 +5306,16 @@ static bool zend_verify_type_inference(uint32_t type_mask, zval *value)
 			if (str) {
 				if (!(type_mask & MAY_BE_ARRAY_KEY_STRING)) {
 					return false;
-					// zend_error_noreturn(E_CORE_ERROR, "%s() missing array_key_string", ZSTR_VAL(name));
 				}
 			} else {
 				if (!(type_mask & MAY_BE_ARRAY_KEY_LONG)) {
 					return false;
-					// zend_error_noreturn(E_CORE_ERROR, "%s() missing array_key_long", ZSTR_VAL(name));
 				}
 			}
 
 			uint32_t array_type = 1u << (Z_TYPE_P(val) + MAY_BE_ARRAY_SHIFT);
 			if (!(type_mask & array_type)) {
 				return false;
-				// zend_error_noreturn(E_CORE_ERROR, "%s() missing array element type %s", ZSTR_VAL(name), zend_get_type_by_const(Z_TYPE_P(retval)));
 			}
 
 			/* Don't check all elements of large arrays. */
@@ -5355,8 +5349,8 @@ static void zend_verify_result_type_inference(zend_execute_data *execute_data, c
 	}
 
 	if (RETURN_VALUE_USED(opline) && !zend_verify_type_inference(opline->result_inferred_type, value)) {
-		fprintf(stderr, "Invalid return type inference\n");
-		// zend_error_noreturn(E_CORE_ERROR, "Invalid return type inference");
+		fprintf(stderr, "<E>");
+		fflush(stderr);
 	}
 }
 static void zend_verify_op1_type_inference(zend_execute_data *execute_data, const zend_op *opline)
@@ -5374,8 +5368,8 @@ static void zend_verify_op1_type_inference(zend_execute_data *execute_data, cons
 		: EX_VAR(opline->op1.var);
 
 	if (!zend_verify_type_inference(opline->op1_inferred_type, value)) {
-		fprintf(stderr, "Invalid op1 type inference\n");
-		// zend_error_noreturn(E_CORE_ERROR, "Invalid op2 type inference");
+		fprintf(stderr, "<E>");
+		fflush(stderr);
 	}
 }
 static void zend_verify_op2_type_inference(zend_execute_data *execute_data, const zend_op *opline)
@@ -5389,8 +5383,8 @@ static void zend_verify_op2_type_inference(zend_execute_data *execute_data, cons
 		: EX_VAR(opline->op2.var);
 
 	if (!zend_verify_type_inference(opline->op2_inferred_type, value)) {
-		fprintf(stderr, "Invalid op2 type inference\n");
-		// zend_error_noreturn(E_CORE_ERROR, "Invalid op2 type inference");
+		fprintf(stderr, "<E>");
+		fflush(stderr);
 	}
 }
 static void zend_verify_operand_type_inference(zend_execute_data *execute_data, const zend_op *opline)

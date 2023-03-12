@@ -1489,11 +1489,19 @@ static void propagate_ssa_inferred_types_to_oplines(zend_op_array *op_array, voi
 			zend_op *opline = &op_array->opcodes[use];
 			zend_ssa_op *ssa_op = &ssa->ops[use];
 			if (ssa_op->op1_use == i) {
-				opline->op1_inferred_type = var_info->type;
+				if (!opline->swapped_operands) {
+					opline->op1_inferred_type = var_info->type;
+				} else {
+					opline->op2_inferred_type = var_info->type;
+				}
 			} else if (ssa_op->op2_use == i) {
 				// FIXME: Assertion fails, e.g. sapi/fpm/tests/bug68458-pm-no-start-server.phpt
 				ZEND_ASSERT(ssa_op->op2_use == i);
-				opline->op2_inferred_type = var_info->type;
+				if (!opline->swapped_operands) {
+					opline->op2_inferred_type = var_info->type;
+				} else {
+					opline->op1_inferred_type = var_info->type;
+				}
 			}
 		} FOREACH_USE_END();
 	}

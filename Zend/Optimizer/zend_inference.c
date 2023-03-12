@@ -1736,7 +1736,7 @@ static uint32_t get_ssa_alias_types(zend_ssa_alias_kind alias) {
 					__type |= MAY_BE_RC1 | MAY_BE_RCN;					\
 				}														\
 				/* FIXME: NOt sure if this is the correct fix */		\
-				if ((__type & MAY_BE_RC1) && (__type & (MAY_BE_STRING|MAY_BE_RESOURCE))) { \
+				if ((__type & MAY_BE_RC1) && (__type & (MAY_BE_STRING|MAY_BE_ARRAY|MAY_BE_RESOURCE))) { \
 					/* TODO: support for array keys and ($str . "")*/   \
 					__type |= MAY_BE_RCN;                               \
 				}                                                       \

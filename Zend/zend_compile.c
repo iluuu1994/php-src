@@ -108,6 +108,7 @@ static void init_op(zend_op *op)
 	op->result_inferred_type = 0;
 	op->op1_inferred_type = 0;
 	op->op2_inferred_type = 0;
+	op->swapped_operands = false;
 #endif
 }
 

@@ -146,6 +146,7 @@ struct _zend_op {
 	uint32_t op1_inferred_type;
 	uint32_t op2_inferred_type;
 	uint32_t result_inferred_type;
+	bool swapped_operands;
 #endif
 };
 
