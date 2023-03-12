@@ -2,6 +2,10 @@
 Test 6: Extends Test
 --EXTENSIONS--
 dom
+--SKIPIF--
+<?php
+if (getenv('VERIFY_TYPE_INFERENCE')) die("xfail documentElement violates RC rules, should be RCN");
+?>
 --FILE--
 <?php
 

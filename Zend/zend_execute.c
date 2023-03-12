@@ -4639,6 +4639,16 @@ static void zend_swap_operands(zend_op *op) /* {{{ */
 	op->op1_type = op->op2_type;
 	op->op2      = tmp;
 	op->op2_type = tmp_type;
+
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+	uint32_t tmp_info;
+	tmp_info = op->op1_use_type;
+	op->op1_use_type = op->op2_use_type;
+	op->op2_use_type = tmp_info;
+	tmp_info = op->op1_def_type;
+	op->op1_def_type = op->op2_def_type;
+	op->op2_def_type = tmp_info;
+#endif
 }
 /* }}} */
 #endif
@@ -5303,7 +5313,151 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 # include "zend_vm_trace_map.h"
 #endif
 
+#ifdef ZEND_VERIFY_TYPE_INFERENCE
+
+static void zend_verify_type_inference(zval *value, uint32_t type_mask, uint8_t op_type, zend_execute_data *execute_data, const zend_op *opline, const char *msg)
+{
+	if (type_mask == MAY_BE_CLASS) {
+		return;
+	}
+
+	if (Z_TYPE_P(value) == IS_INDIRECT) {
+		if (!(type_mask & MAY_BE_INDIRECT)) {
+			fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x mising MAY_BE_INDIRECT)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+		}
+		value = Z_INDIRECT_P(value);
+	}
+
+	/* Verifying RC inference is currently not possible because type information is based on the SSA
+	 * built without ZEND_SSA_RC_INFERENCE, which is missing various definitions for RC-modifying
+	 * operations. Support could be added by repeating SSA-construction and type inference with the
+	 * given flag. */
+	// if (Z_REFCOUNTED_P(value)) {
+	// 	if (Z_REFCOUNT_P(value) == 1 && !(type_mask & MAY_BE_RC1)) {
+	// 		fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_RC1)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+	// 	}
+	// 	if (Z_REFCOUNT_P(value) > 1 && !(type_mask & MAY_BE_RCN)) {
+	// 		fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_RCN)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+	// 	}
+	// }
+
+	if (Z_TYPE_P(value) == IS_REFERENCE) {
+		if (!(type_mask & MAY_BE_REF)) {
+			fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_REF)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+		}
+		value = Z_REFVAL_P(value);
+	}
+
+	if (!(type_mask & (1u << Z_TYPE_P(value)))) {
+		if (Z_TYPE_P(value) == IS_UNUSED && op_type == IS_VAR && (type_mask & MAY_BE_NULL)) {
+			/* FETCH_OBJ_* for typed property may return IS_UNDEF. This is an exception. */
+		} else {
+			fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing type %d)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask, Z_TYPE_P(value));
+		}
+	}
+
+	if (Z_TYPE_P(value) == IS_ARRAY) {
+		HashTable *ht = Z_ARRVAL_P(value);
+		uint32_t num_checked = 0;
+		zend_string *str;
+		zval *val;
+		if (HT_IS_INITIALIZED(ht)) {
+			if (HT_IS_PACKED(ht) && !MAY_BE_PACKED(type_mask)) {
+				fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_ARRAY_PACKED)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+			}
+			if (!HT_IS_PACKED(ht) && !MAY_BE_HASH(type_mask)) {
+				fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_ARRAY_HASH)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+			}
+		} else {
+			if (!(type_mask & MAY_BE_ARRAY_EMPTY)) {
+				fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_ARRAY_EMPTY)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+			}
+		}
+		ZEND_HASH_FOREACH_STR_KEY_VAL(ht, str, val) {
+			if (str) {
+				if (!(type_mask & MAY_BE_ARRAY_KEY_STRING)) {
+					fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_ARRAY_KEY_STRING)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+					break;
+				}
+			} else {
+				if (!(type_mask & MAY_BE_ARRAY_KEY_LONG)) {
+					fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing MAY_BE_ARRAY_KEY_LONG)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask);
+					break;
+				}
+			}
+
+			uint32_t array_type = 1u << (Z_TYPE_P(val) + MAY_BE_ARRAY_SHIFT);
+			if (!(type_mask & array_type)) {
+				fprintf(stderr, "Inference verification failed at %04d %s (mask 0x%x missing array type %d)\n", (int)(opline - EX(func)->op_array.opcodes), msg, type_mask, Z_TYPE_P(val));
+				break;
+			}
+
+			/* Don't check all elements of large arrays. */
+			if (++num_checked > 16) {
+				break;
+			}
+		} ZEND_HASH_FOREACH_END();
+	}
+}
+
+static void zend_verify_inference_use(zend_execute_data *execute_data, const zend_op *opline)
+{
+	if (opline->op1_use_type
+	 && (opline->op1_type & (IS_TMP_VAR|IS_VAR|IS_CV))
+	 && opline->opcode != ZEND_ROPE_ADD
+	 && opline->opcode != ZEND_ROPE_END) {
+		zend_verify_type_inference(EX_VAR(opline->op1.var), opline->op1_use_type, opline->op1_type, execute_data, opline, "op1_use");
+	}
+	if (opline->op2_use_type
+	 && (opline->op2_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
+		zend_verify_type_inference(EX_VAR(opline->op2.var), opline->op2_use_type, opline->op2_type, execute_data, opline, "op2_use");
+	}
+	if (opline->result_use_type
+	 && (opline->result_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
+		zend_verify_type_inference(EX_VAR(opline->result.var), opline->result_use_type, opline->result_type, execute_data, opline, "result_use");
+	}
+}
+
+static void zend_verify_inference_def(zend_execute_data *execute_data, const zend_op *opline)
+{
+	if (EG(exception)) {
+		return;
+	}
+	if (opline->op1_def_type
+	 && (opline->op1_type & (IS_TMP_VAR|IS_VAR|IS_CV))
+	 // array is actually changed by the the following instruction(s)
+	 && opline->opcode != ZEND_FETCH_DIM_W
+	 && opline->opcode != ZEND_FETCH_DIM_RW
+	 && opline->opcode != ZEND_FETCH_DIM_FUNC_ARG
+	 && opline->opcode != ZEND_FETCH_LIST_W) {
+		zend_verify_type_inference(EX_VAR(opline->op1.var), opline->op1_def_type, opline->op1_type, execute_data, opline, "op1_def");
+	}
+	if (opline->op2_def_type
+	 && (opline->op2_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
+		zend_verify_type_inference(EX_VAR(opline->op2.var), opline->op2_def_type, opline->op2_type, execute_data, opline, "op2_def");
+	}
+	if (opline->result_def_type
+	 && (opline->result_type & (IS_TMP_VAR|IS_VAR|IS_CV))
+	 && opline->opcode != ZEND_ROPE_INIT
+	 && opline->opcode != ZEND_ROPE_ADD
+	 // Some jump opcode handlers don't set result when it's never read
+	 && opline->opcode != ZEND_JMP_SET
+	 && opline->opcode != ZEND_JMP_NULL
+	 && opline->opcode != ZEND_COALESCE
+	 && opline->opcode != ZEND_ASSERT_CHECK) {
+		zend_verify_type_inference(EX_VAR(opline->result.var), opline->result_def_type, opline->result_type, execute_data, opline, "result_def");
+	}
+}
+
+# define ZEND_VERIFY_INFERENCE_USE() zend_verify_inference_use(execute_data, OPLINE);
+# define ZEND_VERIFY_INFERENCE_DEF() zend_verify_inference_def(execute_data, OPLINE);
+#else
+# define ZEND_VERIFY_INFERENCE_USE()
+# define ZEND_VERIFY_INFERENCE_DEF()
+#endif
+
 #define ZEND_VM_NEXT_OPCODE_EX(check_exception, skip) \
+	ZEND_VERIFY_INFERENCE_DEF() \
 	CHECK_SYMBOL_TABLES() \
 	if (check_exception) { \
 		OPLINE = EX(opline) + (skip); \
@@ -5311,6 +5465,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_ASSERT(!EG(exception)); \
 		OPLINE = opline + (skip); \
 	} \
+	ZEND_VERIFY_INFERENCE_USE() \
 	ZEND_VM_CONTINUE()
 
 #define ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION() \

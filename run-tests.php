@@ -576,6 +576,9 @@ function main(): void
                             . ':print_suppressions=0';
                     }
                     break;
+                case '--verify-type-inference':
+                    $environment['VERIFY_TYPE_INFERENCE'] = 1;
+                    break;
                 case '--repeat':
                     $num_repeats = (int) $argv[++$i];
                     $environment['SKIP_REPEAT'] = 1;
