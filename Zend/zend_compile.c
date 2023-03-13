@@ -379,6 +379,7 @@ void zend_init_compiler_data_structures(void) /* {{{ */
 	CG(encoding_declared) = 0;
 	CG(memoized_exprs) = NULL;
 	CG(memoize_mode) = 0;
+	CG(zend_lineno) = 0;
 }
 /* }}} */
 
