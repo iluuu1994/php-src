@@ -6,7 +6,7 @@ Abstract accessors not implemented
 abstract class A {
     public $prop {
         abstract get;
-        set { echo __METHOD__, "()\n"; }
+        set {}
     }
 }
 

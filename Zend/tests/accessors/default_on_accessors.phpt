@@ -1,9 +1,13 @@
 --TEST--
-Purely virtual accessors cannot have default value
+Accessors cannot have default value
 --FILE--
 <?php
 
-class Test {
+class TestParent {
+    public $prop;
+}
+
+class Test extends TestParent {
     public $prop = 0 {
         get {}
         set {}

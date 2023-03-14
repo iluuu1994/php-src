@@ -7888,7 +7888,7 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 
 			if (flags & ZEND_ACC_VIRTUAL) {
 				zend_error_noreturn(E_COMPILE_ERROR,
-					"Cannot specify default value for property with explicit accessors");
+					"Cannot specify default value for property with accessors");
 			}
 		} else if (!ZEND_TYPE_IS_SET(type) && !accessors_ast) {
 			ZVAL_NULL(&value_zv);

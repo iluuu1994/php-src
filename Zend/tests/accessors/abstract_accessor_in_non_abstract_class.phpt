@@ -6,7 +6,7 @@ Abstract accessors in non-abstract class
 class Test {
     public $prop {
         abstract get;
-        set { echo __METHOD__, "()\n"; }
+        set {}
     }
 }
 
