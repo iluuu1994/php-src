@@ -4,14 +4,12 @@ Interaction of inaccessible accessors with magic methods
 <?php
 
 class A {
-    public $privateGet {
-        private get { echo __METHOD__, "\n"; }
-        set { die('Unreachable'); }
-    }
-
-    public $privateSet {
-        get { die('Unreachable'); }
-        private set { echo __METHOD__, "\n"; }
+    public $prop {
+        get {
+            echo __METHOD__, "\n";
+            return 'prop';
+        }
+        set { echo __METHOD__, "\n"; }
     }
 }
 
@@ -51,18 +49,16 @@ class B extends A {
 }
 
 $b = new B;
-$b->privateGet;
-isset($b->privateGet);
-$b->privateSet = 1;
-unset($b->privateSet);
+$b->prop;
+var_dump(isset($b->prop));
+$b->prop = 1;
+unset($b->prop);
 
 ?>
 --EXPECT--
-B::__get(privateGet)
-Call to private accessor A::$privateGet::get() from scope B
-B::__isset(privateGet)
-bool(false)
-B::__set(privateSet, 1)
-Call to private accessor A::$privateSet::set() from scope B
-B::__unset(privateSet)
-Cannot unset accessor property B::$privateSet
+A::$prop::get
+A::$prop::get
+bool(true)
+A::$prop::set
+B::__unset(prop)
+Cannot unset accessor property B::$prop

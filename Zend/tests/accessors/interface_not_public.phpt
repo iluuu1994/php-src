@@ -1,10 +1,10 @@
 --TEST--
-Cannot use non-public accessor in interface
+Cannot use non-public accessor in interface (whole property)
 --FILE--
 <?php
 
 interface I {
-    public $prop { get; private set; }
+    protected $prop { get; set; }
 }
 
 ?>

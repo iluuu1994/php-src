@@ -814,11 +814,20 @@ uint32_t zend_modifier_token_to_flag(zend_modifier_target target, uint32_t token
 {
 	switch (token) {
 		case T_PUBLIC:
-			return ZEND_ACC_PUBLIC;
+			if (target != ZEND_MODIFIER_TARGET_ACCESSOR) {
+				return ZEND_ACC_PUBLIC;
+			}
+			break;
 		case T_PROTECTED:
-			return ZEND_ACC_PROTECTED;
+			if (target != ZEND_MODIFIER_TARGET_ACCESSOR) {
+				return ZEND_ACC_PROTECTED;
+			}
+			break;
 		case T_PRIVATE:
-			return ZEND_ACC_PRIVATE;
+			if (target != ZEND_MODIFIER_TARGET_ACCESSOR) {
+				return ZEND_ACC_PRIVATE;
+			}
+			break;
 		case T_READONLY:
 			if (target == ZEND_MODIFIER_TARGET_PROPERTY || target == ZEND_MODIFIER_TARGET_CPP) {
 				return ZEND_ACC_READONLY;
@@ -7663,24 +7672,14 @@ static void zend_compile_accessors(
 		bool reset_return_ast = false, reset_param_type_ast = false;
 		uint32_t accessor_kind;
 
-		uint32_t accessor_visibility = accessor->flags & ZEND_ACC_PPP_MASK;
 		uint32_t prop_visibility = prop_info->flags & ZEND_ACC_PPP_MASK;
-		if (!accessor_visibility) {
-			/* Inherit the visibility of the property. */
-			accessor->flags |= prop_visibility;
-		} else {
-			if (accessor_visibility < prop_visibility) {
-				zend_error_noreturn(E_COMPILE_ERROR,
-					"Visibility of accessor cannot be higher than visibility of property");
-			}
-			if (accessor_visibility == prop_visibility) {
-				zend_error_noreturn(E_COMPILE_ERROR,
-					"Explicit accessor visibility cannot be the same as property visibility. "
-					"Omit the explicit accessor visibility");
-			}
-		}
+		uint32_t accessor_visibility = accessor->flags & ZEND_ACC_PPP_MASK;
+		ZEND_ASSERT(!accessor_visibility);
+		/* Inherit the visibility of the property. */
+		accessor->flags |= prop_visibility;
 
 		if (ce->ce_flags & ZEND_ACC_INTERFACE) {
+			// FIXME: A check on the property would be less confusing?
 			if (accessor->flags & (ZEND_ACC_PROTECTED|ZEND_ACC_PRIVATE)) {
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Accessor in interface cannot be protected or private");

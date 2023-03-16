@@ -1288,21 +1288,11 @@ static void inherit_accessor(
 		return;
 	}
 
-	uint32_t child_flags = child->common.fn_flags;
 	if (parent_flags & ZEND_ACC_FINAL) {
 		zend_error_noreturn(E_COMPILE_ERROR,
 			"Cannot override final accessor %s::%s()",
 			ZSTR_VAL(parent->common.scope->name),
 			ZSTR_VAL(parent->common.function_name));
-	}
-	if ((child_flags & ZEND_ACC_PPP_MASK) > (parent_flags & ZEND_ACC_PPP_MASK)) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"Visibility of %s::%s() must be %s%s (as in class %s)",
-			ZSTR_VAL(child->common.scope->name),
-			ZSTR_VAL(child->common.function_name),
-			zend_visibility_string(parent_flags),
-			(parent_flags & ZEND_ACC_PUBLIC) ? "" : " or higher",
-			ZSTR_VAL(parent->common.scope->name));
 	}
 
 	/* Other signature compatibility issues should already be covered either by the

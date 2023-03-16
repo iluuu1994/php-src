@@ -10,12 +10,12 @@ try {
             get {
                 return 42;
             }
-            private set {
+            final set {
                 echo 'Foo';
                 $this->prop1 = 42;
             }
         }
-        public $prop3 = 1 { get; private set; }
+        public $prop3 = 1 { get; abstract set; }
     });
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
@@ -29,10 +29,10 @@ assert(false && new class {
         get {
             return 42;
         }
-        private set {
+        final set {
             echo 'Foo';
             $this->prop1 = 42;
         }
     }
-    public $prop3 = 1 { get; private set; }
+    public $prop3 = 1 { get; abstract set; }
 })
