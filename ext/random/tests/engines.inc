@@ -4,6 +4,8 @@ namespace Random\Engine\Test;
 
 use Random\Engine;
 
+// test
+
 final class TestShaEngine implements Engine
 {
     private string $state;
