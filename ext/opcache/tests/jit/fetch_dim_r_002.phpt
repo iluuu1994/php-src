@@ -31,14 +31,20 @@ $x=2;
 $y="x";
 foo($x.$y);
 ?>
---EXPECT--
+--EXPECTF--
 int(1)
 int(3)
 int(2)
 int(1)
 int(3)
+
+Warning: Implicit array offset coercion from bool to int in %s on line %d
 int(1)
+
+Warning: Implicit array offset coercion from bool to int in %s on line %d
 int(2)
+
+Warning: Implicit array offset coercion from null to string in %s on line %d
 int(4)
 int(5)
 int(5)

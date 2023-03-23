@@ -22,12 +22,20 @@ unset($a[$r]);
 --EXPECTF--
 Assign:
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 Add assign:
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 Inc:
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 Get:
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 int(3)
 Isset:
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d

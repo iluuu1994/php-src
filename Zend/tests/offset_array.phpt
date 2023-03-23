@@ -38,15 +38,23 @@ int(2)
 Deprecated: Implicit conversion from float 0.0836 to int loses precision in %s on line %d
 int(1)
 
+Warning: Implicit array offset coercion from null to string in %s on line %d
+
 Warning: Undefined array key "" in %s on line %d
 NULL
 
 Warning: Undefined array key "run away" in %s on line %d
 NULL
+
+Warning: Implicit array offset coercion from bool to int in %s on line %d
 int(2)
+
+Warning: Implicit array offset coercion from bool to int in %s on line %d
 int(1)
 
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 int(%d)
 Cannot access offset of type object on array
 Cannot access offset of type array on array

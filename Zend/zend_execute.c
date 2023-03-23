@@ -2500,9 +2500,20 @@ str_index:
 			t = slow_index_convert_w(ht, dim, &val EXECUTE_DATA_CC);
 		}
 		if (t == IS_STRING) {
+			zend_error(E_WARNING, "Implicit array offset coercion from %s to string", zend_zval_type_name(dim));
+			if (UNEXPECTED(EG(exception) != NULL)) {
+				return &EG(uninitialized_zval);
+			}
 			offset_key = val.str;
 			goto str_index;
 		} else if (t == IS_LONG) {
+			// Don't warn for double, they already warn when loosing precision
+			if (Z_TYPE_P(dim) != IS_DOUBLE) {
+				zend_error(E_WARNING, "Implicit array offset coercion from %s to int", zend_zval_type_name(dim));
+				if (UNEXPECTED(EG(exception) != NULL)) {
+					return &EG(uninitialized_zval);
+				}
+			}
 			hval = val.lval;
 			goto num_index;
 		} else {

@@ -36,10 +36,12 @@ foreach($array as $name => $input) {
 
 echo "Done";
 ?>
---EXPECT--
+--EXPECTF--
 *** Testing array_key_exists() : usage variations ***
 
 -- Key in $search array is : null --
+
+Warning: Implicit array offset coercion from null to string in %s on line %d
 Iteration 1:  bool(true)
 Iteration 2:  bool(true)
 Iteration 3:  bool(true)
@@ -48,6 +50,8 @@ Iteration 5:  bool(true)
 Iteration 6:  bool(true)
 
 -- Key in $search array is : NULL --
+
+Warning: Implicit array offset coercion from null to string in %s on line %d
 Iteration 1:  bool(true)
 Iteration 2:  bool(true)
 Iteration 3:  bool(true)
@@ -72,6 +76,8 @@ Iteration 5:  bool(true)
 Iteration 6:  bool(true)
 
 -- Key in $search array is : undefined variable --
+
+Warning: Implicit array offset coercion from null to string in %s on line %d
 Iteration 1:  bool(true)
 Iteration 2:  bool(true)
 Iteration 3:  bool(true)
@@ -80,6 +86,8 @@ Iteration 5:  bool(true)
 Iteration 6:  bool(true)
 
 -- Key in $search array is : unset variable --
+
+Warning: Implicit array offset coercion from null to string in %s on line %d
 Iteration 1:  bool(true)
 Iteration 2:  bool(true)
 Iteration 3:  bool(true)

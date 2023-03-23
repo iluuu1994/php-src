@@ -24,7 +24,8 @@ var_dump($t->baz);
 var_dump($t->buzz);
 
 ?>
---EXPECT--
+--EXPECTF--
+Warning: Implicit array offset coercion from bool to int in %s on line %d
 string(4) "Test"
 bool(true)
 int(1)

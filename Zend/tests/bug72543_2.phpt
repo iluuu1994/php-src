@@ -9,7 +9,8 @@ unset($ref);
 $arr[0][$arr[0]] = null;
 var_dump($arr);
 ?>
---EXPECT--
+--EXPECTF--
+Warning: Implicit array offset coercion from null to string in %s on line %d
 array(1) {
   [0]=>
   array(1) {

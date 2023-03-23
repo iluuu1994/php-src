@@ -15,5 +15,7 @@ echo "Done\n";
 ?>
 --EXPECTF--
 Warning: Resource ID#%d used as offset, casting to integer (%d) in %s on line %d
+
+Warning: Implicit array offset coercion from resource to int in %s on line %d
 int(%d)
 Done
