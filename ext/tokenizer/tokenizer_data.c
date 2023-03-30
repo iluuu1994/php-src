@@ -50,6 +50,7 @@ char *get_token_type_name(int token_type)
 		case T_PRINT: return "T_PRINT";
 		case T_YIELD: return "T_YIELD";
 		case T_YIELD_FROM: return "T_YIELD_FROM";
+		case T_MOVE: return "T_MOVE";
 		case T_INSTANCEOF: return "T_INSTANCEOF";
 		case T_NEW: return "T_NEW";
 		case T_CLONE: return "T_CLONE";

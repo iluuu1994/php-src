@@ -9378,6 +9378,14 @@ static void zend_compile_yield_from(znode *result, zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+static void zend_compile_move(znode *result, zend_ast *ast)
+{
+	zend_ast *expr_ast = ast->child[0];
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+	zend_emit_op_tmp(result, ZEND_MOVE, &expr_node, NULL);
+}
+
 static void zend_compile_instanceof(znode *result, zend_ast *ast) /* {{{ */
 {
 	zend_ast *obj_ast = ast->child[0];
@@ -10395,6 +10403,9 @@ static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 			return;
 		case ZEND_AST_YIELD_FROM:
 			zend_compile_yield_from(result, ast);
+			return;
+		case ZEND_AST_MOVE:
+			zend_compile_move(result, ast);
 			return;
 		case ZEND_AST_INSTANCEOF:
 			zend_compile_instanceof(result, ast);

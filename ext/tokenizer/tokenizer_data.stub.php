@@ -119,6 +119,11 @@ const T_YIELD = UNKNOWN;
 const T_YIELD_FROM = UNKNOWN;
 /**
  * @var int
+ * @cvalue T_MOVE
+ */
+const T_MOVE = UNKNOWN;
+/**
+ * @var int
  * @cvalue T_INSTANCEOF
  */
 const T_INSTANCEOF = UNKNOWN;
