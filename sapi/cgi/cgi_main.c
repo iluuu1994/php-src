@@ -95,6 +95,10 @@ int __riscosify_control = __RISCOSIFY_STRICT_UNIX_SPECS;
 # include "valgrind/callgrind.h"
 #endif
 
+#ifdef HAVE_PFM
+# include <perfmon/pfmlib_perf_event.h>
+#endif
+
 #ifndef PHP_WIN32
 /* XXX this will need to change later when threaded fastcgi is implemented.  shane */
 struct sigaction act, old_term, old_quit, old_int;
@@ -856,6 +860,115 @@ static void php_cgi_ini_activate_user_config(char *path, size_t path_len, const 
 	php_ini_activate_config(entry->user_config, PHP_INI_PERDIR, PHP_INI_STAGE_HTACCESS);
 }
 /* }}} */
+
+#ifdef HAVE_PFM
+typedef struct {
+	struct perf_event_attr event_attr;
+	double instructions_sum;
+	uint32_t iterations;
+	int fd;
+	bool benchmark;
+	bool initialized;
+} cgi_pfm_data;
+
+static void cgi_pfm_terminate(cgi_pfm_data *data)
+{
+	assert(data->initialized);
+	data->initialized = false;
+	data->benchmark = false;
+	pfm_terminate();
+}
+
+static void cgi_pfm_initialize(cgi_pfm_data *data)
+{
+	assert(data->benchmark);
+	assert(!data->initialized);
+
+	data->fd = -1;
+
+	if (pfm_initialize() != PFM_SUCCESS) {
+		data->benchmark = false;
+		return;
+	}
+
+	if (pfm_get_perf_event_encoding("instructions:u", PFM_PLM0|PFM_PLM3, &data->event_attr, NULL, NULL) != PFM_SUCCESS) {
+		cgi_pfm_terminate(data);
+		return;
+	}
+
+	data->event_attr.read_format = PERF_FORMAT_TOTAL_TIME_ENABLED|PERF_FORMAT_TOTAL_TIME_RUNNING;
+	data->event_attr.disabled = true;
+	data->initialized = true;
+}
+
+static void cgi_pfm_start(cgi_pfm_data *data)
+{
+	if (!data->benchmark) {
+		return;
+	}
+
+	if (!data->initialized) {
+		cgi_pfm_initialize(data);
+		if (!data->benchmark) {
+			return;
+		}
+	}
+
+	assert(data->fd == -1);
+
+	data->fd = perf_event_open(&data->event_attr, getpid(), -1, -1, 0);
+	if (data->fd == -1) {
+		cgi_pfm_terminate(data);
+		return;
+	}
+
+	if (ioctl(data->fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+		cgi_pfm_terminate(data);
+		return;
+	}
+}
+
+static void cgi_pfm_end(cgi_pfm_data *data)
+{
+	if (!data->benchmark) {
+		return;
+	}
+
+	assert(data->initialized);
+	assert(data->fd != -1);
+
+	uint64_t instructions_values[3];
+	if (ioctl(data->fd, PERF_EVENT_IOC_DISABLE, 0) != 0) {
+		pfm_terminate();
+		return;
+	}
+
+	if (read(data->fd, instructions_values, sizeof(instructions_values)) != sizeof(instructions_values)) {
+		pfm_terminate();
+		return;
+	}
+
+	close(data->fd);
+	data->fd = -1;
+
+	if (instructions_values[2]) {
+		double count = ((double)instructions_values[0] * instructions_values[1] / instructions_values[2]);
+		data->instructions_sum += count;
+		data->iterations++;
+	}
+}
+
+static void cgi_pfm_print(cgi_pfm_data *data)
+{
+	if (data->iterations == 0) {
+		return;
+	}
+
+	uint64_t instructions_mean = (uint64_t)(data->instructions_sum / data->iterations);
+	fprintf(stderr, "{\"instructions:u\": {\"mean\": %"PRIu64"}}\n", instructions_mean);
+	fflush(stderr);
+}
+#endif
 
 static int sapi_cgi_activate(void)
 {
@@ -1749,6 +1862,10 @@ int main(int argc, char *argv[])
 	char *decoded_query_string;
 	int skip_getopt = 0;
 
+#ifdef HAVE_PFM
+	cgi_pfm_data pfm_data = {0};
+#endif
+
 #if defined(SIGPIPE) && defined(SIG_IGN)
 	signal(SIGPIPE, SIG_IGN); /* ignore SIGPIPE in standalone mode so
 								that sockets created via fsockopen()
@@ -2211,6 +2328,9 @@ parent_loop_end:
 			switch (c) {
 				case 'T':
 					benchmark = 1;
+#ifdef HAVE_PFM
+					pfm_data.benchmark = true;
+#endif
 					{
 						char *comma = strchr(php_optarg, ',');
 						if (comma) {
@@ -2496,6 +2616,12 @@ parent_loop_end:
 				CG(skip_shebang) = 1;
 			}
 
+#ifdef HAVE_PFM
+			if (!fastcgi && warmup_repeats == 0) {
+				cgi_pfm_start(&pfm_data);
+			}
+#endif
+
 			switch (behavior) {
 				case PHP_MODE_STANDARD:
 					php_execute_script(&file_handle);
@@ -2562,6 +2688,10 @@ fastcgi_request_done:
 						}
 						continue;
 					} else {
+#ifdef HAVE_PFM
+						cgi_pfm_end(&pfm_data);
+#endif
+
 						repeats--;
 						if (repeats > 0) {
 							script_file = NULL;
@@ -2621,7 +2751,13 @@ out:
 		sec = (int)(end - start);
 		fprintf(stderr, "\nElapsed time: %d sec\n", sec);
 #endif
+#ifdef HAVE_PFM
+		if (pfm_data.benchmark) {
+			cgi_pfm_print(&pfm_data);
+			cgi_pfm_terminate(&pfm_data);
+		}
 	}
+#endif
 
 parent_out:
 

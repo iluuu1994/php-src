@@ -4,6 +4,38 @@ PHP_ARG_ENABLE([cgi],,
   [yes],
   [no])
 
+PHP_ARG_WITH([pfm],
+  [whether to enable pfm support],
+  [AS_HELP_STRING([--with-pfm],
+    [Enable pfm support])],
+  [no],
+  [no])
+
+if test "$PHP_PFM" != "no"; then
+  AC_MSG_CHECKING(for pfm in default path)
+  for i in /usr/local /usr; do
+    if test -r $i/include/perfmon/pfmlib.h; then
+      PFM_DIR=$i
+      AC_MSG_RESULT(found in $i)
+      break
+    fi
+  done
+
+  if test -z "$PFM_DIR"; then
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR(Please reinstall the pfm distribution)
+  fi
+
+  PHP_CHECK_LIBRARY(pfm, pfm_get_pmu_info,
+    [
+      PHP_ADD_INCLUDE($PFM_DIR/include)
+      PHP_ADD_LIBRARY_WITH_PATH(pfm, $PFM_DIR/$PHP_LIBDIR, PFM_SHARED_LIBADD)
+      AC_DEFINE(HAVE_PFM,1,[ ])
+    ],
+    [AC_MSG_ERROR(pfm not found)],
+    [-L$PFM_DIR/$PHP_LIBDIR])
+fi
+
 dnl CGI setup.
 AC_MSG_CHECKING(for CGI build)
 if test "$PHP_CGI" != "no"; then
