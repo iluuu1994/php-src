@@ -221,27 +221,22 @@ jobs:
         run: .github/scripts/windows/test.bat
   PFM:
     name: "PFM"
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
       - name: git checkout
         uses: actions/checkout@v3
-      - name: apt
-        uses: ./.github/actions/apt-x64
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: "${{github.job}}-${{hashFiles('main/php_version.h')}}"
-          append-timestamp: false
       - name: ./configure
-        uses: ./.github/actions/configure-x64
-        with:
-          configurationParameters: >-
-            --disable-debug
-            --enable-zts
+        run: |
+          ./buildconf --force
+          ./configure \
+            --disable-all \
+            --disable-debug \
+            --enable-cgi \
+            --enable-option-checking=fatal \
+            --enable-zts \
+            --prefix=/usr \
             --with-pfm
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
-      - name: make install
-        uses: ./.github/actions/install-linux
       - name: Test
-        run: php-cgi -T1,10 Zend/bench.php
+        run: sudo sapi/cgi/php-cgi -T1,10 Zend/bench.php

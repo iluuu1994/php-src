@@ -887,11 +887,15 @@ static void cgi_pfm_initialize(cgi_pfm_data *data)
 	data->fd = -1;
 
 	if (pfm_initialize() != PFM_SUCCESS) {
+		fprintf(stderr, "pfm_initialize() failed\n");
+		fflush(stderr);
 		data->benchmark = false;
 		return;
 	}
 
 	if (pfm_get_perf_event_encoding("instructions:u", PFM_PLM0|PFM_PLM3, &data->event_attr, NULL, NULL) != PFM_SUCCESS) {
+		fprintf(stderr, "pfm_get_perf_event_encoding() failed\n");
+		fflush(stderr);
 		cgi_pfm_terminate(data);
 		return;
 	}
@@ -918,11 +922,15 @@ static void cgi_pfm_start(cgi_pfm_data *data)
 
 	data->fd = perf_event_open(&data->event_attr, getpid(), -1, -1, 0);
 	if (data->fd == -1) {
+		fprintf(stderr, "perf_event_open() failed\n");
+		fflush(stderr);
 		cgi_pfm_terminate(data);
 		return;
 	}
 
 	if (ioctl(data->fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
+		fprintf(stderr, "ioctl(PERF_EVENT_IOC_ENABLE) failed\n");
+		fflush(stderr);
 		cgi_pfm_terminate(data);
 		return;
 	}
@@ -939,11 +947,15 @@ static void cgi_pfm_end(cgi_pfm_data *data)
 
 	uint64_t instructions_values[3];
 	if (ioctl(data->fd, PERF_EVENT_IOC_DISABLE, 0) != 0) {
+		fprintf(stderr, "ioctl(PERF_EVENT_IOC_DISABLE) failed\n");
+		fflush(stderr);
 		pfm_terminate();
 		return;
 	}
 
 	if (read(data->fd, instructions_values, sizeof(instructions_values)) != sizeof(instructions_values)) {
+		fprintf(stderr, "read() failed\n");
+		fflush(stderr);
 		pfm_terminate();
 		return;
 	}
