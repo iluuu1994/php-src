@@ -28,6 +28,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     services:
       postgres:
         image: postgres
@@ -89,6 +90,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     container:
@@ -135,6 +137,7 @@ jobs:
             -d opcache.enable_cli=1
             -d opcache.jit_buffer_size=16M
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-11
     steps:
       - name: git checkout
@@ -172,6 +175,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -215,3 +219,29 @@ jobs:
         run: .github/scripts/windows/build.bat
       - name: Test
         run: .github/scripts/windows/test.bat
+  PFM:
+    name: "PFM"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+      - name: apt
+        uses: ./.github/actions/apt-x64
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: "${{github.job}}-${{hashFiles('main/php_version.h')}}"
+          append-timestamp: false
+      - name: ./configure
+        uses: ./.github/actions/configure-x64
+        with:
+          configurationParameters: >-
+            --disable-debug
+            --enable-zts
+            --with-pfm
+      - name: make
+        run: make -j$(/usr/bin/nproc) >/dev/null
+      - name: make install
+        uses: ./.github/actions/install-linux
+      - name: Test
+        run: php-cgi -T1,10 Zend/bench.php

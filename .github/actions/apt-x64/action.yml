@@ -39,6 +39,8 @@ runs:
           libargon2-0-dev \
           libmm-dev \
           libsnmp-dev \
+          libpfm4 \
+          libpfm4-dev \
           postgresql \
           postgresql-contrib \
           snmpd \
