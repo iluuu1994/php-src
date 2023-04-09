@@ -28,6 +28,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     services:
       postgres:
         image: postgres
@@ -89,6 +90,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     container:
@@ -135,7 +137,7 @@ jobs:
             -d opcache.enable_cli=1
             -d opcache.jit_buffer_size=16M
   MACOS_DEBUG_NTS:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - name: git checkout
         uses: actions/checkout@v3
@@ -172,6 +174,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     strategy:
       fail-fast: false
       matrix:

@@ -75,6 +75,8 @@ try {
     var_dump(curl_setopt($ch, CURLOPT_SSLKEY_BLOB, $clientKey));
     var_dump(curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false));
     var_dump(curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false));
+    curl_setopt($ch, CURLOPT_VERBOSE, true);
+    curl_setopt($ch, CURLOPT_CERTINFO, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
     $response = curl_exec($ch);

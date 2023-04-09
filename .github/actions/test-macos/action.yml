@@ -23,7 +23,8 @@ runs:
           --offline \
           --show-diff \
           --show-slow 1000 \
-          --set-timeout 120
+          --set-timeout 120 \
+          ext/curl/tests/curl_setopt_ssl.phpt
     - uses: actions/upload-artifact@v3
       if: always() && inputs.testArtifacts != null
       with:
