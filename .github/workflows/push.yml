@@ -137,12 +137,17 @@ jobs:
             -d opcache.enable_cli=1
             -d opcache.jit_buffer_size=16M
   MACOS_DEBUG_NTS:
-    runs-on: macos-12
+    runs-on: macos-11
     steps:
       - name: git checkout
         uses: actions/checkout@v3
       - name: brew
         uses: ./.github/actions/brew
+      - name: Add Certs to trusted
+        run: |
+          sudo security authorizationdb write com.apple.trust-settings.admin allow
+          sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ext/curl/tests/curl_setopt_ssl_clientcert.pem
+          sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ext/curl/tests/curl_setopt_ssl_servercert.pem
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
