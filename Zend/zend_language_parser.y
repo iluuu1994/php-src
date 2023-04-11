@@ -280,7 +280,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
 %type <ast> function_name non_empty_member_modifiers
-%type <ast> accessor accessor_list accessor_property optional_accessor_list
+%type <ast> accessor accessor_list accessor_property optional_accessor_list accessor_body
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers accessor_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
@@ -1110,16 +1110,22 @@ accessor_modifiers:
 accessor:
 		accessor_modifiers T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); }
-		'{' inner_statement_list '}'
+		accessor_body
 			{ $$ = zend_ast_create_decl(
 					ZEND_AST_ACCESSOR, $1, $<num>4, $3, zend_ast_get_str($2),
-					NULL, NULL, $6, NULL, NULL); }
+					NULL, NULL, $5, NULL, NULL); }
 	|	accessor_modifiers T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); } ';'
 			{ $$ = zend_ast_create_decl(
 					ZEND_AST_ACCESSOR, $1, $<num>4, $3, zend_ast_get_str($2),
 					NULL, NULL, NULL, NULL, NULL); }
 ;
+
+accessor_body:
+		'{' inner_statement_list '}' { $$ = $2; }
+	|	T_DOUBLE_ARROW expr ';'
+			{ $$ = zend_ast_create_list(1, ZEND_AST_STMT_LIST,
+				zend_ast_create(ZEND_AST_RETURN, $2)); }
 
 class_const_list:
 		class_const_list ',' class_const_decl { $$ = zend_ast_list_add($1, $3); }

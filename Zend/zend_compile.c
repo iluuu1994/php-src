@@ -7753,7 +7753,6 @@ static void zend_compile_accessors(
 				/* accessors */ NULL);
 			accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
 			reset_param_type_ast = true;
-			*return_ast_ptr = zend_ast_create_ex(ZEND_AST_TYPE, IS_VOID);
 		} else {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Unknown accessor \"%s\" for property %s::$%s, expected \"get\" or \"set\"",
