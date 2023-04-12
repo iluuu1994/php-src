@@ -2,9 +2,6 @@
 
 require_once __DIR__ . '/shared.php';
 
-error_reporting(E_ALL);
-chdir(dirname(__DIR__));
-
 function main(?string $headCommitHash, ?string $baseCommitHash) {
     if ($headCommitHash === null || $baseCommitHash === null) {
         fwrite(STDERR, "Usage: php generate_diff.php HEAD_COMMIT_HASH BASE_COMMIT_HASH\n");
@@ -29,19 +26,20 @@ function main(?string $headCommitHash, ?string $baseCommitHash) {
     $output = "| Benchmark | Base ($baseCommitHashShort) | Head ($headCommitHashShort) | Diff |\n";
     $output .= "|---|---|---|---|\n";
     foreach ($headSummary as $name => $headBenchmark) {
-        if (null === $baseBenchmark = $baseSummary[$name] ?? null) {
-            continue;
-        }
-        $instructionDiff = $headBenchmark['instructions'] - $baseSummary[$name]['instructions'];
+        $baseInstructions = $baseSummary[$name]['instructions'] ?? null;
+        $headInstructions = $headSummary[$name]['instructions'];
         $output .= "| $name | "
-            . formatInstructions($baseBenchmark['instructions']) . " | "
-            . formatInstructions($headBenchmark['instructions']) . " | "
-            . formatDiff($instructionDiff, $baseBenchmark['instructions']) . " |\n";
+            . formatInstructions($baseInstructions) . " | "
+            . formatInstructions($headInstructions) . " | "
+            . formatDiff($baseInstructions, $headInstructions) . " |\n";
     }
     return $output;
 }
 
-function formatInstructions(int $instructions): string {
+function formatInstructions(?int $instructions): string {
+    if ($instructions === null) {
+        return '-';
+    }
     if ($instructions > 1e6) {
         return sprintf('%.0fM', $instructions / 1e6);
     } elseif ($instructions > 1e3) {
@@ -51,8 +49,12 @@ function formatInstructions(int $instructions): string {
     }
 }
 
-function formatDiff(int $instructionDiff, int $instructionBase): string {
-    return sprintf('%.2f%%', $instructionDiff / $instructionBase * 100);
+function formatDiff(?int $baseInstructions, int $headInstructions): string {
+    if ($baseInstructions === null) {
+        return '-';
+    }
+    $instructionDiff = $headInstructions - $baseInstructions;
+    return sprintf('%.2f%%', $instructionDiff / $baseInstructions * 100);
 }
 
 $headCommitHash = $argv[1] ?? null;

@@ -2,10 +2,7 @@
 
 require_once __DIR__ . '/shared.php';
 
-chdir(dirname(__DIR__));
-
 $commitResult = ($argv[1] ?? 'false') === 'true';
-
 $phpCgi = $argv[2] ?? dirname(PHP_BINARY) . '/php-cgi';
 if (!file_exists($phpCgi)) {
     fwrite(STDERR, "php-cgi not found\n");
@@ -52,7 +49,7 @@ function getPhpSrcCommitHash(): string {
 }
 
 function runBench(): array {
-    $process = runValgrindPhpCgiCommand(['Zend/bench.php']);
+    $process = runValgrindPhpCgiCommand([dirname(__DIR__) . '/Zend/bench.php']);
     return ['instructions' => extractInstructionsFromValgrindOutput($process->stderr)];
 }
 
