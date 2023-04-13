@@ -603,6 +603,10 @@ ZEND_FUNCTION(get_parent_class)
 
 static zend_always_inline bool is_magic_method(zend_string *name)
 {
+	if (name == NULL) {
+		return false;
+	}
+
 	if (ZSTR_LEN(name) < 5) {
 		return false;
 	}
