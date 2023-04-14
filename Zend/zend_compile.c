@@ -7670,7 +7670,8 @@ static void zend_compile_accessors(
 		zend_ast **return_ast_ptr = &accessor->child[3];
 		zend_ast *orig_stmt_ast = *stmt_ast_ptr;
 		CG(zend_lineno) = accessor->start_lineno;
-		bool reset_return_ast = false, reset_param_type_ast = false;
+		bool reset_return_ast = false;
+		zend_ast **value_type_ast_ptr = NULL;
 		uint32_t accessor_kind;
 
 		uint32_t prop_visibility = prop_info->flags & ZEND_ACC_PPP_MASK;
@@ -7739,6 +7740,11 @@ static void zend_compile_accessors(
 
 		/* Abstract properties are neither explicit nor implicit. */
 		if (zend_string_equals_literal_ci(name, "get")) {
+			if (accessor->child[0]) {
+				zend_error_noreturn(E_COMPILE_ERROR, "get accessor of property %s::$%s must not have a parameter list",
+					ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+			}
+
 			accessor_kind = ZEND_ACCESSOR_GET;
 			accessor->child[0] = zend_ast_create_list(0, ZEND_AST_PARAM_LIST);
 
@@ -7746,14 +7752,28 @@ static void zend_compile_accessors(
 			*return_ast_ptr = prop_type_ast;
 		} else if (zend_string_equals_literal_ci(name, "set")) {
 			accessor_kind = ZEND_ACCESSOR_SET;
-			zend_string *param_name = zend_string_init("value", sizeof("value")-1, 0);
-			zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
-			zend_ast *param = zend_ast_create(
-				ZEND_AST_PARAM, prop_type_ast, param_name_ast,
-				/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL,
-				/* accessors */ NULL);
-			accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
-			reset_param_type_ast = true;
+
+			if (accessor->child[0]) {
+				zend_ast_list *param_list = zend_ast_get_list(accessor->child[0]);
+				if (param_list->children != 1) {
+					zend_error_noreturn(E_COMPILE_ERROR, "set accessor of property %s::$%s must accept exactly one parameters",
+						ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+				}
+				zend_ast *value_parameter = param_list->child[0];
+				if (!value_parameter->child[0]) {
+					value_type_ast_ptr = &value_parameter->child[0];
+					value_parameter->child[0] = prop_type_ast;
+				}
+			} else {
+				zend_string *param_name = zend_string_init("value", sizeof("value")-1, 0);
+				zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
+				zend_ast *param = zend_ast_create(
+					ZEND_AST_PARAM, prop_type_ast, param_name_ast,
+					/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL,
+					/* accessors */ NULL);
+				value_type_ast_ptr = &param->child[0];
+				accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
+			}
 		} else {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Unknown accessor \"%s\" for property %s::$%s, expected \"get\" or \"set\"",
@@ -7781,8 +7801,8 @@ static void zend_compile_accessors(
 		if (reset_return_ast) {
 			*return_ast_ptr = NULL;
 		}
-		if (reset_param_type_ast) {
-			zend_ast_get_list(accessor->child[0])->child[0]->child[0] = NULL;
+		if (value_type_ast_ptr) {
+			*value_type_ast_ptr = NULL;
 		}
 	}
 }
