@@ -871,7 +871,9 @@ static void _function_string(smart_str *str, zend_function *fptr, zend_class_ent
 
 static zval *property_get_default(zend_property_info *prop_info) {
 	zend_class_entry *ce = prop_info->ce;
-	if (prop_info->flags & ZEND_ACC_STATIC) {
+	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+		return NULL;
+	} else if (prop_info->flags & ZEND_ACC_STATIC) {
 		zval *prop = &ce->default_static_members_table[prop_info->offset];
 		ZVAL_DEINDIRECT(prop);
 		return prop;
@@ -918,7 +920,7 @@ static void _property_string(smart_str *str, zend_property_info *prop, const cha
 		smart_str_append_printf(str, "$%s", prop_name);
 
 		zval *default_value = property_get_default(prop);
-		if (!Z_ISUNDEF_P(default_value)) {
+		if (default_value && !Z_ISUNDEF_P(default_value)) {
 			smart_str_appends(str, " = ");
 			if (format_default_value(str, default_value) == FAILURE) {
 				return;
@@ -4019,7 +4021,7 @@ static void add_class_vars(zend_class_entry *ce, bool statics, zval *return_valu
 		}
 
 		prop = property_get_default(prop_info);
-		if (Z_ISUNDEF_P(prop)) {
+		if (!prop || Z_ISUNDEF_P(prop)) {
 			continue;
 		}
 
@@ -5847,7 +5849,7 @@ ZEND_METHOD(ReflectionProperty, hasDefaultValue)
 	}
 
 	prop = property_get_default(prop_info);
-	RETURN_BOOL(!Z_ISUNDEF_P(prop));
+	RETURN_BOOL(prop && !Z_ISUNDEF_P(prop));
 }
 /* }}} */
 
@@ -5872,7 +5874,7 @@ ZEND_METHOD(ReflectionProperty, getDefaultValue)
 	}
 
 	prop = property_get_default(prop_info);
-	if (Z_ISUNDEF_P(prop)) {
+	if (!prop || Z_ISUNDEF_P(prop)) {
 		return;
 	}
 
