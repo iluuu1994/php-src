@@ -403,6 +403,7 @@ void init_compiler(void) /* {{{ */
 {
 	CG(arena) = zend_arena_create(64 * 1024);
 	CG(active_op_array) = NULL;
+	CG(active_property_info) = NULL;
 	memset(&CG(context), 0, sizeof(CG(context)));
 	zend_init_compiler_data_structures();
 	zend_init_rsrc_list();
@@ -7918,7 +7919,9 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		info = zend_declare_typed_property(ce, name, &value_zv, flags, doc_comment, type);
 
 		if (accessors_ast) {
+			CG(active_property_info) = info;
 			zend_compile_accessors(info, name, type_ast, zend_ast_get_list(accessors_ast));
+			CG(active_property_info) = NULL;
 		}
 
 		if (attr_ast) {
@@ -8721,6 +8724,14 @@ static bool zend_try_ct_eval_magic_const(zval *zv, zend_ast *ast) /* {{{ */
 		case T_FUNC_C:
 			if (op_array && op_array->function_name) {
 				ZVAL_STR_COPY(zv, op_array->function_name);
+			} else {
+				ZVAL_EMPTY_STRING(zv);
+			}
+			break;
+		case T_PROPERTY_C:;
+			zend_property_info *prop_info = CG(active_property_info);
+			if (prop_info) {
+				ZVAL_STR_COPY(zv, prop_info->name);
 			} else {
 				ZVAL_EMPTY_STRING(zv);
 			}

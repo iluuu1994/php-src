@@ -178,6 +178,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_TRAIT_C         "'__TRAIT__'"
 %token <ident> T_METHOD_C        "'__METHOD__'"
 %token <ident> T_FUNC_C          "'__FUNCTION__'"
+%token <ident> T_PROPERTY_C      "'__PROPERTY__'"
 %token <ident> T_NS_C            "'__NAMESPACE__'"
 
 %token END 0 "end of file"
@@ -305,6 +306,7 @@ reserved_non_modifiers:
 	| T_FUNCTION | T_CONST | T_RETURN | T_PRINT | T_YIELD | T_LIST | T_SWITCH | T_ENDSWITCH | T_CASE | T_DEFAULT | T_BREAK
 	| T_ARRAY | T_CALLABLE | T_EXTENDS | T_IMPLEMENTS | T_NAMESPACE | T_TRAIT | T_INTERFACE | T_CLASS
 	| T_CLASS_C | T_TRAIT_C | T_FUNC_C | T_METHOD_C | T_LINE | T_FILE | T_DIR | T_NS_C | T_FN | T_MATCH | T_ENUM
+	| T_PROPERTY_C
 ;
 
 semi_reserved:
@@ -1436,6 +1438,7 @@ constant:
 	|	T_TRAIT_C	{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_TRAIT_C); }
 	|	T_METHOD_C	{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_METHOD_C); }
 	|	T_FUNC_C	{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_FUNC_C); }
+	|	T_PROPERTY_C	{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_PROPERTY_C); }
 	|	T_NS_C		{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_NS_C); }
 	|	T_CLASS_C	{ $$ = zend_ast_create_ex(ZEND_AST_MAGIC_CONST, T_CLASS_C); }
 ;
