@@ -247,6 +247,7 @@ jobs:
           ./buildconf --force
           ./configure \
             --disable-debug \
+            --disable-phar \
             --enable-mbstring \
             --enable-opcache \
             --enable-option-checking=fatal \
