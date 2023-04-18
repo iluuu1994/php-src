@@ -7934,36 +7934,63 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_IN_ARRAY_SPEC_CON
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
-
-	zend_class_entry *ce = EX(func)->common.scope;
-	// FIXME: Make sure we're in object context
-	zend_class_entry *parent_ce = ce->parent;
-	// FIXME: Assert there's a parent class
-
 	SAVE_OPLINE();
 
+	zend_class_entry *ce = EX(func)->common.scope;
+    ZEND_ASSERT(ce);
+
+	zend_class_entry *parent_ce = ce->parent;
+	if (!parent_ce) {
+		zend_throw_error(NULL, "Cannot use \"parent\" when current class scope has no parent");
+		UNDEF_RESULT();
+		HANDLE_EXCEPTION();
+	}
+
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	// FIXME: Compile to constant
 	zend_string *accessor_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
 
+    // FIXME: Handle private
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
-	// FIXME: Handle inexistent parent property
+	if (!prop_info) {
+		zend_throw_error(NULL, "Undefined property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
+		UNDEF_RESULT();
+		HANDLE_EXCEPTION();
+	}
 
 	zend_function **accessors = prop_info->accessors;
-	zend_function *accessor;
-	if (zend_string_equals_literal_ci(accessor_name, "get")) {
-		accessor = accessors[ZEND_ACCESSOR_GET];
-	} else {
-		ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
-		accessor = accessors[ZEND_ACCESSOR_SET];
-	}
-	// FIXME: Handle non-accessor
+	zend_function *accessor = NULL;
+	if (accessors) {
+        if (zend_string_equals_literal_ci(accessor_name, "get")) {
+            accessor = accessors[ZEND_ACCESSOR_GET];
+        } else {
+            ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
+            accessor = accessors[ZEND_ACCESSOR_SET];
+        }
+    }
 
-	zend_execute_data *call = zend_vm_stack_push_call_frame(
-		ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-		accessor,
-		opline->extended_value,
-		ZEND_THIS);
+	zend_execute_data *call;
+	if (accessor) {
+        call = zend_vm_stack_push_call_frame(
+            ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
+            accessor,
+            opline->extended_value,
+            ZEND_THIS);
+	} else {
+	    zend_function *fbc;
+        if (zend_string_equals_literal_ci(accessor_name, "get")) {
+            zend_property_hook_get_trampoline(&fbc);
+        } else {
+            ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
+            zend_property_hook_set_trampoline(&fbc);
+        }
+        zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
+        hook_call_info->object = Z_PTR_P(ZEND_THIS);
+        hook_call_info->property = property_name;
+        call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+            fbc, opline->extended_value, hook_call_info);
+        /* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
+        ZVAL_PTR(&call->This, hook_call_info);
+	}
 
 	call->prev_execute_data = EX(call);
 	EX(call) = call;

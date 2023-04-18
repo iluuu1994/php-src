@@ -41,9 +41,9 @@ var_dump($test);
 
 ?>
 --EXPECT--
-Cannot recursively write Test::$prop in accessor
-Cannot recursively read Test::$prop in accessor
-Cannot recursively read Test::$prop in accessor
-Cannot recursively read Test::$prop2 in accessor
+Must not write to virtual property Test::$prop
+Must not read from virtual property Test::$prop
+Must not read from virtual property Test::$prop
+Must not read from virtual property Test::$prop2
 object(Test)#1 (0) {
 }
