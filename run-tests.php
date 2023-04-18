@@ -2490,6 +2490,7 @@ COMMAND $cmd
     $startTime = $hrtime[0] * 1000000000 + $hrtime[1];
 
     $stdin = $test->hasSection('STDIN') ? $test->getSection('STDIN') : null;
+    echo "Runner $workerID running test '$test_file'...\n";
     $out = system_with_timeout($cmd, $env, $stdin, $captureStdIn, $captureStdOut, $captureStdErr);
 
     $junit->stopTimer($shortname);
