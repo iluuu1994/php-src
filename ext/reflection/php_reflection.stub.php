@@ -434,6 +434,8 @@ class ReflectionProperty implements Reflector
     public const int IS_PROTECTED = UNKNOWN;
     /** @cvalue ZEND_ACC_PRIVATE */
     public const int IS_PRIVATE = UNKNOWN;
+    /** @cvalue ZEND_ACC_ABSTRACT */
+    public const int IS_ABSTRACT = UNKNOWN;
 
     public string $name;
     public string $class;
@@ -474,6 +476,10 @@ class ReflectionProperty implements Reflector
     /** @tentative-return-type */
     public function isDefault(): bool {}
 
+    public function isAbstract(): bool {}
+
+    public function isVirtual(): bool {}
+
     public function isPromoted(): bool {}
 
     /** @tentative-return-type */
@@ -500,6 +506,11 @@ class ReflectionProperty implements Reflector
     public function getDefaultValue(): mixed {}
 
     public function getAttributes(?string $name = null, int $flags = 0): array {}
+
+    /** @return array<string, ReflectionMethod> */
+    public function getHooks(): array {}
+
+    public function getHook(string $name): ?ReflectionMethod {}
 }
 
 /** @not-serializable */
