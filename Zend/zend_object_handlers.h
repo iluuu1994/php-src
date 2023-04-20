@@ -23,15 +23,31 @@
 #include <stdint.h>
 
 struct _zend_property_info;
+struct zend_object;
+struct zend_string;
+
+typedef struct {
+	zend_object *object;
+	zend_string *property;
+} zend_parent_hook_call_info;
 
 #define ZEND_WRONG_PROPERTY_INFO \
 	((struct _zend_property_info*)((intptr_t)-1))
 
 #define ZEND_DYNAMIC_PROPERTY_OFFSET               ((uintptr_t)(intptr_t)(-1))
 
-#define IS_VALID_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) > 0)
+#define IS_VALID_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) >= 8)
 #define IS_WRONG_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) == 0)
+#define IS_ACCESSOR_PROPERTY_OFFSET(offset) \
+	((intptr_t)(offset) > 0 && (intptr_t)(offset) < 8)
 #define IS_DYNAMIC_PROPERTY_OFFSET(offset)         ((intptr_t)(offset) < 0)
+
+#define ZEND_ACCESSOR_SIMPLE_READ_BIT 2u
+#define ZEND_ACCESSOR_SIMPLE_WRITE_BIT 4u
+#define ZEND_IS_ACCESSOR_SIMPLE_READ(offset) \
+	(((offset) & ZEND_ACCESSOR_SIMPLE_READ_BIT) != 0)
+#define ZEND_IS_ACCESSOR_SIMPLE_WRITE(offset) \
+	(((offset) & ZEND_ACCESSOR_SIMPLE_WRITE_BIT) != 0)
 
 #define IS_UNKNOWN_DYNAMIC_PROPERTY_OFFSET(offset) (offset == ZEND_DYNAMIC_PROPERTY_OFFSET)
 #define ZEND_DECODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-(intptr_t)(offset) - 2))
@@ -248,6 +264,9 @@ ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purp
 /* Will call get_properties_for handler or use default behavior. For use by
  * consumers of the get_properties_for API. */
 ZEND_API HashTable *zend_get_properties_for(zval *obj, zend_prop_purpose purpose);
+
+ZEND_API zend_result zend_property_hook_get_trampoline(zend_function **fptr_ptr);
+ZEND_API zend_result zend_property_hook_set_trampoline(zend_function **fptr_ptr);
 
 #define zend_release_properties(ht) do { \
 	if ((ht) && !(GC_FLAGS(ht) & GC_IMMUTABLE) && !GC_DELREF(ht)) { \
