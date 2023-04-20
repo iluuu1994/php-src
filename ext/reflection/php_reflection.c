@@ -876,7 +876,9 @@ static void _function_string(smart_str *str, zend_function *fptr, zend_class_ent
 
 static zval *property_get_default(zend_property_info *prop_info) {
 	zend_class_entry *ce = prop_info->ce;
-	if (prop_info->flags & ZEND_ACC_STATIC) {
+	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+		return NULL;
+	} else if (prop_info->flags & ZEND_ACC_STATIC) {
 		zval *prop = &ce->default_static_members_table[prop_info->offset];
 		ZVAL_DEINDIRECT(prop);
 		return prop;
@@ -923,7 +925,7 @@ static void _property_string(smart_str *str, zend_property_info *prop, const cha
 		smart_str_append_printf(str, "$%s", prop_name);
 
 		zval *default_value = property_get_default(prop);
-		if (!Z_ISUNDEF_P(default_value)) {
+		if (default_value && !Z_ISUNDEF_P(default_value)) {
 			smart_str_appends(str, " = ");
 			if (format_default_value(str, default_value) == FAILURE) {
 				return;
@@ -4062,7 +4064,7 @@ static void add_class_vars(zend_class_entry *ce, bool statics, zval *return_valu
 		}
 
 		prop = property_get_default(prop_info);
-		if (Z_ISUNDEF_P(prop)) {
+		if (!prop || Z_ISUNDEF_P(prop)) {
 			continue;
 		}
 
@@ -5603,6 +5605,16 @@ ZEND_METHOD(ReflectionProperty, isReadOnly)
 	_property_check_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_READONLY);
 }
 
+ZEND_METHOD(ReflectionProperty, isAbstract)
+{
+	_property_check_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_ABSTRACT);
+}
+
+ZEND_METHOD(ReflectionProperty, isVirtual)
+{
+	_property_check_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_VIRTUAL);
+}
+
 /* {{{ Returns whether this property is default (declared at compilation time). */
 ZEND_METHOD(ReflectionProperty, isDefault)
 {
@@ -5629,7 +5641,7 @@ ZEND_METHOD(ReflectionProperty, getModifiers)
 {
 	reflection_object *intern;
 	property_reference *ref;
-	uint32_t keep_flags = ZEND_ACC_PPP_MASK | ZEND_ACC_STATIC | ZEND_ACC_READONLY;
+	uint32_t keep_flags = ZEND_ACC_PPP_MASK | ZEND_ACC_STATIC | ZEND_ACC_READONLY | ZEND_ACC_ABSTRACT | ZEND_ACC_VIRTUAL;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		RETURN_THROWS();
@@ -5880,7 +5892,7 @@ ZEND_METHOD(ReflectionProperty, hasDefaultValue)
 	}
 
 	prop = property_get_default(prop_info);
-	RETURN_BOOL(!Z_ISUNDEF_P(prop));
+	RETURN_BOOL(prop && !Z_ISUNDEF_P(prop));
 }
 /* }}} */
 
@@ -5905,7 +5917,7 @@ ZEND_METHOD(ReflectionProperty, getDefaultValue)
 	}
 
 	prop = property_get_default(prop_info);
-	if (Z_ISUNDEF_P(prop)) {
+	if (!prop || Z_ISUNDEF_P(prop)) {
 		return;
 	}
 
@@ -5922,6 +5934,64 @@ ZEND_METHOD(ReflectionProperty, getDefaultValue)
 	}
 }
 /* }}} */
+
+ZEND_METHOD(ReflectionProperty, getHooks)
+{
+	reflection_object *intern;
+	property_reference *ref;
+
+	ZEND_PARSE_PARAMETERS_NONE();
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	if (!ref->prop->hooks) {
+		RETURN_EMPTY_ARRAY();
+	}
+
+	array_init(return_value);
+	if (ref->prop->hooks[ZEND_PROPERTY_HOOK_GET]) {
+		zval hook_obj;
+		zend_function *hook = ref->prop->hooks[ZEND_PROPERTY_HOOK_GET];
+		reflection_method_factory(hook->common.scope, hook, NULL, &hook_obj);
+		zend_hash_update(Z_ARRVAL_P(return_value), ZSTR_KNOWN(ZEND_STR_GET), &hook_obj);
+	}
+	if (ref->prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+		zval hook_obj;
+		zend_function *hook = ref->prop->hooks[ZEND_PROPERTY_HOOK_SET];
+		reflection_method_factory(hook->common.scope, hook, NULL, &hook_obj);
+		zend_hash_update(Z_ARRVAL_P(return_value), ZSTR_KNOWN(ZEND_STR_SET), &hook_obj);
+	}
+}
+
+ZEND_METHOD(ReflectionProperty, getHook)
+{
+	reflection_object *intern;
+	property_reference *ref;
+	zend_string *name;
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_STR(name)
+	ZEND_PARSE_PARAMETERS_END();
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	zend_function *hook;
+	if (zend_string_equals_literal_ci(name, "get")) {
+		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_GET] : NULL;
+	} else if (zend_string_equals_literal_ci(name, "set")) {
+		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_SET] : NULL;
+	} else {
+		zend_throw_exception_ex(reflection_exception_ptr, 0,
+			"Property hook \"%s\" does not exist", ZSTR_VAL(name));
+		RETURN_THROWS();
+	}
+
+	if (!hook) {
+		RETURN_NULL();
+	}
+
+	reflection_method_factory(hook->common.scope, hook, NULL, return_value);
+}
 
 /* {{{ Constructor. Throws an Exception in case the given extension does not exist */
 ZEND_METHOD(ReflectionExtension, __construct)

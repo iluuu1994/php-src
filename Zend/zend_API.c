@@ -4259,6 +4259,16 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		property_info = pemalloc(sizeof(zend_property_info), 1);
 	} else {
 		property_info = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
+	}
+
+	if ((access_type & ZEND_ACC_VIRTUAL) && (!property || Z_TYPE_P(property) == IS_UNDEF)) {
+		/* Virtual properties have no backing storage, the offset should never be used. The virtual
+		 * flag may still be removed during inheritance. So allow adding it, but throw if the flag
+		 * hasn't been removed after inheritance. */
+		property_info->offset = (uint32_t)-1;
+		goto skip_default_property;
+	}
+	if (!(ce->type == ZEND_INTERNAL_CLASS)) {
 		if (Z_TYPE_P(property) == IS_CONSTANT_AST) {
 			ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
 			if (access_type & ZEND_ACC_STATIC) {
@@ -4319,13 +4329,14 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		ZVAL_COPY_VALUE(property_default_ptr, property);
 		Z_PROP_FLAG_P(property_default_ptr) = Z_ISUNDEF_P(property) ? IS_PROP_UNINIT : 0;
 	}
+skip_default_property:
 	if (ce->type & ZEND_INTERNAL_CLASS) {
 		/* Must be interned to avoid ZTS data races */
 		if (is_persistent_class(ce)) {
 			name = zend_new_interned_string(zend_string_copy(name));
 		}
 
-		if (Z_REFCOUNTED_P(property)) {
+		if (property && Z_REFCOUNTED_P(property)) {
 			zend_error_noreturn(E_CORE_ERROR, "Internal zvals cannot be refcounted");
 		}
 	}
@@ -4343,6 +4354,7 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 	property_info->flags = access_type;
 	property_info->doc_comment = doc_comment;
 	property_info->attributes = NULL;
+	property_info->hooks = NULL;
 	property_info->ce = ce;
 	property_info->type = type;
 
