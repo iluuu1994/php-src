@@ -633,10 +633,11 @@ struct _zend_ast_ref {
 #define ZEND_GUARD_PROPERTY_SET		(1<<1)
 #define ZEND_GUARD_PROPERTY_UNSET	(1<<2)
 #define ZEND_GUARD_PROPERTY_ISSET	(1<<3)
-#define ZEND_GUARD_PROPERTY_MASK	15
-#define ZEND_GUARD_RECURSION_DEBUG	(1<<4)
-#define ZEND_GUARD_RECURSION_EXPORT	(1<<5)
-#define ZEND_GUARD_RECURSION_JSON	(1<<6)
+#define ZEND_GUARD_PROPERTY_HOOK	(1<<4)
+#define ZEND_GUARD_PROPERTY_MASK	31
+#define ZEND_GUARD_RECURSION_DEBUG	(1<<5)
+#define ZEND_GUARD_RECURSION_EXPORT	(1<<6)
+#define ZEND_GUARD_RECURSION_JSON	(1<<7)
 
 #define ZEND_GUARD_RECURSION_TYPE(t) ZEND_GUARD_RECURSION_ ## t
 
@@ -656,6 +657,10 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 /* we should never set just Z_TYPE, we should set Z_TYPE_INFO */
 #define Z_TYPE(zval)				zval_get_type(&(zval))
 #define Z_TYPE_P(zval_p)			Z_TYPE(*(zval_p))
+
+/* Assign type without affecting other u1.v flags. */
+#define Z_TYPE_EX(zval)				(zval).u1.v.type
+#define Z_TYPE_EX_P(zval_p)			Z_TYPE_EX(*(zval_p))
 
 #define Z_TYPE_FLAGS(zval)			(zval).u1.v.type_flags
 #define Z_TYPE_FLAGS_P(zval_p)		Z_TYPE_FLAGS(*(zval_p))
