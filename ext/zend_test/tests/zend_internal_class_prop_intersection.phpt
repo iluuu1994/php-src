@@ -40,7 +40,7 @@ $o->classIntersectionProp = new I();
 ?>
 ==DONE==
 --EXPECT--
-Error: Typed property _ZendTestClass::$classIntersectionProp must not be accessed before initialization
+Error: Property _ZendTestClass::$classIntersectionProp must not be accessed before initialization
 Cannot assign EmptyIterator to property _ZendTestClass::$classIntersectionProp of type Traversable&Countable
 Cannot assign C to property _ZendTestClass::$classIntersectionProp of type Traversable&Countable
 ==DONE==

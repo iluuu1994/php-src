@@ -89,6 +89,7 @@ struct _zend_compiler_globals {
 	int zend_lineno;
 
 	zend_op_array *active_op_array;
+	zend_property_info *active_property_info;
 
 	HashTable *function_table;	/* function symbol table */
 	HashTable *class_table;		/* class table */

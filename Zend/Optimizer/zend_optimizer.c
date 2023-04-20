@@ -338,6 +338,7 @@ bool zend_optimizer_update_op1_const(zend_op_array *op_array,
 			}
 			zend_optimizer_add_literal_string(op_array, zend_string_tolower(Z_STR_P(val)));
 			break;
+		// FIXME: Needs anything?
 		case ZEND_FETCH_CLASS_CONSTANT:
 			REQUIRES_STRING(val);
 			drop_leading_backslash(val);
@@ -531,6 +532,7 @@ bool zend_optimizer_update_op2_const(zend_op_array *op_array,
 				opline->result.num = alloc_cache_slots(op_array, 2);
 			}
 			break;
+		// FIXME: Needs anything?
 		case ZEND_ASSIGN_OBJ:
 		case ZEND_ASSIGN_OBJ_REF:
 		case ZEND_FETCH_OBJ_R:
@@ -880,6 +882,7 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
+		// FIXME: Needs anything?
 		case ZEND_INIT_METHOD_CALL:
 			if (opline->op1_type == IS_UNUSED
 					&& opline->op2_type == IS_CONST && Z_TYPE_P(CRT_CONSTANT(opline->op2)) == IS_STRING
@@ -1421,6 +1424,7 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 {
 	zval *zv;
 	zend_op_array *op_array;
+	zend_property_info *property;
 
 	zend_foreach_op_array_helper(&script->main_op_array, func, context);
 
@@ -1439,6 +1443,17 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 					&& !(op_array->fn_flags & ZEND_ACC_ABSTRACT)
 					&& !(op_array->fn_flags & ZEND_ACC_TRAIT_CLONE)) {
 				zend_foreach_op_array_helper(op_array, func, context);
+			}
+		} ZEND_HASH_FOREACH_END();
+		ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property) {
+			zend_function **accessors = property->accessors;
+			if (accessors) {
+				if (accessors[ZEND_ACCESSOR_GET]) {
+					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_GET], func, context);
+				}
+				if (accessors[ZEND_ACCESSOR_SET]) {
+					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_SET], func, context);
+				}
 			}
 		} ZEND_HASH_FOREACH_END();
 	} ZEND_HASH_FOREACH_END();

@@ -21,5 +21,5 @@ try {
 
 ?>
 --EXPECT--
-Typed property Test::$i must not be accessed before initialization
-Typed property Test::$i must not be accessed before initialization
+Property Test::$i must not be accessed before initialization
+Property Test::$i must not be accessed before initialization
