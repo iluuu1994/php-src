@@ -421,6 +421,12 @@ class ReflectionObject extends ReflectionClass
     public function __construct(object $object) {}
 }
 
+enum PropertyHookType: string
+{
+    case Get = 'get';
+    case Set = 'set';
+}
+
 /** @not-serializable */
 class ReflectionProperty implements Reflector
 {
@@ -434,6 +440,8 @@ class ReflectionProperty implements Reflector
     public const int IS_PROTECTED = UNKNOWN;
     /** @cvalue ZEND_ACC_PRIVATE */
     public const int IS_PRIVATE = UNKNOWN;
+    /** @cvalue ZEND_ACC_ABSTRACT */
+    public const int IS_ABSTRACT = UNKNOWN;
 
     public string $name;
     public string $class;
@@ -453,6 +461,10 @@ class ReflectionProperty implements Reflector
 
     /** @tentative-return-type */
     public function setValue(mixed $objectOrValue, mixed $value = UNKNOWN): void {}
+
+    public function getRawValue(object $object): mixed {}
+
+    public function setRawValue(object $object, mixed $value): void {}
 
     /** @tentative-return-type */
     public function isInitialized(?object $object = null): bool {}
@@ -474,6 +486,10 @@ class ReflectionProperty implements Reflector
     /** @tentative-return-type */
     public function isDefault(): bool {}
 
+    public function isAbstract(): bool {}
+
+    public function isVirtual(): bool {}
+
     public function isPromoted(): bool {}
 
     /** @tentative-return-type */
@@ -491,6 +507,8 @@ class ReflectionProperty implements Reflector
     /** @tentative-return-type */
     public function getType(): ?ReflectionType {}
 
+    public function getSettableType(): ?ReflectionType {}
+
     /** @tentative-return-type */
     public function hasType(): bool {}
 
@@ -500,6 +518,11 @@ class ReflectionProperty implements Reflector
     public function getDefaultValue(): mixed {}
 
     public function getAttributes(?string $name = null, int $flags = 0): array {}
+
+    /** @return array<string, ReflectionMethod> */
+    public function getHooks(): array {}
+
+    public function getHook(PropertyHookType $type): ?ReflectionMethod {}
 }
 
 /** @not-serializable */
