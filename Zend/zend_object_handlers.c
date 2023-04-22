@@ -41,6 +41,7 @@
 #define IN_SET		(1<<1)
 #define IN_UNSET	(1<<2)
 #define IN_ISSET	(1<<3)
+#define IN_BEFORE_SET	(1<<4)
 
 /*
   __X accessors explanation:
@@ -752,12 +753,9 @@ try_again:
 					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 				return &EG(uninitialized_zval);
 			} else {
-				if (cache_slot) {
-					/* Cache the fact that this accessor has trivial read. This only applies to
-					* BP_VAR_R and BP_VAR_IS fetches. */
-					CACHE_PTR_EX(cache_slot + 1,
-						(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_READ_BIT));
-				}
+				/* Cache the fact that this accessor has trivial read. This only applies to
+				 * BP_VAR_R and BP_VAR_IS fetches. */
+				ZEND_SET_ACCESSOR_SIMPLE_READ(cache_slot);
 
 				retval = OBJ_PROP(zobj, prop_info->offset);
 				if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
@@ -1042,52 +1040,65 @@ found:;
 		}
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *set = prop_info->accessors[ZEND_ACCESSOR_SET];
-		if (!set) {
-			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-				zend_throw_error(NULL, "Property %s::$%s is read-only",
-					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-				return &EG(error_zval);
-			} else {
-				if (cache_slot) {
-					/* Cache the fact that this accessor has trivial write. */
-					CACHE_PTR_EX(cache_slot + 1,
-						(void*)((uintptr_t)CACHED_PTR_EX(cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_WRITE_BIT));
-				}
+		zend_function *before_set = prop_info->accessors[ZEND_ACCESSOR_BEFORE_SET];
 
-				property_offset = prop_info->offset;
-				if (!ZEND_TYPE_IS_SET(prop_info->type)) {
-					prop_info = NULL;
-				}
-				goto try_again;
-			}
-		}
-
-		bool silent = zobj->ce->__set != NULL;
-		set = check_accessor_visibility(&prop_info, zobj->ce, name, set, silent);
-		if (set) {
-			uint32_t *guard = zend_get_property_guard(zobj, name);
-			if (UNEXPECTED((*guard) & IN_SET)) {
-				if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-					zend_throw_error(NULL, "Must not write to virtual property %s::$%s",
-						 ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-					return &EG(error_zval);
-				}
-				property_offset = prop_info->offset;
-				if (!ZEND_TYPE_IS_SET(prop_info->type)) {
-					prop_info = NULL;
-				}
-				goto try_again;
-			}
-
-			GC_ADDREF(zobj);
-			(*guard) |= IN_SET;
-			zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
-			(*guard) &= ~IN_SET;
-			OBJ_RELEASE(zobj);
-			return value;
-		} else if (!silent) {
+		if (!set && prop_info->flags & ZEND_ACC_VIRTUAL) {
+			zend_throw_error(NULL, "Property %s::$%s is read-only", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 			return &EG(error_zval);
 		}
+
+		if (before_set) {
+			uint32_t *guard = zend_get_property_guard(zobj, name);
+			if (!((*guard) & IN_BEFORE_SET)) {
+				zval retval;
+				GC_ADDREF(zobj);
+				(*guard) |= IN_BEFORE_SET;
+				zend_call_known_instance_method_with_1_params(before_set, zobj, &retval, value);
+				(*guard) &= ~IN_BEFORE_SET;
+				OBJ_RELEASE(zobj);
+				if (EG(exception)) {
+					return &EG(error_zval);
+				}
+				zval_ptr_dtor(value);
+				ZVAL_COPY_VALUE(value, &retval);
+				if (EG(exception)) {
+					return &EG(error_zval);
+				}
+			}
+		}
+
+		if (!set) {
+			ZEND_ASSERT(!(prop_info->flags & ZEND_ACC_VIRTUAL));
+			if (!before_set) {
+				ZEND_SET_ACCESSOR_SIMPLE_WRITE(cache_slot);
+			}
+			property_offset = prop_info->offset;
+			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
+				prop_info = NULL;
+			}
+			goto try_again;
+		}
+
+		uint32_t *guard = zend_get_property_guard(zobj, name);
+		if (UNEXPECTED((*guard) & IN_SET)) {
+			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+				zend_throw_error(NULL, "Must not write to virtual property %s::$%s",
+					 ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				return &EG(error_zval);
+			}
+			property_offset = prop_info->offset;
+			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
+				prop_info = NULL;
+			}
+			goto try_again;
+		}
+
+		GC_ADDREF(zobj);
+		(*guard) |= IN_SET;
+		zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
+		(*guard) &= ~IN_SET;
+		OBJ_RELEASE(zobj);
+		return value;
 	} else if (UNEXPECTED(EG(exception))) {
 		variable_ptr = &EG(error_zval);
 		goto exit;

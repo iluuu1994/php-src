@@ -4572,9 +4572,10 @@ static void zend_compile_parent_accessor_call(znode *result, zend_ast *ast, uint
 	zend_ast *args_ast = ast->child[1];
 
 	zend_string *name = zend_ast_get_str(name_ast);
-	// Accessor names are always 3 characters at the moment (get, set)
-	zend_string *accessor_name = zend_string_init(ZSTR_VAL(name) + ZSTR_LEN(name) - 3, 3, /* persistent */ false);
-	zend_string *property_name = zend_string_init(ZSTR_VAL(name) + strlen("parent::$"), ZSTR_LEN(name) - strlen("parent::$") - strlen("::") - 3, /* persistent */ false);
+	char *property_name_start = ZSTR_VAL(name) + strlen("parent::$");
+	char *accessor_name_start = strchr(property_name_start, ':') + 2;
+	zend_string *property_name = zend_string_init(property_name_start, accessor_name_start - property_name_start - 2, /* persistent */ false);
+	zend_string *accessor_name = zend_string_init(accessor_name_start, (ZSTR_VAL(name) + ZSTR_LEN(name)) - accessor_name_start, /* persistent */ false);
 
 	// FIXME: Assert the handler has the same name
 	// FIXME: Assert the method is an accessor
@@ -6869,17 +6870,17 @@ static uint32_t get_virtual_flag(zend_ast *accessors_ast) {
 		return 0;
 	}
 
-	/* If any of the accessors are auto-generated, a backing property is needed. */
 	zend_ast_list *accessors = zend_ast_get_list(accessors_ast);
 	for (uint32_t i = 0; i < accessors->children; i++) {
 		zend_ast_decl *accessor = (zend_ast_decl *) accessors->child[i];
-		if (!accessor->child[2]) {
-			return 0;
+		zend_string *name = accessor->name;
+		if ((zend_string_equals_literal_ci(name, "get") || zend_string_equals_literal_ci(name, "set"))
+		 && accessor->child[2] != NULL) {
+			return ZEND_ACC_VIRTUAL;
 		}
 	}
 
-	/* This property is purely virtual. */
-	return ZEND_ACC_VIRTUAL;
+	return 0;
 }
 
 static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32_t fallback_return_type) /* {{{ */
@@ -7738,26 +7739,35 @@ static void zend_compile_accessors(
 				ZSTR_VAL(name));
 		}
 
-		/* Abstract properties are neither explicit nor implicit. */
 		if (zend_string_equals_literal_ci(name, "get")) {
+			accessor_kind = ZEND_ACCESSOR_GET;
+		} else if (zend_string_equals_literal_ci(name, "set")) {
+			accessor_kind = ZEND_ACCESSOR_SET;
+		} else if (zend_string_equals_literal_ci(name, "beforeSet")) {
+			accessor_kind = ZEND_ACCESSOR_BEFORE_SET;
+		} else {
+			zend_error_noreturn(E_COMPILE_ERROR,
+								"Unknown accessor \"%s\" for property %s::$%s, expected \"get\", \"set\" or \"beforeSet\"",
+								ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+		}
+
+		if (accessor_kind == ZEND_ACCESSOR_GET) {
 			if (accessor->child[0]) {
 				zend_error_noreturn(E_COMPILE_ERROR, "get accessor of property %s::$%s must not have a parameter list",
 					ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 			}
 
-			accessor_kind = ZEND_ACCESSOR_GET;
 			accessor->child[0] = zend_ast_create_list(0, ZEND_AST_PARAM_LIST);
 
 			reset_return_ast = true;
 			*return_ast_ptr = prop_type_ast;
-		} else if (zend_string_equals_literal_ci(name, "set")) {
-			accessor_kind = ZEND_ACCESSOR_SET;
-
+		} else if (accessor_kind == ZEND_ACCESSOR_SET || accessor_kind == ZEND_ACCESSOR_BEFORE_SET) {
 			if (accessor->child[0]) {
 				zend_ast_list *param_list = zend_ast_get_list(accessor->child[0]);
 				if (param_list->children != 1) {
-					zend_error_noreturn(E_COMPILE_ERROR, "set accessor of property %s::$%s must accept exactly one parameters",
-						ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+					const char *accessor_name = accessor_kind == ZEND_ACCESSOR_SET ? "set" : "beforeSet";
+					zend_error_noreturn(E_COMPILE_ERROR, "%s accessor of property %s::$%s must accept exactly one parameters",
+										accessor_name, ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 				}
 				zend_ast *value_parameter = param_list->child[0];
 				if (!value_parameter->child[0]) {
@@ -7775,9 +7785,7 @@ static void zend_compile_accessors(
 				accessor->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
 			}
 		} else {
-			zend_error_noreturn(E_COMPILE_ERROR,
-				"Unknown accessor \"%s\" for property %s::$%s, expected \"get\" or \"set\"",
-				ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+			ZEND_UNREACHABLE();
 		}
 
 		accessor->name = zend_strpprintf(0, "$%s::%s", ZSTR_VAL(prop_name), ZSTR_VAL(name));
@@ -7804,6 +7812,14 @@ static void zend_compile_accessors(
 		if (value_type_ast_ptr) {
 			*value_type_ast_ptr = NULL;
 		}
+	}
+
+	if (ce->parent_name == NULL
+	 && (prop_info->flags & ZEND_ACC_VIRTUAL)
+	 && !prop_info->accessors[ZEND_ACCESSOR_SET]
+	 && prop_info->accessors[ZEND_ACCESSOR_BEFORE_SET]) {
+		zend_error_noreturn(E_COMPILE_ERROR,
+			"Virtual readonly property %s::$%s must not declare beforeSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
 	}
 }
 

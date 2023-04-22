@@ -1315,6 +1315,18 @@ static prop_variance prop_get_variance(zend_property_info *prop_info) {
 	return PROP_INVARIANT;
 }
 
+static void verify_accessors(zend_class_entry *ce, zend_property_info *prop_info)
+{
+	zend_function **accessors = prop_info->accessors;
+	if ((prop_info->flags & ZEND_ACC_VIRTUAL)
+	 && accessors
+	 && !accessors[ZEND_ACCESSOR_SET]
+	 && accessors[ZEND_ACCESSOR_BEFORE_SET]) {
+		zend_error_noreturn(E_COMPILE_ERROR,
+			"Virtual readonly property %s::$%s must not declare beforeSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
+	}
+}
+
 static void do_inherit_property(zend_property_info *parent_info, zend_string *key, zend_class_entry *ce) /* {{{ */
 {
 	zval *child = zend_hash_find_known_hash(&ce->properties_info, key);
@@ -1358,15 +1370,23 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 
 				child_info->offset = parent_info->offset;
 				child_info->flags &= ~ZEND_ACC_VIRTUAL;
+			} else if (!(child_info->flags & ZEND_ACC_STATIC) && (parent_info->flags & ZEND_ACC_VIRTUAL)) {
+				child_info->offset = (uint32_t)-1;
+				child_info->flags |= ZEND_ACC_VIRTUAL;
 			}
 
 			zend_function **parent_accessors = parent_info->accessors;
 			zend_function **child_accessors = child_info->accessors;
-			if (child_accessors) {
-				if (parent_accessors) {
+			if (parent_accessors) {
+				if (child_accessors) {
 					for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
 						inherit_accessor(ce, &parent_accessors[i], &child_accessors[i]);
 					}
+				} else if (parent_info->flags & ZEND_ACC_VIRTUAL) {
+					zend_error_noreturn(E_COMPILE_ERROR,
+						"Non-virtual property %s::$%s must not redeclare virtual property %s::$%s",
+						ZSTR_VAL(ce->name), ZSTR_VAL(key),
+						ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key));
 				}
 			}
 
@@ -1716,6 +1736,10 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 			do_inherit_property(property_info, key, ce);
 		} ZEND_HASH_FOREACH_END();
 	}
+
+	ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, property_info) {
+		verify_accessors(ce, property_info);
+	} ZEND_HASH_FOREACH_END();
 
 	if (zend_hash_num_elements(&parent_ce->constants_table)) {
 		zend_class_constant *c;

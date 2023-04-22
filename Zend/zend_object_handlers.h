@@ -48,6 +48,20 @@ typedef struct {
 	(((offset) & ZEND_ACCESSOR_SIMPLE_READ_BIT) != 0)
 #define ZEND_IS_ACCESSOR_SIMPLE_WRITE(offset) \
 	(((offset) & ZEND_ACCESSOR_SIMPLE_WRITE_BIT) != 0)
+#define ZEND_SET_ACCESSOR_SIMPLE_READ(cache_slot) \
+	do { \
+		void **__cache_slot = (cache_slot); \
+		if (__cache_slot) { \
+			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_READ_BIT)); \
+		} \
+	} while (0)
+#define ZEND_SET_ACCESSOR_SIMPLE_WRITE(cache_slot) \
+	do { \
+		void **__cache_slot = (cache_slot); \
+		if (__cache_slot) { \
+			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_WRITE_BIT)); \
+		} \
+	} while (0)
 
 #define IS_UNKNOWN_DYNAMIC_PROPERTY_OFFSET(offset) (offset == ZEND_DYNAMIC_PROPERTY_OFFSET)
 #define ZEND_DECODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-(intptr_t)(offset) - 2))
