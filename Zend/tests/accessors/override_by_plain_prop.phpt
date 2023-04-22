@@ -14,17 +14,6 @@ class B extends A {
     public $prop;
 }
 
-$a = new A;
-$a->prop = 1;
-var_dump($a->prop);
-
-$b = new B;
-$b->prop = 1;
-var_dump($b->prop);
-
 ?>
---EXPECT--
-A::$prop::set
-A::$prop::get
-int(42)
-int(1)
+--EXPECTF--
+Fatal error: Non-virtual property B::$prop must not redeclare virtual property A::$prop in %s on line %d

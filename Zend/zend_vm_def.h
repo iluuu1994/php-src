@@ -9543,9 +9543,12 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
 	if (accessors) {
         if (zend_string_equals_literal_ci(accessor_name, "get")) {
             accessor = accessors[ZEND_ACCESSOR_GET];
-        } else {
-            ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
+        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
             accessor = accessors[ZEND_ACCESSOR_SET];
+        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")) {
+            accessor = accessors[ZEND_ACCESSOR_BEFORE_SET];
+        } else {
+            ZEND_UNREACHABLE();
         }
     }
 
@@ -9560,9 +9563,14 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
 	    zend_function *fbc;
         if (zend_string_equals_literal_ci(accessor_name, "get")) {
             zend_property_hook_get_trampoline(&fbc);
-        } else {
-            ZEND_ASSERT(zend_string_equals_literal_ci(accessor_name, "set"));
+        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
             zend_property_hook_set_trampoline(&fbc);
+        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")) {
+            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(accessor_name));
+            UNDEF_RESULT();
+            HANDLE_EXCEPTION();
+        } else {
+            ZEND_UNREACHABLE();
         }
         zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
         hook_call_info->object = Z_PTR_P(ZEND_THIS);
