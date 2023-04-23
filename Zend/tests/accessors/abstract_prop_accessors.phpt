@@ -1,5 +1,5 @@
 --TEST--
-Explicit accessor property satisfies abstract property
+Explicit hook property satisfies abstract property
 --FILE--
 <?php
 

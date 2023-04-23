@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook on readonly property inherited
+Defining a get and beforeSet hook with no set hook via inheritance is illegal
 --FILE--
 <?php
 
@@ -21,4 +21,4 @@ var_dump($c);
 
 ?>
 --EXPECTF--
-Fatal error: Virtual readonly property C::$prop must not declare beforeSet hook in %s on line %d
+Fatal error: Virtual read-only property C::$prop must not declare beforeSet hook in %s on line %d

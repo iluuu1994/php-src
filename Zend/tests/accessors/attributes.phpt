@@ -1,16 +1,16 @@
 --TEST--
-Accessor AST printing
+Hooks accept method-targeted attributes
 --FILE--
 <?php
 
 #[Attribute]
 class A {}
 
-#[Attribute]
+#[Attribute(Attribute::TARGET_METHOD)]
 class B {}
 
 class C {
-    public $prop { 
+    public $prop {
         #[A] get {}
         #[B] set {}
     }

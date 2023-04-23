@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook garbage dtor
+A beforeSet hook discards its parameter if not used
 --FILE--
 <?php
 

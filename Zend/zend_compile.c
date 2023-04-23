@@ -7819,7 +7819,7 @@ static void zend_compile_accessors(
 	 && !prop_info->accessors[ZEND_ACCESSOR_SET]
 	 && prop_info->accessors[ZEND_ACCESSOR_BEFORE_SET]) {
 		zend_error_noreturn(E_COMPILE_ERROR,
-			"Virtual readonly property %s::$%s must not declare beforeSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
+			"Virtual read-only property %s::$%s must not declare beforeSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
 	}
 }
 

@@ -1,5 +1,5 @@
 --TEST--
-Abstract property with abstract accessor
+Abstract property with abstract hook is redundant so invalid
 --FILE--
 <?php
 

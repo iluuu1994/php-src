@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook inheritance
+beforeSet hook inheritance can access parent hooks
 --FILE--
 <?php
 

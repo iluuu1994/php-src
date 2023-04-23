@@ -1,5 +1,5 @@
 --TEST--
-Abstract property without accessor is illegal
+Abstract property without hook is illegal
 --FILE--
 <?php
 

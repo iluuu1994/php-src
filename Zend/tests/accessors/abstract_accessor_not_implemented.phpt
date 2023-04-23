@@ -1,5 +1,5 @@
 --TEST--
-Abstract accessors not implemented
+Abstract hooks that are not implemented throw an error
 --FILE--
 <?php
 

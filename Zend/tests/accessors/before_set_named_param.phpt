@@ -1,13 +1,13 @@
 --TEST--
-beforeSet hook works as a passthrough
+beforeSet allows specifying a custom parameter name
 --FILE--
 <?php
 
 class C {
     public $prop {
-        beforeSet {
-            echo "beforeSet: $value\n";
-            return strtoupper($value);
+        beforeSet ($new) {
+            echo "beforeSet: $new\n";
+            return strtoupper($new);
         }
     }
 }

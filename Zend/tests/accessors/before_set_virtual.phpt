@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook on virtual property
+beforeSet hook on virtual property is allowed
 --FILE--
 <?php
 

@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook guard
+A beforeSet hook may write to its own property.
 --FILE--
 <?php
 

@@ -1,5 +1,5 @@
 --TEST--
-Abstract accessors in non-abstract class
+Abstract hooks in non-abstract class gives an error
 --FILE--
 <?php
 

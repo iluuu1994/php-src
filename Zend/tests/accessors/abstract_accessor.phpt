@@ -1,5 +1,5 @@
 --TEST--
-Abstract accessors
+Abstract hooks compile successfully
 --FILE--
 <?php
 

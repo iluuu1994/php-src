@@ -1,5 +1,5 @@
 --TEST--
-Accessor beforeSet hook exception
+beforeSet hooks may block a set operation with an exception
 --FILE--
 <?php
 

@@ -1,5 +1,5 @@
 --TEST--
-Accessor AST printing
+Hook AST printing
 --FILE--
 <?php
 

@@ -1,5 +1,5 @@
 --TEST--
-Abstract property not implemented
+Abstract property not implemented throws an error
 --FILE--
 <?php
 
