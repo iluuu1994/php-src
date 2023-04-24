@@ -660,11 +660,11 @@ ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *membe
 }
 /* }}} */
 
-ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_property_info *prop_info)
+ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_property_info *prop_info, zend_string *name)
 {
 	zend_throw_error(NULL, "Property %s::$%s must not be accessed before initialization",
-		 ZSTR_VAL(prop_info->ce->name),
-		 ZSTR_VAL(prop_info->name));
+		ZSTR_VAL(prop_info->ce->name),
+		ZSTR_VAL(name));
 }
 
 ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int type, void **cache_slot, zval *rv) /* {{{ */
@@ -901,7 +901,7 @@ call_getter:
 uninit_error:
 	if (type != BP_VAR_IS) {
 		if (UNEXPECTED(prop_info)) {
-			zend_typed_property_uninitialized_access(prop_info);
+			zend_typed_property_uninitialized_access(prop_info, name);
 		} else {
 			zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 		}
@@ -1314,7 +1314,7 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 			    UNEXPECTED(prop_info && (Z_PROP_FLAG_P(retval) & IS_PROP_UNINIT))) {
 				if (UNEXPECTED(type == BP_VAR_RW || type == BP_VAR_R)) {
 					if (UNEXPECTED(prop_info)) {
-						zend_typed_property_uninitialized_access(prop_info);
+						zend_typed_property_uninitialized_access(prop_info, name);
 						retval = &EG(error_zval);
 					} else {
 						ZVAL_NULL(retval);
