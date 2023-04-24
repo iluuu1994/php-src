@@ -7965,6 +7965,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC
             accessor = accessors[ZEND_ACCESSOR_SET];
         } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")) {
             accessor = accessors[ZEND_ACCESSOR_BEFORE_SET];
+        } else if (zend_string_equals_literal_ci(accessor_name, "afterSet")) {
+            accessor = accessors[ZEND_ACCESSOR_AFTER_SET];
         } else {
             ZEND_UNREACHABLE();
         }
@@ -7983,7 +7985,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC
             zend_property_hook_get_trampoline(&fbc);
         } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
             zend_property_hook_set_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")) {
+        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")
+		|| zend_string_equals_literal_ci(accessor_name, "afterSet")) {
             zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(accessor_name));
             UNDEF_RESULT();
             HANDLE_EXCEPTION();

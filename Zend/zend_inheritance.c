@@ -1315,15 +1315,20 @@ static prop_variance prop_get_variance(zend_property_info *prop_info) {
 	return PROP_INVARIANT;
 }
 
-static void verify_accessors(zend_class_entry *ce, zend_property_info *prop_info)
+void zend_verify_accessors(zend_class_entry *ce, zend_property_info *prop_info)
 {
 	zend_function **accessors = prop_info->accessors;
-	if ((prop_info->flags & ZEND_ACC_VIRTUAL)
-	 && accessors
-	 && !accessors[ZEND_ACCESSOR_SET]
-	 && accessors[ZEND_ACCESSOR_BEFORE_SET]) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"Virtual read-only property %s::$%s must not declare beforeSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
+	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+		if (!accessors[ZEND_ACCESSOR_SET]
+		 && (accessors[ZEND_ACCESSOR_BEFORE_SET]
+		  || accessors[ZEND_ACCESSOR_AFTER_SET])) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Virtual read-only property %s::$%s must not declare beforeSet or afterSet hooks", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
+		}
+		if (!accessors[ZEND_ACCESSOR_GET] && accessors[ZEND_ACCESSOR_AFTER_SET]) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Virtual write-only property %s::$%s must not declare afterSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
+		}
 	}
 }
 
@@ -1738,7 +1743,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 	}
 
 	ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, property_info) {
-		verify_accessors(ce, property_info);
+		zend_verify_accessors(ce, property_info);
 	} ZEND_HASH_FOREACH_END();
 
 	if (zend_hash_num_elements(&parent_ce->constants_table)) {

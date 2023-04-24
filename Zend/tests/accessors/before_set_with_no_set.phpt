@@ -12,4 +12,4 @@ class C {
 
 ?>
 --EXPECTF--
-Fatal error: Virtual read-only property C::$prop must not declare beforeSet hook in %s on line %d
+Fatal error: Virtual read-only property C::$prop must not declare beforeSet or afterSet hooks in %s on line %d

@@ -958,6 +958,8 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 	uintptr_t property_offset;
 	zend_property_info *prop_info = NULL;
 	ZEND_ASSERT(!Z_ISREF_P(value));
+	zval old_value, *old_value_ptr = NULL;
+	zend_function *after_set = NULL;
 
 	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__set != NULL), cache_slot, (const zend_property_info **) &prop_info);
 
@@ -1019,6 +1021,19 @@ found:;
 					gc_check_possible_root_no_ref(garbage);
 				}
 			}
+
+			if (old_value_ptr) {
+				ZEND_ASSERT(after_set != NULL);
+				uint32_t *guard = zend_get_property_guard(zobj, name);
+				GC_ADDREF(zobj);
+				(*guard) |= IN_SET;
+				if (Z_TYPE_P(old_value_ptr) == IS_UNDEF) {
+					ZVAL_NULL(old_value_ptr);
+				}
+				zend_call_known_instance_method_with_1_params(after_set, zobj, NULL, old_value_ptr);
+				(*guard) &= ~IN_SET;
+				OBJ_RELEASE(zobj);
+			}
 			goto exit;
 		}
 		if (Z_PROP_FLAG_P(variable_ptr) & IS_PROP_UNINIT) {
@@ -1041,14 +1056,17 @@ found:;
 	} else if (IS_ACCESSOR_PROPERTY_OFFSET(property_offset)) {
 		zend_function *set = prop_info->accessors[ZEND_ACCESSOR_SET];
 		zend_function *before_set = prop_info->accessors[ZEND_ACCESSOR_BEFORE_SET];
+		after_set = prop_info->accessors[ZEND_ACCESSOR_AFTER_SET];
+		uint32_t *guard = 0;
 
 		if (!set && prop_info->flags & ZEND_ACC_VIRTUAL) {
 			zend_throw_error(NULL, "Property %s::$%s is read-only", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			return &EG(error_zval);
+			variable_ptr = &EG(error_zval);
+			goto exit;
 		}
 
 		if (before_set) {
-			uint32_t *guard = zend_get_property_guard(zobj, name);
+			guard = zend_get_property_guard(zobj, name);
 			if (!((*guard) & IN_BEFORE_SET)) {
 				zval retval;
 				GC_ADDREF(zobj);
@@ -1057,19 +1075,30 @@ found:;
 				(*guard) &= ~IN_BEFORE_SET;
 				OBJ_RELEASE(zobj);
 				if (EG(exception)) {
-					return &EG(error_zval);
+					variable_ptr = &EG(error_zval);
+					goto exit;
 				}
 				zval_ptr_dtor(value);
 				ZVAL_COPY_VALUE(value, &retval);
 				if (EG(exception)) {
-					return &EG(error_zval);
+					variable_ptr = &EG(error_zval);
+					goto exit;
 				}
+			}
+		}
+
+		if (after_set) {
+			old_value_ptr = &old_value;
+			// FIXME: Is it safe to share the cache slot?
+			zval *retval = zobj->handlers->read_property(zobj, name, BP_VAR_IS, cache_slot, old_value_ptr);
+			if (retval != old_value_ptr) {
+				ZVAL_COPY(old_value_ptr, retval);
 			}
 		}
 
 		if (!set) {
 			ZEND_ASSERT(!(prop_info->flags & ZEND_ACC_VIRTUAL));
-			if (!before_set) {
+			if (!before_set && !after_set) {
 				ZEND_SET_ACCESSOR_SIMPLE_WRITE(cache_slot);
 			}
 			property_offset = prop_info->offset;
@@ -1079,12 +1108,15 @@ found:;
 			goto try_again;
 		}
 
-		uint32_t *guard = zend_get_property_guard(zobj, name);
+		if (!guard) {
+			guard = zend_get_property_guard(zobj, name);
+		}
 		if (UNEXPECTED((*guard) & IN_SET)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_error(NULL, "Must not write to virtual property %s::$%s",
 					 ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-				return &EG(error_zval);
+				variable_ptr = &EG(error_zval);
+				goto exit;
 			}
 			property_offset = prop_info->offset;
 			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -1097,8 +1129,16 @@ found:;
 		(*guard) |= IN_SET;
 		zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
 		(*guard) &= ~IN_SET;
+		if (after_set) {
+			if (Z_TYPE_P(old_value_ptr) == IS_UNDEF) {
+				ZVAL_NULL(old_value_ptr);
+			}
+			zend_call_known_instance_method_with_1_params(after_set, zobj, NULL, old_value_ptr);
+		}
 		OBJ_RELEASE(zobj);
-		return value;
+
+		variable_ptr = value;
+		goto exit;
 	} else if (UNEXPECTED(EG(exception))) {
 		variable_ptr = &EG(error_zval);
 		goto exit;
@@ -1161,6 +1201,19 @@ write_std_property:
 			}
 
 			ZVAL_COPY_VALUE(variable_ptr, value);
+
+			if (old_value_ptr) {
+				ZEND_ASSERT(after_set != NULL);
+				uint32_t *guard = zend_get_property_guard(zobj, name);
+				GC_ADDREF(zobj);
+				(*guard) |= IN_SET;
+				if (Z_TYPE_P(old_value_ptr) == IS_UNDEF) {
+					ZVAL_NULL(old_value_ptr);
+				}
+				zend_call_known_instance_method_with_1_params(after_set, zobj, NULL, old_value_ptr);
+				(*guard) &= ~IN_SET;
+				OBJ_RELEASE(zobj);
+			}
 		} else {
 			if (UNEXPECTED(zobj->ce->ce_flags & ZEND_ACC_NO_DYNAMIC_PROPERTIES)) {
 				zend_forbidden_dynamic_property(zobj->ce, name);
@@ -1183,6 +1236,10 @@ write_std_property:
 	}
 
 exit:
+	if (old_value_ptr != NULL) {
+		zval_ptr_dtor(old_value_ptr);
+	}
+
 	return variable_ptr;
 }
 /* }}} */
