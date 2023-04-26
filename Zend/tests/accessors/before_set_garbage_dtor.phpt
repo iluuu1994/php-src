@@ -28,4 +28,4 @@ var_dump($c->prop);
 ?>
 --EXPECT--
 Thrown from Boom::__destruct
-NULL
+string(3) "foo"

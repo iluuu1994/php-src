@@ -960,6 +960,7 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 	ZEND_ASSERT(!Z_ISREF_P(value));
 	zval old_value, *old_value_ptr = NULL;
 	zend_function *after_set = NULL;
+	bool value_needs_addref = true;
 
 	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__set != NULL), cache_slot, (const zend_property_info **) &prop_info);
 
@@ -967,11 +968,13 @@ try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
 		variable_ptr = OBJ_PROP(zobj, property_offset);
 		if (Z_TYPE_P(variable_ptr) != IS_UNDEF) {
-			Z_TRY_ADDREF_P(value);
+			if (value_needs_addref) {
+				Z_TRY_ADDREF_P(value);
+			}
 
 			if (UNEXPECTED(prop_info)) {
 				if (UNEXPECTED((prop_info->flags & ZEND_ACC_READONLY) && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_REINITABLE))) {
-					Z_TRY_DELREF_P(value);
+					zval_ptr_dtor(value);
 					zend_readonly_property_modification_error(prop_info);
 					variable_ptr = &EG(error_zval);
 					goto exit;
@@ -989,7 +992,7 @@ try_again:
 					goto exit;
 				}
 				if (UNEXPECTED(!type_matched)) {
-					Z_TRY_DELREF_P(value);
+					zval_ptr_dtor(value);
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
@@ -1068,22 +1071,22 @@ found:;
 		if (before_set) {
 			guard = zend_get_property_guard(zobj, name);
 			if (!((*guard) & IN_BEFORE_SET)) {
-				zval retval;
 				GC_ADDREF(zobj);
 				(*guard) |= IN_BEFORE_SET;
-				zend_call_known_instance_method_with_1_params(before_set, zobj, &retval, value);
+				zend_call_known_instance_method_with_1_params(before_set, zobj, &tmp, value);
 				(*guard) &= ~IN_BEFORE_SET;
 				OBJ_RELEASE(zobj);
 				if (EG(exception)) {
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
-				zval_ptr_dtor(value);
-				ZVAL_COPY_VALUE(value, &retval);
 				if (EG(exception)) {
+					zval_ptr_dtor(&tmp),
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
+				value = &tmp;
+				value_needs_addref = false;
 			}
 		}
 
@@ -1171,7 +1174,9 @@ write_std_property:
 		if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
 			variable_ptr = OBJ_PROP(zobj, property_offset);
 
-			Z_TRY_ADDREF_P(value);
+			if (value_needs_addref) {
+				Z_TRY_ADDREF_P(value);
+			}
 			if (UNEXPECTED(prop_info)) {
 				if (UNEXPECTED((prop_info->flags & ZEND_ACC_READONLY)
 						&& !verify_readonly_initialization_access(prop_info, zobj->ce, name, "initialize"))) {

@@ -174,6 +174,7 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 			case ZEND_INIT_METHOD_CALL:
 			case ZEND_INIT_FCALL:
 			case ZEND_NEW:
+			case ZEND_INIT_PARENT_ACCESSOR_CALL:
 				/* The argument passing optimizations are valid for prototypes as well,
 				 * as inheritance cannot change between ref <-> non-ref arguments. */
 				call_stack[call].func = zend_optimizer_get_called_func(

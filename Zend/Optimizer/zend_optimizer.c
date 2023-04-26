@@ -1448,11 +1448,10 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 		ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property) {
 			zend_function **accessors = property->accessors;
 			if (accessors) {
-				if (accessors[ZEND_ACCESSOR_GET]) {
-					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_GET], func, context);
-				}
-				if (accessors[ZEND_ACCESSOR_SET]) {
-					zend_foreach_op_array_helper((zend_op_array *)accessors[ZEND_ACCESSOR_SET], func, context);
+				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
+					if (accessors[i]) {
+						zend_foreach_op_array_helper((zend_op_array *)accessors[i], func, context);
+					}
 				}
 			}
 		} ZEND_HASH_FOREACH_END();
