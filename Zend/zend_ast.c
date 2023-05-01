@@ -1507,8 +1507,8 @@ static ZEND_COLD void zend_ast_export_stmt(smart_str *str, zend_ast *ast, int in
 				break;
 			case ZEND_AST_PROP_GROUP: {
 				zend_ast *first_prop = zend_ast_get_list(ast->child[1])->child[0];
-				zend_ast *accessor_list = first_prop->child[3];
-				if (accessor_list == NULL) {
+				zend_ast *hook_list = first_prop->child[3];
+				if (hook_list == NULL) {
 					smart_str_appendc(str, ';');
 				}
 				break;
@@ -2112,7 +2112,7 @@ simple_list:
 			break;
 		case ZEND_AST_CALL:
 		// FIXME: This will contain whitespaces instead of being normalized of the original code does so
-		case ZEND_AST_PARENT_ACCESSOR_CALL:
+		case ZEND_AST_PARENT_PROPERTY_HOOK_CALL:
 			zend_ast_export_ns_name(str, ast->child[0], 0, indent);
 			smart_str_appendc(str, '(');
 			zend_ast_export_ex(str, ast->child[1], 0, indent);
@@ -2340,9 +2340,9 @@ simple_list:
 			}
 
 			if (ast->child[3]) {
-				zend_ast_list *accessor_list = zend_ast_get_list(ast->child[3]);
-				zend_ast *first_accessor = accessor_list->child[0];
-				bool is_explicit = ((zend_ast_decl *)first_accessor)->child[2] != NULL;
+				zend_ast_list *hook_list = zend_ast_get_list(ast->child[3]);
+				zend_ast *first_hook = hook_list->child[0];
+				bool is_explicit = ((zend_ast_decl *)first_hook)->child[2] != NULL;
 
 				smart_str_appends(str, " {");
 				if (is_explicit) {
@@ -2353,24 +2353,24 @@ simple_list:
 					smart_str_appendc(str, ' ');
 				}
 
-				for (uint32_t i = 0; i < accessor_list->children; i++) {
-					zend_ast_decl *accessor = (zend_ast_decl *)accessor_list->child[i];
-					zend_ast_export_visibility(str, accessor->flags);
-					if (accessor->flags & ZEND_ACC_ABSTRACT) {
+				for (uint32_t i = 0; i < hook_list->children; i++) {
+					zend_ast_decl *hook = (zend_ast_decl *)hook_list->child[i];
+					zend_ast_export_visibility(str, hook->flags);
+					if (hook->flags & ZEND_ACC_ABSTRACT) {
 						smart_str_appends(str, "abstract ");
 					}
-					if (accessor->flags & ZEND_ACC_FINAL) {
+					if (hook->flags & ZEND_ACC_FINAL) {
 						smart_str_appends(str, "final ");
 					}
 					switch (i) {
-						case ZEND_ACCESSOR_GET:
+						case ZEND_PROPERTY_HOOK_GET:
 							smart_str_appends(str, "get");
 							break;
-						case ZEND_ACCESSOR_SET:
+						case ZEND_PROPERTY_HOOK_SET:
 							smart_str_appends(str, "set");
 							break;
 					}
-					zend_ast *statement_list = accessor->child[2];
+					zend_ast *statement_list = hook->child[2];
 					if (statement_list != NULL) {
 						smart_str_appends(str, " {\n");
 						zend_ast_export_stmt(str, statement_list, indent + 1);
@@ -2379,7 +2379,7 @@ simple_list:
 					} else {
 						smart_str_appendc(str, ';');
 					}
-					if (i < (accessor_list->children - 1)) {
+					if (i < (hook_list->children - 1)) {
 						if (is_explicit) {
 							smart_str_appendc(str, '\n');
 							zend_ast_export_indent(str, indent);
@@ -2656,7 +2656,7 @@ zend_ast * ZEND_FASTCALL zend_ast_with_attributes(zend_ast *ast, zend_ast *attr)
 	case ZEND_AST_CLOSURE:
 	case ZEND_AST_METHOD:
 	case ZEND_AST_ARROW_FUNC:
-	case ZEND_AST_ACCESSOR:
+	case ZEND_AST_PROPERTY_HOOK:
 		((zend_ast_decl *) ast)->child[4] = attr;
 		break;
 	case ZEND_AST_CLASS:

@@ -560,7 +560,7 @@ static int is_property_visibility_changed(zend_class_entry *ce, zval *key)
 		if (existing_propinfo != NULL) {
 			if (existing_propinfo->flags & ZEND_ACC_VIRTUAL) {
 				php_error_docref(NULL, E_WARNING,
-					"Cannot unserialize value for property %s::$%s with explicit accessors",
+					"Cannot unserialize value for hooked property %s::$%s",
 					ZSTR_VAL(existing_propinfo->ce->name), Z_STRVAL_P(key));
 				return -1;
 			}

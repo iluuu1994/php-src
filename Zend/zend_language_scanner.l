@@ -2373,7 +2373,7 @@ inline_char_handler:
 }
 
 <ST_IN_SCRIPTING>"parent::$"{LABEL}"::"("get"|"set"|"beforeSet"|"afterSet") {
-	RETURN_TOKEN_WITH_STR(T_PARENT_ACCESSOR_NAME, 0);
+	RETURN_TOKEN_WITH_STR(T_PARENT_PROPERTY_HOOK_NAME, 0);
 }
 
 <ST_IN_SCRIPTING>{LABEL}("\\"{LABEL})+ {

@@ -644,12 +644,12 @@ static zend_property_info* zend_get_known_property_info(const zend_op_array *op_
 		}
 	}
 
-	// TODO: Treat accessors more precisely.
+	// TODO: Treat property hooks more precisely.
 	info = (zend_property_info*)zend_hash_find_ptr(&ce->properties_info, member);
 	if (info == NULL ||
 	    !IS_VALID_PROPERTY_OFFSET(info->offset) ||
 	    (info->flags & ZEND_ACC_STATIC) ||
-	    info->accessors) {
+	    info->hooks) {
 		return NULL;
 	}
 
@@ -682,12 +682,12 @@ static bool zend_may_be_dynamic_property(zend_class_entry *ce, zend_string *memb
 		}
 	}
 
-	// TODO: Treat accessors more precisely.
+	// TODO: Treat property hooks more precisely.
 	info = (zend_property_info*)zend_hash_find_ptr(&ce->properties_info, member);
 	if (info == NULL ||
 	    !IS_VALID_PROPERTY_OFFSET(info->offset) ||
 	    (info->flags & ZEND_ACC_STATIC) ||
-	    info->accessors) {
+	    info->hooks) {
 		return 1;
 	}
 

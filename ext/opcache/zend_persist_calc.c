@@ -378,11 +378,11 @@ static void zend_persist_property_info_calc(zend_property_info *prop)
 	if (prop->attributes) {
 		zend_persist_attributes_calc(prop->attributes);
 	}
-	if (prop->accessors) {
-		ADD_SIZE(ZEND_ACCESSOR_STRUCT_SIZE);
-		for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-			if (prop->accessors[i]) {
-				zend_persist_class_method_calc((zend_op_array *) prop->accessors[i]);
+	if (prop->hooks) {
+		ADD_SIZE(ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+			if (prop->hooks[i]) {
+				zend_persist_class_method_calc((zend_op_array *) prop->hooks[i]);
 			}
 		}
 	}

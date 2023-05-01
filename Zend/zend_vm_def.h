@@ -2114,9 +2114,9 @@ ZEND_VM_C_LABEL(fetch_obj_r_fast_copy):
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						ZEND_VM_C_GOTO(fetch_obj_r_simple);
@@ -2289,8 +2289,8 @@ ZEND_VM_C_LABEL(fetch_obj_is_fast_copy):
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(GET_OP2_ZVAL_PTR(BP_VAR_R));
@@ -2488,9 +2488,9 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 					ZEND_VM_C_GOTO(exit_assign_obj);
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -7170,9 +7170,9 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 										UNDEF_RESULT();
 										HANDLE_EXCEPTION();
 									}
-									if (UNEXPECTED(prop_info->accessors != NULL)) {
+									if (UNEXPECTED(prop_info->hooks != NULL)) {
 										zend_throw_error(NULL,
-											"Cannot acquire reference to accessor property %s::$%s",
+											"Cannot acquire reference to hooked property %s::$%s",
 											ZSTR_VAL(prop_info->ce->name), ZSTR_VAL(p->key));
 										UNDEF_RESULT();
 										HANDLE_EXCEPTION();
@@ -9512,7 +9512,7 @@ ZEND_VM_HANDLER(202, ZEND_CALLABLE_CONVERT, UNUSED, UNUSED)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
+ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, CONST, NUM)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
@@ -9528,7 +9528,7 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
 	}
 
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	zend_string *accessor_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
+	zend_string *hook_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
 
     // FIXME: Handle private
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
@@ -9538,34 +9538,34 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_ACCESSOR_CALL, CONST, CONST, NUM)
 		HANDLE_EXCEPTION();
 	}
 
-	zend_function **accessors = prop_info->accessors;
-	zend_function *accessor = NULL;
-	if (accessors) {
-        if (zend_string_equals_literal_ci(accessor_name, "get")) {
-            accessor = accessors[ZEND_ACCESSOR_GET];
-        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
-            accessor = accessors[ZEND_ACCESSOR_SET];
+	zend_function **hooks = prop_info->hooks;
+	zend_function *hook = NULL;
+	if (hooks) {
+        if (zend_string_equals_literal_ci(hook_name, "get")) {
+            hook = hooks[ZEND_PROPERTY_HOOK_GET];
+        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
+            hook = hooks[ZEND_PROPERTY_HOOK_SET];
         } else {
             ZEND_UNREACHABLE();
         }
     }
 
 	zend_execute_data *call;
-	if (accessor) {
+	if (hook) {
         call = zend_vm_stack_push_call_frame(
             ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-            accessor,
+            hook,
             opline->extended_value,
             ZEND_THIS);
 	} else {
 	    zend_function *fbc;
-        if (zend_string_equals_literal_ci(accessor_name, "get")) {
+        if (zend_string_equals_literal_ci(hook_name, "get")) {
             zend_property_hook_get_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
+        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
             zend_property_hook_set_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")
-		|| zend_string_equals_literal_ci(accessor_name, "afterSet")) {
-            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(accessor_name));
+        } else if (zend_string_equals_literal_ci(hook_name, "beforeSet")
+		|| zend_string_equals_literal_ci(hook_name, "afterSet")) {
+            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(hook_name));
             UNDEF_RESULT();
             HANDLE_EXCEPTION();
         } else {

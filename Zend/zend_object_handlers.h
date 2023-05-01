@@ -38,28 +38,28 @@ typedef struct {
 
 #define IS_VALID_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) >= 8)
 #define IS_WRONG_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) == 0)
-#define IS_ACCESSOR_PROPERTY_OFFSET(offset) \
+#define IS_HOOKED_PROPERTY_OFFSET(offset) \
 	((intptr_t)(offset) > 0 && (intptr_t)(offset) < 8)
 #define IS_DYNAMIC_PROPERTY_OFFSET(offset)         ((intptr_t)(offset) < 0)
 
-#define ZEND_ACCESSOR_SIMPLE_READ_BIT 2u
-#define ZEND_ACCESSOR_SIMPLE_WRITE_BIT 4u
-#define ZEND_IS_ACCESSOR_SIMPLE_READ(offset) \
-	(((offset) & ZEND_ACCESSOR_SIMPLE_READ_BIT) != 0)
-#define ZEND_IS_ACCESSOR_SIMPLE_WRITE(offset) \
-	(((offset) & ZEND_ACCESSOR_SIMPLE_WRITE_BIT) != 0)
-#define ZEND_SET_ACCESSOR_SIMPLE_READ(cache_slot) \
+#define ZEND_PROPERTY_HOOK_SIMPLE_READ_BIT 2u
+#define ZEND_PROPERTY_HOOK_SIMPLE_WRITE_BIT 4u
+#define ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(offset) \
+	(((offset) & ZEND_PROPERTY_HOOK_SIMPLE_READ_BIT) != 0)
+#define ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(offset) \
+	(((offset) & ZEND_PROPERTY_HOOK_SIMPLE_WRITE_BIT) != 0)
+#define ZEND_SET_PROPERTY_HOOK_SIMPLE_READ(cache_slot) \
 	do { \
 		void **__cache_slot = (cache_slot); \
 		if (__cache_slot) { \
-			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_READ_BIT)); \
+			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_PROPERTY_HOOK_SIMPLE_READ_BIT)); \
 		} \
 	} while (0)
-#define ZEND_SET_ACCESSOR_SIMPLE_WRITE(cache_slot) \
+#define ZEND_SET_PROPERTY_HOOK_SIMPLE_WRITE(cache_slot) \
 	do { \
 		void **__cache_slot = (cache_slot); \
 		if (__cache_slot) { \
-			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_ACCESSOR_SIMPLE_WRITE_BIT)); \
+			CACHE_PTR_EX(__cache_slot + 1, (void*)((uintptr_t)CACHED_PTR_EX(__cache_slot + 1) | ZEND_PROPERTY_HOOK_SIMPLE_WRITE_BIT)); \
 		} \
 	} while (0)
 

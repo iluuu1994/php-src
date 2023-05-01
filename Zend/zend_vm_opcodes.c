@@ -226,7 +226,7 @@ static const char *zend_vm_opcodes_names[204] = {
 	"ZEND_FETCH_GLOBALS",
 	"ZEND_VERIFY_NEVER_TYPE",
 	"ZEND_CALLABLE_CONVERT",
-	"ZEND_INIT_PARENT_ACCESSOR_CALL",
+	"ZEND_INIT_PARENT_PROPERTY_HOOK_CALL",
 };
 
 static uint32_t zend_vm_opcodes_flags[204] = {

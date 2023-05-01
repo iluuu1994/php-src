@@ -6452,9 +6452,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -6589,8 +6589,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
@@ -7930,7 +7930,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_IN_ARRAY_SPEC_CON
 	ZEND_VM_SMART_BRANCH(0, 1);
 }
 
-static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
@@ -7946,7 +7946,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC
 	}
 
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	zend_string *accessor_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
+	zend_string *hook_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
 
     // FIXME: Handle private
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
@@ -7956,34 +7956,34 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC
 		HANDLE_EXCEPTION();
 	}
 
-	zend_function **accessors = prop_info->accessors;
-	zend_function *accessor = NULL;
-	if (accessors) {
-        if (zend_string_equals_literal_ci(accessor_name, "get")) {
-            accessor = accessors[ZEND_ACCESSOR_GET];
-        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
-            accessor = accessors[ZEND_ACCESSOR_SET];
+	zend_function **hooks = prop_info->hooks;
+	zend_function *hook = NULL;
+	if (hooks) {
+        if (zend_string_equals_literal_ci(hook_name, "get")) {
+            hook = hooks[ZEND_PROPERTY_HOOK_GET];
+        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
+            hook = hooks[ZEND_PROPERTY_HOOK_SET];
         } else {
             ZEND_UNREACHABLE();
         }
     }
 
 	zend_execute_data *call;
-	if (accessor) {
+	if (hook) {
         call = zend_vm_stack_push_call_frame(
             ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-            accessor,
+            hook,
             opline->extended_value,
             ZEND_THIS);
 	} else {
 	    zend_function *fbc;
-        if (zend_string_equals_literal_ci(accessor_name, "get")) {
+        if (zend_string_equals_literal_ci(hook_name, "get")) {
             zend_property_hook_get_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
+        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
             zend_property_hook_set_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")
-		|| zend_string_equals_literal_ci(accessor_name, "afterSet")) {
-            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(accessor_name));
+        } else if (zend_string_equals_literal_ci(hook_name, "beforeSet")
+		|| zend_string_equals_literal_ci(hook_name, "afterSet")) {
+            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(hook_name));
             UNDEF_RESULT();
             HANDLE_EXCEPTION();
         } else {
@@ -9038,9 +9038,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -9175,8 +9175,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC));
@@ -11428,9 +11428,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -11565,8 +11565,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC));
@@ -15826,9 +15826,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -15963,8 +15963,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
@@ -17287,9 +17287,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -17424,8 +17424,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC));
@@ -18637,9 +18637,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -18774,8 +18774,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC));
@@ -22600,9 +22600,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_RW_SPEC_VAR_HANDLER(Z
 										UNDEF_RESULT();
 										HANDLE_EXCEPTION();
 									}
-									if (UNEXPECTED(prop_info->accessors != NULL)) {
+									if (UNEXPECTED(prop_info->hooks != NULL)) {
 										zend_throw_error(NULL,
-											"Cannot acquire reference to accessor property %s::$%s",
+											"Cannot acquire reference to hooked property %s::$%s",
 											ZSTR_VAL(prop_info->ce->name), ZSTR_VAL(p->key));
 										UNDEF_RESULT();
 										HANDLE_EXCEPTION();
@@ -23560,9 +23560,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -23707,9 +23707,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -23854,9 +23854,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -24001,9 +24001,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -26516,9 +26516,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -26663,9 +26663,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -26810,9 +26810,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -26957,9 +26957,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -30860,9 +30860,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -31007,9 +31007,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -31154,9 +31154,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -31301,9 +31301,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -33217,9 +33217,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -33397,8 +33397,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
@@ -33561,9 +33561,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -33708,9 +33708,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -33855,9 +33855,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -34002,9 +34002,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -35322,9 +35322,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -35497,8 +35497,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC));
@@ -35661,9 +35661,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -35808,9 +35808,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -35955,9 +35955,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -36102,9 +36102,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -37880,9 +37880,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -38055,8 +38055,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC));
@@ -38219,9 +38219,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -38366,9 +38366,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -38513,9 +38513,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -38660,9 +38660,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -42136,9 +42136,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -42316,8 +42316,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
@@ -42480,9 +42480,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -42627,9 +42627,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -42774,9 +42774,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -42921,9 +42921,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -46048,9 +46048,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -46223,8 +46223,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC));
@@ -46387,9 +46387,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -46534,9 +46534,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -46681,9 +46681,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -46828,9 +46828,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -51529,9 +51529,9 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-					if (ZEND_IS_ACCESSOR_SIMPLE_READ(prop_offset)) {
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
@@ -51704,8 +51704,8 @@ fetch_obj_is_fast_copy:
 						}
 					}
 				} else {
-					/* Fall through to read_property for accessors. */
-					ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
+					/* Fall through to read_property for hooks. */
+					ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
 				}
 			}
 			name = Z_STR_P(_get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC));
@@ -51868,9 +51868,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -52015,9 +52015,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -52162,9 +52162,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -52309,9 +52309,9 @@ fast_assign_obj:
 					goto exit_assign_obj;
 				}
 			} else {
-				/* Fall through to write_property for accessors. */
-				ZEND_ASSERT(IS_ACCESSOR_PROPERTY_OFFSET(prop_offset));
-				if (ZEND_IS_ACCESSOR_SIMPLE_WRITE(prop_offset)) {
+				/* Fall through to write_property for hooks. */
+				ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
 					if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -56606,7 +56606,7 @@ ZEND_API void execute_ex(zend_execute_data *ex)
 			(void*)&&ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_LABEL,
-			(void*)&&ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST_LABEL,
+			(void*)&&ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_LABEL,
 			(void*)&&ZEND_RECV_NOTYPE_SPEC_LABEL,
 			(void*)&&ZEND_JMP_FORWARD_SPEC_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
@@ -58422,9 +58422,9 @@ zend_leave_helper_SPEC_LABEL:
 				VM_TRACE(ZEND_IN_ARRAY_SPEC_CONST_CONST)
 				ZEND_IN_ARRAY_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
-			HYBRID_CASE(ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST):
-				VM_TRACE(ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST)
-				ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+			HYBRID_CASE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST):
+				VM_TRACE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST)
+				ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_ADD_SPEC_CONST_TMPVARCV):
 				VM_TRACE(ZEND_ADD_SPEC_CONST_TMPVARCV)
@@ -64715,7 +64715,7 @@ void zend_vm_init(void)
 		ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_HANDLER,
-		ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC_CONST_CONST_HANDLER,
+		ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER,
 		ZEND_RECV_NOTYPE_SPEC_HANDLER,
 		ZEND_JMP_FORWARD_SPEC_HANDLER,
 		ZEND_NULL_HANDLER,

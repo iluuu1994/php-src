@@ -1268,7 +1268,7 @@ static void emit_incompatible_property_error(
 		ZSTR_VAL(parent->ce->name));
 }
 
-static void inherit_accessor(
+static void inherit_property_hook(
 		zend_class_entry *ce, zend_function **parent_ptr, zend_function **child_ptr) {
 	zend_function *parent = *parent_ptr;
 	zend_function *child = *child_ptr;
@@ -1293,7 +1293,7 @@ static void inherit_accessor(
 
 	if (parent_flags & ZEND_ACC_FINAL) {
 		zend_error_noreturn(E_COMPILE_ERROR,
-			"Cannot override final accessor %s::%s()",
+			"Cannot override final property hook %s::%s()",
 			ZSTR_VAL(parent->common.scope->name),
 			ZSTR_VAL(parent->common.function_name));
 	}
@@ -1304,11 +1304,11 @@ static void inherit_accessor(
 }
 
 static prop_variance prop_get_variance(zend_property_info *prop_info) {
-	if (prop_info->accessors) {
-		if (!prop_info->accessors[ZEND_ACCESSOR_SET]) {
+	if (prop_info->hooks) {
+		if (!prop_info->hooks[ZEND_PROPERTY_HOOK_SET]) {
 			return PROP_COVARIANT;
 		}
-		if (!prop_info->accessors[ZEND_ACCESSOR_GET]) {
+		if (!prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
 			return PROP_CONTRAVARIANT;
 		}
 	}
@@ -1356,12 +1356,12 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 				child_info->flags &= ~ZEND_ACC_VIRTUAL;
 			}
 
-			zend_function **parent_accessors = parent_info->accessors;
-			zend_function **child_accessors = child_info->accessors;
-			if (parent_accessors) {
-				if (child_accessors) {
-					for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-						inherit_accessor(ce, &parent_accessors[i], &child_accessors[i]);
+			zend_function **parent_hooks = parent_info->hooks;
+			zend_function **child_hooks = child_info->hooks;
+			if (parent_hooks) {
+				if (child_hooks) {
+					for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+						inherit_property_hook(ce, &parent_hooks[i], &child_hooks[i]);
 					}
 				} else if (parent_info->flags & ZEND_ACC_VIRTUAL) {
 					zend_error_noreturn(E_COMPILE_ERROR,
@@ -1390,10 +1390,10 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 			}
 		}
 	} else {
-		zend_function **accessors = parent_info->accessors;
-		if (accessors) {
-			for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-				if (accessors[i] && (accessors[i]->common.fn_flags & ZEND_ACC_ABSTRACT)) {
+		zend_function **hooks = parent_info->hooks;
+		if (hooks) {
+			for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+				if (hooks[i] && (hooks[i]->common.fn_flags & ZEND_ACC_ABSTRACT)) {
 					ce->ce_flags |= ZEND_ACC_IMPLICIT_ABSTRACT_CLASS;
 				}
 			}
@@ -2519,9 +2519,9 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 					bool is_compatible = false;
 					uint32_t flags_mask = ZEND_ACC_PPP_MASK | ZEND_ACC_STATIC | ZEND_ACC_READONLY;
 
-					if (colliding_prop->accessors || property_info->accessors) {
+					if (colliding_prop->hooks || property_info->hooks) {
 						zend_error_noreturn(E_COMPILE_ERROR,
-							"%s and %s define the same accessor property ($%s) in the composition of %s. Conflict resolution between accessor properties is currently not supported. Class was composed",
+							"%s and %s define the same hooked property ($%s) in the composition of %s. Conflict resolution between hooked properties is currently not supported. Class was composed",
 							ZSTR_VAL(find_first_property_definition(ce, traits, i, prop_name, colliding_prop->ce)->name),
 							ZSTR_VAL(property_info->ce->name),
 							ZSTR_VAL(prop_name),
@@ -2594,14 +2594,14 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 					GC_ADDREF(new_prop->attributes);
 				}
 			}
-			if (property_info->accessors) {
-				zend_function **accessors = new_prop->accessors =
-					zend_arena_alloc(&CG(arena), ZEND_ACCESSOR_STRUCT_SIZE);
-				memcpy(accessors, property_info->accessors, ZEND_ACCESSOR_STRUCT_SIZE);
-				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-					if (accessors[i]) {
-						accessors[i] = zend_duplicate_function(accessors[i], ce);
-						if (accessors[i]->common.fn_flags & ZEND_ACC_ABSTRACT) {
+			if (property_info->hooks) {
+				zend_function **hooks = new_prop->hooks =
+					zend_arena_alloc(&CG(arena), ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+				memcpy(hooks, property_info->hooks, ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+					if (hooks[i]) {
+						hooks[i] = zend_duplicate_function(hooks[i], ce);
+						if (hooks[i]->common.fn_flags & ZEND_ACC_ABSTRACT) {
 							ce->ce_flags |= ZEND_ACC_IMPLICIT_ABSTRACT_CLASS;
 						}
 					}
@@ -2683,9 +2683,9 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 	if (!is_explicit_abstract) {
 		zend_property_info *prop_info;
 		ZEND_HASH_FOREACH_PTR(&ce->properties_info, prop_info) {
-			if (prop_info->accessors) {
-				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-					zend_function *fn = prop_info->accessors[i];
+			if (prop_info->hooks) {
+				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+					zend_function *fn = prop_info->hooks[i];
 					if (fn && (fn->common.fn_flags & ZEND_ACC_ABSTRACT)) {
 						zend_verify_abstract_class_function(fn, &ai);
 					}
@@ -2712,29 +2712,29 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 }
 /* }}} */
 
-void zend_verify_property_accessor_visibility(zend_class_entry *ce)
+void zend_verify_property_hook_visibility(zend_class_entry *ce)
 {
 	zend_property_info *property_info;
 
 	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property_info) {
-		zend_function **accessors = property_info->accessors;
-		if (!accessors) {
+		zend_function **hooks = property_info->hooks;
+		if (!hooks) {
 			continue;
 		}
 
 		uint32_t property_visibility = property_info->flags & ZEND_ACC_PPP_MASK;
-		uint32_t highest_accessor_visibility = ZEND_ACC_PRIVATE;
-		for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-			zend_function *accessor = accessors[i];
-			if (!accessor) {
+		uint32_t highest_hook_visibility = ZEND_ACC_PRIVATE;
+		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+			zend_function *hook = hooks[i];
+			if (!hook) {
 				continue;
 			}
-			highest_accessor_visibility = MIN(highest_accessor_visibility, accessor->common.fn_flags & ZEND_ACC_PPP_MASK);
+			highest_hook_visibility = MIN(highest_hook_visibility, hook->common.fn_flags & ZEND_ACC_PPP_MASK);
 		}
 
-		if (property_visibility < highest_accessor_visibility) {
+		if (property_visibility < highest_hook_visibility) {
 			zend_error_noreturn(E_COMPILE_ERROR,
-				"At least one accessor must match the visibility of the property");
+				"At least one hook must match the visibility of the property");
 		}
 	} ZEND_HASH_FOREACH_END();
 }
@@ -3079,13 +3079,13 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 				ZEND_TYPE_SET_PTR(new_prop_info->type, list);
 				ZEND_TYPE_FULL_MASK(new_prop_info->type) |= _ZEND_TYPE_ARENA_BIT;
 			}
-			if (new_prop_info->accessors) {
-				new_prop_info->accessors = zend_arena_alloc(&CG(arena), ZEND_ACCESSOR_STRUCT_SIZE);
-				memcpy(new_prop_info->accessors, prop_info->accessors, ZEND_ACCESSOR_STRUCT_SIZE);
-				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-					if (new_prop_info->accessors[i]) {
-						new_prop_info->accessors[i] = (zend_function *) zend_lazy_method_load(
-							(zend_op_array *) new_prop_info->accessors[i], ce, pce);
+			if (new_prop_info->hooks) {
+				new_prop_info->hooks = zend_arena_alloc(&CG(arena), ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+				memcpy(new_prop_info->hooks, prop_info->hooks, ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+					if (new_prop_info->hooks[i]) {
+						new_prop_info->hooks[i] = (zend_function *) zend_lazy_method_load(
+							(zend_op_array *) new_prop_info->hooks[i], ce, pce);
 					}
 				}
 			}
@@ -3293,7 +3293,7 @@ ZEND_API zend_class_entry *zend_do_link_class(zend_class_entry *ce, zend_string 
 		if (ce->ce_flags & ZEND_ACC_ENUM) {
 			zend_verify_enum(ce);
 		}
-		zend_verify_property_accessor_visibility(ce);
+		zend_verify_property_hook_visibility(ce);
 
 		/* Normally Stringable is added during compilation. However, if it is imported from a trait,
 		 * we need to explicitly add the interface here. */
@@ -3523,7 +3523,7 @@ ZEND_API zend_class_entry *zend_try_early_bind(zend_class_entry *ce, zend_class_
 			if ((ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) == ZEND_ACC_IMPLICIT_ABSTRACT_CLASS) {
 				zend_verify_abstract_class(ce);
 			}
-			zend_verify_property_accessor_visibility(ce);
+			zend_verify_property_hook_visibility(ce);
 			ZEND_ASSERT(!(ce->ce_flags & ZEND_ACC_UNRESOLVED_VARIANCE));
 			ce->ce_flags |= ZEND_ACC_LINKED;
 

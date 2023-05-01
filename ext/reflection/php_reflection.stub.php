@@ -530,8 +530,6 @@ class ReflectionProperty implements Reflector
 
     public function isAbstract(): bool {}
 
-    public function isFinal(): bool {}
-
     public function isPromoted(): bool {}
 
     /** @tentative-return-type */

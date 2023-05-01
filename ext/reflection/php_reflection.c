@@ -5616,11 +5616,6 @@ ZEND_METHOD(ReflectionProperty, isAbstract)
 	_property_check_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_ABSTRACT);
 }
 
-ZEND_METHOD(ReflectionProperty, isFinal)
-{
-	_property_check_flag(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACC_FINAL);
-}
-
 /* {{{ Returns whether this property is default (declared at compilation time). */
 ZEND_METHOD(ReflectionProperty, isDefault)
 {
@@ -5941,7 +5936,7 @@ ZEND_METHOD(ReflectionProperty, getDefaultValue)
 }
 /* }}} */
 
-static void get_accessor(INTERNAL_FUNCTION_PARAMETERS, uint32_t accessor)
+static void get_property_hook(INTERNAL_FUNCTION_PARAMETERS, uint32_t hook)
 {
 	reflection_object *intern;
 	property_reference *ref;
@@ -5950,22 +5945,22 @@ static void get_accessor(INTERNAL_FUNCTION_PARAMETERS, uint32_t accessor)
 
 	GET_REFLECTION_OBJECT_PTR(ref);
 
-	if (!ref->prop->accessors || !ref->prop->accessors[accessor]) {
+	if (!ref->prop->hooks || !ref->prop->hooks[hook]) {
 		RETURN_NULL();
 	}
 
-	zend_function *fn = ref->prop->accessors[accessor];
+	zend_function *fn = ref->prop->hooks[hook];
 	reflection_method_factory(fn->common.scope, fn, NULL, return_value);
 }
 
 ZEND_METHOD(ReflectionProperty, getGet)
 {
-	get_accessor(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACCESSOR_GET);
+	get_property_hook(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_PROPERTY_HOOK_GET);
 }
 
 ZEND_METHOD(ReflectionProperty, getSet)
 {
-	get_accessor(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_ACCESSOR_SET);
+	get_property_hook(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_PROPERTY_HOOK_SET);
 }
 
 /* {{{ Constructor. Throws an Exception in case the given extension does not exist */

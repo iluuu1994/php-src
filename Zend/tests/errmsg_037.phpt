@@ -10,4 +10,4 @@ class test {
 echo "Done\n";
 ?>
 --EXPECTF--
-Fatal error: Only accessor properties may be declared abstract in %s on line %d
+Fatal error: Only hooked properties may be declared abstract in %s on line %d
