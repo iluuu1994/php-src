@@ -390,9 +390,7 @@ char *zend_visibility_string(uint32_t fn_flags);
 
 #define ZEND_ACCESSOR_GET 0
 #define ZEND_ACCESSOR_SET 1
-#define ZEND_ACCESSOR_BEFORE_SET 2
-#define ZEND_ACCESSOR_AFTER_SET 3
-#define ZEND_ACCESSOR_COUNT 4
+#define ZEND_ACCESSOR_COUNT 2
 #define ZEND_ACCESSOR_STRUCT_SIZE (sizeof(zend_function*) * ZEND_ACCESSOR_COUNT)
 
 typedef struct _zend_property_info {

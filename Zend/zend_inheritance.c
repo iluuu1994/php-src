@@ -1315,23 +1315,6 @@ static prop_variance prop_get_variance(zend_property_info *prop_info) {
 	return PROP_INVARIANT;
 }
 
-void zend_verify_accessors(zend_class_entry *ce, zend_property_info *prop_info)
-{
-	zend_function **accessors = prop_info->accessors;
-	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-		if (!accessors[ZEND_ACCESSOR_SET]
-		 && (accessors[ZEND_ACCESSOR_BEFORE_SET]
-		  || accessors[ZEND_ACCESSOR_AFTER_SET])) {
-			zend_error_noreturn(E_COMPILE_ERROR,
-				"Virtual read-only property %s::$%s must not declare beforeSet or afterSet hooks", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
-		}
-		if (!accessors[ZEND_ACCESSOR_GET] && accessors[ZEND_ACCESSOR_AFTER_SET]) {
-			zend_error_noreturn(E_COMPILE_ERROR,
-				"Virtual write-only property %s::$%s must not declare afterSet hook", ZSTR_VAL(ce->name), ZSTR_VAL(prop_info->name));
-		}
-	}
-}
-
 static void do_inherit_property(zend_property_info *parent_info, zend_string *key, zend_class_entry *ce) /* {{{ */
 {
 	zval *child = zend_hash_find_known_hash(&ce->properties_info, key);
@@ -1375,9 +1358,6 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 
 				child_info->offset = parent_info->offset;
 				child_info->flags &= ~ZEND_ACC_VIRTUAL;
-			} else if (!(child_info->flags & ZEND_ACC_STATIC) && (parent_info->flags & ZEND_ACC_VIRTUAL)) {
-				child_info->offset = (uint32_t)-1;
-				child_info->flags |= ZEND_ACC_VIRTUAL;
 			}
 
 			zend_function **parent_accessors = parent_info->accessors;
@@ -1741,10 +1721,6 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 			do_inherit_property(property_info, key, ce);
 		} ZEND_HASH_FOREACH_END();
 	}
-
-	ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, property_info) {
-		zend_verify_accessors(ce, property_info);
-	} ZEND_HASH_FOREACH_END();
 
 	if (zend_hash_num_elements(&parent_ce->constants_table)) {
 		zend_class_constant *c;

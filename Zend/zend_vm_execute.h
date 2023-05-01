@@ -7963,10 +7963,6 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_ACCESSOR_CALL_SPEC
             accessor = accessors[ZEND_ACCESSOR_GET];
         } else if (zend_string_equals_literal_ci(accessor_name, "set")) {
             accessor = accessors[ZEND_ACCESSOR_SET];
-        } else if (zend_string_equals_literal_ci(accessor_name, "beforeSet")) {
-            accessor = accessors[ZEND_ACCESSOR_BEFORE_SET];
-        } else if (zend_string_equals_literal_ci(accessor_name, "afterSet")) {
-            accessor = accessors[ZEND_ACCESSOR_AFTER_SET];
         } else {
             ZEND_UNREACHABLE();
         }

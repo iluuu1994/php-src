@@ -7743,10 +7743,6 @@ static void zend_compile_accessors(
 			accessor_kind = ZEND_ACCESSOR_GET;
 		} else if (zend_string_equals_literal_ci(name, "set")) {
 			accessor_kind = ZEND_ACCESSOR_SET;
-		} else if (zend_string_equals_literal_ci(name, "beforeSet")) {
-			accessor_kind = ZEND_ACCESSOR_BEFORE_SET;
-		} else if (zend_string_equals_literal_ci(name, "afterSet")) {
-			accessor_kind = ZEND_ACCESSOR_AFTER_SET;
 		} else {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Unknown accessor \"%s\" for property %s::$%s, expected \"get\", \"set\" or \"beforeSet\"",
@@ -7763,7 +7759,7 @@ static void zend_compile_accessors(
 
 			reset_return_ast = true;
 			*return_ast_ptr = prop_type_ast;
-		} else if (accessor_kind == ZEND_ACCESSOR_SET || accessor_kind == ZEND_ACCESSOR_BEFORE_SET || accessor_kind == ZEND_ACCESSOR_AFTER_SET) {
+		} else if (accessor_kind == ZEND_ACCESSOR_SET) {
 			if (accessor->child[0]) {
 				zend_ast_list *param_list = zend_ast_get_list(accessor->child[0]);
 				if (param_list->children != 1) {
@@ -7776,9 +7772,7 @@ static void zend_compile_accessors(
 					value_parameter->child[0] = prop_type_ast;
 				}
 			} else {
-				zend_string *param_name = accessor_kind != ZEND_ACCESSOR_AFTER_SET
-					? zend_string_init("value", sizeof("value")-1, 0)
-					: zend_string_init("oldValue", sizeof("oldValue")-1, 0);
+				zend_string *param_name = zend_string_init("value", sizeof("value")-1, 0);
 				zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
 				zend_ast *param = zend_ast_create(
 					ZEND_AST_PARAM, prop_type_ast, param_name_ast,
@@ -7795,10 +7789,6 @@ static void zend_compile_accessors(
 		zend_function *func = (zend_function *) zend_compile_func_decl(
 			NULL, (zend_ast *) accessor, /* toplevel */ false);
 		ce->ce_flags |= ZEND_ACC_USE_GUARDS;
-
-		if (accessor_kind == ZEND_ACCESSOR_AFTER_SET) {
-			ZEND_TYPE_FULL_MASK(func->op_array.arg_info[0].type) |= MAY_BE_NULL;
-		}
 
 		if (!prop_info->accessors) {
 			prop_info->accessors = zend_arena_alloc(&CG(arena), ZEND_ACCESSOR_STRUCT_SIZE);
@@ -7819,12 +7809,6 @@ static void zend_compile_accessors(
 		if (value_type_ast_ptr) {
 			*value_type_ast_ptr = NULL;
 		}
-	}
-
-	/* We cannot verify the accessors when the parent is unavailable as hooks get merged, so we delay
-	 * it until inheritance. */
-	if (ce->parent_name == NULL) {
-		zend_verify_accessors(ce, prop_info);
 	}
 }
 
