@@ -1449,7 +1449,8 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 			zend_function **accessors = property->accessors;
 			if (accessors) {
 				for (uint32_t i = 0; i < ZEND_ACCESSOR_COUNT; i++) {
-					if (accessors[i]) {
+					zend_function *accessor = accessors[i];
+					if (accessor && accessor->common.scope == ce) {
 						zend_foreach_op_array_helper((zend_op_array *)accessors[i], func, context);
 					}
 				}
