@@ -557,9 +557,10 @@ class ReflectionProperty implements Reflector
 
     public function getAttributes(?string $name = null, int $flags = 0): array {}
 
-    public function getGet(): ?ReflectionMethod {}
+    /** @return array<string, ReflectionMethod> */
+    public function getHooks(): array {}
 
-    public function getSet(): ?ReflectionMethod {}
+    public function getHook(string $name): ?ReflectionMethod {}
 }
 
 /** @not-serializable */

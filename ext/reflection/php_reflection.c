@@ -5936,7 +5936,7 @@ ZEND_METHOD(ReflectionProperty, getDefaultValue)
 }
 /* }}} */
 
-static void get_property_hook(INTERNAL_FUNCTION_PARAMETERS, uint32_t hook)
+ZEND_METHOD(ReflectionProperty, getHooks)
 {
 	reflection_object *intern;
 	property_reference *ref;
@@ -5945,22 +5945,53 @@ static void get_property_hook(INTERNAL_FUNCTION_PARAMETERS, uint32_t hook)
 
 	GET_REFLECTION_OBJECT_PTR(ref);
 
-	if (!ref->prop->hooks || !ref->prop->hooks[hook]) {
+	if (!ref->prop->hooks) {
+		RETURN_EMPTY_ARRAY();
+	}
+
+	array_init(return_value);
+	if (ref->prop->hooks[ZEND_PROPERTY_HOOK_GET]) {
+		zval hook_obj;
+		zend_function *hook = ref->prop->hooks[ZEND_PROPERTY_HOOK_GET];
+		reflection_method_factory(hook->common.scope, hook, NULL, &hook_obj);
+		zend_hash_update(Z_ARRVAL_P(return_value), ZSTR_KNOWN(ZEND_STR_GET), &hook_obj);
+	}
+	if (ref->prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+		zval hook_obj;
+		zend_function *hook = ref->prop->hooks[ZEND_PROPERTY_HOOK_SET];
+		reflection_method_factory(hook->common.scope, hook, NULL, &hook_obj);
+		zend_hash_update(Z_ARRVAL_P(return_value), ZSTR_KNOWN(ZEND_STR_SET), &hook_obj);
+	}
+}
+
+ZEND_METHOD(ReflectionProperty, getHook)
+{
+	reflection_object *intern;
+	property_reference *ref;
+	zend_string *name;
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		Z_PARAM_STR(name)
+	ZEND_PARSE_PARAMETERS_END();
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	zend_function *hook;
+	if (zend_string_equals_literal_ci(name, "get")) {
+		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_GET] : NULL;
+	} else if (zend_string_equals_literal_ci(name, "set")) {
+		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_SET] : NULL;
+	} else {
+		zend_throw_exception_ex(reflection_exception_ptr, 0,
+			"Property hook \"%s\" does not exist", ZSTR_VAL(name));
+		RETURN_THROWS();
+	}
+
+	if (!hook) {
 		RETURN_NULL();
 	}
 
-	zend_function *fn = ref->prop->hooks[hook];
-	reflection_method_factory(fn->common.scope, fn, NULL, return_value);
-}
-
-ZEND_METHOD(ReflectionProperty, getGet)
-{
-	get_property_hook(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_PROPERTY_HOOK_GET);
-}
-
-ZEND_METHOD(ReflectionProperty, getSet)
-{
-	get_property_hook(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_PROPERTY_HOOK_SET);
+	reflection_method_factory(hook->common.scope, hook, NULL, return_value);
 }
 
 /* {{{ Constructor. Throws an Exception in case the given extension does not exist */

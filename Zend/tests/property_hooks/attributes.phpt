@@ -16,12 +16,12 @@ class C {
     }
 }
 
-$getAttr = (new ReflectionProperty(C::class, 'prop'))->getGet()->getAttributes()[0];
+$getAttr = (new ReflectionProperty(C::class, 'prop'))->getHook('get')->getAttributes()[0];
 var_dump($getAttr->getName());
 var_dump($getAttr->getArguments());
 var_dump($getAttr->newInstance());
 
-$setAttr = (new ReflectionProperty(C::class, 'prop'))->getSet()->getAttributes()[0];
+$setAttr = (new ReflectionProperty(C::class, 'prop'))->getHook('set')->getAttributes()[0];
 var_dump($setAttr->getName());
 var_dump($setAttr->getArguments());
 var_dump($setAttr->newInstance());

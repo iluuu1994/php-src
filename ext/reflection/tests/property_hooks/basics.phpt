@@ -27,14 +27,14 @@ function dumpFlags(ReflectionProperty $rp) {
 $test = new Test;
 
 $rp1 = new ReflectionProperty(Test::class, 'prop1');
-var_dump($rp1->getGet());
-var_dump($rp1->getSet());
+var_dump($rp1->getHook('get'));
+var_dump($rp1->getHook('set'));
 dumpFlags($rp1);
 echo "\n";
 
 $rp2 = new ReflectionProperty(Test::class, 'prop2');
-var_dump($g = $rp2->getGet());
-var_dump($s = $rp2->getSet());
+var_dump($g = $rp2->getHook('get'));
+var_dump($s = $rp2->getHook('set'));
 var_dump($g->invoke($test));
 try {
     $s->invoke($test, 42);
@@ -48,8 +48,8 @@ dumpFlags($rp2);
 echo "\n";
 
 $rp3 = new ReflectionProperty(Test::class, 'prop3');
-var_dump($g = $rp3->getGet());
-var_dump($s = $rp3->getSet());
+var_dump($g = $rp3->getHook('get'));
+var_dump($s = $rp3->getHook('set'));
 $g->invoke($test);
 $s->invoke($test, 42);
 dumpFlags($rp3);
