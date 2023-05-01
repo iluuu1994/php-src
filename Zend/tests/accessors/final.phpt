@@ -1,5 +1,5 @@
 --TEST--
-Final accessors
+Final accessors are not allowed
 --FILE--
 <?php
 
@@ -9,12 +9,6 @@ class A {
     }
 }
 
-class B extends A {
-    public $prop {
-        get { return 24; }
-    }
-}
-
 ?>
 --EXPECTF--
-Fatal error: Cannot override final accessor A::$prop::get() in %s on line %d
+Fatal error: Cannot use the final modifier on an accessor in %s on line %d

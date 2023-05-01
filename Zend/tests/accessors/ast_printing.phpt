@@ -10,7 +10,7 @@ try {
             get {
                 return 42;
             }
-            final set {
+            abstract set {
                 echo 'Foo';
                 $this->prop1 = 42;
             }
@@ -29,7 +29,7 @@ assert(false && new class {
         get {
             return 42;
         }
-        final set {
+        abstract set {
             echo 'Foo';
             $this->prop1 = 42;
         }
