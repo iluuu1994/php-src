@@ -6871,9 +6871,7 @@ static uint32_t get_virtual_flag(zend_ast *hooks_ast) {
 	zend_ast_list *hooks = zend_ast_get_list(hooks_ast);
 	for (uint32_t i = 0; i < hooks->children; i++) {
 		zend_ast_decl *hook = (zend_ast_decl *) hooks->child[i];
-		zend_string *name = hook->name;
-		if ((zend_string_equals_literal_ci(name, "get") || zend_string_equals_literal_ci(name, "set"))
-		 && hook->child[2] != NULL) {
+		if (hook->child[2] != NULL) {
 			return ZEND_ACC_VIRTUAL;
 		}
 	}
@@ -7091,6 +7089,9 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 					"Property %s::$%s cannot have type %s",
 					ZSTR_VAL(scope->name), ZSTR_VAL(name), ZSTR_VAL(str));
 			}
+			if (hooks_ast) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Hooked property must not be promoted");
+			}
 
 			if (!(property_flags & ZEND_ACC_READONLY) && (scope->ce_flags & ZEND_ACC_READONLY_CLASS)) {
 				property_flags |= ZEND_ACC_READONLY;
@@ -7105,7 +7106,7 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 			/* Don't give the property an explicit default value. For typed properties this means
 			 * uninitialized, for untyped properties it means an implicit null default value. */
 			zval default_value;
-			if (ZEND_TYPE_IS_SET(type) || hooks_ast) {
+			if (ZEND_TYPE_IS_SET(type)) {
 				ZVAL_UNDEF(&default_value);
 			} else {
 				if (property_flags & ZEND_ACC_READONLY) {
@@ -7120,12 +7121,8 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 				doc_comment_ast ? zend_string_copy(zend_ast_get_str(doc_comment_ast)) : NULL;
 			zend_property_info *prop = zend_declare_typed_property(
 				scope, name, &default_value,
-				property_flags | get_virtual_flag(hooks_ast) | ZEND_ACC_PROMOTED,
+				property_flags | ZEND_ACC_PROMOTED,
 				doc_comment, type);
-			if (hooks_ast) {
-				zend_ast_list *hooks = zend_ast_get_list(hooks_ast);
-				zend_compile_property_hooks(prop, name, type_ast, hooks);
-			}
 			if (attributes_ast) {
 				zend_compile_attributes(
 					&prop->attributes, attributes_ast, 0, ZEND_ATTRIBUTE_TARGET_PROPERTY, ZEND_ATTRIBUTE_TARGET_PARAMETER);

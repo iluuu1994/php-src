@@ -1,21 +1,17 @@
 --TEST--
-Generated hooks in property promotion
+Hooks in property promotion
 --FILE--
 <?php
 
 class Test {
     public function __construct(
         public $prop {
-            get { echo "get\n"; }
-            set { echo "set($value)\n"; }
-        },
+            get {}
+            set {}
+        }
     ) {}
 }
 
-$test = new Test(42);
-echo $test->prop;
-
 ?>
---EXPECT--
-set(42)
-get
+--EXPECTF--
+Fatal error: Hooked property must not be promoted in %s on line %d
