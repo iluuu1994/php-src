@@ -1092,6 +1092,11 @@ hooked_property:
 			{ $$ = zend_ast_create(ZEND_AST_PROP_ELEM, $1, NULL, ($2 ? zend_ast_create_zval_from_str($2) : NULL), $4); }
 	|	T_VARIABLE '=' expr backup_doc_comment '{' property_hook_list '}'
 			{ $$ = zend_ast_create(ZEND_AST_PROP_ELEM, $1, $3, ($4 ? zend_ast_create_zval_from_str($4) : NULL), $6); }
+	|	T_VARIABLE T_DOUBLE_ARROW expr backup_doc_comment ';' {
+			zend_ast *return_ast = zend_ast_create_list(1, ZEND_AST_STMT_LIST, zend_ast_create(ZEND_AST_RETURN, $3));
+			zend_ast *get_ast = zend_ast_create_decl(ZEND_AST_PROPERTY_HOOK, 0, 0, NULL, ZSTR_INIT_LITERAL("get", 0), NULL, NULL, return_ast, NULL, NULL);
+			$$ = zend_ast_create(ZEND_AST_PROP_ELEM, $1, NULL, ($4 ? zend_ast_create_zval_from_str($4) : NULL), zend_ast_create_list(1, ZEND_AST_STMT_LIST, get_ast));
+		}
 ;
 
 property_hook_list:
