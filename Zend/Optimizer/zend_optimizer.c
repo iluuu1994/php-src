@@ -882,7 +882,6 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
-		// FIXME: Needs anything?
 		case ZEND_INIT_METHOD_CALL:
 			if (opline->op1_type == IS_UNUSED
 					&& opline->op2_type == IS_CONST && Z_TYPE_P(CRT_CONSTANT(opline->op2)) == IS_STRING
@@ -908,6 +907,23 @@ zend_function *zend_optimizer_get_called_func(
 						*is_prototype = true;
 					}
 					return fbc;
+				}
+			}
+			break;
+		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
+			if (op_array->scope && (op_array->scope->ce_flags & ZEND_ACC_LINKED) && op_array->scope->parent) {
+				zend_class_entry *parent_scope = op_array->scope->parent;
+				zend_string *prop_name = Z_STR_P(CRT_CONSTANT(opline->op1));
+				zend_string *hook_name = Z_STR_P(CRT_CONSTANT(opline->op2));
+				zend_property_info *prop_info = zend_get_property_info(parent_scope, prop_name, /* silent */ true);
+
+				if (prop_info && !(prop_info->flags & ZEND_ACC_PRIVATE) && prop_info->hooks) {
+					uint32_t hook_kind = zend_get_hook_kind_from_name(hook_name);
+					zend_function *fbc = prop_info->hooks[hook_kind];
+					if (fbc) {
+						*is_prototype = true;
+						return fbc;
+					}
 				}
 			}
 			break;

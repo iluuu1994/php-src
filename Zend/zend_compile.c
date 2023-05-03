@@ -7649,6 +7649,16 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 }
 /* }}} */
 
+uint32_t zend_get_hook_kind_from_name(zend_string *name) {
+	if (zend_string_equals_literal_ci(name, "get")) {
+		return ZEND_PROPERTY_HOOK_GET;
+	} else if (zend_string_equals_literal_ci(name, "set")) {
+		return ZEND_PROPERTY_HOOK_SET;
+	} else {
+		return (uint32_t)-1;
+	}
+}
+
 static void zend_compile_property_hooks(
 		zend_property_info *prop_info, zend_string *prop_name,
 		zend_ast *prop_type_ast, zend_ast_list *hooks)
@@ -7668,7 +7678,6 @@ static void zend_compile_property_hooks(
 		CG(zend_lineno) = hook->start_lineno;
 		bool reset_return_ast = false;
 		zend_ast **value_type_ast_ptr = NULL;
-		uint32_t hook_kind;
 
 		/* Non-private hooks are always public. This avoids having to copy the hook when inheriting
 		 * hooks from protected properties to public ones. */
@@ -7722,11 +7731,8 @@ static void zend_compile_property_hooks(
 				ZSTR_VAL(name));
 		}
 
-		if (zend_string_equals_literal_ci(name, "get")) {
-			hook_kind = ZEND_PROPERTY_HOOK_GET;
-		} else if (zend_string_equals_literal_ci(name, "set")) {
-			hook_kind = ZEND_PROPERTY_HOOK_SET;
-		} else {
+		uint32_t hook_kind = zend_get_hook_kind_from_name(name);
+		if (hook_kind == (uint32_t)-1) {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Unknown hook \"%s\" for property %s::$%s, expected \"get\", \"set\" or \"beforeSet\"",
 				ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
