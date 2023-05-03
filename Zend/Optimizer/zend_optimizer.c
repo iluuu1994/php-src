@@ -338,7 +338,6 @@ bool zend_optimizer_update_op1_const(zend_op_array *op_array,
 			}
 			zend_optimizer_add_literal_string(op_array, zend_string_tolower(Z_STR_P(val)));
 			break;
-		// FIXME: Needs anything?
 		case ZEND_FETCH_CLASS_CONSTANT:
 			REQUIRES_STRING(val);
 			drop_leading_backslash(val);
@@ -532,7 +531,6 @@ bool zend_optimizer_update_op2_const(zend_op_array *op_array,
 				opline->result.num = alloc_cache_slots(op_array, 2);
 			}
 			break;
-		// FIXME: Needs anything?
 		case ZEND_ASSIGN_OBJ:
 		case ZEND_ASSIGN_OBJ_REF:
 		case ZEND_FETCH_OBJ_R:
@@ -910,15 +908,16 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
-		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
-			if (op_array->scope && (op_array->scope->ce_flags & ZEND_ACC_LINKED) && op_array->scope->parent) {
-				zend_class_entry *parent_scope = op_array->scope->parent;
+		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:;
+			zend_class_entry *scope = op_array->scope;
+			ZEND_ASSERT(scope != NULL);
+			if (scope && (scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
+				zend_class_entry *parent_scope = scope->parent;
 				zend_string *prop_name = Z_STR_P(CRT_CONSTANT(opline->op1));
-				zend_string *hook_name = Z_STR_P(CRT_CONSTANT(opline->op2));
+				uint32_t hook_kind = opline->op2.num;
 				zend_property_info *prop_info = zend_get_property_info(parent_scope, prop_name, /* silent */ true);
 
 				if (prop_info && !(prop_info->flags & ZEND_ACC_PRIVATE) && prop_info->hooks) {
-					uint32_t hook_kind = zend_get_property_hook_kind_from_name(hook_name);
 					zend_function *fbc = prop_info->hooks[hook_kind];
 					if (fbc) {
 						*is_prototype = true;
