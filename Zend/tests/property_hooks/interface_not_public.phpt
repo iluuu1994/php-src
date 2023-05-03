@@ -9,4 +9,4 @@ interface I {
 
 ?>
 --EXPECTF--
-Fatal error: Property hook in interface cannot be protected or private in %s on line %d
+Fatal error: Property in interface cannot be protected or private in %s on line %d

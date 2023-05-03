@@ -7670,17 +7670,15 @@ static void zend_compile_property_hooks(
 		zend_ast **value_type_ast_ptr = NULL;
 		uint32_t hook_kind;
 
-		uint32_t prop_visibility = prop_info->flags & ZEND_ACC_PPP_MASK;
-		uint32_t hook_visibility = hook->flags & ZEND_ACC_PPP_MASK;
-		ZEND_ASSERT(!hook_visibility);
-		/* Inherit the visibility of the property. */
-		hook->flags |= prop_visibility;
+		/* Non-private hooks are always public. This avoids having to copy the hook when inheriting
+		 * hooks from protected properties to public ones. */
+		uint32_t hook_visibility = (prop_info->flags & ZEND_ACC_PPP_MASK) != ZEND_ACC_PRIVATE ? ZEND_ACC_PUBLIC : ZEND_ACC_PRIVATE;
+		hook->flags |= hook_visibility;
 
 		if (ce->ce_flags & ZEND_ACC_INTERFACE) {
-			// FIXME: A check on the property would be less confusing?
-			if (hook->flags & (ZEND_ACC_PROTECTED|ZEND_ACC_PRIVATE)) {
+			if (prop_info->flags & (ZEND_ACC_PROTECTED|ZEND_ACC_PRIVATE)) {
 				zend_error_noreturn(E_COMPILE_ERROR,
-					"Property hook in interface cannot be protected or private");
+					"Property in interface cannot be protected or private");
 			}
 			if (hook->flags & ZEND_ACC_ABSTRACT) {
 				zend_error_noreturn(E_COMPILE_ERROR,
