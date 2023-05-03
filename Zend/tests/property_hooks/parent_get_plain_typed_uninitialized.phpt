@@ -1,5 +1,5 @@
 --TEST--
-Using parent::$prop::get() on native uninitialized typed property
+Using parent::$prop::get() on plain uninitialized typed property
 --FILE--
 <?php
 
@@ -22,4 +22,4 @@ try {
 
 ?>
 --EXPECT--
-Property C::$prop must not be accessed before initialization
+Typed property C::$prop must not be accessed before initialization

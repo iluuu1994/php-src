@@ -61,7 +61,7 @@ $test->foo = 42;
 
 ?>
 --EXPECT--
-Property Test::$foo must not be accessed before initialization
+Typed property Test::$foo must not be accessed before initialization
 bool(false)
 int(42)
 __set foo = 42

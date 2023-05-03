@@ -1,5 +1,5 @@
 --TEST--
-Overridden set of native property
+Overridden set of plain property
 --FILE--
 <?php
 

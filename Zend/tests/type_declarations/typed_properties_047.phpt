@@ -36,5 +36,5 @@ object(Foo)#1 (1) {
 NULL
 int(5)
 NULL
-Property Foo::$foo must not be accessed before initialization
+Typed property Foo::$foo must not be accessed before initialization
 Cannot assign string to property Foo::$foo of type ?int

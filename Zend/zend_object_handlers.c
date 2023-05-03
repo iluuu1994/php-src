@@ -661,7 +661,7 @@ ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *membe
 
 ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_property_info *prop_info, zend_string *name)
 {
-	zend_throw_error(NULL, "Property %s::$%s must not be accessed before initialization",
+	zend_throw_error(NULL, "Typed property %s::$%s must not be accessed before initialization",
 		ZSTR_VAL(prop_info->ce->name),
 		ZSTR_VAL(name));
 }

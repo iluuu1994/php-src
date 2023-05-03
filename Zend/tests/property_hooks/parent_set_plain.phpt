@@ -1,5 +1,5 @@
 --TEST--
-Using parent::$prop::set() on native property
+Using parent::$prop::set() on plain property
 --FILE--
 <?php
 

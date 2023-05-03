@@ -1,10 +1,10 @@
 --TEST--
-Using parent::$prop::get() on native untyped uninitialized property
+Using parent::$prop::get() on plain property
 --FILE--
 <?php
 
 class P {
-    public $prop;
+    public $prop = 42;
 }
 
 class C extends P {
@@ -18,4 +18,4 @@ var_dump($c->prop);
 
 ?>
 --EXPECT--
-NULL
+int(42)
