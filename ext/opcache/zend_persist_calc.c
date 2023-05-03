@@ -382,7 +382,7 @@ static void zend_persist_property_info_calc(zend_property_info *prop)
 		ADD_SIZE(ZEND_PROPERTY_HOOK_STRUCT_SIZE);
 		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 			if (prop->hooks[i]) {
-				zend_persist_class_method_calc((zend_op_array *) prop->hooks[i]);
+				zend_persist_class_method_calc(&prop->hooks[i]->op_array);
 			}
 		}
 	}

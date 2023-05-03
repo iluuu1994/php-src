@@ -483,11 +483,6 @@ class ReflectionProperty implements Reflector
      * @cvalue ZEND_ACC_ABSTRACT
      */
     public const IS_ABSTRACT = UNKNOWN;
-    /**
-     * @var int
-     * @cvalue ZEND_ACC_FINAL
-     */
-    public const IS_FINAL = UNKNOWN;
 
     public string $name;
     public string $class;

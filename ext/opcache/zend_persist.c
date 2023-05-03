@@ -711,18 +711,18 @@ static zend_op_array *zend_persist_class_method(zend_op_array *op_array, zend_cl
 			old_op_array = zend_shared_alloc_get_xlat_entry(op_array);
 			if (old_op_array) {
 				return old_op_array;
-			}
+			} else {
+				op_array = zend_shared_memdup_put(op_array, sizeof(zend_internal_function));
+				if (op_array->scope) {
+					void *persist_ptr;
 
-			op_array = zend_shared_memdup_put(op_array, sizeof(zend_internal_function));
-			if (op_array->scope) {
-				void *persist_ptr;
-
-				if ((persist_ptr = zend_shared_alloc_get_xlat_entry(op_array->scope))) {
-					op_array->scope = (zend_class_entry*)persist_ptr;
-				}
-				if (op_array->prototype) {
-					if ((persist_ptr = zend_shared_alloc_get_xlat_entry(op_array->prototype))) {
-						op_array->prototype = (zend_function*)persist_ptr;
+					if ((persist_ptr = zend_shared_alloc_get_xlat_entry(op_array->scope))) {
+						op_array->scope = (zend_class_entry*)persist_ptr;
+					}
+					if (op_array->prototype) {
+						if ((persist_ptr = zend_shared_alloc_get_xlat_entry(op_array->prototype))) {
+							op_array->prototype = (zend_function*)persist_ptr;
+						}
 					}
 				}
 				// Real dynamically created internal functions like enum methods must have their own run_time_cache pointer. They're always on the same scope as their defining class.
@@ -803,7 +803,7 @@ static zend_property_info *zend_persist_property_info(zend_property_info *prop)
 		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 			if (prop->hooks[i]) {
 				prop->hooks[i] = (zend_function *) zend_persist_class_method(
-					(zend_op_array *) prop->hooks[i], ce);
+					&prop->hooks[i]->op_array, ce);
 			}
 		}
 	}

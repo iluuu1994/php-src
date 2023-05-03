@@ -5642,7 +5642,7 @@ ZEND_METHOD(ReflectionProperty, getModifiers)
 {
 	reflection_object *intern;
 	property_reference *ref;
-	uint32_t keep_flags = ZEND_ACC_PPP_MASK | ZEND_ACC_STATIC | ZEND_ACC_READONLY | ZEND_ACC_FINAL | ZEND_ACC_ABSTRACT;
+	uint32_t keep_flags = ZEND_ACC_PPP_MASK | ZEND_ACC_STATIC | ZEND_ACC_READONLY | ZEND_ACC_ABSTRACT;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		RETURN_THROWS();

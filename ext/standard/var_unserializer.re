@@ -551,23 +551,25 @@ static int is_property_visibility_changed(zend_class_entry *ce, zval *key)
 
 		if (unmangled_class == NULL) {
 			existing_propinfo = zend_hash_find_ptr(&ce->properties_info, Z_STR_P(key));
-		} else if (!strcmp(unmangled_class, "*")
-				|| !strcasecmp(unmangled_class, ZSTR_VAL(ce->name))) {
-			existing_propinfo = zend_hash_str_find_ptr(
-				&ce->properties_info, unmangled_prop, unmangled_prop_len);
+		} else {
+			if (!strcmp(unmangled_class, "*")
+			 || !strcasecmp(unmangled_class, ZSTR_VAL(ce->name))) {
+				existing_propinfo = zend_hash_str_find_ptr(
+					&ce->properties_info, unmangled_prop, unmangled_prop_len);
+			}
 		}
 
 		if (existing_propinfo != NULL) {
-			if (existing_propinfo->flags & ZEND_ACC_VIRTUAL) {
+			if (!(existing_propinfo->flags & ZEND_ACC_VIRTUAL)) {
+				zval_ptr_dtor_str(key);
+				ZVAL_STR_COPY(key, existing_propinfo->name);
+				return 1;
+			} else {
 				php_error_docref(NULL, E_WARNING,
 					"Cannot unserialize value for hooked property %s::$%s",
 					ZSTR_VAL(existing_propinfo->ce->name), Z_STRVAL_P(key));
 				return -1;
 			}
-
-			zval_ptr_dtor_str(key);
-			ZVAL_STR_COPY(key, existing_propinfo->name);
-			return 1;
 		}
 	}
 	return 0;

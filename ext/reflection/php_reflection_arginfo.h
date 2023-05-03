@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 129546111f8ad444e228418d1a01faf33e18240e */
+ * Stub hash: 378f1ca167c3480eec622ac59ded64598304995e */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -1441,12 +1441,6 @@ static zend_class_entry *register_class_ReflectionProperty(zend_class_entry *cla
 	zend_string *const_IS_ABSTRACT_name = zend_string_init_interned("IS_ABSTRACT", sizeof("IS_ABSTRACT") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_IS_ABSTRACT_name, &const_IS_ABSTRACT_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_IS_ABSTRACT_name);
-
-	zval const_IS_FINAL_value;
-	ZVAL_LONG(&const_IS_FINAL_value, ZEND_ACC_FINAL);
-	zend_string *const_IS_FINAL_name = zend_string_init_interned("IS_FINAL", sizeof("IS_FINAL") - 1, 1);
-	zend_declare_class_constant_ex(class_entry, const_IS_FINAL_name, &const_IS_FINAL_value, ZEND_ACC_PUBLIC, NULL);
-	zend_string_release(const_IS_FINAL_name);
 
 	zval property_name_default_value;
 	ZVAL_UNDEF(&property_name_default_value);
