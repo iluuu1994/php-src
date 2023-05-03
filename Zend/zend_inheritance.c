@@ -2712,33 +2712,6 @@ void zend_verify_abstract_class(zend_class_entry *ce) /* {{{ */
 }
 /* }}} */
 
-void zend_verify_property_hook_visibility(zend_class_entry *ce)
-{
-	zend_property_info *property_info;
-
-	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property_info) {
-		zend_function **hooks = property_info->hooks;
-		if (!hooks) {
-			continue;
-		}
-
-		uint32_t property_visibility = property_info->flags & ZEND_ACC_PPP_MASK;
-		uint32_t highest_hook_visibility = ZEND_ACC_PRIVATE;
-		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
-			zend_function *hook = hooks[i];
-			if (!hook) {
-				continue;
-			}
-			highest_hook_visibility = MIN(highest_hook_visibility, hook->common.fn_flags & ZEND_ACC_PPP_MASK);
-		}
-
-		if (property_visibility < highest_hook_visibility) {
-			zend_error_noreturn(E_COMPILE_ERROR,
-				"At least one hook must match the visibility of the property");
-		}
-	} ZEND_HASH_FOREACH_END();
-}
-
 typedef struct {
 	enum {
 		OBLIGATION_DEPENDENCY,
@@ -3293,7 +3266,6 @@ ZEND_API zend_class_entry *zend_do_link_class(zend_class_entry *ce, zend_string 
 		if (ce->ce_flags & ZEND_ACC_ENUM) {
 			zend_verify_enum(ce);
 		}
-		zend_verify_property_hook_visibility(ce);
 
 		/* Normally Stringable is added during compilation. However, if it is imported from a trait,
 		 * we need to explicitly add the interface here. */
@@ -3523,7 +3495,6 @@ ZEND_API zend_class_entry *zend_try_early_bind(zend_class_entry *ce, zend_class_
 			if ((ce->ce_flags & (ZEND_ACC_IMPLICIT_ABSTRACT_CLASS|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) == ZEND_ACC_IMPLICIT_ABSTRACT_CLASS) {
 				zend_verify_abstract_class(ce);
 			}
-			zend_verify_property_hook_visibility(ce);
 			ZEND_ASSERT(!(ce->ce_flags & ZEND_ACC_UNRESOLVED_VARIANCE));
 			ce->ce_flags |= ZEND_ACC_LINKED;
 
