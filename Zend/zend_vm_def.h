@@ -9512,7 +9512,7 @@ ZEND_VM_HANDLER(202, ZEND_CALLABLE_CONVERT, UNUSED, UNUSED)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, CONST, NUM)
+ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
@@ -9528,9 +9528,9 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, CONST, NUM)
 	}
 
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	zend_string *hook_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
+	uint32_t hook_kind = opline->op2.num;
 
-    // FIXME: Handle private
+	// FIXME: Handle private
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
 	if (!prop_info) {
 		zend_throw_error(NULL, "Undefined property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
@@ -9539,45 +9539,31 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, CONST, NUM)
 	}
 
 	zend_function **hooks = prop_info->hooks;
-	zend_function *hook = NULL;
-	if (hooks) {
-        if (zend_string_equals_literal_ci(hook_name, "get")) {
-            hook = hooks[ZEND_PROPERTY_HOOK_GET];
-        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
-            hook = hooks[ZEND_PROPERTY_HOOK_SET];
-        } else {
-            ZEND_UNREACHABLE();
-        }
-    }
+	zend_function *hook = hooks ? hooks[hook_kind] : NULL;
 
 	zend_execute_data *call;
 	if (hook) {
-        call = zend_vm_stack_push_call_frame(
-            ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-            hook,
-            opline->extended_value,
-            ZEND_THIS);
+		call = zend_vm_stack_push_call_frame(
+			ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
+			hook,
+			opline->extended_value,
+			ZEND_THIS);
 	} else {
-	    zend_function *fbc;
-        if (zend_string_equals_literal_ci(hook_name, "get")) {
-            zend_property_hook_get_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
-            zend_property_hook_set_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(hook_name, "beforeSet")
-		|| zend_string_equals_literal_ci(hook_name, "afterSet")) {
-            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(hook_name));
-            UNDEF_RESULT();
-            HANDLE_EXCEPTION();
-        } else {
-            ZEND_UNREACHABLE();
-        }
-        zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
-        hook_call_info->object = Z_PTR_P(ZEND_THIS);
-        hook_call_info->property = property_name;
-        call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-            fbc, opline->extended_value, hook_call_info);
-        /* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
-        ZVAL_PTR(&call->This, hook_call_info);
+		zend_function *fbc;
+		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+			zend_property_hook_get_trampoline(&fbc);
+		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+			zend_property_hook_set_trampoline(&fbc);
+		} else {
+			ZEND_UNREACHABLE();
+		}
+		zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
+		hook_call_info->object = Z_PTR_P(ZEND_THIS);
+		hook_call_info->property = property_name;
+		call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+			fbc, opline->extended_value, hook_call_info);
+		/* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
+		ZVAL_PTR(&call->This, hook_call_info);
 	}
 
 	call->prev_execute_data = EX(call);

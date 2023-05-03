@@ -2372,7 +2372,7 @@ inline_char_handler:
 	RETURN_TOKEN_WITH_STR(T_NAME_RELATIVE, sizeof("namespace\\") - 1);
 }
 
-<ST_IN_SCRIPTING>"parent::$"{LABEL}"::"("get"|"set"|"beforeSet"|"afterSet") {
+<ST_IN_SCRIPTING>"parent::$"{LABEL}"::"("get"|"set") {
 	RETURN_TOKEN_WITH_STR(T_PARENT_PROPERTY_HOOK_NAME, 0);
 }
 

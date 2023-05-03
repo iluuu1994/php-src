@@ -11,4 +11,4 @@ class Test {
 
 ?>
 --EXPECTF--
-Fatal error: Unknown hook "foobar" for property Test::$prop, expected "get", "set" or "beforeSet" in %s on line %d
+Fatal error: Unknown hook "foobar" for property Test::$prop, expected "get" or "set" in %s on line %d

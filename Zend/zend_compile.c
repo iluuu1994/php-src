@@ -4574,6 +4574,9 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	char *hook_name_start = strchr(property_name_start, ':') + 2;
 	zend_string *property_name = zend_string_init(property_name_start, hook_name_start - property_name_start - 2, /* persistent */ false);
 	zend_string *hook_name = zend_string_init(hook_name_start, (ZSTR_VAL(name) + ZSTR_LEN(name)) - hook_name_start, /* persistent */ false);
+	uint32_t hook_kind = zend_get_property_hook_kind_from_name(hook_name);
+	ZEND_ASSERT(hook_kind != (uint32_t)-1);
+	zend_string_release_ex(hook_name, /* persistent */ false);
 
 	// FIXME: Assert the handler has the same name
 	// FIXME: Assert the method is a hook
@@ -4582,8 +4585,7 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
 	opline->op1_type = IS_CONST;
 	opline->op1.constant = zend_add_class_name_literal(property_name);
-	opline->op2_type = IS_CONST;
-	opline->op2.constant = zend_add_class_name_literal(hook_name);
+	opline->op2.num = hook_kind;
 
 	zend_function *fbc = NULL;
 	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
@@ -7649,7 +7651,7 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 }
 /* }}} */
 
-uint32_t zend_get_hook_kind_from_name(zend_string *name) {
+uint32_t zend_get_property_hook_kind_from_name(zend_string *name) {
 	if (zend_string_equals_literal_ci(name, "get")) {
 		return ZEND_PROPERTY_HOOK_GET;
 	} else if (zend_string_equals_literal_ci(name, "set")) {
@@ -7731,10 +7733,10 @@ static void zend_compile_property_hooks(
 				ZSTR_VAL(name));
 		}
 
-		uint32_t hook_kind = zend_get_hook_kind_from_name(name);
+		uint32_t hook_kind = zend_get_property_hook_kind_from_name(name);
 		if (hook_kind == (uint32_t)-1) {
 			zend_error_noreturn(E_COMPILE_ERROR,
-				"Unknown hook \"%s\" for property %s::$%s, expected \"get\", \"set\" or \"beforeSet\"",
+				"Unknown hook \"%s\" for property %s::$%s, expected \"get\" or \"set\"",
 				ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 		}
 

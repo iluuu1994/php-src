@@ -7930,79 +7930,6 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_IN_ARRAY_SPEC_CON
 	ZEND_VM_SMART_BRANCH(0, 1);
 }
 
-static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
-{
-	USE_OPLINE
-	SAVE_OPLINE();
-
-	zend_class_entry *ce = EX(func)->common.scope;
-    ZEND_ASSERT(ce);
-
-	zend_class_entry *parent_ce = ce->parent;
-	if (!parent_ce) {
-		zend_throw_error(NULL, "Cannot use \"parent\" when current class scope has no parent");
-		UNDEF_RESULT();
-		HANDLE_EXCEPTION();
-	}
-
-	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	zend_string *hook_name = Z_STR_P(RT_CONSTANT(opline, opline->op2));
-
-    // FIXME: Handle private
-	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
-	if (!prop_info) {
-		zend_throw_error(NULL, "Undefined property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
-		UNDEF_RESULT();
-		HANDLE_EXCEPTION();
-	}
-
-	zend_function **hooks = prop_info->hooks;
-	zend_function *hook = NULL;
-	if (hooks) {
-        if (zend_string_equals_literal_ci(hook_name, "get")) {
-            hook = hooks[ZEND_PROPERTY_HOOK_GET];
-        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
-            hook = hooks[ZEND_PROPERTY_HOOK_SET];
-        } else {
-            ZEND_UNREACHABLE();
-        }
-    }
-
-	zend_execute_data *call;
-	if (hook) {
-        call = zend_vm_stack_push_call_frame(
-            ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-            hook,
-            opline->extended_value,
-            ZEND_THIS);
-	} else {
-	    zend_function *fbc;
-        if (zend_string_equals_literal_ci(hook_name, "get")) {
-            zend_property_hook_get_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(hook_name, "set")) {
-            zend_property_hook_set_trampoline(&fbc);
-        } else if (zend_string_equals_literal_ci(hook_name, "beforeSet")
-		|| zend_string_equals_literal_ci(hook_name, "afterSet")) {
-            zend_throw_error(NULL, "Call to undefined method %s::$%s::%s()", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name), ZSTR_VAL(hook_name));
-            UNDEF_RESULT();
-            HANDLE_EXCEPTION();
-        } else {
-            ZEND_UNREACHABLE();
-        }
-        zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
-        hook_call_info->object = Z_PTR_P(ZEND_THIS);
-        hook_call_info->property = property_name;
-        call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-            fbc, opline->extended_value, hook_call_info);
-        /* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
-        ZVAL_PTR(&call->This, hook_call_info);
-	}
-
-	call->prev_execute_data = EX(call);
-	EX(call) = call;
-	ZEND_VM_NEXT_OPCODE();
-}
-
 static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ADD_SPEC_CONST_TMPVARCV_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
@@ -11153,6 +11080,65 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSE
 	} else {
 		ZVAL_EMPTY_ARRAY(EX_VAR(opline->result.var));
 	}
+	ZEND_VM_NEXT_OPCODE();
+}
+
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+
+	zend_class_entry *ce = EX(func)->common.scope;
+    ZEND_ASSERT(ce);
+
+	zend_class_entry *parent_ce = ce->parent;
+	if (!parent_ce) {
+		zend_throw_error(NULL, "Cannot use \"parent\" when current class scope has no parent");
+		UNDEF_RESULT();
+		HANDLE_EXCEPTION();
+	}
+
+	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
+	uint32_t hook_kind = opline->op2.num;
+
+	// FIXME: Handle private
+	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
+	if (!prop_info) {
+		zend_throw_error(NULL, "Undefined property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
+		UNDEF_RESULT();
+		HANDLE_EXCEPTION();
+	}
+
+	zend_function **hooks = prop_info->hooks;
+	zend_function *hook = hooks ? hooks[hook_kind] : NULL;
+
+	zend_execute_data *call;
+	if (hook) {
+		call = zend_vm_stack_push_call_frame(
+			ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
+			hook,
+			opline->extended_value,
+			ZEND_THIS);
+	} else {
+		zend_function *fbc;
+		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+			zend_property_hook_get_trampoline(&fbc);
+		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+			zend_property_hook_set_trampoline(&fbc);
+		} else {
+			ZEND_UNREACHABLE();
+		}
+		zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
+		hook_call_info->object = Z_PTR_P(ZEND_THIS);
+		hook_call_info->property = property_name;
+		call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+			fbc, opline->extended_value, hook_call_info);
+		/* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
+		ZVAL_PTR(&call->This, hook_call_info);
+	}
+
+	call->prev_execute_data = EX(call);
+	EX(call) = call;
 	ZEND_VM_NEXT_OPCODE();
 }
 
@@ -56606,7 +56592,7 @@ ZEND_API void execute_ex(zend_execute_data *ex)
 			(void*)&&ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_LABEL,
-			(void*)&&ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_LABEL,
+			(void*)&&ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_LABEL,
 			(void*)&&ZEND_RECV_NOTYPE_SPEC_LABEL,
 			(void*)&&ZEND_JMP_FORWARD_SPEC_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
@@ -58422,10 +58408,6 @@ zend_leave_helper_SPEC_LABEL:
 				VM_TRACE(ZEND_IN_ARRAY_SPEC_CONST_CONST)
 				ZEND_IN_ARRAY_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
-			HYBRID_CASE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST):
-				VM_TRACE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST)
-				ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
-				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_ADD_SPEC_CONST_TMPVARCV):
 				VM_TRACE(ZEND_ADD_SPEC_CONST_TMPVARCV)
 				ZEND_ADD_SPEC_CONST_TMPVARCV_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
@@ -58713,6 +58695,10 @@ zend_leave_helper_SPEC_LABEL:
 			HYBRID_CASE(ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSED):
 				VM_TRACE(ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSED)
 				ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+				HYBRID_BREAK();
+			HYBRID_CASE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED):
+				VM_TRACE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED)
+				ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_DIV_SPEC_CONST_CV):
 				VM_TRACE(ZEND_DIV_SPEC_CONST_CV)
@@ -64715,7 +64701,7 @@ void zend_vm_init(void)
 		ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_HANDLER,
-		ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_CONST_HANDLER,
+		ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER,
 		ZEND_RECV_NOTYPE_SPEC_HANDLER,
 		ZEND_JMP_FORWARD_SPEC_HANDLER,
 		ZEND_NULL_HANDLER,

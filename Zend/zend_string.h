@@ -633,7 +633,6 @@ EMPTY_SWITCH_DEFAULT_CASE()
 	_(ZEND_STR_CONST_EXPR_PLACEHOLDER, "[constant expression]") \
 	_(ZEND_STR_GET,                    "get") \
 	_(ZEND_STR_SET,                    "set") \
-	_(ZEND_STR_BEFORE_SET,             "beforeSet") \
 
 
 typedef enum _zend_known_string_id {

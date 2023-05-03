@@ -199,7 +199,6 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 					break;
 				case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
 					LITERAL_INFO(opline->op1.constant, 1);
-					LITERAL_INFO(opline->op2.constant, 1);
 					break;
 				case ZEND_CATCH:
 					LITERAL_INFO(opline->op1.constant, 2);
