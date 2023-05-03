@@ -6932,7 +6932,6 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		zend_ast **default_ast_ptr = &param_ast->child[2];
 		zend_ast *attributes_ast = param_ast->child[3];
 		zend_ast *doc_comment_ast = param_ast->child[4];
-		zend_ast *hooks_ast = param_ast->child[5];
 		zend_string *name = zval_make_interned_string(zend_ast_get_zval(var_ast));
 		bool is_ref = (param_ast->attr & ZEND_PARAM_REF) != 0;
 		bool is_variadic = (param_ast->attr & ZEND_PARAM_VARIADIC) != 0;
@@ -7090,9 +7089,6 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Property %s::$%s cannot have type %s",
 					ZSTR_VAL(scope->name), ZSTR_VAL(name), ZSTR_VAL(str));
-			}
-			if (hooks_ast) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Hooked property must not be promoted");
 			}
 
 			if (!(property_flags & ZEND_ACC_READONLY) && (scope->ce_flags & ZEND_ACC_READONLY_CLASS)) {
@@ -7767,8 +7763,7 @@ static void zend_compile_property_hooks(
 				zend_ast *param_name_ast = zend_ast_create_zval_from_str(param_name);
 				zend_ast *param = zend_ast_create(
 					ZEND_AST_PARAM, prop_type_ast, param_name_ast,
-					/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL,
-					/* hooks */ NULL);
+					/* expr */ NULL, /* doc_comment */ NULL, /* attributes */ NULL);
 				value_type_ast_ptr = &param->child[0];
 				hook->child[0] = zend_ast_create_list(1, ZEND_AST_PARAM_LIST, param);
 			}

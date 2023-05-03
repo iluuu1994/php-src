@@ -281,7 +281,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
 %type <ast> function_name non_empty_member_modifiers
-%type <ast> property_hook property_hook_list hooked_property optional_property_hook_list property_hook_body
+%type <ast> property_hook property_hook_list hooked_property property_hook_body
 %type <ast> optional_parameter_list
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
@@ -806,20 +806,15 @@ optional_cpp_modifiers:
 			  if (!$$) { YYERROR; } }
 ;
 
-optional_property_hook_list:
-		%empty					{ $$ = NULL; }
-	|	'{' property_hook_list '}'	{ $$ = $2; }
-;
-
 parameter:
 		optional_cpp_modifiers optional_type_without_static
-		is_reference is_variadic T_VARIABLE backup_doc_comment optional_property_hook_list
+		is_reference is_variadic T_VARIABLE backup_doc_comment
 			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $3 | $4, $2, $5, NULL,
-					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL, $7); }
+					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL); }
 	|	optional_cpp_modifiers optional_type_without_static
-		is_reference is_variadic T_VARIABLE backup_doc_comment '=' expr optional_property_hook_list
+		is_reference is_variadic T_VARIABLE backup_doc_comment '=' expr
 			{ $$ = zend_ast_create_ex(ZEND_AST_PARAM, $1 | $3 | $4, $2, $5, $8,
-					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL, $9); }
+					NULL, $6 ? zend_ast_create_zval_from_str($6) : NULL); }
 ;
 
 optional_type_without_static:
