@@ -3216,23 +3216,21 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 				}
 				return;
 			}
-		} else if (EXPECTED(IS_DYNAMIC_PROPERTY_OFFSET(prop_offset))) {
-			if (EXPECTED(zobj->properties != NULL)) {
-				if (UNEXPECTED(GC_REFCOUNT(zobj->properties) > 1)) {
-					if (EXPECTED(!(GC_FLAGS(zobj->properties) & IS_ARRAY_IMMUTABLE))) {
-						GC_DELREF(zobj->properties);
-					}
-					zobj->properties = zend_array_dup(zobj->properties);
-				}
-				ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
-				if (EXPECTED(ptr)) {
-					ZVAL_INDIRECT(result, ptr);
-					return;
-				}
-			}
-		} else {
+		} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
 			/* Fall through to read_property for hooks. */
-			ZEND_ASSERT(IS_HOOKED_PROPERTY_OFFSET(prop_offset));
+		} else if (EXPECTED(zobj->properties != NULL)) {
+			ZEND_ASSERT(IS_DYNAMIC_PROPERTY_OFFSET(prop_offset));
+			if (UNEXPECTED(GC_REFCOUNT(zobj->properties) > 1)) {
+				if (EXPECTED(!(GC_FLAGS(zobj->properties) & IS_ARRAY_IMMUTABLE))) {
+					GC_DELREF(zobj->properties);
+				}
+				zobj->properties = zend_array_dup(zobj->properties);
+			}
+			ptr = zend_hash_find_known_hash(zobj->properties, Z_STR_P(prop_ptr));
+			if (EXPECTED(ptr)) {
+				ZVAL_INDIRECT(result, ptr);
+				return;
+			}
 		}
 	}
 
