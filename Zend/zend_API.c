@@ -1548,9 +1548,6 @@ ZEND_API zend_result zend_update_class_constants(zend_class_entry *class_type) /
 
 		if (class_type->default_static_members_count) {
 			ZEND_HASH_MAP_FOREACH_PTR(&class_type->properties_info, prop_info) {
-				if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-					continue;
-				}
 				if (prop_info->flags & ZEND_ACC_STATIC) {
 					val = static_members_table + prop_info->offset;
 					if (Z_TYPE_P(val) == IS_CONSTANT_AST

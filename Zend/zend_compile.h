@@ -207,12 +207,18 @@ typedef struct _zend_oparray_context {
 /* Static method or property                              |     |     |     */
 #define ZEND_ACC_STATIC                  (1 <<  4) /*     |  X  |  X  |     */
 /*                                                        |     |     |     */
+/* Promoted property / parameter                          |     |     |     */
+#define ZEND_ACC_PROMOTED                (1 <<  5) /*     |     |  X  |  X  */
+/*                                                        |     |     |     */
 /* Final class or method                                  |     |     |     */
-#define ZEND_ACC_FINAL                   (1 <<  5) /*  X  |  X  |  X  |     */
+#define ZEND_ACC_FINAL                   (1 <<  5) /*  X  |  X  |     |     */
 /*                                                        |     |     |     */
 /* Abstract method                                        |     |     |     */
 #define ZEND_ACC_ABSTRACT                (1 <<  6) /*  X  |  X  |  X  |     */
 #define ZEND_ACC_EXPLICIT_ABSTRACT_CLASS (1 <<  6) /*  X  |     |     |     */
+/*                                                        |     |     |     */
+/* Readonly property                                      |     |     |     */
+#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Immutable op_array and class_entries                   |     |     |     */
 /* (implemented only for lazy loading of op_arrays)       |     |     |     */
@@ -234,12 +240,6 @@ typedef struct _zend_oparray_context {
 /*                                                        |     |     |     */
 /* Property Flags (unused: 10...)                         |     |     |     */
 /* ===========                                            |     |     |     */
-/*                                                        |     |     |     */
-/* Readonly property                                      |     |     |     */
-#define ZEND_ACC_READONLY                (1 <<  7) /*     |     |  X  |     */
-/*                                                        |     |     |     */
-/* Promoted property / parameter                          |     |     |     */
-#define ZEND_ACC_PROMOTED                (1 <<  8) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Virtual property without backing storage               |     |     |     */
 #define ZEND_ACC_VIRTUAL                 (1 <<  9) /*     |     |  X  |     */
@@ -310,7 +310,7 @@ typedef struct _zend_oparray_context {
 /* Class cannot be serialized or unserialized             |     |     |     */
 #define ZEND_ACC_NOT_SERIALIZABLE        (1 << 29) /*  X  |     |     |     */
 /*                                                        |     |     |     */
-/* Function Flags (unused: 29-30)                         |     |     |     */
+/* Function Flags (unused: 28-30)                         |     |     |     */
 /* ==============                                         |     |     |     */
 /*                                                        |     |     |     */
 /* deprecation flag                                       |     |     |     */
