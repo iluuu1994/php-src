@@ -917,7 +917,10 @@ zend_function *zend_optimizer_get_called_func(
 				uint32_t hook_kind = opline->op2.num;
 				zend_property_info *prop_info = zend_get_property_info(parent_scope, prop_name, /* silent */ true);
 
-				if (prop_info && !(prop_info->flags & ZEND_ACC_PRIVATE) && prop_info->hooks) {
+				if (prop_info
+					&& prop_info != ZEND_WRONG_PROPERTY_INFO
+					&& !(prop_info->flags & ZEND_ACC_PRIVATE)
+					&& prop_info->hooks) {
 					zend_function *fbc = prop_info->hooks[hook_kind];
 					if (fbc) {
 						*is_prototype = true;

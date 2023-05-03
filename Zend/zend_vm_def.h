@@ -9530,10 +9530,14 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
 	uint32_t hook_kind = opline->op2.num;
 
-	// FIXME: Handle private
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
 	if (!prop_info) {
 		zend_throw_error(NULL, "Undefined property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
+		UNDEF_RESULT();
+		HANDLE_EXCEPTION();
+	}
+	if (prop_info->flags & ZEND_ACC_PRIVATE) {
+		zend_throw_error(NULL, "Cannot access private property %s::$%s", ZSTR_VAL(parent_ce->name), ZSTR_VAL(property_name));
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	}
