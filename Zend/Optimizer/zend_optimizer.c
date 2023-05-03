@@ -1469,7 +1469,7 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 					zend_function *hook = hooks[i];
 					if (hook && hook->common.scope == ce) {
-						zend_foreach_op_array_helper((zend_op_array *)hooks[i], func, context);
+						zend_foreach_op_array_helper(&hooks[i]->op_array, func, context);
 					}
 				}
 			}
