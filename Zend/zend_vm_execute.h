@@ -11099,7 +11099,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL
 	}
 
 	zend_string *property_name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
-	uint32_t hook_kind = opline->op2.num;
+	zend_property_hook_kind hook_kind = opline->op2.num;
 
 	zend_property_info *prop_info = zend_hash_find_ptr(&parent_ce->properties_info, property_name);
 	if (!prop_info) {

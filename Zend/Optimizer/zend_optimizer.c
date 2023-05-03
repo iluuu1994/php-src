@@ -914,7 +914,7 @@ zend_function *zend_optimizer_get_called_func(
 			if (scope && (scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
 				zend_class_entry *parent_scope = scope->parent;
 				zend_string *prop_name = Z_STR_P(CRT_CONSTANT(opline->op1));
-				uint32_t hook_kind = opline->op2.num;
+				zend_property_hook_kind hook_kind = opline->op2.num;
 				zend_property_info *prop_info = zend_get_property_info(parent_scope, prop_name, /* silent */ true);
 
 				if (prop_info
