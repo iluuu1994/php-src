@@ -2105,9 +2105,13 @@ simple_list:
 			zend_ast_export_var(str, ast->child[1], 0, indent);
 			break;
 		case ZEND_AST_CALL:
-		// FIXME: This will contain whitespaces instead of being normalized of the original code does so
-		case ZEND_AST_PARENT_PROPERTY_HOOK_CALL:
 			zend_ast_export_ns_name(str, ast->child[0], 0, indent);
+			smart_str_appendc(str, '(');
+			zend_ast_export_ex(str, ast->child[1], 0, indent);
+			smart_str_appendc(str, ')');
+			break;
+		case ZEND_AST_PARENT_PROPERTY_HOOK_CALL:
+			smart_str_append(str, Z_STR_P(zend_ast_get_zval(ast->child[0])));
 			smart_str_appendc(str, '(');
 			zend_ast_export_ex(str, ast->child[1], 0, indent);
 			smart_str_appendc(str, ')');
@@ -2323,38 +2327,29 @@ simple_list:
 				smart_str_appendc(str, ';');
 			}
 			break;
-		case ZEND_AST_PROP_ELEM: {
+		case ZEND_AST_PROP_ELEM:
 			smart_str_appendc(str, '$');
 			zend_ast_export_name(str, ast->child[0], 0, indent);
 
 			zend_ast *default_value = ast->child[1];
 			if (default_value) {
 				smart_str_appends(str, " = ");
-				zend_ast_export_ex(str, ast->child[1], 0, indent + 1);
+				zend_ast_export_ex(str, default_value, 0, indent + 1);
 			}
 
 			if (ast->child[3]) {
 				zend_ast_list *hook_list = zend_ast_get_list(ast->child[3]);
-				zend_ast *first_hook = hook_list->child[0];
-				bool is_explicit = ((zend_ast_decl *)first_hook)->child[2] != NULL;
 
 				smart_str_appends(str, " {");
-				if (is_explicit) {
-					smart_str_appendc(str, '\n');
-					indent++;
-					zend_ast_export_indent(str, indent);
-				} else {
-					smart_str_appendc(str, ' ');
-				}
+				smart_str_appendc(str, '\n');
+				indent++;
+				zend_ast_export_indent(str, indent);
 
 				for (uint32_t i = 0; i < hook_list->children; i++) {
 					zend_ast_decl *hook = (zend_ast_decl *)hook_list->child[i];
 					zend_ast_export_visibility(str, hook->flags);
 					if (hook->flags & ZEND_ACC_ABSTRACT) {
 						smart_str_appends(str, "abstract ");
-					}
-					if (hook->flags & ZEND_ACC_FINAL) {
-						smart_str_appends(str, "final ");
 					}
 					switch (i) {
 						case ZEND_PROPERTY_HOOK_GET:
@@ -2374,25 +2369,16 @@ simple_list:
 						smart_str_appendc(str, ';');
 					}
 					if (i < (hook_list->children - 1)) {
-						if (is_explicit) {
-							smart_str_appendc(str, '\n');
-							zend_ast_export_indent(str, indent);
-						} else {
-							smart_str_appendc(str, ' ');
-						}
+						smart_str_appendc(str, '\n');
+						zend_ast_export_indent(str, indent);
 					}
 				}
-				if (is_explicit) {
-					smart_str_appendc(str, '\n');
-					indent--;
-					zend_ast_export_indent(str, indent);
-				} else {
-					smart_str_appendc(str, ' ');
-				}
+				smart_str_appendc(str, '\n');
+				indent--;
+				zend_ast_export_indent(str, indent);
 				smart_str_appendc(str, '}');
 			}
 			break;
-		}
 		case ZEND_AST_CONST_ELEM:
 			zend_ast_export_name(str, ast->child[0], 0, indent);
 			APPEND_DEFAULT_VALUE(1);

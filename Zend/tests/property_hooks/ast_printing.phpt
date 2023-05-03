@@ -8,7 +8,7 @@ try {
         public $prop1 { get; set; }
         public $prop2 {
             get {
-                return 42;
+                return parent::$prop1::get();
             }
             abstract set {
                 echo 'Foo';
@@ -24,15 +24,21 @@ try {
 ?>
 --EXPECT--
 assert(false && new class {
-    public $prop1 { get; set; }
+    public $prop1 {
+        get;
+        set;
+    }
     public $prop2 {
         get {
-            return 42;
+            return parent::$prop1::get();
         }
         abstract set {
             echo 'Foo';
             $this->prop1 = 42;
         }
     }
-    public $prop3 = 1 { get; abstract set; }
+    public $prop3 = 1 {
+        get;
+        abstract set;
+    }
 })
