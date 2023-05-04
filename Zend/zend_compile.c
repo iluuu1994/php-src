@@ -3409,6 +3409,11 @@ static void zend_compile_assign(znode *result, zend_ast *ast) /* {{{ */
 
 			zend_compile_list_assign(result, var_ast, &expr_node, var_ast->attr);
 			return;
+		case ZEND_AST_CONST:;
+			/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
+			zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
+			zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
+			return;
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
@@ -6874,7 +6879,18 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 	zend_ast *ast = *ast_ptr;
 	find_property_usage_context *context = (find_property_usage_context *) _context;
 
-	if (ast->kind == ZEND_AST_PROP || ast->kind == ZEND_AST_NULLSAFE_PROP) {
+	if (ast->kind == ZEND_AST_CONST) {
+		zend_string *const_name = zend_ast_get_str(ast->child[0]);
+		if (zend_string_equals_literal(const_name, "field")) {
+			context->uses_property = true;
+			zend_ast_destroy(ast);
+			*ast_ptr = zend_ast_create(ZEND_AST_PROP, 
+				zend_ast_create(ZEND_AST_VAR, zend_ast_create_zval_from_str(ZSTR_INIT_LITERAL("this", false))),
+				zend_ast_create_zval_from_str(zend_string_copy(context->property_name)));
+			/* We just replaced the AST, no need to look for references in this branch. */
+			return;
+		}
+	} else if (ast->kind == ZEND_AST_PROP || ast->kind == ZEND_AST_NULLSAFE_PROP) {
 		zend_ast *object_ast = ast->child[0];
 		zend_ast *property_ast = ast->child[1];
 
@@ -6888,14 +6904,12 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 				&& zend_string_equals_literal(Z_STR_P(object), "this")
 				&& zend_string_equals(Z_STR_P(property), context->property_name)) {
 				context->uses_property = true;
-				return;
 			}
 		}
-	} else if (ast->kind == ZEND_AST_CLOSURE || ast->kind == ZEND_AST_ARROW_FUNC) {
-		/* Conservatively add backing value if $this->prop is used in closures. */
-		zend_ast_decl *closure_ast = (zend_ast_decl *) ast;
-		zend_property_hook_find_property_usage(&closure_ast->child[2], context);
-	} else {
+	}
+
+	/* Don't search across function/class boundaries. */
+	if (!zend_ast_is_special(ast)) {
 		zend_ast_apply(ast, zend_property_hook_find_property_usage, context);
 	}
 }
@@ -6912,6 +6926,8 @@ static bool zend_property_is_virtual(zend_string *property_name, zend_ast *hooks
 		return false;
 	}
 
+	bool is_virtual = true;
+
 	zend_ast_list *hooks = zend_ast_get_list(hooks_ast);
 	for (uint32_t i = 0; i < hooks->children; i++) {
 		zend_ast_decl *hook = (zend_ast_decl *) hooks->child[i];
@@ -6920,16 +6936,13 @@ static bool zend_property_is_virtual(zend_string *property_name, zend_ast *hooks
 		}
 
 		zend_ast *body = hook->child[2];
-		if (!body) {
-			/* Abstract properties aren't virtual. */
-			return false;
-		}
-		if (zend_property_hook_uses_property(property_name, body)) {
-			return false;
+		/* Abstract properties aren't virtual. */
+		if (!body || zend_property_hook_uses_property(property_name, body)) {
+			is_virtual = false;
 		}
 	}
 
-	return true;
+	return is_virtual;
 }
 
 static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32_t fallback_return_type) /* {{{ */

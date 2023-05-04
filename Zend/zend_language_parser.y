@@ -1196,6 +1196,9 @@ expr:
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN, $1, $3); }
 	|	variable '=' ampersand variable
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_REF, $1, $4); }
+	/* Used for `field = $value` syntax. */
+	|	name '=' expr
+			{ $$ = zend_ast_create(ZEND_AST_ASSIGN, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	T_CLONE expr { $$ = zend_ast_create(ZEND_AST_CLONE, $2); }
 	|	variable T_PLUS_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_ADD, $1, $3); }
