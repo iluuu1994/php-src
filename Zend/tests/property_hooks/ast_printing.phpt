@@ -15,6 +15,10 @@ try {
                 $this->prop1 = 42;
             }
         }
+        public $prop3 {
+            get => 42;
+        }
+        public $prop4 => 42;
     });
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
@@ -34,6 +38,16 @@ assert(false && new class {
         set {
             echo 'Foo';
             $this->prop1 = 42;
+        }
+    }
+    public $prop3 {
+        get {
+            return 42;
+        }
+    }
+    public $prop4 {
+        get {
+            return 42;
         }
     }
 })
