@@ -5,17 +5,16 @@ Hook AST printing
 
 try {
     assert(false && new class {
-        public $prop1 { get; set; }
+        public $prop1 { get; abstract set; }
         public $prop2 {
             get {
                 return parent::$prop1::get();
             }
-            abstract set {
+            set {
                 echo 'Foo';
                 $this->prop1 = 42;
             }
         }
-        public $prop3 = 1 { get; abstract set; }
     });
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
@@ -26,19 +25,15 @@ try {
 assert(false && new class {
     public $prop1 {
         get;
-        set;
+        abstract set;
     }
     public $prop2 {
         get {
             return parent::$prop1::get();
         }
-        abstract set {
+        set {
             echo 'Foo';
             $this->prop1 = 42;
         }
-    }
-    public $prop3 = 1 {
-        get;
-        abstract set;
     }
 })
