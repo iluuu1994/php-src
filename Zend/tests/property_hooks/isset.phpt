@@ -4,10 +4,9 @@ isset() and empty() call get property hook
 <?php
 
 class Test {
-    public $_prop1;
     public $prop1 {
-        get { return $this->_prop1; }
-        set { $this->_prop1 = $value; }
+        get { return $this->prop1; }
+        set { $this->prop1 = $value; }
     }
 }
 

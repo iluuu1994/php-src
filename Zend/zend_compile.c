@@ -6864,21 +6864,72 @@ static void zend_compile_property_hooks(
 		zend_property_info *prop_info, zend_string *prop_name,
 		zend_ast *prop_type_ast, zend_ast_list *hooks);
 
-static uint32_t get_virtual_flag(zend_ast *hooks_ast) {
+typedef struct {
+	zend_string *property_name;
+	bool uses_property;
+} find_property_usage_context;
+
+static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_context) /* {{{ */
+{
+	zend_ast *ast = *ast_ptr;
+	find_property_usage_context *context = (find_property_usage_context *) _context;
+
+	if (ast->kind == ZEND_AST_PROP || ast->kind == ZEND_AST_NULLSAFE_PROP) {
+		zend_ast *object_ast = ast->child[0];
+		zend_ast *property_ast = ast->child[1];
+
+		if (object_ast->kind == ZEND_AST_VAR
+			&& object_ast->child[0]->kind == ZEND_AST_ZVAL
+			&& property_ast->kind == ZEND_AST_ZVAL) {
+			zval *object = zend_ast_get_zval(object_ast->child[0]);
+			zval *property = zend_ast_get_zval(property_ast);
+			if (Z_TYPE_P(object) == IS_STRING
+				&& Z_TYPE_P(property) == IS_STRING
+				&& zend_string_equals_literal(Z_STR_P(object), "this")
+				&& zend_string_equals(Z_STR_P(property), context->property_name)) {
+				context->uses_property = true;
+				return;
+			}
+		}
+	} else if (ast->kind == ZEND_AST_CLOSURE || ast->kind == ZEND_AST_ARROW_FUNC) {
+		/* Conservatively add backing value if $this->prop is used in closures. */
+		zend_ast_decl *closure_ast = (zend_ast_decl *) ast;
+		zend_property_hook_find_property_usage(&closure_ast->child[2], context);
+	} else {
+		zend_ast_apply(ast, zend_property_hook_find_property_usage, context);
+	}
+}
+
+static bool zend_property_hook_uses_property(zend_string *property_name, zend_ast *hook_ast)
+{
+	find_property_usage_context context = { property_name, false };
+	zend_property_hook_find_property_usage(&hook_ast, &context);
+	return context.uses_property;
+}
+
+static bool zend_property_is_virtual(zend_string *property_name, zend_ast *hooks_ast) {
 	if (!hooks_ast) {
-		/* If no hooks are used, a backing property is certainly needed. */
-		return 0;
+		return false;
 	}
 
 	zend_ast_list *hooks = zend_ast_get_list(hooks_ast);
 	for (uint32_t i = 0; i < hooks->children; i++) {
 		zend_ast_decl *hook = (zend_ast_decl *) hooks->child[i];
-		if (hook->child[2] != NULL) {
-			return ZEND_ACC_VIRTUAL;
+		if (!hook) {
+			continue;
+		}
+
+		zend_ast *body = hook->child[2];
+		if (!body) {
+			/* Abstract properties aren't virtual. */
+			return false;
+		}
+		if (zend_property_hook_uses_property(property_name, body)) {
+			return false;
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32_t fallback_return_type) /* {{{ */
@@ -7828,7 +7879,7 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		zend_string *doc_comment = NULL;
 		zval value_zv;
 		zend_type type = ZEND_TYPE_INIT_NONE(0);
-		flags |= get_virtual_flag(hooks_ast);
+		flags |= zend_property_is_virtual(name, hooks_ast) ? ZEND_ACC_VIRTUAL : 0;
 
 		if (!hooks_ast) {
 			if (ce->ce_flags & ZEND_ACC_INTERFACE) {

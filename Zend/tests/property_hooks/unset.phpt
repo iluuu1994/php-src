@@ -4,10 +4,9 @@ Hooked properties cannot be unset
 <?php
 
 class Test {
-    private $_prop;
     public $prop {
-        get { return $this->_prop; }
-        set { $this->_prop = $value; }
+        get { return $this->prop; }
+        set { $this->prop = $value; }
     }
 }
 

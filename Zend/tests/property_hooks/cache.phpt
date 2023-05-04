@@ -4,14 +4,14 @@ Test caching of hooked property
 <?php
 
 class Test {
-    private $_prop;
     public $prop {
-        get { echo __METHOD__, "\n"; return $this->_prop; }
-        set { echo __METHOD__, "\n"; $this->_prop = $value; }
+        get { echo __METHOD__, "\n"; return $this->prop; }
+        set { echo __METHOD__, "\n"; $this->prop = $value; }
     }
 }
 
 function doTest(Test $test) {
+    $test->prop = null;
     $test->prop;
     $test->prop = 1;
     $test->prop += 1;
@@ -39,6 +39,7 @@ doTest($test);
 ?>
 --EXPECTF--
 Deprecated: Creation of dynamic property Test::$dyn is deprecated in %s on line %d
+Test::$prop::set
 Test::$prop::get
 Test::$prop::set
 Test::$prop::get
@@ -50,6 +51,7 @@ Test::$prop::get
 Test::$prop::get
 Cannot unset hooked property Test::$prop
 
+Test::$prop::set
 Test::$prop::get
 Test::$prop::set
 Test::$prop::get

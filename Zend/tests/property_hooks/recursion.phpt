@@ -17,33 +17,20 @@ class Test {
 }
 
 $test = new Test;
-try {
-    $test->prop = 10;
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
-try {
-    var_dump($test->prop);
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
-try {
-    var_dump(isset($test->prop));
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
-try {
-    var_dump(isset($test->prop2));
-} catch (Error $e) {
-    echo $e->getMessage(), "\n";
-}
+$test->prop = 10;
+var_dump($test->prop);
+var_dump(isset($test->prop));
+var_dump(isset($test->prop2));
 var_dump($test);
 
 ?>
 --EXPECT--
-Must not write to virtual property Test::$prop
-Must not read from virtual property Test::$prop
-Must not read from virtual property Test::$prop
-Must not read from virtual property Test::$prop2
-object(Test)#1 (0) {
+int(40)
+bool(true)
+bool(true)
+object(Test)#1 (1) {
+  ["prop"]=>
+  int(20)
+  ["prop2"]=>
+  uninitialized(int)
 }

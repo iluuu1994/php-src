@@ -4,11 +4,9 @@ Explicit set property hook $value parameter
 <?php
 
 class Test {
-    private string $_prop;
     public string $prop {
-        get => $this->_prop;
         set(string|array $prop) {
-            $this->_prop = is_array($prop) ? join(', ', $prop) : $prop;
+            $this->prop = is_array($prop) ? join(', ', $prop) : $prop;
         }
     }
 }

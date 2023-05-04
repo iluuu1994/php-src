@@ -5,12 +5,10 @@ Different kinds of indirect modification with by-val and by-ref getters
 
 
 class Test {
-    private $_byVal;
     public $byVal {
-        get { return $this->_byVal; }
         set {
             echo __METHOD__, "\n";
-            $this->_byVal = $value;
+            $this->byVal = $value;
         }
     }
 }

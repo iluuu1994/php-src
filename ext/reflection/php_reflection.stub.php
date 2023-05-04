@@ -525,6 +525,8 @@ class ReflectionProperty implements Reflector
 
     public function isAbstract(): bool {}
 
+    public function isVirtual(): bool {}
+
     public function isPromoted(): bool {}
 
     /** @tentative-return-type */

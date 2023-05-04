@@ -4,16 +4,16 @@ Get property hook by ref and indirect modification
 <?php
 
 class Test {
-    public $_byVal = [];
     public $byVal {
-        get { return $this->_byVal; }
-        set { $this->_byVal = $value; }
+        get { return $this->byVal; }
+        set { $this->byVal = $value; }
     }
 }
 
 $test = new Test;
 
 try {
+    $test->byVal = [];
     $test->byVal[] = 42;
 } catch (\Error $e) {
     echo $e->getMessage(), "\n";
