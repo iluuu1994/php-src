@@ -19,8 +19,22 @@ class Foo {
     }
 }
 
+class CustomReflectionProperty extends \ReflectionProperty {
+    public function getValue(?object $object = null): mixed {
+        return $object->{$this->getName()};
+    }
+    public function setValue(mixed $objectOrValue, mixed $value = null): void {
+        $objectOrValue->{$this->getName()} = $value;
+    }
+}
+
 $foo = new Foo();
 $reflectionProperty = new ReflectionProperty(Foo::class, 'bar');
+$reflectionProperty->getValue($foo);
+$reflectionProperty->setValue($foo, 'bar');
+
+$foo = new Foo();
+$reflectionProperty = new CustomReflectionProperty(Foo::class, 'bar');
 $reflectionProperty->getValue($foo);
 $reflectionProperty->setValue($foo, 'bar');
 
@@ -28,3 +42,5 @@ $reflectionProperty->setValue($foo, 'bar');
 --EXPECT--
 string(3) "Foo"
 string(3) "Foo"
+string(24) "CustomReflectionProperty"
+string(24) "CustomReflectionProperty"

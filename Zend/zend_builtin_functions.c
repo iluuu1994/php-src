@@ -658,7 +658,7 @@ ZEND_FUNCTION(magic_method_get_calling_scope)
 	/* Check if the current call is an instance of ReflectionProperty class. */
 	if (call
 	 && Z_TYPE(call->This) == IS_OBJECT
-	 && instanceof_function(Z_OBJCE(call->This), reflection_property_ptr)) {
+	 && Z_OBJCE(call->This) == reflection_property_ptr) {
 		RETURN_STR_COPY(obj->ce->name);
 	}
 
