@@ -20,11 +20,21 @@ class Foo {
 }
 
 class CustomReflectionProperty extends \ReflectionProperty {
+    public static $callParent = false;
+
     public function getValue(?object $object = null): mixed {
-        return $object->{$this->getName()};
+        if (self::$callParent) {
+            return parent::getValue($object);
+        } else {
+            return $object->{$this->getName()};
+        }
     }
     public function setValue(mixed $objectOrValue, mixed $value = null): void {
-        $objectOrValue->{$this->getName()} = $value;
+        if (self::$callParent) {
+            parent::setValue($objectOrValue, $value);
+        } else {
+            $objectOrValue->{$this->getName()} = $value;
+        }
     }
 }
 
@@ -38,9 +48,17 @@ $reflectionProperty = new CustomReflectionProperty(Foo::class, 'bar');
 $reflectionProperty->getValue($foo);
 $reflectionProperty->setValue($foo, 'bar');
 
+CustomReflectionProperty::$callParent = true;
+$foo = new Foo();
+$reflectionProperty = new CustomReflectionProperty(Foo::class, 'bar');
+$reflectionProperty->getValue($foo);
+$reflectionProperty->setValue($foo, 'bar');
+
 ?>
 --EXPECT--
 string(3) "Foo"
 string(3) "Foo"
 string(24) "CustomReflectionProperty"
 string(24) "CustomReflectionProperty"
+string(3) "Foo"
+string(3) "Foo"
