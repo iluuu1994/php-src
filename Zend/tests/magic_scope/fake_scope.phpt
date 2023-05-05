@@ -1,6 +1,5 @@
 --TEST--
 Fake scope
---XFAIL--
 --FILE--
 <?php
 class Foo {

@@ -9,4 +9,4 @@ try {
 }
 ?>
 --EXPECT--
-magic_method_get_calling_scope() must be called from one of __get(), __set(), __isset(), __unset(), __clone(), __call() or __callStatic() magic methods.
+magic_method_get_calling_scope() must be called from one of __get(), __set(), __isset(), __unset() or __clone() magic methods.

@@ -31,6 +31,7 @@
 #include "zend_generators.h"
 #include "zend_builtin_functions_arginfo.h"
 #include "zend_smart_str.h"
+#include "ext/reflection/php_reflection.h"
 
 /* }}} */
 
@@ -616,9 +617,7 @@ static zend_always_inline bool is_magic_method(zend_string *name)
 		return false;
 	}
 
-	return zend_string_equals_literal_ci(name, "__call")
-		|| zend_string_equals_literal_ci(name, "__callStatic")
-		|| zend_string_equals_literal_ci(name, "__clone")
+	return zend_string_equals_literal_ci(name, "__clone")
 		|| zend_string_equals_literal_ci(name, "__get")
 		|| zend_string_equals_literal_ci(name, "__isset")
 		|| zend_string_equals_literal_ci(name, "__set")
@@ -629,19 +628,17 @@ ZEND_FUNCTION(magic_method_get_calling_scope)
 {
 	ZEND_PARSE_PARAMETERS_NONE();
 
-	if (EG(fake_scope)) {
-		RETURN_STR_COPY(EG(fake_scope)->name);
-	}
-
 	zend_execute_data *call = EX(prev_execute_data);
 	ZEND_ASSERT(call != NULL);
 
 	if (!call->func || !is_magic_method(call->func->common.function_name)) {
-		zend_throw_error(NULL, "magic_method_get_calling_scope() must be called from one of __get(), __set(), __isset(), __unset(), __clone(), __call() or __callStatic() magic methods.");
+		zend_throw_error(NULL, "magic_method_get_calling_scope() must be called from one of __get(), __set(), __isset(), __unset() or __clone() magic methods.");
 		RETURN_THROWS();
 	}
 
-	zval *obj = &call->This;
+	ZEND_ASSERT(Z_TYPE(call->This) == IS_OBJECT);
+	zend_object *obj = Z_OBJ(call->This);
+
 	zend_string *method = call->func->common.function_name;
 	bool is_clone = zend_string_equals_literal_ci(call->func->common.function_name, "__clone");
 	zend_string *first_prop = !is_clone
@@ -649,16 +646,20 @@ ZEND_FUNCTION(magic_method_get_calling_scope)
 		: NULL;
 
 	while ((call = call->prev_execute_data) != NULL) {
-		bool same_object = Z_TYPE_P(obj) == IS_OBJECT && Z_TYPE(call->This) == IS_OBJECT
-			? Z_OBJ_P(obj) == Z_OBJ(call->This)
-			: (Z_TYPE_P(obj)|Z_TYPE(call->This)) == IS_NULL;
-
+		bool same_object = Z_TYPE(call->This) == IS_OBJECT && obj == Z_OBJ(call->This);
 		if (!same_object
 		 || !call->func
 		 || !zend_string_equals_ci(method, call->func->common.function_name)
 		 || (!is_clone && !zend_string_equals(first_prop, Z_STR_P(ZEND_CALL_ARG(call, 1))))) {
 			break;
 		}
+	}
+
+	/* Check if the current call is an instance of ReflectionProperty class. */
+	if (call
+	 && Z_TYPE(call->This) == IS_OBJECT
+	 && instanceof_function(Z_OBJCE(call->This), reflection_property_ptr)) {
+		RETURN_STR_COPY(obj->ce->name);
 	}
 
 	zend_class_entry *scope = call && call->func
@@ -669,8 +670,6 @@ ZEND_FUNCTION(magic_method_get_calling_scope)
 	} else {
 		RETURN_NULL();
 	}
-
-	RETURN_NULL();
 }
 
 static void is_a_impl(INTERNAL_FUNCTION_PARAMETERS, bool only_subclass) /* {{{ */
