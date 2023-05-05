@@ -7773,7 +7773,6 @@ static void zend_compile_property_hooks(
 		}
 
 		if (prop_info->flags & ZEND_ACC_STATIC) {
-			// TODO: This restriction can be relaxed.
 			zend_error_noreturn(E_COMPILE_ERROR, "Cannot declare hooks for static property");
 		}
 		if (hook->flags & ZEND_ACC_ABSTRACT) {
@@ -7781,7 +7780,6 @@ static void zend_compile_property_hooks(
 				zend_error_noreturn(E_COMPILE_ERROR, "Abstract property hook cannot have body");
 			}
 			if (hook->flags & ZEND_ACC_PRIVATE) {
-				// TODO Trait exception?
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Property hook cannot be both abstract and private");
 			}
@@ -7823,6 +7821,15 @@ static void zend_compile_property_hooks(
 				if (param_list->children != 1) {
 					zend_error_noreturn(E_COMPILE_ERROR, "%s hook of property %s::$%s must accept exactly one parameters",
 						ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+				}
+				zend_ast *value_param_ast = param_list->child[0];
+				if (value_param_ast->attr & ZEND_PARAM_REF) {
+					zend_error_noreturn(E_COMPILE_ERROR, "Parameter $%s of %s hook %s::$%s must not be pass-by-reference",
+						ZSTR_VAL(zend_ast_get_str(value_param_ast->child[1])), ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+				}
+				if (value_param_ast->attr & ZEND_PARAM_VARIADIC) {
+					zend_error_noreturn(E_COMPILE_ERROR, "Parameter $%s of %s hook %s::$%s must not be variadic",
+						ZSTR_VAL(zend_ast_get_str(value_param_ast->child[1])), ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 				}
 				zend_ast *value_parameter = param_list->child[0];
 				if (!value_parameter->child[0]) {
