@@ -41,6 +41,7 @@
 #define IN_SET		(1<<1)
 #define IN_UNSET	(1<<2)
 #define IN_ISSET	(1<<3)
+#define IN_HOOK		(1<<4)
 
 /*
   __X accessors explanation:
@@ -718,7 +719,7 @@ try_again:
 		}
 
 		guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED((*guard) & IN_GET)) {
+		if (UNEXPECTED((*guard) & IN_HOOK)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_error(NULL, "Must not read from virtual property %s::$%s",
 					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
@@ -732,9 +733,9 @@ try_again:
 		}
 
 		GC_ADDREF(zobj);
-		*guard |= IN_GET;
+		*guard |= IN_HOOK;
 		zend_call_known_instance_method_with_0_params(get, zobj, rv);
-		*guard &= ~IN_GET;
+		*guard &= ~IN_HOOK;
 
 		if (Z_TYPE_P(rv) != IS_UNDEF) {
 			retval = rv;
@@ -988,7 +989,7 @@ found:;
 		}
 
 		uint32_t *guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED((*guard) & IN_SET)) {
+		if (UNEXPECTED((*guard) & IN_HOOK)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_error(NULL, "Must not write to virtual property %s::$%s",
 					 ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
@@ -1002,9 +1003,9 @@ found:;
 			goto try_again;
 		}
 		GC_ADDREF(zobj);
-		(*guard) |= IN_SET;
+		(*guard) |= IN_HOOK;
 		zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
-		(*guard) &= ~IN_SET;
+		(*guard) &= ~IN_HOOK;
 		OBJ_RELEASE(zobj);
 
 		variable_ptr = value;
@@ -2098,7 +2099,7 @@ found:
 		}
 
 		uint32_t *guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED(*guard & IN_GET)) {
+		if (UNEXPECTED(*guard & IN_HOOK)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_error(NULL, "Must not read from virtual property %s::$%s",
 					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
@@ -2113,9 +2114,9 @@ found:
 
 		zval rv;
 		GC_ADDREF(zobj);
-		*guard |= IN_GET;
+		*guard |= IN_HOOK;
 		zend_call_known_instance_method_with_0_params(get, zobj, &rv);
-		*guard &= ~IN_GET;
+		*guard &= ~IN_HOOK;
 		OBJ_RELEASE(zobj);
 
 		if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
