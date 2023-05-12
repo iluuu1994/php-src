@@ -5733,6 +5733,14 @@ ZEND_METHOD(ReflectionProperty, getDeclaringClass)
 }
 /* }}} */
 
+PHPAPI zend_string *zend_reflection_property_get_class_name(zval *reflection_property)
+{
+	reflection_object *intern = Z_REFLECTION_P(reflection_property);
+	property_reference *ref = (property_reference *) intern->ptr;
+	zend_class_entry *ce = ref->prop ? ref->prop->ce : intern->ce;
+	return zend_string_copy(ce->name);
+}
+
 /* {{{ Returns the doc comment for this property */
 ZEND_METHOD(ReflectionProperty, getDocComment)
 {

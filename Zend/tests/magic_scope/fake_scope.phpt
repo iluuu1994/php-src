@@ -19,6 +19,8 @@ class Foo {
     }
 }
 
+class Bar extends Foo {}
+
 class CustomReflectionProperty extends \ReflectionProperty {
     public static $callParent = false;
 
@@ -54,11 +56,18 @@ $reflectionProperty = new CustomReflectionProperty(Foo::class, 'bar');
 $reflectionProperty->getValue($foo);
 $reflectionProperty->setValue($foo, 'bar');
 
+$bar = new Bar();
+$reflectionProperty = new ReflectionProperty(Foo::class, 'bar');
+$reflectionProperty->getValue($bar);
+$reflectionProperty->setValue($bar, 'bar');
+
 ?>
 --EXPECT--
 string(3) "Foo"
 string(3) "Foo"
 string(24) "CustomReflectionProperty"
 string(24) "CustomReflectionProperty"
+string(3) "Foo"
+string(3) "Foo"
 string(3) "Foo"
 string(3) "Foo"

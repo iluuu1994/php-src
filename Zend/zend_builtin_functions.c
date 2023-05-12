@@ -658,9 +658,10 @@ ZEND_FUNCTION(magic_method_get_calling_scope)
 	/* Check if the current call is an instance of ReflectionProperty class. */
 	if (call
 	 && call->func
-	 && call->func->common.scope
-	 && call->func->common.scope == reflection_property_ptr) {
-		RETURN_STR_COPY(obj->ce->name);
+	 && call->func->type == ZEND_INTERNAL_FUNCTION
+	 && (call->func->internal_function.handler == ZEND_MN(ReflectionProperty_getValue)
+	  || call->func->internal_function.handler == ZEND_MN(ReflectionProperty_setValue))) {
+		RETURN_STR(zend_reflection_property_get_class_name(&call->This));
 	}
 
 	zend_class_entry *scope = call && call->func
