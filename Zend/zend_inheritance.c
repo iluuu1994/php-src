@@ -1565,6 +1565,16 @@ void zend_build_properties_info_table(zend_class_entry *ce)
 	} ZEND_HASH_FOREACH_END();
 }
 
+static void zend_verify_property(zend_class_entry *ce, zend_property_info *prop_info, zend_string *prop_name)
+{
+	/* We specified a default value (otherwise offset would be -1), but the virtual flag wasn't
+	 * removed during inheritance. */
+	if ((prop_info->flags & ZEND_ACC_VIRTUAL) && prop_info->offset != (uint32_t)-1) {
+		zend_error_noreturn(E_COMPILE_ERROR,
+			"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+	}
+}
+
 ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *parent_ce, bool checked) /* {{{ */
 {
 	zend_property_info *property_info;
@@ -1702,7 +1712,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 		if (property_info->ce == ce) {
 			if (property_info->flags & ZEND_ACC_STATIC) {
 				property_info->offset += parent_ce->default_static_members_count;
-			} else {
+			} else if (property_info->offset != (uint32_t)-1) {
 				property_info->offset += parent_ce->default_properties_count * sizeof(zval);
 			}
 		}
@@ -1717,6 +1727,12 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 			do_inherit_property(property_info, key, ce);
 		} ZEND_HASH_FOREACH_END();
 	}
+
+	ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, property_info) {
+		if (property_info->ce == ce) {
+			zend_verify_property(ce, property_info, key);
+		}
+	} ZEND_HASH_FOREACH_END();
 
 	if (zend_hash_num_elements(&parent_ce->constants_table)) {
 		zend_class_constant *c;

@@ -6884,7 +6884,9 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 	zend_ast *ast = *ast_ptr;
 	find_property_usage_context *context = (find_property_usage_context *) _context;
 
-	if (ast->kind == ZEND_AST_CONST) {
+	if (ast == NULL) {
+		return;
+	} else if (ast->kind == ZEND_AST_CONST) {
 		zend_string *const_name = zend_ast_get_str(ast->child[0]);
 		if (zend_string_equals_literal(const_name, "field")) {
 			context->uses_property = true;
@@ -7967,9 +7969,10 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 				}
 			}
 
-			if (flags & ZEND_ACC_VIRTUAL) {
+			/* Check needs to be repeated after inheritance for classes with parents. */
+			if ((flags & ZEND_ACC_VIRTUAL) && !ce->parent_name) {
 				zend_error_noreturn(E_COMPILE_ERROR,
-					"Cannot specify default value for hooked property");
+					"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(name));
 			}
 		} else if (!ZEND_TYPE_IS_SET(type) && !hooks_ast) {
 			ZVAL_NULL(&value_zv);

@@ -5,17 +5,17 @@ Hook AST printing
 
 try {
     assert(false && new class {
-        public $prop1 { get; abstract set; }
+        public $prop1 { get; set; }
         public $prop2 {
             get {
                 return parent::$prop1::get();
             }
-            set {
+            abstract set {
                 echo 'Foo';
                 $this->prop1 = 42;
             }
         }
-        public $prop3 {
+        public $prop3 = 1 {
             get => 42;
         }
         public $prop4 => 42;
@@ -29,18 +29,18 @@ try {
 assert(false && new class {
     public $prop1 {
         get;
-        abstract set;
+        set;
     }
     public $prop2 {
         get {
             return parent::$prop1::get();
         }
-        set {
+        abstract set {
             echo 'Foo';
             $this->prop1 = 42;
         }
     }
-    public $prop3 {
+    public $prop3 = 1 {
         get {
             return 42;
         }
