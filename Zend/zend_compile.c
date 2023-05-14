@@ -1986,6 +1986,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 		ce->num_interfaces = 0;
 		ce->interfaces = NULL;
 		ce->num_traits = 0;
+		ce->num_prop_hooks_variance_checks = 0;
 		ce->trait_names = NULL;
 		ce->trait_aliases = NULL;
 		ce->trait_precedences = NULL;
@@ -7867,6 +7868,20 @@ static void zend_compile_property_hooks(
 		}
 		prop_info->hooks[hook_kind] = func;
 
+		if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+			switch (zend_verify_property_hook_variance(prop_info, func)) {
+				case INHERITANCE_SUCCESS:
+					break;
+				case INHERITANCE_UNRESOLVED:
+					ce->num_prop_hooks_variance_checks++;
+					break;
+				case INHERITANCE_ERROR:
+					zend_hooked_property_variance_error(prop_info);
+				case INHERITANCE_WARNING:
+					ZEND_UNREACHABLE();
+			}
+		}
+
 		zend_string_release(name);
 		/* Un-share type ASTs. Alternatively we could duplicate them. */
 		if (reset_return_ast) {
@@ -8380,7 +8395,7 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 	}
 
 	/* We currently don't early-bind classes that implement interfaces or use traits */
-	if (!ce->num_interfaces && !ce->num_traits
+	if (!ce->num_interfaces && !ce->num_traits && !ce->num_prop_hooks_variance_checks
 	 && !(CG(compiler_options) & ZEND_COMPILE_WITHOUT_EXECUTION)) {
 		if (toplevel) {
 			if (extends_ast) {
@@ -8446,7 +8461,7 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 		if (extends_ast && toplevel
 			 && (CG(compiler_options) & ZEND_COMPILE_DELAYED_BINDING)
 				/* We currently don't early-bind classes that implement interfaces or use traits */
-			 && !ce->num_interfaces && !ce->num_traits
+			 && !ce->num_interfaces && !ce->num_traits && !ce->num_prop_hooks_variance_checks
 		) {
 			CG(active_op_array)->fn_flags |= ZEND_ACC_EARLY_BINDING;
 			opline->opcode = ZEND_DECLARE_CLASS_DELAYED;

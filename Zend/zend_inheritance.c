@@ -37,12 +37,7 @@ ZEND_API zend_class_entry* (*zend_inheritance_cache_add)(zend_class_entry *ce, z
 /* Unresolved means that class declarations that are currently not available are needed to
  * determine whether the inheritance is valid or not. At runtime UNRESOLVED should be treated
  * as an ERROR. */
-typedef enum {
-	INHERITANCE_UNRESOLVED = -1,
-	INHERITANCE_ERROR = 0,
-	INHERITANCE_WARNING = 1,
-	INHERITANCE_SUCCESS = 2,
-} inheritance_status;
+typedef zend_inheritance_status inheritance_status;
 
 typedef enum {
 	PROP_INVARIANT,
@@ -60,6 +55,8 @@ static void add_property_compatibility_obligation(
 static void add_class_constant_compatibility_obligation(
 		zend_class_entry *ce, const zend_class_constant *child_const,
 		const zend_class_constant *parent_const, const zend_string *const_name);
+static void add_property_hook_obligation(
+		zend_class_entry *ce, const zend_property_info *hooked_prop, const zend_function *hook_func);
 
 static void ZEND_COLD emit_incompatible_method_error(
 		const zend_function *child, zend_class_entry *child_scope,
@@ -626,7 +623,7 @@ static inheritance_status zend_is_intersection_subtype_of_type(
 	return early_exit_status == INHERITANCE_ERROR ? INHERITANCE_SUCCESS : INHERITANCE_ERROR;
 }
 
-static inheritance_status zend_perform_covariant_type_check(
+ZEND_API inheritance_status zend_perform_covariant_type_check(
 		zend_class_entry *fe_scope, zend_type fe_type,
 		zend_class_entry *proto_scope, zend_type proto_type)
 {
@@ -1573,6 +1570,30 @@ static void zend_verify_property(zend_class_entry *ce, zend_property_info *prop_
 		zend_error_noreturn(E_COMPILE_ERROR,
 			"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 	}
+}
+
+ZEND_API ZEND_COLD ZEND_NORETURN void zend_hooked_property_variance_error(const zend_property_info *prop_info)
+{
+	zend_string *value_param_name = prop_info->hooks[ZEND_PROPERTY_HOOK_SET]->op_array.arg_info[0].name;
+	zend_error_noreturn(E_COMPILE_ERROR, "Type of parameter $%s of hook %s::$%s::set must be compatible with property type",
+		ZSTR_VAL(value_param_name), ZSTR_VAL(prop_info->ce->name), zend_get_unmangled_property_name(prop_info->name));
+}
+
+ZEND_API inheritance_status zend_verify_property_hook_variance(const zend_property_info *prop_info, const zend_function *func)
+{
+	ZEND_ASSERT(prop_info->hooks && prop_info->hooks[ZEND_PROPERTY_HOOK_SET] == func);
+
+	zend_arg_info *value_arg_info = &func->op_array.arg_info[0];
+	if (!ZEND_TYPE_IS_SET(value_arg_info->type)) {
+		return INHERITANCE_SUCCESS;
+	}
+
+	if (!ZEND_TYPE_IS_SET(prop_info->type)) {
+		return INHERITANCE_ERROR;
+	}
+
+	zend_class_entry *ce = prop_info->ce;
+	return zend_perform_covariant_type_check(ce, prop_info->type, ce, value_arg_info->type);
 }
 
 ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *parent_ce, bool checked) /* {{{ */
@@ -2733,7 +2754,8 @@ typedef struct {
 		OBLIGATION_DEPENDENCY,
 		OBLIGATION_COMPATIBILITY,
 		OBLIGATION_PROPERTY_COMPATIBILITY,
-		OBLIGATION_CLASS_CONSTANT_COMPATIBILITY
+		OBLIGATION_CLASS_CONSTANT_COMPATIBILITY,
+		OBLIGATION_PROPERTY_HOOK,
 	} type;
 	union {
 		zend_class_entry *dependency_ce;
@@ -2754,6 +2776,10 @@ typedef struct {
 			const zend_string *const_name;
 			const zend_class_constant *parent_const;
 			const zend_class_constant *child_const;
+		};
+		struct {
+			const zend_property_info *hooked_prop;
+			const zend_function *hook_func;
 		};
 	};
 } variance_obligation;
@@ -2843,6 +2869,16 @@ static void add_class_constant_compatibility_obligation(
 	zend_hash_next_index_insert_ptr(obligations, obligation);
 }
 
+static void add_property_hook_obligation(
+		zend_class_entry *ce, const zend_property_info *hooked_prop, const zend_function *hook_func) {
+	HashTable *obligations = get_or_init_obligations_for_class(ce);
+	variance_obligation *obligation = emalloc(sizeof(variance_obligation));
+	obligation->type = OBLIGATION_PROPERTY_HOOK;
+	obligation->hooked_prop = hooked_prop;
+	obligation->hook_func = hook_func;
+	zend_hash_next_index_insert_ptr(obligations, obligation);
+}
+
 static void resolve_delayed_variance_obligations(zend_class_entry *ce);
 
 static void check_variance_obligation(variance_obligation *obligation) {
@@ -2872,12 +2908,17 @@ static void check_variance_obligation(variance_obligation *obligation) {
 		if (status != INHERITANCE_SUCCESS) {
 			emit_incompatible_property_error(obligation->child_prop, obligation->parent_prop, obligation->variance);
 		}
-	} else {
-		ZEND_ASSERT(obligation->type == OBLIGATION_CLASS_CONSTANT_COMPATIBILITY);
+	} else if (obligation->type == OBLIGATION_CLASS_CONSTANT_COMPATIBILITY) {
 		inheritance_status status =
 		class_constant_types_compatible(obligation->parent_const, obligation->child_const);
 		if (status != INHERITANCE_SUCCESS) {
 			emit_incompatible_class_constant_error(obligation->child_const, obligation->parent_const, obligation->const_name);
+		}
+	} else {
+		ZEND_ASSERT(obligation->type == OBLIGATION_PROPERTY_HOOK);
+		inheritance_status status = zend_verify_property_hook_variance(obligation->hooked_prop, obligation->hook_func);
+		if (status != INHERITANCE_SUCCESS) {
+			zend_hooked_property_variance_error(obligation->hooked_prop);
 		}
 	}
 }
@@ -3281,6 +3322,25 @@ ZEND_API zend_class_entry *zend_do_link_class(zend_class_entry *ce, zend_string 
 		}
 		if (ce->ce_flags & ZEND_ACC_ENUM) {
 			zend_verify_enum(ce);
+		}
+		if (ce->num_prop_hooks_variance_checks) {
+			zend_property_info *prop_info;
+			ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, prop_info) {
+				if (prop_info->ce == ce && prop_info->hooks && prop_info->hooks[ZEND_PROPERTY_HOOK_SET]) {
+					switch (zend_verify_property_hook_variance(prop_info, prop_info->hooks[ZEND_PROPERTY_HOOK_SET])) {
+						case INHERITANCE_SUCCESS:
+							break;
+						case INHERITANCE_ERROR:
+							zend_hooked_property_variance_error(prop_info);
+							break;
+						case INHERITANCE_UNRESOLVED:
+							add_property_hook_obligation(ce, prop_info, prop_info->hooks[ZEND_PROPERTY_HOOK_SET]);
+							break;
+						case INHERITANCE_WARNING:
+							ZEND_UNREACHABLE();
+					}
+				}
+			} ZEND_HASH_FOREACH_END();
 		}
 
 		/* Normally Stringable is added during compilation. However, if it is imported from a trait,
