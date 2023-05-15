@@ -404,6 +404,7 @@ void init_compiler(void) /* {{{ */
 	CG(arena) = zend_arena_create(64 * 1024);
 	CG(active_op_array) = NULL;
 	CG(active_property_info) = NULL;
+	CG(active_property_hook_kind) = (zend_property_hook_kind)-1;
 	memset(&CG(context), 0, sizeof(CG(context)));
 	zend_init_compiler_data_structures();
 	zend_init_rsrc_list();
@@ -4570,6 +4571,16 @@ static zend_result zend_try_compile_special_func(znode *result, zend_string *lcn
 }
 /* }}} */
 
+static const char *zend_get_cstring_from_property_hook_kind(zend_property_hook_kind kind) {
+	switch (kind) {
+		case ZEND_PROPERTY_HOOK_GET:
+			return "get";
+		case ZEND_PROPERTY_HOOK_SET:
+			return "set";
+		EMPTY_SWITCH_DEFAULT_CASE()
+	}
+}
+
 static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
 {
 	zend_class_entry *ce = CG(active_class_entry);
@@ -4589,8 +4600,19 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	ZEND_ASSERT(hook_kind != (uint32_t)-1);
 	zend_string_release_ex(hook_name, /* persistent */ false);
 
-	// FIXME: Assert the handler has the same name
-	// FIXME: Assert the method is a hook
+	zend_property_info *prop_info = CG(active_property_info);
+	if (!prop_info) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() outside a property hook",
+			ZSTR_VAL(property_name), ZSTR_VAL(hook_name));
+	}
+	if (!zend_string_equals(property_name, prop_info->name)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() in a different property ($%s)",
+			ZSTR_VAL(property_name), ZSTR_VAL(hook_name), ZSTR_VAL(prop_info->name));
+	}
+	if (hook_kind != CG(active_property_hook_kind)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() in a different property hook (%s)",
+			ZSTR_VAL(property_name), ZSTR_VAL(hook_name), zend_get_cstring_from_property_hook_kind(CG(active_property_hook_kind)));
+	}
 
 	zend_op *opline = get_next_op();
 	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
@@ -7853,8 +7875,12 @@ static void zend_compile_property_hooks(
 		}
 
 		hook->name = zend_strpprintf(0, "$%s::%s", ZSTR_VAL(prop_name), ZSTR_VAL(name));
+
+		CG(active_property_hook_kind) = hook_kind;
 		zend_function *func = (zend_function *) zend_compile_func_decl(
 			NULL, (zend_ast *) hook, /* toplevel */ false);
+		CG(active_property_hook_kind) = (zend_property_hook_kind)-1;
+
 		ce->ce_flags |= ZEND_ACC_USE_GUARDS;
 
 		if (!prop_info->hooks) {

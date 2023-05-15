@@ -6,14 +6,16 @@ Using parent::$prop::get() with undefined property
 class P {}
 
 class C extends P {
-    public function test() {
-        return parent::$prop::get();
+    public $prop {
+        get {
+            return parent::$prop::get();
+        }
     }
 }
 
 $c = new C();
 try {
-    var_dump($c->test());
+    var_dump($c->prop);
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
 }
