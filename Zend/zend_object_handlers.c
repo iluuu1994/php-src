@@ -1342,11 +1342,9 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			return;
 		}
 	} else if (IS_HOOKED_PROPERTY_OFFSET(property_offset)) {
-		if (!zobj->ce->__unset) {
-			zend_throw_error(NULL, "Cannot unset hooked property %s::$%s",
-				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			return;
-		}
+		zend_throw_error(NULL, "Cannot unset hooked property %s::$%s",
+			ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+		return;
 	} else if (UNEXPECTED(EG(exception))) {
 		return;
 	}
@@ -1364,10 +1362,8 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			zend_wrong_offset(zobj->ce, name);
 			ZEND_ASSERT(EG(exception));
 			return;
-		} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(property_offset))) {
-			zend_throw_error(NULL, "Cannot unset hooked property %s::$%s",
-				ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 		} else {
+			ZEND_ASSERT(!IS_HOOKED_PROPERTY_OFFSET(property_offset));
 			/* Nothing to do: The property already does not exist. */
 		}
 	}

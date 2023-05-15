@@ -39,12 +39,7 @@ class B extends A {
         }
     }
     public function __unset($name) {
-        echo __METHOD__, "($name)\n";
-        try {
-            unset($this->$name);
-        } catch (Error $e) {
-            echo $e->getMessage(), "\n";
-        }
+        echo "Never reached\n";
     }
 }
 
@@ -52,7 +47,11 @@ $b = new B;
 $b->prop;
 var_dump(isset($b->prop));
 $b->prop = 1;
-unset($b->prop);
+try {
+    unset($b->prop);
+} catch (Error $e) {
+    echo $e->getMessage(), "\n";
+}
 
 ?>
 --EXPECT--
@@ -60,5 +59,4 @@ A::$prop::get
 A::$prop::get
 bool(true)
 A::$prop::set
-B::__unset(prop)
 Cannot unset hooked property B::$prop

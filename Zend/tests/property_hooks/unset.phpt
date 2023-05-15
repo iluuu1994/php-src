@@ -8,6 +8,10 @@ class Test {
         get { return $this->prop; }
         set { $this->prop = $value; }
     }
+
+    public function __unset($name) {
+        echo "Never reached\n";
+    }
 }
 
 $test = new Test;
