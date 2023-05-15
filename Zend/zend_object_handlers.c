@@ -819,8 +819,7 @@ call_getter:
 
 			OBJ_RELEASE(zobj);
 			goto exit;
-		} else if (UNEXPECTED(IS_WRONG_PROPERTY_OFFSET(property_offset)
-					|| IS_HOOKED_PROPERTY_OFFSET(property_offset))) {
+		} else if (UNEXPECTED(IS_WRONG_PROPERTY_OFFSET(property_offset))) {
 			/* Trigger the correct error */
 			zend_wrong_offset(zobj->ce, name);
 			ZEND_ASSERT(EG(exception));
@@ -1026,8 +1025,7 @@ found:;
 			(*guard) &= ~IN_SET;
 			OBJ_RELEASE(zobj);
 			variable_ptr = value;
-		} else if (EXPECTED(!IS_WRONG_PROPERTY_OFFSET(property_offset)
-						&& !IS_HOOKED_PROPERTY_OFFSET(property_offset))) {
+		} else if (EXPECTED(!IS_WRONG_PROPERTY_OFFSET(property_offset))) {
 			goto write_std_property;
 		} else {
 			/* Trigger the correct error */
@@ -1363,7 +1361,6 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			ZEND_ASSERT(EG(exception));
 			return;
 		} else {
-			ZEND_ASSERT(!IS_HOOKED_PROPERTY_OFFSET(property_offset));
 			/* Nothing to do: The property already does not exist. */
 		}
 	}
