@@ -5,8 +5,8 @@ Accessing property from hook does not call magic method
 
 class Test {
     public $prop {
-        get => $this->prop;
-        set => $this->prop = $value;
+        get => field;
+        set => field = $value;
     }
 
     public function __get($name) {
@@ -20,9 +20,11 @@ class Test {
 }
 
 $test = new Test;
-$test->prop;
+var_dump($test->prop);
 $test->prop = 42;
+var_dump($test->prop);
 
 ?>
---EXPECTF--
-Warning: Undefined property: Test::$prop in %s on line %d
+--EXPECT--
+NULL
+int(42)

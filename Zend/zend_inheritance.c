@@ -1570,6 +1570,13 @@ static void zend_verify_property(zend_class_entry *ce, zend_property_info *prop_
 		zend_error_noreturn(E_COMPILE_ERROR,
 			"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 	}
+	/* If the property turns backed during inheritance and no type and default value are set, we want
+	 * the default value to be null. */
+	if (!(prop_info->flags & ZEND_ACC_VIRTUAL)
+	 && !ZEND_TYPE_IS_SET(prop_info->type)
+	 && Z_TYPE(ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)]) == IS_UNDEF) {
+		ZVAL_NULL(&ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)]);
+	}
 }
 
 ZEND_API ZEND_COLD ZEND_NORETURN void zend_hooked_property_variance_error(const zend_property_info *prop_info)

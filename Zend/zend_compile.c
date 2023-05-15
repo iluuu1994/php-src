@@ -8022,6 +8022,16 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 			CG(active_property_info) = info;
 			zend_compile_property_hooks(info, name, type_ast, zend_ast_get_list(hooks_ast));
 			CG(active_property_info) = NULL;
+
+			/* If the property is known to be backed at compile-time and no type and default value
+			 * are set, we want the default value to be null. The same happens after inheritance when
+			 * there is a superclass. */
+			if (!ce->parent_name
+			 && !(info->flags & ZEND_ACC_VIRTUAL)
+			 && !ZEND_TYPE_IS_SET(info->type)
+			 && Z_TYPE(ce->default_properties_table[OBJ_PROP_TO_NUM(info->offset)]) == IS_UNDEF) {
+				ZVAL_NULL(&ce->default_properties_table[OBJ_PROP_TO_NUM(info->offset)]);
+			}
 		}
 
 		if (attr_ast) {
