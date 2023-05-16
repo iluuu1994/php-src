@@ -4598,7 +4598,6 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	zend_string *hook_name = zend_string_init(hook_name_start, (ZSTR_VAL(name) + ZSTR_LEN(name)) - hook_name_start, /* persistent */ false);
 	zend_property_hook_kind hook_kind = zend_get_property_hook_kind_from_name(hook_name);
 	ZEND_ASSERT(hook_kind != (uint32_t)-1);
-	zend_string_release_ex(hook_name, /* persistent */ false);
 
 	zend_property_info *prop_info = CG(active_property_info);
 	if (!prop_info) {
@@ -4613,6 +4612,7 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() in a different property hook (%s)",
 			ZSTR_VAL(property_name), ZSTR_VAL(hook_name), zend_get_cstring_from_property_hook_kind(CG(active_property_hook_kind)));
 	}
+	zend_string_release_ex(hook_name, /* persistent */ false);
 
 	zend_op *opline = get_next_op();
 	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
