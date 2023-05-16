@@ -1,23 +1,23 @@
 --TEST--
-Field in different assignments
+$field in different assignments
 --FILE--
 <?php
 
 class Test {
     public $prop {
         set {
-            field ??= 42;
-            var_dump(field);
-            field += 1;
-            var_dump(field);
-            field -= 2;
-            var_dump(field);
-            field *= 3;
-            var_dump(field);
-            field++;
-            var_dump(field);
-            --field;
-            var_dump(field);
+            $field ??= 42;
+            var_dump($field);
+            $field += 1;
+            var_dump($field);
+            $field -= 2;
+            var_dump($field);
+            $field *= 3;
+            var_dump($field);
+            $field++;
+            var_dump($field);
+            --$field;
+            var_dump($field);
         }
     }
 }

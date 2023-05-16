@@ -3411,11 +3411,6 @@ static void zend_compile_assign(znode *result, zend_ast *ast) /* {{{ */
 
 			zend_compile_list_assign(result, var_ast, &expr_node, var_ast->attr);
 			return;
-		case ZEND_AST_CONST:;
-			/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
-			zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
-			zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
-			return;
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
@@ -3561,11 +3556,6 @@ static void zend_compile_compound_assign(znode *result, zend_ast *ast) /* {{{ */
 
 			opline = zend_emit_op_data(&expr_node);
 			opline->extended_value = cache_slot;
-			return;
-		case ZEND_AST_CONST:;
-			/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
-			zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
-			zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
 			return;
 		EMPTY_SWITCH_DEFAULT_CASE()
 	}
@@ -6909,9 +6899,11 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 
 	if (ast == NULL) {
 		return;
-	} else if (ast->kind == ZEND_AST_CONST) {
-		zend_string *const_name = zend_ast_get_str(ast->child[0]);
-		if (zend_string_equals_literal(const_name, "field")) {
+	} else if (ast->kind == ZEND_AST_VAR
+	 && ast->child[0]->kind == ZEND_AST_ZVAL) {
+		zval *var_name = zend_ast_get_zval(ast->child[0]);
+		if (Z_TYPE_P(var_name) == IS_STRING
+		 && zend_string_equals_literal(Z_STR_P(var_name), "field")) {
 			context->uses_property = true;
 			zend_ast_destroy(ast);
 			*ast_ptr = zend_ast_create(ZEND_AST_PROP, 
@@ -6934,7 +6926,7 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 				&& zend_string_equals_literal(Z_STR_P(object), "this")
 				&& zend_string_equals(Z_STR_P(property), context->property_name)) {
 				context->uses_property = true;
-				/* No further references are possible in this branch. */
+				/* We just replaced the AST, no need to look for references in this branch. */
 				return;
 			}
 		}
@@ -9425,10 +9417,6 @@ static void zend_compile_post_incdec(znode *result, zend_ast *ast) /* {{{ */
 		zend_op *opline = zend_compile_static_prop(NULL, var_ast, BP_VAR_RW, 0, 0);
 		opline->opcode = ast->kind == ZEND_AST_POST_INC ? ZEND_POST_INC_STATIC_PROP : ZEND_POST_DEC_STATIC_PROP;
 		zend_make_tmp_result(result, opline);
-	} else if (var_ast->kind == ZEND_AST_CONST) {
-		/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
-		zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
-		zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
 	} else {
 		znode var_node;
 		zend_op *opline = zend_compile_var(&var_node, var_ast, BP_VAR_RW, 0);
@@ -9458,10 +9446,6 @@ static void zend_compile_pre_incdec(znode *result, zend_ast *ast) /* {{{ */
 		opline->opcode = ast->kind == ZEND_AST_PRE_INC ? ZEND_PRE_INC_STATIC_PROP : ZEND_PRE_DEC_STATIC_PROP;
 		opline->result_type = IS_TMP_VAR;
 		result->op_type = IS_TMP_VAR;
-	} else if (var_ast->kind == ZEND_AST_CONST) {
-		/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
-		zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
-		zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
 	} else {
 		znode var_node;
 		zend_op *opline = zend_compile_var(&var_node, var_ast, BP_VAR_RW, 0);
@@ -9679,11 +9663,6 @@ static void zend_compile_assign_coalesce(znode *result, zend_ast *ast) /* {{{ */
 			zend_emit_op_data(&default_node);
 			assign_node = var_node_w;
 			break;
-		case ZEND_AST_CONST:;
-			/* This path is reachable if the "field" constant doesn't get replaced by zend_property_hook_find_property_usage() */
-			zend_string *const_name = zend_ast_get_str(var_ast->child[0]);
-			zend_error_noreturn(E_COMPILE_ERROR, "Cannot assign to constant %s", ZSTR_VAL(const_name));
-			return;
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 

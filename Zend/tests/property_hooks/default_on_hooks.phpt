@@ -11,11 +11,11 @@ class B extends A {
     public $prop = 42 {
         get {
             echo __METHOD__, "\n";
-            return field;
+            return $field;
         }
         set {
             echo __METHOD__, "\n";
-            field = $value;
+            $field = $value;
         }
     }
 }

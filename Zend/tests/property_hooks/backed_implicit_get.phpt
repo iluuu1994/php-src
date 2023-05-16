@@ -7,7 +7,7 @@ class C {
     public $prop {
         set {
             echo __METHOD__, "\n";
-            field = $value;
+            $field = $value;
         }
     }
 }

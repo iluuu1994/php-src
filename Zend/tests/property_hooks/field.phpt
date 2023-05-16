@@ -1,12 +1,12 @@
 --TEST--
-Special field keyword refers to property backing store
+Special $field variable refers to property backing store
 --FILE--
 <?php
 
 class Test {
     public $prop {
-        get => field;
-        set => field = $value;
+        get => $field;
+        set => $field = $value;
     }
 }
 

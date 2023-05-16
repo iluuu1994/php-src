@@ -5,8 +5,8 @@ Hooked properties with no default value are initialized to null
 
 class Test {
     public $prop {
-        get => field;
-        set => field = $value;
+        get => $field;
+        set => $field = $value;
     }
 }
 

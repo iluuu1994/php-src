@@ -1,5 +1,5 @@
 --TEST--
-Field refers to backing store from either hook
+$field refers to backing store from either hook
 --FILE--
 <?php
 
@@ -7,11 +7,11 @@ class Test {
     public $prop {
         get { 
             echo "get\n";
-            field = 'prop';
+            $field = 'prop';
         }
         set {
             echo "set\n";
-            var_dump(field);
+            var_dump($field);
         }
     }
 }

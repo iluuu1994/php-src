@@ -1196,71 +1196,39 @@ expr:
 			{ $2->attr = ZEND_ARRAY_SYNTAX_SHORT; $$ = zend_ast_create(ZEND_AST_ASSIGN, $2, $5); }
 	|	variable '=' expr
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN, $1, $3); }
-	|	T_STRING '=' expr
-			{ $$ = zend_ast_create(ZEND_AST_ASSIGN, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable '=' ampersand variable
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_REF, $1, $4); }
 	|	T_CLONE expr { $$ = zend_ast_create(ZEND_AST_CLONE, $2); }
 	|	variable T_PLUS_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_ADD, $1, $3); }
-	|	T_STRING T_PLUS_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_ADD, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_MINUS_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_SUB, $1, $3); }
-	|	T_STRING T_MINUS_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SUB, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_MUL_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_MUL, $1, $3); }
-	|	T_STRING T_MUL_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_MUL, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_POW_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_POW, $1, $3); }
-	|	T_STRING T_POW_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_POW, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_DIV_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_DIV, $1, $3); }
-	|	T_STRING T_DIV_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_DIV, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_CONCAT_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_CONCAT, $1, $3); }
-	|	T_STRING T_CONCAT_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_CONCAT, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_MOD_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_MOD, $1, $3); }
-	|	T_STRING T_MOD_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_MOD, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_AND_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_BW_AND, $1, $3); }
-	|	T_STRING T_AND_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_AND, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_OR_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_BW_OR, $1, $3); }
-	|	T_STRING T_OR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_OR, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_XOR_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_BW_XOR, $1, $3); }
-	|	T_STRING T_XOR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_XOR, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_SL_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_SL, $1, $3); }
-	|	T_STRING T_SL_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SL, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_SR_EQUAL expr
 			{ $$ = zend_ast_create_assign_op(ZEND_SR, $1, $3); }
-	|	T_STRING T_SR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SR, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_COALESCE_EQUAL expr
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_COALESCE, $1, $3); }
-	|	T_STRING T_COALESCE_EQUAL expr
-			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_COALESCE, zend_ast_create(ZEND_AST_CONST, $1), $3); }
 	|	variable T_INC { $$ = zend_ast_create(ZEND_AST_POST_INC, $1); }
-	|	T_STRING T_INC { $$ = zend_ast_create(ZEND_AST_POST_INC, zend_ast_create(ZEND_AST_CONST, $1)); }
 	|	T_INC variable { $$ = zend_ast_create(ZEND_AST_PRE_INC, $2); }
-	|	T_INC T_STRING { $$ = zend_ast_create(ZEND_AST_PRE_INC, zend_ast_create(ZEND_AST_CONST, $2)); }
 	|	variable T_DEC { $$ = zend_ast_create(ZEND_AST_POST_DEC, $1); }
-	|	T_STRING T_DEC { $$ = zend_ast_create(ZEND_AST_POST_DEC, zend_ast_create(ZEND_AST_CONST, $1)); }
 	|	T_DEC variable { $$ = zend_ast_create(ZEND_AST_PRE_DEC, $2); }
-	|	T_DEC T_STRING { $$ = zend_ast_create(ZEND_AST_PRE_DEC, zend_ast_create(ZEND_AST_CONST, $2)); }
 	|	expr T_BOOLEAN_OR expr
 			{ $$ = zend_ast_create(ZEND_AST_OR, $1, $3); }
 	|	expr T_BOOLEAN_AND expr
