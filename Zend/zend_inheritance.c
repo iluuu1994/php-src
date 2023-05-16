@@ -1564,7 +1564,7 @@ void zend_build_properties_info_table(zend_class_entry *ce)
 
 ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_info *prop_info, zend_string *prop_name)
 {
-	if (prop_info->flags & ZEND_ACC_STATIC) {
+	if (!prop_info->hooks) {
 		return;
 	}
 	/* We specified a default value (otherwise offset would be -1), but the virtual flag wasn't
@@ -1772,7 +1772,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 	}
 
 	ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, property_info) {
-		if (property_info->ce == ce) {
+		if (property_info->ce == ce && property_info->hooks) {
 			zend_verify_hooked_property(ce, property_info, key);
 		}
 	} ZEND_HASH_FOREACH_END();
