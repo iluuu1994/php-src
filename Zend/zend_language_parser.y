@@ -1110,12 +1110,12 @@ property_hook_modifiers:
 ;
 
 property_hook:
-		property_hook_modifiers T_STRING
+		property_hook_modifiers returns_ref T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); }
 		optional_parameter_list property_hook_body
 			{ $$ = zend_ast_create_decl(
-					ZEND_AST_PROPERTY_HOOK, $1, $<num>4, $3, zend_ast_get_str($2),
-					$5, NULL, $6, NULL, NULL); }
+					ZEND_AST_PROPERTY_HOOK, $1 | $2, $<num>5, $4, zend_ast_get_str($3),
+					$6, NULL, $7, NULL, NULL); }
 ;
 
 property_hook_body:

@@ -8009,12 +8009,6 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 						ZSTR_VAL(ce->name), ZSTR_VAL(name), ZSTR_VAL(str));
 				}
 			}
-
-			/* Check needs to be repeated after inheritance for classes with parents. */
-			if ((flags & ZEND_ACC_VIRTUAL) && !ce->parent_name) {
-				zend_error_noreturn(E_COMPILE_ERROR,
-					"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(name));
-			}
 		} else if (!ZEND_TYPE_IS_SET(type) && !hooks_ast) {
 			ZVAL_NULL(&value_zv);
 		} else {
@@ -8049,14 +8043,8 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 			zend_compile_property_hooks(info, name, type_ast, zend_ast_get_list(hooks_ast));
 			CG(active_property_info) = NULL;
 
-			/* If the property is known to be backed at compile-time and no type and default value
-			 * are set, we want the default value to be null. The same happens after inheritance when
-			 * there is a superclass. */
-			if (!ce->parent_name
-			 && !(info->flags & ZEND_ACC_VIRTUAL)
-			 && !ZEND_TYPE_IS_SET(info->type)
-			 && Z_TYPE(ce->default_properties_table[OBJ_PROP_TO_NUM(info->offset)]) == IS_UNDEF) {
-				ZVAL_NULL(&ce->default_properties_table[OBJ_PROP_TO_NUM(info->offset)]);
+			if (!ce->parent_name) {
+				zend_verify_hooked_property(ce, info, name);
 			}
 		}
 
