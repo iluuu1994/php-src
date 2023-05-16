@@ -11,11 +11,20 @@ class Test {
     }
 }
 
+function inc(&$ref) {
+    $ref++;
+}
+
 $test = new Test();
 $test->prop = 42;
 
 $prop = &$test->prop;
 $prop++;
+var_dump($test);
+var_dump($test->prop);
+unset($prop);
+
+inc($test->prop);
 var_dump($test);
 var_dump($test->prop);
 
@@ -26,3 +35,8 @@ object(Test)#1 (1) {
   &int(43)
 }
 int(43)
+object(Test)#1 (1) {
+  ["_prop":"Test":private]=>
+  int(44)
+}
+int(44)
