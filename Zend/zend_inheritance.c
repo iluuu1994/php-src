@@ -1564,6 +1564,9 @@ void zend_build_properties_info_table(zend_class_entry *ce)
 
 static void zend_verify_property(zend_class_entry *ce, zend_property_info *prop_info, zend_string *prop_name)
 {
+	if (prop_info->flags & ZEND_ACC_STATIC) {
+		return;
+	}
 	/* We specified a default value (otherwise offset would be -1), but the virtual flag wasn't
 	 * removed during inheritance. */
 	if ((prop_info->flags & ZEND_ACC_VIRTUAL) && prop_info->offset != (uint32_t)-1) {
