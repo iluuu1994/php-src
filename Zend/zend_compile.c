@@ -99,6 +99,23 @@ static void zend_compile_expr(znode *result, zend_ast *ast);
 static void zend_compile_stmt(zend_ast *ast);
 static void zend_compile_assign(znode *result, zend_ast *ast);
 
+static void zend_throw_compile_error(const char *format, ...)
+{
+	/* We've already failed during compilation, suppress further errors. */
+	if (EG(exception)) {
+		return;
+	}
+
+	va_list arg;
+	char *message;
+
+	va_start(arg, format);
+	zend_vspprintf(&message, 0, format, arg);
+	va_end(arg);
+	zend_throw_exception(zend_ce_compile_error, message, 0);
+	efree(message);
+}
+
 static void init_op(zend_op *op)
 {
 	MAKE_NOP(op);
@@ -204,7 +221,7 @@ static bool zend_is_reserved_class_name(const zend_string *name) /* {{{ */
 void zend_assert_valid_class_name(const zend_string *name) /* {{{ */
 {
 	if (zend_is_reserved_class_name(name)) {
-		zend_error_noreturn(E_COMPILE_ERROR,
+		zend_throw_compile_error(
 			"Cannot use '%s' as class name as it is reserved", ZSTR_VAL(name));
 	}
 }
@@ -1052,12 +1069,14 @@ static zend_string *zend_resolve_class_name(zend_string *name, uint32_t type) /*
 
 	if (ZEND_FETCH_CLASS_DEFAULT != zend_get_class_fetch_type(name)) {
 		if (type == ZEND_NAME_FQ) {
-			zend_error_noreturn(E_COMPILE_ERROR,
+			zend_throw_compile_error(
 				"'\\%s' is an invalid class name", ZSTR_VAL(name));
+			return ZSTR_EMPTY_ALLOC();
 		}
 		if (type == ZEND_NAME_RELATIVE) {
-			zend_error_noreturn(E_COMPILE_ERROR,
+			zend_throw_compile_error(
 				"'namespace\\%s' is an invalid class name", ZSTR_VAL(name));
+			return ZSTR_EMPTY_ALLOC();
 		}
 		ZEND_ASSERT(type == ZEND_NAME_NOT_FQ);
 		return zend_string_copy(name);
@@ -1072,7 +1091,7 @@ static zend_string *zend_resolve_class_name(zend_string *name, uint32_t type) /*
 			/* Remove \ prefix (only relevant if this is a string rather than a label) */
 			name = zend_string_init(ZSTR_VAL(name) + 1, ZSTR_LEN(name) - 1, 0);
 			if (ZEND_FETCH_CLASS_DEFAULT != zend_get_class_fetch_type(name)) {
-				zend_error_noreturn(E_COMPILE_ERROR,
+				zend_throw_compile_error(
 					"'\\%s' is an invalid class name", ZSTR_VAL(name));
 			}
 			return name;
@@ -1113,7 +1132,8 @@ zend_string *zend_resolve_class_name_ast(zend_ast *ast) /* {{{ */
 {
 	zval *class_name = zend_ast_get_zval(ast);
 	if (Z_TYPE_P(class_name) != IS_STRING) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Illegal class name");
+		zend_throw_compile_error("Illegal class name");
+		return ZSTR_EMPTY_ALLOC();
 	}
 	return zend_resolve_class_name(Z_STR_P(class_name), ast->attr);
 }
@@ -1169,22 +1189,21 @@ ZEND_API void function_add_ref(zend_function *function) /* {{{ */
 }
 /* }}} */
 
-static zend_never_inline ZEND_COLD ZEND_NORETURN void do_bind_function_error(zend_string *lcname, zend_op_array *op_array, bool compile_time) /* {{{ */
+static zend_never_inline ZEND_COLD void do_bind_function_error(zend_string *lcname, zend_op_array *op_array, bool compile_time) /* {{{ */
 {
 	zval *zv = zend_hash_find_known_hash(compile_time ? CG(function_table) : EG(function_table), lcname);
-	int error_level = compile_time ? E_COMPILE_ERROR : E_ERROR;
 	zend_function *old_function;
 
 	ZEND_ASSERT(zv != NULL);
 	old_function = (zend_function*)Z_PTR_P(zv);
 	if (old_function->type == ZEND_USER_FUNCTION
 		&& old_function->op_array.last > 0) {
-		zend_error_noreturn(error_level, "Cannot redeclare %s() (previously declared in %s:%d)",
+		zend_throw_compile_error("Cannot redeclare %s() (previously declared in %s:%d)",
 					op_array ? ZSTR_VAL(op_array->function_name) : ZSTR_VAL(old_function->common.function_name),
 					ZSTR_VAL(old_function->op_array.filename),
 					old_function->op_array.opcodes[0].lineno);
 	} else {
-		zend_error_noreturn(error_level, "Cannot redeclare %s()",
+		zend_throw_compile_error("Cannot redeclare %s()",
 			op_array ? ZSTR_VAL(op_array->function_name) : ZSTR_VAL(old_function->common.function_name));
 	}
 }
@@ -1222,7 +1241,7 @@ ZEND_API zend_class_entry *zend_bind_class_in_slot(
 		success = zend_hash_add_ptr(EG(class_table), Z_STR_P(lcname), ce) != NULL;
 	}
 	if (UNEXPECTED(!success)) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Cannot declare %s %s, because the name is already in use", zend_get_object_type(ce), ZSTR_VAL(ce->name));
+		zend_throw_compile_error("Cannot declare %s %s, because the name is already in use", zend_get_object_type(ce), ZSTR_VAL(ce->name));
 		return NULL;
 	}
 
@@ -10178,6 +10197,29 @@ void zend_const_expr_to_zval(zval *result, zend_ast **ast_ptr, bool allow_dynami
 }
 /* }}} */
 
+static void zend_release_failed_script(uint32_t num_classes, uint32_t num_functions)
+{
+	// FIXME: Do we need a zend_hash_extend(..., ..., 0)?
+	Bucket *p, *end;
+	
+	end = CG(class_table)->arData + num_classes;
+	ZEND_HASH_MAP_REVERSE_FOREACH_BUCKET(CG(class_table), p) {
+		if (p < end) {
+			break;
+		}
+		zend_hash_del_bucket(CG(class_table), p);
+	} ZEND_HASH_FOREACH_END();
+
+	// FIXME: Do we need a zend_hash_extend(..., ..., 0)?
+	end = CG(function_table)->arData + num_functions;
+	ZEND_HASH_MAP_REVERSE_FOREACH_BUCKET(CG(class_table), p) {
+		if (p < end) {
+			break;
+		}
+		zend_hash_del_bucket(CG(function_table), p);
+	} ZEND_HASH_FOREACH_END();
+}
+
 /* Same as compile_stmt, but with early binding */
 void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 {
@@ -10185,28 +10227,37 @@ void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 		return;
 	}
 
+	void *arena_checkpoint = zend_arena_checkpoint(CG(arena));
+	uint32_t num_classes = CG(class_table)->nNumUsed;
+	uint32_t num_functions = CG(function_table)->nNumUsed;
+	// num_early_bindings?
+
 	if (ast->kind == ZEND_AST_STMT_LIST) {
 		zend_ast_list *list = zend_ast_get_list(ast);
 		uint32_t i;
 		for (i = 0; i < list->children; ++i) {
 			zend_compile_top_stmt(list->child[i]);
 		}
-		return;
+	} else {
+		if (ast->kind == ZEND_AST_FUNC_DECL) {
+			CG(zend_lineno) = ast->lineno;
+			zend_compile_func_decl(NULL, ast, 1);
+			CG(zend_lineno) = ((zend_ast_decl *) ast)->end_lineno;
+		} else if (ast->kind == ZEND_AST_CLASS) {
+			CG(zend_lineno) = ast->lineno;
+			zend_compile_class_decl(NULL, ast, 1);
+			CG(zend_lineno) = ((zend_ast_decl *) ast)->end_lineno;
+		} else {
+			zend_compile_stmt(ast);
+		}
+		if (ast->kind != ZEND_AST_NAMESPACE && ast->kind != ZEND_AST_HALT_COMPILER) {
+			zend_verify_namespace();
+		}
 	}
 
-	if (ast->kind == ZEND_AST_FUNC_DECL) {
-		CG(zend_lineno) = ast->lineno;
-		zend_compile_func_decl(NULL, ast, 1);
-		CG(zend_lineno) = ((zend_ast_decl *) ast)->end_lineno;
-	} else if (ast->kind == ZEND_AST_CLASS) {
-		CG(zend_lineno) = ast->lineno;
-		zend_compile_class_decl(NULL, ast, 1);
-		CG(zend_lineno) = ((zend_ast_decl *) ast)->end_lineno;
-	} else {
-		zend_compile_stmt(ast);
-	}
-	if (ast->kind != ZEND_AST_NAMESPACE && ast->kind != ZEND_AST_HALT_COMPILER) {
-		zend_verify_namespace();
+	if (EG(exception)) {
+		zend_release_failed_script(num_classes, num_functions);
+		zend_arena_release(&CG(arena), arena_checkpoint);
 	}
 }
 /* }}} */
