@@ -226,7 +226,7 @@ static const char *zend_vm_opcodes_names[204] = {
 	"ZEND_FETCH_GLOBALS",
 	"ZEND_VERIFY_NEVER_TYPE",
 	"ZEND_CALLABLE_CONVERT",
-	"ZEND_INIT_PARENT_PROPERTY_HOOK_CALL",
+	"ZEND_PARENT_PROPERTY_HOOK",
 };
 
 static uint32_t zend_vm_opcodes_flags[204] = {
@@ -433,7 +433,7 @@ static uint32_t zend_vm_opcodes_flags[204] = {
 	0x00000101,
 	0x00000101,
 	0x00000101,
-	0x01001103,
+	0x04001103,
 };
 
 ZEND_API const char* ZEND_FASTCALL zend_get_opcode_name(uint8_t opcode) {

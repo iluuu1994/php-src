@@ -47,7 +47,6 @@ static void zend_delete_call_instructions(zend_op_array *op_array, zend_op *opli
 			case ZEND_INIT_STATIC_METHOD_CALL:
 			case ZEND_INIT_METHOD_CALL:
 			case ZEND_INIT_FCALL:
-			case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
 				if (call == 0) {
 					MAKE_NOP(opline);
 					return;
@@ -93,11 +92,6 @@ static void zend_try_inline_call(zend_op_array *op_array, zend_op *fcall, zend_o
 			if (fcall->opcode == ZEND_INIT_STATIC_METHOD_CALL
 					&& !(func->op_array.fn_flags & ZEND_ACC_STATIC)) {
 				/* Don't inline static call to instance method. */
-				return;
-			}
-
-			if (fcall->opcode == ZEND_INIT_PARENT_PROPERTY_HOOK_CALL) {
-				/* Don't inline property hook method */
 				return;
 			}
 
@@ -174,7 +168,6 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 			case ZEND_INIT_METHOD_CALL:
 			case ZEND_INIT_FCALL:
 			case ZEND_NEW:
-			case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
 				/* The argument passing optimizations are valid for prototypes as well,
 				 * as inheritance cannot change between ref <-> non-ref arguments. */
 				call_stack[call].func = zend_optimizer_get_called_func(
@@ -218,7 +211,6 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 						}
 					} else if (fcall->opcode == ZEND_INIT_STATIC_METHOD_CALL
 							|| fcall->opcode == ZEND_INIT_METHOD_CALL
-							|| fcall->opcode == ZEND_INIT_PARENT_PROPERTY_HOOK_CALL
 							|| fcall->opcode == ZEND_NEW) {
 						/* We don't have specialized opcodes for this, do nothing */
 					} else {

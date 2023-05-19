@@ -4580,8 +4580,13 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 
 	zend_ast *name_ast = ast->child[0];
 	zend_ast *args_ast = ast->child[1];
-
 	zend_string *name = zend_ast_get_str(name_ast);
+
+	if (args_ast->kind == ZEND_AST_CALLABLE_CONVERT) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Cannot create Closure for parent hook call");
+	}
+	zend_ast_list *args_list = zend_ast_get_list(args_ast);
+
 	char *property_name_start = ZSTR_VAL(name) + strlen("parent::$");
 	char *hook_name_start = strchr(property_name_start, ':') + 2;
 	zend_string *property_name = zend_string_init(property_name_start, hook_name_start - property_name_start - 2, /* persistent */ false);
@@ -4605,13 +4610,30 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	zend_string_release_ex(hook_name, /* persistent */ false);
 
 	zend_op *opline = get_next_op();
-	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
+	opline->opcode = ZEND_PARENT_PROPERTY_HOOK;
 	opline->op1_type = IS_CONST;
 	opline->op1.constant = zend_add_class_name_literal(property_name);
 	opline->op2.num = hook_kind;
+	zend_make_var_result(result, opline);
 
-	zend_function *fbc = NULL;
-	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
+	if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+		if (args_list->children != 0) {
+			zend_error_noreturn(E_COMPILE_ERROR, "get() expects exactly 0 arguments, %d given", args_list->children);
+		}
+		znode value_node;
+		value_node.op_type = IS_CONST;
+		ZVAL_NULL(&value_node.u.constant);
+		zend_emit_op_data(&value_node);
+	} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+		if (args_list->children != 1) {
+			zend_error_noreturn(E_COMPILE_ERROR, "set() expects exactly 1 argument, %d given", args_list->children);
+		}
+		znode value_node;
+		zend_compile_expr(&value_node, zend_ast_get_list(args_ast)->child[0]);
+		zend_emit_op_data(&value_node);
+	} else {
+		ZEND_UNREACHABLE();
+	}
 }
 
 static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */

@@ -23,5 +23,5 @@ try {
 }
 
 ?>
---EXPECT--
-get() expects exactly 0 arguments, 1 given
+--EXPECTF--
+Fatal error: get() expects exactly 0 arguments, 1 given in %s on line %d

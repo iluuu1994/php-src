@@ -908,27 +908,6 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
-		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:;
-			zend_class_entry *scope = op_array->scope;
-			ZEND_ASSERT(scope != NULL);
-			if (scope && (scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
-				zend_class_entry *parent_scope = scope->parent;
-				zend_string *prop_name = Z_STR_P(CRT_CONSTANT(opline->op1));
-				zend_property_hook_kind hook_kind = opline->op2.num;
-				zend_property_info *prop_info = zend_get_property_info(parent_scope, prop_name, /* silent */ true);
-
-				if (prop_info
-					&& prop_info != ZEND_WRONG_PROPERTY_INFO
-					&& !(prop_info->flags & ZEND_ACC_PRIVATE)
-					&& prop_info->hooks) {
-					zend_function *fbc = prop_info->hooks[hook_kind];
-					if (fbc) {
-						*is_prototype = true;
-						return fbc;
-					}
-				}
-			}
-			break;
 		case ZEND_NEW:
 		{
 			zend_class_entry *ce = zend_optimizer_get_class_entry_from_op1(

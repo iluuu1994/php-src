@@ -23,5 +23,5 @@ try {
 }
 
 ?>
---EXPECT--
-set() expects exactly 1 argument, 2 given
+--EXPECTF--
+Fatal error: set() expects exactly 1 argument, 2 given in %s on line %d

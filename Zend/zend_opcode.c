@@ -789,7 +789,6 @@ static void emit_live_range(
 					case ZEND_INIT_USER_CALL:
 					case ZEND_INIT_METHOD_CALL:
 					case ZEND_INIT_STATIC_METHOD_CALL:
-					case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:
 					case ZEND_NEW:
 						level++;
 						break;

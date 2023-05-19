@@ -11075,13 +11075,13 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSE
 	ZEND_VM_NEXT_OPCODE();
 }
 
-static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
 
 	zend_class_entry *ce = EX(func)->common.scope;
-    ZEND_ASSERT(ce);
+	ZEND_ASSERT(ce);
 
 	zend_class_entry *parent_ce = ce->parent;
 	if (!parent_ce) {
@@ -11107,35 +11107,49 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_PARENT_PROPERTY_HOOK_CALL
 
 	zend_function **hooks = prop_info->hooks;
 	zend_function *hook = hooks ? hooks[hook_kind] : NULL;
-
-	zend_execute_data *call;
+	zend_object *obj = Z_OBJ_P(ZEND_THIS);
 	if (hook) {
-		call = zend_vm_stack_push_call_frame(
-			ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-			hook,
-			opline->extended_value,
-			ZEND_THIS);
-	} else {
-		zend_function *fbc;
+		GC_ADDREF(obj);
 		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
-			zend_property_hook_get_trampoline(&fbc);
+			zval rv;
+			zend_call_known_instance_method_with_0_params(hook, obj, &rv);
+			if (EXPECTED(RETURN_VALUE_USED(opline))) {
+				ZVAL_COPY_VALUE(EX_VAR(opline->result.var), &rv);
+			}
 		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
-			zend_property_hook_set_trampoline(&fbc);
+			zend_call_known_instance_method_with_1_params(hook, obj, NULL, get_op_data_zval_ptr_deref_r((opline+1)->op1_type, (opline+1)->op1));
+			if (EXPECTED(RETURN_VALUE_USED(opline))) {
+				// FIXME: Should we return value?
+				ZVAL_NULL(EX_VAR(opline->result.var));
+			}
+			FREE_OP((opline+1)->op1_type, (opline+1)->op1.var);
 		} else {
 			ZEND_UNREACHABLE();
 		}
-		zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
-		hook_call_info->object = Z_PTR_P(ZEND_THIS);
-		hook_call_info->property = property_name;
-		call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-			fbc, opline->extended_value, hook_call_info);
-		/* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
-		ZVAL_PTR(&call->This, hook_call_info);
+		OBJ_RELEASE(obj);
+	} else {
+		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+			zval rv;
+			zval *retval = obj->handlers->read_property(obj, property_name, BP_VAR_R, NULL, &rv);
+			if (retval == &rv && RETURN_VALUE_USED(opline)) {
+				zval_ptr_dtor(&rv);
+			} if (retval == &rv) {
+				ZVAL_COPY_VALUE(EX_VAR(opline->result.var), retval);
+			} else {
+				ZVAL_COPY(EX_VAR(opline->result.var), retval);
+			}
+		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+			zval *retval = obj->handlers->write_property(obj, property_name, get_op_data_zval_ptr_deref_r((opline+1)->op1_type, (opline+1)->op1), NULL);
+			if (RETURN_VALUE_USED(opline)) {
+				ZVAL_COPY(EX_VAR(opline->result.var), retval);
+			}
+			FREE_OP((opline+1)->op1_type, (opline+1)->op1.var);
+		} else {
+			ZEND_UNREACHABLE();
+		}
 	}
 
-	call->prev_execute_data = EX(call);
-	EX(call) = call;
-	ZEND_VM_NEXT_OPCODE();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DIV_SPEC_CONST_CV_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -56548,7 +56562,7 @@ ZEND_API void execute_ex(zend_execute_data *ex)
 			(void*)&&ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_LABEL,
 			(void*)&&ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_LABEL,
-			(void*)&&ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_LABEL,
+			(void*)&&ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED_LABEL,
 			(void*)&&ZEND_RECV_NOTYPE_SPEC_LABEL,
 			(void*)&&ZEND_JMP_FORWARD_SPEC_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
@@ -58652,9 +58666,9 @@ zend_leave_helper_SPEC_LABEL:
 				VM_TRACE(ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSED)
 				ZEND_FUNC_GET_ARGS_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
-			HYBRID_CASE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED):
-				VM_TRACE(ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED)
-				ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+			HYBRID_CASE(ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED):
+				VM_TRACE(ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED)
+				ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_DIV_SPEC_CONST_CV):
 				VM_TRACE(ZEND_DIV_SPEC_CONST_CV)
@@ -64657,7 +64671,7 @@ void zend_vm_init(void)
 		ZEND_FETCH_GLOBALS_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_VERIFY_NEVER_TYPE_SPEC_UNUSED_UNUSED_HANDLER,
 		ZEND_CALLABLE_CONVERT_SPEC_UNUSED_UNUSED_HANDLER,
-		ZEND_INIT_PARENT_PROPERTY_HOOK_CALL_SPEC_CONST_UNUSED_HANDLER,
+		ZEND_PARENT_PROPERTY_HOOK_SPEC_CONST_UNUSED_HANDLER,
 		ZEND_RECV_NOTYPE_SPEC_HANDLER,
 		ZEND_JMP_FORWARD_SPEC_HANDLER,
 		ZEND_NULL_HANDLER,

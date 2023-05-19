@@ -9508,13 +9508,13 @@ ZEND_VM_HANDLER(202, ZEND_CALLABLE_CONVERT, UNUSED, UNUSED)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM)
+ZEND_VM_HANDLER(203, ZEND_PARENT_PROPERTY_HOOK, CONST, UNUSED|NUM, OP)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
 
 	zend_class_entry *ce = EX(func)->common.scope;
-    ZEND_ASSERT(ce);
+	ZEND_ASSERT(ce);
 
 	zend_class_entry *parent_ce = ce->parent;
 	if (!parent_ce) {
@@ -9540,35 +9540,49 @@ ZEND_VM_HANDLER(203, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 
 	zend_function **hooks = prop_info->hooks;
 	zend_function *hook = hooks ? hooks[hook_kind] : NULL;
-
-	zend_execute_data *call;
+	zend_object *obj = Z_OBJ_P(ZEND_THIS);
 	if (hook) {
-		call = zend_vm_stack_push_call_frame(
-			ZEND_CALL_FUNCTION | ZEND_CALL_RELEASE_THIS | ZEND_CALL_HAS_THIS,
-			hook,
-			opline->extended_value,
-			ZEND_THIS);
-	} else {
-		zend_function *fbc;
+		GC_ADDREF(obj);
 		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
-			zend_property_hook_get_trampoline(&fbc);
+			zval rv;
+			zend_call_known_instance_method_with_0_params(hook, obj, &rv);
+			if (EXPECTED(RETURN_VALUE_USED(opline))) {
+				ZVAL_COPY_VALUE(EX_VAR(opline->result.var), &rv);
+			}
 		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
-			zend_property_hook_set_trampoline(&fbc);
+			zend_call_known_instance_method_with_1_params(hook, obj, NULL, GET_OP_DATA_ZVAL_PTR_DEREF(BP_VAR_R));
+			if (EXPECTED(RETURN_VALUE_USED(opline))) {
+				// FIXME: Should we return value?
+				ZVAL_NULL(EX_VAR(opline->result.var));
+			}
+			FREE_OP_DATA();
 		} else {
 			ZEND_UNREACHABLE();
 		}
-		zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
-		hook_call_info->object = Z_PTR_P(ZEND_THIS);
-		hook_call_info->property = property_name;
-		call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-			fbc, opline->extended_value, hook_call_info);
-		/* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR. */
-		ZVAL_PTR(&call->This, hook_call_info);
+		OBJ_RELEASE(obj);
+	} else {
+		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+			zval rv;
+			zval *retval = obj->handlers->read_property(obj, property_name, BP_VAR_R, NULL, &rv);
+			if (retval == &rv && RETURN_VALUE_USED(opline)) {
+				zval_ptr_dtor(&rv);
+			} if (retval == &rv) {
+				ZVAL_COPY_VALUE(EX_VAR(opline->result.var), retval);
+			} else {
+				ZVAL_COPY(EX_VAR(opline->result.var), retval);
+			}
+		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+			zval *retval = obj->handlers->write_property(obj, property_name, GET_OP_DATA_ZVAL_PTR_DEREF(BP_VAR_R), NULL);
+			if (RETURN_VALUE_USED(opline)) {
+				ZVAL_COPY(EX_VAR(opline->result.var), retval);
+			}
+			FREE_OP_DATA();
+		} else {
+			ZEND_UNREACHABLE();
+		}
 	}
 
-	call->prev_execute_data = EX(call);
-	EX(call) = call;
-	ZEND_VM_NEXT_OPCODE();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_JMP, (OP_JMP_ADDR(op, op->op1) > op), ZEND_JMP_FORWARD, JMP_ADDR, ANY)
