@@ -81,4 +81,4 @@ runs:
           --with-pdo-firebird \
           --with-pdo-dblib \
           --enable-werror \
-          ${{ inputs.configurationParameters }}
+          ${{ inputs.configurationParameters }} || cat config.log
