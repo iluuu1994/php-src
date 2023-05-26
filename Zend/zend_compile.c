@@ -35,6 +35,7 @@
 #include "zend_enum.h"
 #include "zend_observer.h"
 #include "zend_call_stack.h"
+#include "zend_property_hooks.h"
 
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
@@ -7908,6 +7909,10 @@ static void zend_compile_property_hooks(
 		if (value_type_ast_ptr) {
 			*value_type_ast_ptr = NULL;
 		}
+	}
+
+	if (!ce->get_iterator) {
+		ce->get_iterator = zend_hooked_object_get_iterator;
 	}
 }
 
