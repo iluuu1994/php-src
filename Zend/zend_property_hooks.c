@@ -53,8 +53,7 @@ static zend_array *zend_hooked_object_build_properties(zend_object *zobj)
 			if (UNEXPECTED(Z_TYPE_P(OBJ_PROP(zobj, prop_info->offset)) == IS_UNDEF)) {
 				HT_FLAGS(properties) |= HASH_FLAG_HAS_EMPTY_IND;
 			}
-			_zend_hash_append_ind(properties, prop_info->name,
-				OBJ_PROP(zobj, prop_info->offset));
+			_zend_hash_append_ind(properties, prop_info->name, OBJ_PROP(zobj, prop_info->offset));
 		}
 	} ZEND_HASH_FOREACH_END();
 
@@ -91,27 +90,15 @@ static void zend_hooked_object_it_fetch_current_data(zend_object_iterator *iter)
 	if (Z_TYPE_P(property) == IS_PTR) {
 		zend_property_info *prop_info = Z_PTR_P(property);
 		zend_function *get = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
-		if (get == NULL) {
-			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-				zend_throw_error(NULL, "Must not read from virtual property %s::$%s",
-					ZSTR_VAL(zobj->ce->name), zend_get_unmangled_property_name(prop_info->name));
-				return;
-			}
-			goto get_direct;
-		}
-		if (hooked_iter->by_ref && !(get->op_array.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
-			zend_throw_error(NULL, "Must not fetch get hook of %s::$%s by-ref",
+		if (hooked_iter->by_ref
+		 && get != NULL
+		 && !(get->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+			zend_throw_error(NULL, "Cannot create reference to property %s::$%s",
 				ZSTR_VAL(zobj->ce->name), zend_get_unmangled_property_name(prop_info->name));
 			return;
 		}
-		GC_ADDREF(zobj);
-		// FIXME: We need the guard...
-		// *guard |= IN_HOOK;
-		zend_call_known_instance_method_with_0_params(get, zobj, &hooked_iter->current_data);
-		// *guard &= ~IN_HOOK;
-		OBJ_RELEASE(zobj);
+		zend_read_property_ex(zobj->ce, zobj, prop_info->name, /* silent */ true, &hooked_iter->current_data);
 	} else {
-get_direct:
 		ZVAL_DEINDIRECT(property);
 		if (hooked_iter->by_ref
 		 && Z_TYPE_P(property) != IS_REFERENCE
@@ -121,7 +108,6 @@ get_direct:
 		ZVAL_COPY(&hooked_iter->current_data, property);
 	}
 	if (!hooked_iter->by_ref) {
-		// FIXME: Is there a macro just for references?
 		SEPARATE_ZVAL(&hooked_iter->current_data);
 	}
 }
