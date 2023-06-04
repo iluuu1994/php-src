@@ -1,10 +1,10 @@
 --TEST--
-Property itself may be marked final (hook)
+Property itself may be marked final (normal)
 --FILE--
 <?php
 
 class A {
-    public final $prop { get {} set {} }
+    public final $prop;
 }
 
 class B extends A {

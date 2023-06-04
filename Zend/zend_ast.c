@@ -2351,6 +2351,9 @@ simple_list:
 					if (hook->flags & ZEND_ACC_ABSTRACT) {
 						smart_str_appends(str, "abstract ");
 					}
+					if (hook->flags & ZEND_ACC_FINAL) {
+						smart_str_appends(str, "final ");
+					}
 					switch (i) {
 						case ZEND_PROPERTY_HOOK_GET:
 							smart_str_appends(str, "get");

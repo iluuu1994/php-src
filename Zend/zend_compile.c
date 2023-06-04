@@ -845,7 +845,9 @@ uint32_t zend_modifier_token_to_flag(zend_modifier_target target, uint32_t token
 			break;
 		case T_FINAL:
 			if (target == ZEND_MODIFIER_TARGET_METHOD
-				|| target == ZEND_MODIFIER_TARGET_CONSTANT) {
+				|| target == ZEND_MODIFIER_TARGET_CONSTANT
+				|| target == ZEND_MODIFIER_TARGET_PROPERTY
+				|| target == ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
 				return ZEND_ACC_FINAL;
 			}
 			break;
@@ -7793,6 +7795,13 @@ static void zend_compile_property_hooks(
 		if (prop_info->flags & ZEND_ACC_STATIC) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Cannot declare hooks for static property");
 		}
+		if ((hook->flags & ZEND_ACC_FINAL) && (hook->flags & ZEND_ACC_PRIVATE)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Property hook cannot be both final and private");
+		}
+		if ((prop_info->flags & ZEND_ACC_FINAL) && (hook->flags & ZEND_ACC_FINAL)) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Hook on final property cannot be explicitly final");
+		}
 		if (hook->flags & ZEND_ACC_ABSTRACT) {
 			if (orig_stmt_ast) {
 				zend_error_noreturn(E_COMPILE_ERROR, "Abstract property hook cannot have body");
@@ -7800,6 +7809,9 @@ static void zend_compile_property_hooks(
 			if (hook->flags & ZEND_ACC_PRIVATE) {
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Property hook cannot be both abstract and private");
+			}
+			if (hook->flags & ZEND_ACC_FINAL) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Property hook cannot be both abstract and final");
 			}
 
 			ce->ce_flags |= ZEND_ACC_IMPLICIT_ABSTRACT_CLASS;
@@ -7926,7 +7938,14 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		zend_error_noreturn(E_COMPILE_ERROR, "Enum %s cannot include properties", ZSTR_VAL(ce->name));
 	}
 
+	if ((flags & ZEND_ACC_FINAL) && (flags & ZEND_ACC_PRIVATE)) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Property cannot be both final and private");
+	}
+
 	if (ce->ce_flags & ZEND_ACC_INTERFACE) {
+		if (flags & ZEND_ACC_FINAL) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Property in interface cannot be final");
+		}
 		if (flags & ZEND_ACC_ABSTRACT) {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Property in interface cannot be explicitly abstract. "

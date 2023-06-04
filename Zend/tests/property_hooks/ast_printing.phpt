@@ -10,7 +10,7 @@ try {
             get {
                 return parent::$prop1::get();
             }
-            abstract set {
+            final set {
                 echo 'Foo';
                 $this->prop1 = 42;
             }
@@ -35,7 +35,7 @@ assert(false && new class {
         get {
             return parent::$prop1::get();
         }
-        abstract set {
+        final set {
             echo 'Foo';
             $this->prop1 = 42;
         }
