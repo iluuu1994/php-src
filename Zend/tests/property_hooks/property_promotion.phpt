@@ -1,17 +1,21 @@
 --TEST--
-Hooks in property promotion
+Generated hooks in property promotion
 --FILE--
 <?php
 
 class Test {
     public function __construct(
         public $prop {
-            get {}
-            set {}
-        }
+            get { echo "get\n"; }
+            set { echo "set($value)\n"; }
+        },
     ) {}
 }
 
+$test = new Test(42);
+echo $test->prop;
+
 ?>
---EXPECTF--
-Parse error: syntax error, unexpected token "{", expecting ")" in %s on line %d
+--EXPECT--
+set(42)
+get
