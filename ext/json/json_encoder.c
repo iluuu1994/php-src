@@ -28,6 +28,7 @@
 #include "php_json_encoder.h"
 #include <zend_exceptions.h>
 #include "zend_enum.h"
+#include "zend_property_hooks.h"
 
 static const char digits[] = "0123456789abcdef";
 
@@ -114,14 +115,17 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 {
 	int i, r, need_comma = 0;
 	HashTable *myht, *prop_ht;
+	zend_refcounted *recursion_rc;
 
 	if (Z_TYPE_P(val) == IS_ARRAY) {
 		myht = Z_ARRVAL_P(val);
+		recursion_rc = (zend_refcounted *)myht;
 		prop_ht = NULL;
 		r = (options & PHP_JSON_FORCE_OBJECT) ? PHP_JSON_OUTPUT_OBJECT : php_json_determine_array_type(val);
 	} else if (Z_OBJ_P(val)->properties == NULL
 	 && Z_OBJ_HT_P(val)->get_properties_for == NULL
-	 && Z_OBJ_HT_P(val)->get_properties == zend_std_get_properties) {
+	 && Z_OBJ_HT_P(val)->get_properties == zend_std_get_properties
+	 && Z_OBJ_P(val)->ce->num_hooked_props == 0) {
 		/* Optimized version without rebuilding properties HashTable */
 		zend_object *obj = Z_OBJ_P(val);
 		zend_class_entry *ce = obj->ce;
@@ -197,19 +201,34 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 		}
 		smart_str_appendc(buf, '}');
 		return SUCCESS;
+	} else if (Z_OBJ_P(val)->ce->num_hooked_props != 0) {
+		zend_object *obj = Z_OBJ_P(val);
+		prop_ht = myht = zend_hooked_object_build_properties(Z_OBJ_P(val));
+		if (myht == NULL) {
+			ZEND_ASSERT(EG(exception));
+			// FIXME: New error? What does throwing in jsonSerialize do?
+			// encoder->error_code = PHP_JSON_ERROR_;
+			zend_release_properties(prop_ht);
+			return FAILURE;
+		}
+		/* Protecting the object itself is fine here because myht is temporary and can't be
+		 * referenced from a different place in the object graph. */
+		recursion_rc = (zend_refcounted *)obj;
+		r = PHP_JSON_OUTPUT_OBJECT;
 	} else {
 		prop_ht = myht = zend_get_properties_for(val, ZEND_PROP_PURPOSE_JSON);
+		recursion_rc = (zend_refcounted *)prop_ht;
 		r = PHP_JSON_OUTPUT_OBJECT;
 	}
 
-	if (myht && GC_IS_RECURSIVE(myht)) {
+	if (recursion_rc && GC_IS_RECURSIVE(recursion_rc)) {
 		encoder->error_code = PHP_JSON_ERROR_RECURSION;
 		smart_str_appendl(buf, "null", 4);
 		zend_release_properties(prop_ht);
 		return FAILURE;
 	}
 
-	PHP_JSON_HASH_PROTECT_RECURSION(myht);
+	PHP_JSON_HASH_PROTECT_RECURSION(recursion_rc);
 
 	if (r == PHP_JSON_OUTPUT_ARRAY) {
 		smart_str_appendc(buf, '[');
@@ -278,16 +297,31 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 				php_json_pretty_print_char(buf, options, ' ');
 			}
 
+			/* data is IS_PTR for properties with hooks. */
+			zval tmp;
+			ZVAL_UNDEF(&tmp);
+			if (UNEXPECTED(Z_TYPE_P(data) == IS_PTR)) {
+				zend_property_info *prop_info = Z_PTR_P(data);
+				zend_read_property_ex(Z_OBJ_P(val)->ce, Z_OBJ_P(val), prop_info->name, /* silent */ true, &tmp);
+				if (EG(exception)) {
+					PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
+					zend_release_properties(prop_ht);
+					return FAILURE;
+				}
+				data = &tmp;
+			}
 			if (php_json_encode_zval(buf, data, options, encoder) == FAILURE &&
 					!(options & PHP_JSON_PARTIAL_OUTPUT_ON_ERROR)) {
-				PHP_JSON_HASH_UNPROTECT_RECURSION(myht);
+				PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
 				zend_release_properties(prop_ht);
+				zval_ptr_dtor(&tmp);
 				return FAILURE;
 			}
+			zval_ptr_dtor(&tmp);
 		} ZEND_HASH_FOREACH_END();
 	}
 
-	PHP_JSON_HASH_UNPROTECT_RECURSION(myht);
+	PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
 
 	if (encoder->depth > encoder->max_depth) {
 		encoder->error_code = PHP_JSON_ERROR_DEPTH;

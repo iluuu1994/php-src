@@ -1364,11 +1364,14 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 					for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 						inherit_property_hook(ce, &parent_hooks[i], &child_hooks[i]);
 					}
-				} else if (parent_info->flags & ZEND_ACC_VIRTUAL) {
-					zend_error_noreturn(E_COMPILE_ERROR,
-						"Non-virtual property %s::$%s must not redeclare virtual property %s::$%s",
-						ZSTR_VAL(ce->name), ZSTR_VAL(key),
-						ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key));
+				} else {
+					if (parent_info->flags & ZEND_ACC_VIRTUAL) {
+						zend_error_noreturn(E_COMPILE_ERROR,
+							"Non-virtual property %s::$%s must not redeclare virtual property %s::$%s",
+							ZSTR_VAL(ce->name), ZSTR_VAL(key),
+							ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key));
+					}
+					ce->num_hooked_props++;
 				}
 			}
 
@@ -1393,6 +1396,7 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 	} else {
 		zend_function **hooks = parent_info->hooks;
 		if (hooks) {
+			ce->num_hooked_props++;
 			for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 				if (hooks[i] && (hooks[i]->common.fn_flags & ZEND_ACC_ABSTRACT)) {
 					ce->ce_flags |= ZEND_ACC_IMPLICIT_ABSTRACT_CLASS;

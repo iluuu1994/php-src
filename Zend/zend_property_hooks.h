@@ -25,6 +25,7 @@
 BEGIN_EXTERN_C()
 
 ZEND_API zend_object_iterator *zend_hooked_object_get_iterator(zend_class_entry *ce, zval *object, int by_ref);
+ZEND_API zend_array *zend_hooked_object_build_properties(zend_object *zobj);
 
 END_EXTERN_C()
 

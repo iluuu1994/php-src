@@ -1991,6 +1991,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 		ce->interfaces = NULL;
 		ce->num_traits = 0;
 		ce->num_prop_hooks_variance_checks = 0;
+		ce->num_hooked_props = 0;
 		ce->trait_names = NULL;
 		ce->trait_aliases = NULL;
 		ce->trait_precedences = NULL;
@@ -7968,6 +7969,8 @@ static void zend_compile_property_hooks(
 			*value_type_ast_ptr = NULL;
 		}
 	}
+
+	ce->num_hooked_props++;
 
 	if (!ce->get_iterator) {
 		ce->get_iterator = zend_hooked_object_get_iterator;

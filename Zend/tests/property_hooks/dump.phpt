@@ -6,21 +6,21 @@ Dumping object with property hooks
 class Test {
     public $addedHooks = 'addedHooks';
     public $virtual {
-        get { throw new Exception(); }
+        get { return strtoupper('virtual'); }
     }
     public $backed = 'backed' {
-        get { throw new Exception(); }
+        get { return strtoupper($field); }
         set { $field = $value; }
     }
     private $private = 'private' {
-        get { throw new Exception(); }
+        get { return strtoupper($field); }
         set { $field = $value; }
     }
 }
 
 class Child extends Test {
     public $addedHooks {
-        get { throw new Exception(); }
+        get { return strtoupper(parent::$addedHooks::get()); }
     }
 }
 
@@ -29,6 +29,7 @@ function dump($test) {
     var_dump(get_object_vars($test));
     var_export($test);
     echo "\n";
+    echo json_encode($test), "\n";
 }
 
 dump(new Test);
@@ -55,6 +56,7 @@ array(2) {
    'backed' => 'backed',
    'private' => 'private',
 ))
+{"addedHooks":"addedHooks","virtual":"VIRTUAL","backed":"BACKED"}
 object(Child)#1 (3) {
   ["addedHooks"]=>
   string(10) "addedHooks"
@@ -74,3 +76,4 @@ array(2) {
    'backed' => 'backed',
    'private' => 'private',
 ))
+{"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}

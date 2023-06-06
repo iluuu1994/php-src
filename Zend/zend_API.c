@@ -4261,12 +4261,14 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		property_info = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
 	}
 
-	if ((access_type & ZEND_ACC_VIRTUAL) && (!property || Z_TYPE_P(property) == IS_UNDEF)) {
+	if ((access_type & ZEND_ACC_VIRTUAL)) {
 		/* Virtual properties have no backing storage, the offset should never be used. The virtual
 		 * flag may still be removed during inheritance. So allow adding it, but throw if the flag
 		 * hasn't been removed after inheritance. */
-		property_info->offset = (uint32_t)-1;
-		goto skip_default_property;
+		if ((!property || Z_TYPE_P(property) == IS_UNDEF)) {
+			property_info->offset = (uint32_t)-1;
+			goto skip_default_property;
+		}
 	}
 	if (!(ce->type == ZEND_INTERNAL_CLASS)) {
 		if (Z_TYPE_P(property) == IS_CONSTANT_AST) {
