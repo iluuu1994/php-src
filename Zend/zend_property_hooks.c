@@ -110,7 +110,7 @@ static zend_result zend_hooked_object_it_fetch_current_data(zend_object_iterator
 				ZSTR_VAL(zobj->ce->name), zend_get_unmangled_property_name(prop_info->name));
 			return FAILURE;
 		}
-		zend_read_property_ex(zobj->ce, zobj, prop_info->name, /* silent */ true, &hooked_iter->current_data);
+		zend_read_property_ex(prop_info->ce, zobj, prop_info->name, /* silent */ true, &hooked_iter->current_data);
 	} else {
 		if (hooked_iter->by_ref
 		 && Z_TYPE_P(property) != IS_REFERENCE

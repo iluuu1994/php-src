@@ -30,6 +30,7 @@
 #include "zend_closures.h"
 #include "zend_compile.h"
 #include "zend_hash.h"
+#include "zend_property_hooks.h"
 
 #define DEBUG_OBJECT_HANDLERS 0
 
@@ -2237,10 +2238,15 @@ ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purp
 				return ht;
 			}
 			ZEND_FALLTHROUGH;
+		case ZEND_PROP_PURPOSE_JSON:
+		case ZEND_PROP_PURPOSE_GET_OJBECT_VARS:
+			if (obj->ce->num_hooked_props) {
+				return zend_hooked_object_build_properties(obj);
+			}
+			ZEND_FALLTHROUGH;
 		case ZEND_PROP_PURPOSE_ARRAY_CAST:
 		case ZEND_PROP_PURPOSE_SERIALIZE:
 		case ZEND_PROP_PURPOSE_VAR_EXPORT:
-		case ZEND_PROP_PURPOSE_JSON:
 			ht = obj->handlers->get_properties(obj);
 			if (ht) {
 				GC_TRY_ADDREF(ht);

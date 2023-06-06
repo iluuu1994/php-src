@@ -201,23 +201,16 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 		}
 		smart_str_appendc(buf, '}');
 		return SUCCESS;
-	} else if (Z_OBJ_P(val)->ce->num_hooked_props != 0) {
-		zend_object *obj = Z_OBJ_P(val);
-		prop_ht = myht = zend_hooked_object_build_properties(Z_OBJ_P(val));
-		if (myht == NULL) {
-			ZEND_ASSERT(EG(exception));
-			// FIXME: New error? What does throwing in jsonSerialize do?
-			// encoder->error_code = PHP_JSON_ERROR_;
-			zend_release_properties(prop_ht);
-			return FAILURE;
-		}
-		/* Protecting the object itself is fine here because myht is temporary and can't be
-		 * referenced from a different place in the object graph. */
-		recursion_rc = (zend_refcounted *)obj;
-		r = PHP_JSON_OUTPUT_OBJECT;
 	} else {
+		zend_object *obj = Z_OBJ_P(val);
 		prop_ht = myht = zend_get_properties_for(val, ZEND_PROP_PURPOSE_JSON);
-		recursion_rc = (zend_refcounted *)prop_ht;
+		if (obj->ce->num_hooked_props == 0) {
+			recursion_rc = (zend_refcounted *)prop_ht;
+		} else {
+			/* Protecting the object itself is fine here because myht is temporary and can't be
+			* referenced from a different place in the object graph. */
+			recursion_rc = (zend_refcounted *)obj;
+		}
 		r = PHP_JSON_OUTPUT_OBJECT;
 	}
 
@@ -302,7 +295,7 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 			ZVAL_UNDEF(&tmp);
 			if (UNEXPECTED(Z_TYPE_P(data) == IS_PTR)) {
 				zend_property_info *prop_info = Z_PTR_P(data);
-				zend_read_property_ex(Z_OBJ_P(val)->ce, Z_OBJ_P(val), prop_info->name, /* silent */ true, &tmp);
+				zend_read_property_ex(prop_info->ce, Z_OBJ_P(val), prop_info->name, /* silent */ true, &tmp);
 				if (EG(exception)) {
 					PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
 					zend_release_properties(prop_ht);

@@ -16,11 +16,31 @@ class Test {
         get { return strtoupper($field); }
         set { $field = $value; }
     }
+    private $changed = 'changed Test' {
+        get { return strtoupper($field); }
+    }
+    public function dumpTest() {
+        var_dump($this);
+        var_dump(get_object_vars($this));
+        var_export($this);
+        echo "\n";
+        echo json_encode($this), "\n";
+    }
 }
 
 class Child extends Test {
     public $addedHooks {
         get { return strtoupper(parent::$addedHooks::get()); }
+    }
+    private $changed = 'changed Child' {
+        get { return strtoupper($field); }
+    }
+    public function dumpChild() {
+        var_dump($this);
+        var_dump(get_object_vars($this));
+        var_export($this);
+        echo "\n";
+        echo json_encode($this), "\n";
     }
 }
 
@@ -34,46 +54,119 @@ function dump($test) {
 
 dump(new Test);
 dump(new Child);
+(new Child)->dumpTest();
+(new Child)->dumpChild();
 
 ?>
 --EXPECT--
-object(Test)#1 (3) {
+object(Test)#1 (4) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
   string(6) "backed"
   ["private":"Test":private]=>
   string(7) "private"
+  ["changed":"Test":private]=>
+  string(12) "changed Test"
 }
-array(2) {
+array(5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
+  ["virtual"]=>
+  string(7) "VIRTUAL"
   ["backed"]=>
-  string(6) "backed"
+  string(6) "BACKED"
 }
 \Test::__set_state(array(
    'addedHooks' => 'addedHooks',
    'backed' => 'backed',
    'private' => 'private',
+   'changed' => 'changed Test',
 ))
 {"addedHooks":"addedHooks","virtual":"VIRTUAL","backed":"BACKED"}
-object(Child)#1 (3) {
+object(Child)#1 (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
   string(6) "backed"
   ["private":"Test":private]=>
   string(7) "private"
+  ["changed":"Test":private]=>
+  string(12) "changed Test"
+  ["changed":"Child":private]=>
+  string(13) "changed Child"
 }
-array(2) {
+array(5) {
   ["addedHooks"]=>
-  string(10) "addedHooks"
+  string(10) "ADDEDHOOKS"
+  ["virtual"]=>
+  string(7) "VIRTUAL"
   ["backed"]=>
-  string(6) "backed"
+  string(6) "BACKED"
 }
 \Child::__set_state(array(
    'addedHooks' => 'addedHooks',
    'backed' => 'backed',
    'private' => 'private',
+   'changed' => 'changed Test',
+   'changed' => 'changed Child',
+))
+{"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
+object(Child)#1 (5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["private":"Test":private]=>
+  string(7) "private"
+  ["changed":"Test":private]=>
+  string(12) "changed Test"
+  ["changed":"Child":private]=>
+  string(13) "changed Child"
+}
+array(5) {
+  ["addedHooks"]=>
+  string(10) "ADDEDHOOKS"
+  ["virtual"]=>
+  string(7) "VIRTUAL"
+  ["backed"]=>
+  string(6) "BACKED"
+}
+\Child::__set_state(array(
+   'addedHooks' => 'addedHooks',
+   'backed' => 'backed',
+   'private' => 'private',
+   'changed' => 'changed Test',
+   'changed' => 'changed Child',
+))
+{"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
+object(Child)#1 (5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["private":"Test":private]=>
+  string(7) "private"
+  ["changed":"Test":private]=>
+  string(12) "changed Test"
+  ["changed":"Child":private]=>
+  string(13) "changed Child"
+}
+array(6) {
+  ["addedHooks"]=>
+  string(10) "ADDEDHOOKS"
+  ["virtual"]=>
+  string(7) "VIRTUAL"
+  ["backed"]=>
+  string(6) "BACKED"
+  ["changed"]=>
+  string(13) "changed Child"
+}
+\Child::__set_state(array(
+   'addedHooks' => 'addedHooks',
+   'backed' => 'backed',
+   'private' => 'private',
+   'changed' => 'changed Test',
+   'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}

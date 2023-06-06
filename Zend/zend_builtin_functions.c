@@ -749,7 +749,9 @@ ZEND_FUNCTION(get_object_vars)
 		Z_PARAM_OBJ(zobj)
 	ZEND_PARSE_PARAMETERS_END();
 
-	properties = zobj->handlers->get_properties(zobj);
+	zval obj_zv;
+	ZVAL_OBJ(&obj_zv, zobj);
+	properties = zend_get_properties_for(&obj_zv, ZEND_PROP_PURPOSE_GET_OJBECT_VARS);
 	if (properties == NULL) {
 		RETURN_EMPTY_ARRAY();
 	}
@@ -765,6 +767,8 @@ ZEND_FUNCTION(get_object_vars)
 
 		ZEND_HASH_FOREACH_KEY_VAL(properties, num_key, key, value) {
 			bool is_dynamic = 1;
+			zval tmp;
+			ZVAL_UNDEF(&tmp);
 			if (Z_TYPE_P(value) == IS_INDIRECT) {
 				value = Z_INDIRECT_P(value);
 				if (UNEXPECTED(Z_ISUNDEF_P(value))) {
@@ -780,6 +784,19 @@ ZEND_FUNCTION(get_object_vars)
 
 			if (Z_ISREF_P(value) && Z_REFCOUNT_P(value) == 1) {
 				value = Z_REFVAL_P(value);
+			}
+			if (Z_TYPE_P(value) == IS_PTR) {
+				/* value is IS_PTR for properties with hooks. */
+				zend_property_info *prop_info = Z_PTR_P(value);
+				zend_read_property_ex(prop_info->ce, zobj, prop_info->name, /* silent */ true, &tmp);
+				if (EG(exception)) {
+					if (zobj->properties != properties) {
+						zend_release_properties(properties);
+					}
+					zval_ptr_dtor(return_value);
+					RETURN_THROWS();
+				}
+				value = &tmp;
 			}
 			Z_TRY_ADDREF_P(value);
 
@@ -799,7 +816,11 @@ ZEND_FUNCTION(get_object_vars)
 			} else {
 				zend_symtable_add_new(Z_ARRVAL_P(return_value), key, value);
 			}
+			zval_ptr_dtor(&tmp);
 		} ZEND_HASH_FOREACH_END();
+	}
+	if (zobj->properties != properties) {
+		zend_release_properties(properties);
 	}
 }
 /* }}} */
