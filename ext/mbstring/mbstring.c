@@ -2996,18 +2996,21 @@ struct candidate {
 	uint64_t demerits; /* Wide bit size to prevent overflow */
 	unsigned int state;
 	float multiplier;
+	struct candidate *next;
 };
 
 static size_t init_candidate_array(struct candidate *array, size_t length, const mbfl_encoding **encodings, const unsigned char **in, size_t *in_len, size_t n, bool strict, bool order_significant)
 {
 	size_t j = 0;
 
+	struct candidate *prev = NULL;
 	for (size_t i = 0; i < length; i++) {
 		const mbfl_encoding *enc = encodings[i];
 
 		array[j].enc = enc;
 		array[j].state = 0;
 		array[j].demerits = 0;
+		array[j].next = NULL;
 
 		/* If any candidate encodings have specialized validation functions, use them
 		 * to eliminate as many candidates as possible */
@@ -3027,6 +3030,10 @@ static size_t init_candidate_array(struct candidate *array, size_t length, const
 		 * first more likely to be chosen. It is a weight factor which multiplies
 		 * the number of demerits counted for each candidate. */
 		array[j].multiplier = order_significant ? 1.0 + ((0.3 * i) / length) : 1.0;
+		if (prev) {
+			prev->next = &array[j];
+		}
+		prev = &array[j];
 		j++;
 skip_to_next: ;
 	}
@@ -3066,14 +3073,16 @@ static size_t count_demerits(struct candidate *array, size_t length, bool strict
 {
 	uint32_t wchar_buf[128];
 	unsigned int finished = 0; /* For how many candidate encodings have we processed all the input? */
+	struct candidate *first_candidate = array;
 
 	while ((strict || length > 1) && finished < length) {
-		for (size_t i = 0; i < length; i++) {
-try_next_encoding:
+		struct candidate *candidate = first_candidate;
+		struct candidate *previous_candidate = NULL;
+		while (candidate) {
 			/* Do we still have more input to process for this candidate encoding? */
-			if (array[i].in_len) {
-				const mbfl_encoding *enc = array[i].enc;
-				size_t out_len = enc->to_wchar((unsigned char**)&array[i].in, &array[i].in_len, wchar_buf, 128, &array[i].state);
+			if (candidate->in_len) {
+				const mbfl_encoding *enc = candidate->enc;
+				size_t out_len = enc->to_wchar((unsigned char**)&candidate->in, &candidate->in_len, wchar_buf, 128, &candidate->state);
 				ZEND_ASSERT(out_len <= 128);
 				/* Check this batch of decoded codepoints; are there any error markers?
 				 * Also sum up the number of demerits */
@@ -3086,19 +3095,38 @@ try_next_encoding:
 							if (length == 0) {
 								return 0;
 							}
-							memmove(&array[i], &array[i+1], (length - i) * sizeof(struct candidate));
+							if (previous_candidate) {
+								previous_candidate->next = candidate->next;
+							} else {
+								/* There should be a previous candidate or a next one, otherwise length would've been 0. */
+								ZEND_ASSERT(candidate->next);
+								first_candidate = candidate->next;
+							}
 							goto try_next_encoding;
 						} else {
-							array[i].demerits += 1000;
+							candidate->demerits += 1000;
 						}
 					} else {
-						array[i].demerits += estimate_demerits(w);
+						candidate->demerits += estimate_demerits(w);
 					}
 				}
-				if (array[i].in_len == 0) {
+				if (candidate->in_len == 0) {
 					finished++;
 				}
 			}
+			previous_candidate = candidate;
+try_next_encoding:
+			candidate = candidate->next;
+		}
+	}
+
+	/* Remove holes. */
+	if (strict) {
+		size_t new_position = 0;
+		struct candidate *candidate = first_candidate;
+		while (candidate) {
+			array[new_position++] = *candidate;
+			candidate = candidate->next;
 		}
 	}
 
