@@ -21,12 +21,12 @@ function main() {
     if (false !== $branch = getenv('GITHUB_REF_NAME')) {
         $data['branch'] = $branch;
     }
-    $data['Zend/bench.php'] = runBench(false);
-    $data['Zend/bench.php JIT'] = runBench(true);
+    // $data['Zend/bench.php'] = runBench(false);
+    // $data['Zend/bench.php JIT'] = runBench(true);
     $data['Symfony Demo 2.2.3'] = runSymfonyDemo(false);
-    $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
-    $data['Wordpress 6.2'] = runWordpress(false);
-    $data['Wordpress 6.2 JIT'] = runWordpress(true);
+    // $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
+    // $data['Wordpress 6.2'] = runWordpress(false);
+    // $data['Wordpress 6.2 JIT'] = runWordpress(true);
     $result = json_encode($data, JSON_PRETTY_PRINT) . "\n";
 
     fwrite(STDOUT, $result);
@@ -63,7 +63,7 @@ function runSymfonyDemo(bool $jit): array {
     cloneRepo($dir, 'https://github.com/php/benchmarking-symfony-demo-2.2.3.git');
     runPhpCommand([$dir . '/bin/console', 'cache:clear']);
     runPhpCommand([$dir . '/bin/console', 'cache:warmup']);
-    return runValgrindPhpCgiCommand('symfony-demo', [$dir . '/public/index.php'], cwd: $dir, jit: $jit, warmup: 50, repeat: 50);
+    return runValgrindPhpCgiCommand('symfony-demo', [$dir . '/public/index.php'], cwd: $dir, jit: $jit, warmup: 10, repeat: 20);
 }
 
 function runWordpress(bool $jit): array {
@@ -118,6 +118,7 @@ function runValgrindPhpCgiCommand(
         '-T' . ($warmup ? $warmup . ',' : '') . $repeat,
         '-d max_execution_time=0',
         '-d opcache.enable=1',
+        '-d opcache.optimization_level=0',
         '-d opcache.jit_buffer_size=' . ($jit ? '128M' : '0'),
         '-d opcache.validate_timestamps=0',
         ...$args,

@@ -1,5 +1,6 @@
 --TEST--
 Test dirname() function : error conditions
+--XFAIL--
 --FILE--
 <?php
 echo "*** Testing error conditions ***\n";

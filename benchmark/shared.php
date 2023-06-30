@@ -36,8 +36,10 @@ function runCommand(array $args, ?string $cwd = null): ProcessResult {
             $chunk = fgets($stream);
             if ($stream === $stdout) {
                 $result->stdout .= $chunk;
+                // fprintf(STDOUT, $chunk);
             } elseif ($stream === $stderr) {
                 $result->stderr .= $chunk;
+                fprintf(STDERR, $chunk);
             }
         }
 

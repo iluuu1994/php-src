@@ -35,6 +35,7 @@
 #include "zend_enum.h"
 #include "zend_observer.h"
 #include "zend_call_stack.h"
+#include "zend_frameless_function.h"
 
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
@@ -4516,6 +4517,81 @@ static zend_result zend_compile_func_array_slice(znode *result, zend_ast_list *a
 }
 /* }}} */
 
+static int find_frameless_function_offset(int arity, void *handler)
+{
+	void **list;
+	if (arity == 0) {
+		list = (void **)zend_frameless_function_0_list;
+	} else if (arity == 1) {
+		list = (void **)zend_frameless_function_1_list;
+	} else if (arity == 2) {
+		list = (void **)zend_frameless_function_2_list;
+	} else if (arity == 3) {
+		list = (void **)zend_frameless_function_3_list;
+	} else {
+		ZEND_UNREACHABLE();
+	}
+
+	void **current = list;
+	while (true) {
+		ZEND_ASSERT(current);
+		if (*current == handler) {
+			return current - list;
+		}
+		current++;
+	}
+}
+
+static zend_result zend_compile_frameless_icall(znode *result, zend_ast_list *args, zend_function *fbc, uint32_t type)
+{
+	if (type != BP_VAR_R) {
+		return FAILURE;
+	}
+
+	if (ZEND_USER_CODE(fbc->type)) {
+		return FAILURE;
+	}
+
+	const zend_frameless_function_info *frameless_function_info = fbc->internal_function.frameless_function_infos;
+	if (!frameless_function_info) {
+		return FAILURE;
+	}
+
+	while (frameless_function_info->handler) {
+		if (frameless_function_info->num_args == args->children) {
+			uint8_t opcode = ZEND_FRAMELESS_ICALL_0;
+			znode arg1, arg2, arg3;
+			if (args->children >= 1) {
+				opcode = ZEND_FRAMELESS_ICALL_1;
+				zend_compile_expr(&arg1, args->child[0]);
+			}
+			if (args->children >= 2) {
+				opcode = ZEND_FRAMELESS_ICALL_2;
+				zend_compile_expr(&arg2, args->child[1]);
+			}
+			if (args->children >= 3) {
+				opcode = ZEND_FRAMELESS_ICALL_3;
+				zend_compile_expr(&arg3, args->child[2]);
+			}
+			zend_op *opline = zend_emit_op_tmp(result, opcode, NULL, NULL);
+			if (args->children >= 1) {
+				SET_NODE(opline->op1, &arg1);
+			}
+			if (args->children >= 2) {
+				SET_NODE(opline->op2, &arg2);
+			}
+			if (args->children >= 3) {
+				zend_emit_op_data(&arg3);
+			}
+			opline->extended_value = find_frameless_function_offset(args->children, frameless_function_info->handler);
+			return SUCCESS;
+		}
+		frameless_function_info++;
+	}
+
+	return FAILURE;
+}
+
 static zend_result zend_try_compile_special_func(znode *result, zend_string *lcname, zend_ast_list *args, zend_function *fbc, uint32_t type) /* {{{ */
 {
 	if (CG(compiler_options) & ZEND_COMPILE_NO_BUILTINS) {
@@ -4596,6 +4672,8 @@ static zend_result zend_try_compile_special_func(znode *result, zend_string *lcn
 		return zend_compile_func_array_slice(result, args);
 	} else if (zend_string_equals_literal(lcname, "array_key_exists")) {
 		return zend_compile_func_array_key_exists(result, args);
+	} else if (zend_compile_frameless_icall(result, args, fbc, type) == SUCCESS) {
+		return SUCCESS;
 	} else {
 		return FAILURE;
 	}

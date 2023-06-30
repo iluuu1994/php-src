@@ -152,6 +152,7 @@ ZEND_API const zend_internal_function zend_pass_function = {
 	0,                      /* T                 */
 	ZEND_FN(pass),          /* handler           */
 	NULL,                   /* module            */
+	NULL,                   /* frameless_function_infos */
 	{NULL,NULL,NULL,NULL}   /* reserved          */
 };
 
@@ -5460,6 +5461,8 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 /* This callback disables optimization of "vm_stack_data" variable in VM */
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
 
+#include "ext/standard/php_array.h"
+#include "zend_frameless_function_handler_lists.c"
 #include "zend_vm_execute.h"
 
 ZEND_API zend_result zend_set_user_opcode_handler(zend_uchar opcode, user_opcode_handler_t handler)

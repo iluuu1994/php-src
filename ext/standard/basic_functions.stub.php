@@ -1624,6 +1624,8 @@ function array_walk_recursive(array|object &$array, callable $callback, mixed $a
 
 /**
  * @compile-time-eval
+ * @frameless-function {"arity": 2}
+ * @frameless-function {"arity": 3}
  */
 function in_array(mixed $needle, array $haystack, bool $strict = false): bool {}
 
@@ -2355,7 +2357,11 @@ function str_decrement(string $string): string {}
 /** @refcount 1 */
 function basename(string $path, string $suffix = ""): string {}
 
-/** @refcount 1 */
+/**
+ * @refcount 1
+ * @frameless-function {"arity": 1}
+ * @frameless-function {"arity": 2}
+ */
 function dirname(string $path, int $levels = 1): string {}
 
 /**
@@ -2379,7 +2385,11 @@ function strstr(string $haystack, string $needle, bool $before_needle = false): 
 /** @alias strstr */
 function strchr(string $haystack, string $needle, bool $before_needle = false): string|false {}
 
-/** @compile-time-eval */
+/**
+ * @compile-time-eval
+ * @frameless-function {"arity": 2}
+ * @frameless-function {"arity": 3}
+ */
 function strpos(string $haystack, string $needle, int $offset = 0): int|false {}
 
 /** @compile-time-eval */
@@ -2412,7 +2422,10 @@ function str_ends_with(string $haystack, string $needle): bool {}
  */
 function chunk_split(string $string, int $length = 76, string $separator = "\r\n"): string {}
 
-/** @compile-time-eval */
+/**
+ * @compile-time-eval
+ * @frameless-function {"arity": 2}
+ */
 function substr(string $string, int $offset, ?int $length = null): string {}
 
 /**

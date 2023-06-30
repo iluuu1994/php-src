@@ -1505,6 +1505,57 @@ PHP_FUNCTION(dirname)
 }
 /* }}} */
 
+static zend_always_inline void zendi_frameless_dirname(zval *return_value, zval *str_zv, zval *levels_zv)
+{
+	zend_string *zstr;
+	zend_long levels = 1;
+	if (!zend_parse_arg_str(str_zv, &zstr, /* null_check */ false, 1)
+	 || (levels_zv && !zend_parse_arg_long(levels_zv, &levels, NULL, /* null_check */ false, 2))) {
+		RETURN_THROWS();
+	}
+
+	char *str = ZSTR_VAL(zstr);
+	size_t str_len = ZSTR_LEN(zstr);
+	zend_string *ret;
+
+	ret = zend_string_init(str, str_len, 0);
+
+	if (levels == 1) {
+		/* Default case */
+#ifdef PHP_WIN32
+		ZSTR_LEN(ret) = php_win32_ioutil_dirname(ZSTR_VAL(ret), str_len);
+#else
+		ZSTR_LEN(ret) = zend_dirname(ZSTR_VAL(ret), str_len);
+#endif
+	} else if (levels < 1) {
+		zend_argument_value_error(2, "must be greater than or equal to 1");
+		zend_string_efree(ret);
+		RETURN_THROWS();
+	} else {
+		/* Some levels up */
+		do {
+#ifdef PHP_WIN32
+			ZSTR_LEN(ret) = php_win32_ioutil_dirname(ZSTR_VAL(ret), str_len = ZSTR_LEN(ret));
+#else
+			ZSTR_LEN(ret) = zend_dirname(ZSTR_VAL(ret), str_len = ZSTR_LEN(ret));
+#endif
+		} while (ZSTR_LEN(ret) < str_len && --levels);
+	}
+
+	RETURN_NEW_STR(ret);
+}
+
+ZEND_FRAMELESS_FUNCTION(dirname, 1)
+{
+	zendi_frameless_dirname(return_value, arg1, NULL);
+}
+
+ZEND_FRAMELESS_FUNCTION(dirname, 2)
+{
+	ZEND_ASSERT(arg2 != NULL);
+	zendi_frameless_dirname(return_value, arg1, arg2);
+}
+
 /* {{{ Returns information about a certain string */
 PHP_FUNCTION(pathinfo)
 {
@@ -1789,6 +1840,47 @@ PHP_FUNCTION(strpos)
 	RETURN_LONG(found - ZSTR_VAL(haystack));
 }
 /* }}} */
+
+void zend_always_inline zend_frameless_strpos(zval *return_value, zval *haystack_zv, zval *needle_zv, zval *offset_zv)
+{
+	zend_string *haystack, *needle;
+	const char *found = NULL;
+	zend_long offset = 0;
+
+	if (!zend_parse_arg_str(haystack_zv, &haystack, /* null_check */ false, 1)
+	 || !zend_parse_arg_str(needle_zv, &needle, /* null_check */ false, 2)
+	 || (offset_zv && !zend_parse_arg_long(offset_zv, &offset, NULL, /* null_check */ false, 3))) {
+		RETURN_THROWS();
+	}
+
+	if (offset < 0) {
+		offset += (zend_long)ZSTR_LEN(haystack);
+	}
+	if (offset < 0 || (size_t)offset > ZSTR_LEN(haystack)) {
+		zend_argument_value_error(3, "must be contained in argument #1 ($haystack)");
+		RETURN_THROWS();
+	}
+
+	found = (char*)php_memnstr(ZSTR_VAL(haystack) + offset,
+						ZSTR_VAL(needle), ZSTR_LEN(needle),
+						ZSTR_VAL(haystack) + ZSTR_LEN(haystack));
+
+	if (UNEXPECTED(!found)) {
+		RETURN_FALSE;
+	}
+	RETURN_LONG(found - ZSTR_VAL(haystack));
+}
+
+ZEND_FRAMELESS_FUNCTION(strpos, 2)
+{
+	zend_frameless_strpos(return_value, arg1, arg2, NULL);
+}
+
+ZEND_FRAMELESS_FUNCTION(strpos, 3)
+{
+	ZEND_ASSERT(arg3 != NULL);
+	zend_frameless_strpos(return_value, arg1, arg2, arg3);
+}
 
 /* {{{ Finds position of first occurrence of a string within another, case insensitive */
 PHP_FUNCTION(stripos)
@@ -2108,6 +2200,71 @@ PHP_FUNCTION(substr)
 	}
 }
 /* }}} */
+
+static zend_always_inline void zendi_frameless_substr(zval *return_value, zval *str_zv, zval *f_zv, zval *l_zv)
+{
+	zend_string *str;
+	zend_long f;
+	zend_long l = 0;
+	bool len_is_null = true;
+	if (!zend_parse_arg_str(str_zv, &str, /* null_check */ false, 1)
+	 || !zend_parse_arg_long(f_zv, &f, /* is_null */ NULL, /* null_check */ false, 2)
+	 || (l_zv && !zend_parse_arg_long(l_zv, &l, &len_is_null, /* null_check */ true, 3))) {
+		ZVAL_UNDEF(return_value);
+		RETURN_THROWS();
+	}
+
+	if (f < 0) {
+		/* if "from" position is negative, count start position from the end
+		 * of the string
+		 */
+		if (-(size_t)f > ZSTR_LEN(str)) {
+			f = 0;
+		} else {
+			f = (zend_long)ZSTR_LEN(str) + f;
+		}
+	} else if ((size_t)f > ZSTR_LEN(str)) {
+		RETURN_EMPTY_STRING();
+	}
+
+	if (!len_is_null) {
+		if (l < 0) {
+			/* if "length" position is negative, set it to the length
+			 * needed to stop that many chars from the end of the string
+			 */
+			if (-(size_t)l > ZSTR_LEN(str) - (size_t)f) {
+				l = 0;
+			} else {
+				l = (zend_long)ZSTR_LEN(str) - f + l;
+			}
+		} else if ((size_t)l > ZSTR_LEN(str) - (size_t)f) {
+			l = (zend_long)ZSTR_LEN(str) - f;
+		}
+	} else {
+		l = (zend_long)ZSTR_LEN(str) - f;
+	}
+
+	if (l == ZSTR_LEN(str)) {
+		RETVAL_STR_COPY(str);
+	} else {
+		RETVAL_STRINGL_FAST(ZSTR_VAL(str) + f, l);
+	}
+
+	if (Z_TYPE_P(str_zv) != IS_STRING) {
+		zend_string_release(str);
+	}
+}
+
+ZEND_FRAMELESS_FUNCTION(substr, 2)
+{
+	zendi_frameless_substr(return_value, arg1, arg2, NULL);
+}
+
+ZEND_FRAMELESS_FUNCTION(substr, 3)
+{
+	ZEND_ASSERT(arg3 != NULL);
+	zendi_frameless_substr(return_value, arg1, arg2, arg3);
+}
 
 /* {{{ Replaces part of a string with another string */
 PHP_FUNCTION(substr_replace)

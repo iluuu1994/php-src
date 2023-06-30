@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 487cee0751d47b18bf0a8fbdb050313783f1b369 */
+ * Stub hash: 708a3181d5a90804ce35f1f79532c2325edba53f */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_set_time_limit, 0, 1, _IS_BOOL, 0)
 	ZEND_ARG_TYPE_INFO(0, seconds, IS_LONG, 0)
@@ -2203,6 +2203,29 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_sapi_windows_generate_ctrl_event
 ZEND_END_ARG_INFO()
 #endif
 
+static const zend_frameless_function_info frameless_function_infos_in_array[] = {
+	{ ZEND_FRAMELESS_FUNCTION_NAME(in_array, 2), 2 },
+	{ ZEND_FRAMELESS_FUNCTION_NAME(in_array, 3), 3 },
+	{ 0 },
+};
+
+static const zend_frameless_function_info frameless_function_infos_dirname[] = {
+	{ ZEND_FRAMELESS_FUNCTION_NAME(dirname, 1), 1 },
+	{ ZEND_FRAMELESS_FUNCTION_NAME(dirname, 2), 2 },
+	{ 0 },
+};
+
+static const zend_frameless_function_info frameless_function_infos_strpos[] = {
+	{ ZEND_FRAMELESS_FUNCTION_NAME(strpos, 2), 2 },
+	{ ZEND_FRAMELESS_FUNCTION_NAME(strpos, 3), 3 },
+	{ 0 },
+};
+
+static const zend_frameless_function_info frameless_function_infos_substr[] = {
+	{ ZEND_FRAMELESS_FUNCTION_NAME(substr, 2), 2 },
+	{ 0 },
+};
+
 
 ZEND_FUNCTION(set_time_limit);
 ZEND_FUNCTION(header_register_callback);
@@ -2873,7 +2896,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(max, arginfo_max)
 	ZEND_FE(array_walk, arginfo_array_walk)
 	ZEND_FE(array_walk_recursive, arginfo_array_walk_recursive)
-	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(in_array, arginfo_in_array)
+	ZEND_DIRECT_FE(in_array, arginfo_in_array, frameless_function_infos_in_array)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(array_search, arginfo_array_search)
 	ZEND_FE(extract, arginfo_extract)
 	ZEND_FE(compact, arginfo_compact)
@@ -3093,12 +3116,12 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(str_increment, arginfo_str_increment)
 	ZEND_FE(str_decrement, arginfo_str_decrement)
 	ZEND_FE(basename, arginfo_basename)
-	ZEND_FE(dirname, arginfo_dirname)
+	ZEND_DIRECT_FE(dirname, arginfo_dirname, frameless_function_infos_dirname)
 	ZEND_FE(pathinfo, arginfo_pathinfo)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(stristr, arginfo_stristr)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(strstr, arginfo_strstr)
 	ZEND_FALIAS(strchr, strstr, arginfo_strchr)
-	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(strpos, arginfo_strpos)
+	ZEND_DIRECT_FE(strpos, arginfo_strpos, frameless_function_infos_strpos)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(stripos, arginfo_stripos)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(strrpos, arginfo_strrpos)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(strripos, arginfo_strripos)
@@ -3107,7 +3130,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(str_starts_with, arginfo_str_starts_with)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(str_ends_with, arginfo_str_ends_with)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(chunk_split, arginfo_chunk_split)
-	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(substr, arginfo_substr)
+	ZEND_DIRECT_FE(substr, arginfo_substr, frameless_function_infos_substr)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(substr_replace, arginfo_substr_replace)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(quotemeta, arginfo_quotemeta)
 	ZEND_SUPPORTS_COMPILE_TIME_EVAL_FE(ord, arginfo_ord)

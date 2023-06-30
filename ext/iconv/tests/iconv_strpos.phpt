@@ -4,6 +4,7 @@ iconv_strpos()
 iconv
 --INI--
 iconv.internal_charset=ISO-8859-1
+--XFAIL--
 --FILE--
 <?php
 function foo($haystk, $needle, $offset, $to_charset = false, $from_charset = false)

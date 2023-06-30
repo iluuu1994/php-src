@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "zend_llist.h"
+#include "zend_frameless_function.h"
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
@@ -517,6 +518,7 @@ typedef struct _zend_internal_function {
 
 	zif_handler handler;
 	struct _zend_module_entry *module;
+	const zend_frameless_function_info *frameless_function_infos;
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 } zend_internal_function;
 

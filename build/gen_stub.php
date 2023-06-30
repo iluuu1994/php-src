@@ -1059,6 +1059,11 @@ class FunctionName implements FunctionOrMethodName {
         return "arginfo_$underscoreName";
     }
 
+    public function getFramelessFunctionInfosName(): string {
+        $underscoreName = implode('_', $this->name->getParts());
+        return "frameless_function_infos_$underscoreName";
+    }
+
     public function getMethodSynopsisFilename(): string {
         return implode('_', $this->name->getParts());
     }
@@ -1213,6 +1218,7 @@ class FuncInfo {
     public bool $isUndocumentable;
     /** @var AttributeInfo[] */
     public array $attributes;
+    public array $framelessFunctionInfos;
 
     /**
      * @param AttributeInfo[] $attributes
@@ -1232,7 +1238,8 @@ class FuncInfo {
         int $numRequiredArgs,
         ?string $cond,
         bool $isUndocumentable,
-        array $attributes
+        array $attributes,
+        array $framelessFunctionInfos
     ) {
         $this->name = $name;
         $this->classFlags = $classFlags;
@@ -1248,6 +1255,7 @@ class FuncInfo {
         $this->cond = $cond;
         $this->isUndocumentable = $isUndocumentable;
         $this->attributes = $attributes;
+        $this->framelessFunctionInfos = $framelessFunctionInfos;
     }
 
     public function isMethod(): bool
@@ -1344,6 +1352,10 @@ class FuncInfo {
         return $name->getDeclaration();
     }
 
+    public function getFramelessFunctionInfosName(): string {
+        return $this->name->getFramelessFunctionInfosName();
+    }
+
     public function getFunctionEntry(): string {
         if ($this->name instanceof MethodName) {
             if ($this->alias) {
@@ -1382,6 +1394,20 @@ class FuncInfo {
             $namespace = $this->name->getNamespace();
             $functionName = $this->name->getFunctionName();
             $declarationName = $this->alias ? $this->alias->getNonNamespacedName() : $this->name->getDeclarationName();
+
+            if (!empty($this->framelessFunctionInfos)) {
+                if ($namespace) {
+                    die('Namespaced direct calls are not supported yet');
+                }
+                if ($this->alias) {
+                    die('Aliased direct calls are not supported yet');
+                }
+                // FIXME: Missing options for CTE
+                return sprintf(
+                    "\tZEND_DIRECT_FE(%s, %s, %s)\n",
+                    $functionName, $this->getArgInfoName(), $this->getFramelessFunctionInfosName()
+                );
+            }
 
             if ($namespace) {
                 // Namespaced functions are always declared as aliases to avoid name conflicts when two functions with
@@ -1440,6 +1466,23 @@ class FuncInfo {
         }
 
         return "\tF" . $this->return->refcount . '("' . $this->name->__toString() . '", ' . $type->toOptimizerTypeMask() . "),\n";
+    }
+
+    public function getFramelessFunctionHandlers($arity): ?string {
+        if ($this->isMethod() || empty($this->framelessFunctionInfos)) {
+            return null;
+        }
+
+        $functionName = $this->name->getFunctionName();
+        $code = '';
+
+        foreach ($this->framelessFunctionInfos as $framelessFunctionInfo) {
+            if ($framelessFunctionInfo->arity === $arity) {
+                $code .= "\tZEND_FRAMELESS_FUNCTION_NAME($functionName, $framelessFunctionInfo->arity),\n";
+            }
+        }
+
+        return $code ?: null;
     }
 
     public function discardInfoForOldPhpVersions(): void {
@@ -3393,6 +3436,19 @@ function parseDocComment(DocComment $comment): array {
     return $tags;
 }
 
+class FramelessFunctionInfo {
+    public int $arity;
+}
+
+function parseFramelessFunctionInfo(string $json): FramelessFunctionInfo {
+    // FIXME: We should probably use something closer to docBlocks than JSON.
+    // FIXME: Should have some validation
+    $json = json_decode($json, true);
+    $framelessFunctionInfo = new FramelessFunctionInfo();
+    $framelessFunctionInfo->arity = $json["arity"];
+    return $framelessFunctionInfo;
+}
+
 function parseFunctionLike(
     PrettyPrinterAbstract $prettyPrinter,
     FunctionOrMethodName $name,
@@ -3414,6 +3470,7 @@ function parseFunctionLike(
         $tentativeReturnType = false;
         $docParamTypes = [];
         $refcount = null;
+        $framelessFunctionInfos = [];
 
         if ($comment) {
             $tags = parseDocComment($comment);
@@ -3468,6 +3525,10 @@ function parseFunctionLike(
 
                     case 'undocumentable':
                         $isUndocumentable = true;
+                        break;
+
+                    case 'frameless-function':
+                        $framelessFunctionInfos[] = parseFramelessFunctionInfo($tag->getValue());
                         break;
                 }
             }
@@ -3565,7 +3626,8 @@ function parseFunctionLike(
             $numRequiredArgs,
             $cond,
             $isUndocumentable,
-            createAttributes($func->attrGroups)
+            createAttributes($func->attrGroups),
+            $framelessFunctionInfos
         );
     } catch (Exception $e) {
         throw new Exception($name . "(): " .$e->getMessage());
@@ -4162,6 +4224,20 @@ function findEquivalentFuncInfo(array $generatedFuncInfos, FuncInfo $funcInfo): 
     return null;
 }
 
+function framelessFunctionInfoToCode(FileInfo $fileInfo, FuncInfo $funcInfo): ?string {
+    if (empty($funcInfo->framelessFunctionInfos)) {
+        return null;
+    }
+
+    $code = 'static const zend_frameless_function_info ' . $funcInfo->getFramelessFunctionInfosName() . "[] = {\n";
+    foreach ($funcInfo->framelessFunctionInfos as $framelessFunctionInfo) {
+        $code .= "\t{ ZEND_FRAMELESS_FUNCTION_NAME({$funcInfo->name->getFunctionName()}, {$framelessFunctionInfo->arity}), {$framelessFunctionInfo->arity} },\n";
+    }
+    $code .= "\t{ 0 },\n";
+    $code .= "};\n";
+    return $code;
+}
+
 /**
  * @template T
  * @param iterable<T> $infos
@@ -4217,6 +4293,14 @@ function generateArgInfoCode(
             }
 
             $generatedFuncInfos[] = $funcInfo;
+            return $code;
+        }
+    );
+
+    $code .= generateCodeWithConditions(
+        $fileInfo->getAllFuncInfos(), "\n",
+        static function (FuncInfo $funcInfo) use ($fileInfo) {
+            $code = framelessFunctionInfoToCode($fileInfo, $funcInfo);
             return $code;
         }
     );
@@ -4424,6 +4508,38 @@ function generateOptimizerInfo(array $funcMap): string {
     });
 
     $code .= "};\n";
+
+    return $code;
+}
+
+/** @param array<string, FuncInfo> $funcMap */
+function generateFramelessFunctionHandlerLists(array $funcMap): string {
+    $code = "/* This is a generated file, edit the .stub.php files instead. */\n\n";
+    $code .= "#include \"zend_frameless_function.h\"\n\n";
+
+    $code .= "const zend_frameless_function_0 zend_frameless_function_0_list[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionHandlers(0);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const zend_frameless_function_1 zend_frameless_function_1_list[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionHandlers(1);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const zend_frameless_function_2 zend_frameless_function_2_list[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionHandlers(2);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const zend_frameless_function_3 zend_frameless_function_3_list[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionHandlers(3);
+    });
+    $code .= "\tNULL,\n};\n";
 
     return $code;
 }
@@ -5125,7 +5241,7 @@ $options = getopt(
     [
         "force-regeneration", "parameter-stats", "help", "verify", "verify-manual", "replace-predefined-constants",
         "generate-classsynopses", "replace-classsynopses", "generate-methodsynopses", "replace-methodsynopses",
-        "generate-optimizer-info",
+        "generate-optimizer-info", "generate-frameless-function-handler-lists"
     ],
     $optind
 );
@@ -5140,8 +5256,9 @@ $replaceClassSynopses = isset($options["replace-classsynopses"]);
 $generateMethodSynopses = isset($options["generate-methodsynopses"]);
 $replaceMethodSynopses = isset($options["replace-methodsynopses"]);
 $generateOptimizerInfo = isset($options["generate-optimizer-info"]);
+$generateFramelessFunctionHandlerLists = isset($options["generate-frameless-function-handler-lists"]);
 $context->forceRegeneration = isset($options["f"]) || isset($options["force-regeneration"]);
-$context->forceParse = $context->forceRegeneration || $printParameterStats || $verify || $verifyManual || $replacePredefinedConstants || $generateClassSynopses || $generateOptimizerInfo || $replaceClassSynopses || $generateMethodSynopses || $replaceMethodSynopses;
+$context->forceParse = $context->forceRegeneration || $printParameterStats || $verify || $verifyManual || $replacePredefinedConstants || $generateClassSynopses || $generateOptimizerInfo || $generateFramelessFunctionHandlerLists || $replaceClassSynopses || $generateMethodSynopses || $replaceMethodSynopses;
 
 $manualTarget = $argv[$argc - 1] ?? null;
 if (($replacePredefinedConstants || $verifyManual) && $manualTarget === null) {
@@ -5411,5 +5528,14 @@ if ($verifyManual) {
         if (!$info->isUndocumentable) {
             echo "Warning: Missing method synopsis for $functionName()\n";
         }
+    }
+}
+
+if ($generateFramelessFunctionHandlerLists) {
+    $filename = dirname(__FILE__, 2) . "/Zend/zend_frameless_function_handler_lists.c";
+    $code = generateFramelessFunctionHandlerLists($funcMap);
+
+    if (file_put_contents($filename, $code)) {
+        echo "Saved $filename\n";
     }
 }

@@ -22,6 +22,7 @@
 #include "zend_types.h"
 #include "zend_gc.h"
 #include "zend_alloc.h"
+#include "zend_frameless_function.h"
 
 BEGIN_EXTERN_C()
 
@@ -641,5 +642,12 @@ ZEND_KNOWN_STRINGS(_ZEND_STR_ID)
 #undef _ZEND_STR_ID
 	ZEND_STR_LAST_KNOWN
 } zend_known_string_id;
+
+extern ZEND_FRAMELESS_FUNCTION(dirname, 1);
+extern ZEND_FRAMELESS_FUNCTION(dirname, 2);
+extern ZEND_FRAMELESS_FUNCTION(strpos, 2);
+extern ZEND_FRAMELESS_FUNCTION(strpos, 3);
+extern ZEND_FRAMELESS_FUNCTION(substr, 2);
+extern ZEND_FRAMELESS_FUNCTION(substr, 3);
 
 #endif /* ZEND_STRING_H */

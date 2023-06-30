@@ -21,6 +21,7 @@
 #define PHP_ARRAY_H
 
 # include "ext/random/php_random.h"
+# include "zend_frameless_function.h"
 
 PHP_MINIT_FUNCTION(array);
 PHP_MSHUTDOWN_FUNCTION(array);
@@ -68,5 +69,8 @@ ZEND_BEGIN_MODULE_GLOBALS(array)
 ZEND_END_MODULE_GLOBALS(array)
 
 #define ARRAYG(v) ZEND_MODULE_GLOBALS_ACCESSOR(array, v)
+
+ZEND_FRAMELESS_FUNCTION(in_array, 2);
+ZEND_FRAMELESS_FUNCTION(in_array, 3);
 
 #endif /* PHP_ARRAY_H */

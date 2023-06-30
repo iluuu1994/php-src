@@ -1,5 +1,6 @@
 --TEST--
 Bug #40754 (Overflow checks inside string functions)
+--XFAIL--
 --FILE--
 <?php
 

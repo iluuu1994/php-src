@@ -9549,6 +9549,55 @@ ZEND_VM_HANDLER(202, ZEND_CALLABLE_CONVERT, UNUSED, UNUSED)
 	ZEND_VM_NEXT_OPCODE();
 }
 
+ZEND_VM_HANDLER(204, ZEND_FRAMELESS_ICALL_0, UNUSED, UNUSED)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+	zend_frameless_function_0 function = zend_frameless_function_0_list[opline->extended_value];
+	function(EX_VAR(opline->result.var));
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+}
+
+ZEND_VM_HANDLER(205, ZEND_FRAMELESS_ICALL_1, CONST|TMPVAR|CV, UNUSED)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+	zend_frameless_function_1 function = zend_frameless_function_1_list[opline->extended_value];
+	function(EX_VAR(opline->result.var), GET_OP1_ZVAL_PTR_DEREF(BP_VAR_R));
+	FREE_OP1();
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+}
+
+ZEND_VM_HANDLER(206, ZEND_FRAMELESS_ICALL_2, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+	zend_frameless_function_2 function = zend_frameless_function_2_list[opline->extended_value];
+	function(
+		EX_VAR(opline->result.var),
+		GET_OP1_ZVAL_PTR_DEREF(BP_VAR_R),
+		GET_OP2_ZVAL_PTR_DEREF(BP_VAR_R));
+	FREE_OP1();
+	FREE_OP2();
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+}
+
+ZEND_VM_HANDLER(207, ZEND_FRAMELESS_ICALL_3, ANY, ANY, OP)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+	zend_frameless_function_3 function = zend_frameless_function_3_list[opline->extended_value];
+	function(
+		EX_VAR(opline->result.var),
+		GET_OP1_ZVAL_PTR_DEREF(BP_VAR_R),
+		GET_OP2_ZVAL_PTR_DEREF(BP_VAR_R),
+		GET_OP_DATA_ZVAL_PTR_DEREF(BP_VAR_R));
+	FREE_OP1();
+	FREE_OP2();
+	FREE_OP_DATA();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
+}
+
 ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_JMP, (OP_JMP_ADDR(op, op->op1) > op), ZEND_JMP_FORWARD, JMP_ADDR, ANY)
 {
 	USE_OPLINE
