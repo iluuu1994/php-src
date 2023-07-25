@@ -3046,7 +3046,9 @@ static zend_op *zend_delayed_compile_prop(znode *result, zend_ast *ast, uint32_t
 		 * check for a nullsafe access. */
 	} else {
 		zend_short_circuiting_mark_inner(obj_ast);
-		opline = zend_delayed_compile_var(&obj_node, obj_ast, type, 0);
+		/* Allow fetching constants by R, even in W context. */
+		uint32_t obj_type = obj_ast->kind == ZEND_AST_CONST ? BP_VAR_R : type;
+		opline = zend_delayed_compile_var(&obj_node, obj_ast, obj_type, 0);
 		if (opline && (opline->opcode == ZEND_FETCH_DIM_W
 				|| opline->opcode == ZEND_FETCH_DIM_RW
 				|| opline->opcode == ZEND_FETCH_DIM_FUNC_ARG
@@ -3081,6 +3083,19 @@ static zend_op *zend_delayed_compile_prop(znode *result, zend_ast *ast, uint32_t
 				}
 			}
 			zend_emit_jmp_null(&obj_node, type);
+		}
+
+		/* ZEND_AST_CONST can result in IS_TMP_VAR and IS_CONST which is uncommon for accessing
+		 * properties. ASSIGN_OBJ and FETCH_OBJ_[R]W are missing handlers for CONST|TMP op1, we work
+		 * around this by converting the TMP to a VAR, and by assigning the CONST to a temporary VAR. */
+		if ((type == BP_VAR_W || type == BP_VAR_RW)) {
+			if (obj_node.op_type == IS_TMP_VAR) {
+				ZEND_ASSERT(obj_ast->kind == ZEND_AST_CONST);
+				obj_node.op_type = IS_VAR;
+			} else if (obj_node.op_type == IS_CONST) {
+				ZEND_ASSERT(obj_ast->kind == ZEND_AST_CONST);
+				zend_emit_op(&obj_node, ZEND_QM_ASSIGN, &obj_node, NULL);
+			}
 		}
 	}
 
