@@ -20,10 +20,14 @@
 #ifndef ZEND_BUILTIN_FUNCTIONS_H
 #define ZEND_BUILTIN_FUNCTIONS_H
 
+#include "zend_frameless_function.h"
+
 zend_result zend_startup_builtin_functions(void);
 
 BEGIN_EXTERN_C()
 ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int options, int limit);
+
+extern ZEND_FRAMELESS_FUNCTION(class_exists, 1);
 END_EXTERN_C()
 
 #endif /* ZEND_BUILTIN_FUNCTIONS_H */

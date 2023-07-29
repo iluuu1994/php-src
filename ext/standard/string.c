@@ -1841,15 +1841,25 @@ PHP_FUNCTION(strpos)
 }
 /* }}} */
 
-void zend_always_inline zend_frameless_strpos(zval *return_value, zval *haystack_zv, zval *needle_zv, zval *offset_zv)
+static zend_always_inline void zend_frameless_strpos(zval *return_value, zval *haystack_zv, zval *needle_zv, zval *offset_zv)
 {
 	zend_string *haystack, *needle;
 	const char *found = NULL;
 	zend_long offset = 0;
 
-	if (!zend_parse_arg_str(haystack_zv, &haystack, /* null_check */ false, 1)
-	 || !zend_parse_arg_str(needle_zv, &needle, /* null_check */ false, 2)
-	 || (offset_zv && !zend_parse_arg_long(offset_zv, &offset, NULL, /* null_check */ false, 3))) {
+	if (!zend_parse_arg_str(haystack_zv, &haystack, /* null_check */ false, 1)) {
+		zend_wrong_parameter_type_error(1, Z_EXPECTED_STRING, haystack_zv);
+		ZVAL_NULL(return_value);
+		RETURN_THROWS();
+	}
+	if (!zend_parse_arg_str(needle_zv, &needle, /* null_check */ false, 2)) {
+		zend_wrong_parameter_type_error(2, Z_EXPECTED_STRING, needle_zv);
+		ZVAL_NULL(return_value);
+		RETURN_THROWS();
+	}
+	if (offset_zv && !zend_parse_arg_long(offset_zv, &offset, NULL, /* null_check */ false, 3)) {
+		zend_wrong_parameter_type_error(3, Z_EXPECTED_LONG, offset_zv);
+		ZVAL_NULL(return_value);
 		RETURN_THROWS();
 	}
 
@@ -1858,6 +1868,7 @@ void zend_always_inline zend_frameless_strpos(zval *return_value, zval *haystack
 	}
 	if (offset < 0 || (size_t)offset > ZSTR_LEN(haystack)) {
 		zend_argument_value_error(3, "must be contained in argument #1 ($haystack)");
+		ZVAL_NULL(return_value);
 		RETURN_THROWS();
 	}
 

@@ -5462,6 +5462,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
 
 #include "ext/standard/php_array.h"
+#include "Zend/zend_builtin_functions.h"
 #include "zend_frameless_function_handler_lists.c"
 #include "zend_vm_execute.h"
 

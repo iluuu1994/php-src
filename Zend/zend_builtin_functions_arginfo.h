@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 12899073f3791c5da31aa555c0e612ee1faadf55 */
+ * Stub hash: c55ca8a84d363fdf0bf12508e1eb6d4c5eec74ae */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_zend_version, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -217,6 +217,11 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_gc_status arginfo_func_get_args
 
+static const zend_frameless_function_info frameless_function_infos_class_exists[] = {
+	{ ZEND_FRAMELESS_FUNCTION_NAME(class_exists, 1), 1 },
+	{ 0 },
+};
+
 
 ZEND_FUNCTION(zend_version);
 ZEND_FUNCTION(func_num_args);
@@ -302,7 +307,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(get_class_methods, arginfo_get_class_methods)
 	ZEND_FE(method_exists, arginfo_method_exists)
 	ZEND_FE(property_exists, arginfo_property_exists)
-	ZEND_FE(class_exists, arginfo_class_exists)
+	ZEND_DIRECT_FE(class_exists, arginfo_class_exists, frameless_function_infos_class_exists)
 	ZEND_FE(interface_exists, arginfo_interface_exists)
 	ZEND_FE(trait_exists, arginfo_trait_exists)
 	ZEND_FE(enum_exists, arginfo_enum_exists)

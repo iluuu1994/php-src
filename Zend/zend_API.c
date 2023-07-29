@@ -467,10 +467,7 @@ ZEND_API bool ZEND_FASTCALL zend_parse_arg_class(zval *arg, zend_class_entry **p
 /* }}} */
 
 static ZEND_COLD bool zend_null_arg_deprecated(const char *fallback_type, uint32_t arg_num) {
-	// FIXME: This breaks with a missing stack frame
-	return true;
-
-	zend_function *func = EG(current_execute_data)->func;
+	zend_function *func = zend_active_function();
 	ZEND_ASSERT(arg_num > 0);
 	uint32_t arg_offset = arg_num - 1;
 	if (arg_offset >= func->common.num_args) {
@@ -479,6 +476,7 @@ static ZEND_COLD bool zend_null_arg_deprecated(const char *fallback_type, uint32
 	}
 
 	zend_arg_info *arg_info = &func->common.arg_info[arg_offset];
+
 	zend_string *func_name = get_active_function_or_method_name();
 	const char *arg_name = get_active_function_arg_name(arg_num);
 

@@ -1485,6 +1485,23 @@ class FuncInfo {
         return $code ?: null;
     }
 
+    public function getFramelessFunctionNames($arity): ?string {
+        if ($this->isMethod() || empty($this->framelessFunctionInfos)) {
+            return null;
+        }
+
+        $functionName = $this->name->getFunctionName();
+        $code = '';
+
+        foreach ($this->framelessFunctionInfos as $framelessFunctionInfo) {
+            if ($framelessFunctionInfo->arity === $arity) {
+                $code .= "\t\"$functionName\",\n";
+            }
+        }
+
+        return $code ?: null;
+    }
+
     public function discardInfoForOldPhpVersions(): void {
         $this->attributes = [];
         $this->return->type = null;
@@ -4538,6 +4555,30 @@ function generateFramelessFunctionHandlerLists(array $funcMap): string {
     $code .= "const zend_frameless_function_3 zend_frameless_function_3_list[] = {\n";
     $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
         return $funcInfo->getFramelessFunctionHandlers(3);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const char *zend_frameless_function_0_names[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionNames(0);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const char *zend_frameless_function_1_names[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionNames(1);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const char *zend_frameless_function_2_names[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionNames(2);
+    });
+    $code .= "\tNULL,\n};\n";
+
+    $code .= "const char *zend_frameless_function_3_names[] = {\n";
+    $code .= generateCodeWithConditions($funcMap, "", static function (FuncInfo $funcInfo) {
+        return $funcInfo->getFramelessFunctionNames(3);
     });
     $code .= "\tNULL,\n};\n";
 

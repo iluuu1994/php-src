@@ -41,6 +41,11 @@ extern const zend_frameless_function_1 zend_frameless_function_1_list[];
 extern const zend_frameless_function_2 zend_frameless_function_2_list[];
 extern const zend_frameless_function_3 zend_frameless_function_3_list[];
 
+extern const char *zend_frameless_function_0_names[];
+extern const char *zend_frameless_function_1_names[];
+extern const char *zend_frameless_function_2_names[];
+extern const char *zend_frameless_function_3_names[];
+
 typedef struct {
 	void *handler;
 	uint32_t num_args;

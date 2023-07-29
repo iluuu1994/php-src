@@ -4533,13 +4533,14 @@ static int find_frameless_function_offset(int arity, void *handler)
 	}
 
 	void **current = list;
-	while (true) {
-		ZEND_ASSERT(current);
+	while (current) {
 		if (*current == handler) {
 			return current - list;
 		}
 		current++;
 	}
+
+	return (uint32_t)-1;
 }
 
 static zend_result zend_compile_frameless_icall(znode *result, zend_ast_list *args, zend_function *fbc, uint32_t type)
@@ -4557,8 +4558,20 @@ static zend_result zend_compile_frameless_icall(znode *result, zend_ast_list *ar
 		return FAILURE;
 	}
 
+	/* We don't support named arguments or argument unpacking. */
+	for (uint32_t i = 0; i < args->children; i++) {
+		zend_ast *arg = args->child[i];
+		if (arg->kind == ZEND_AST_UNPACK || arg->kind == ZEND_AST_NAMED_ARG) {
+			return FAILURE;
+		}
+	}
+
 	while (frameless_function_info->handler) {
 		if (frameless_function_info->num_args == args->children) {
+			uint32_t offset = find_frameless_function_offset(args->children, frameless_function_info->handler);
+			if (offset == (uint32_t)-1) {
+				continue;
+			}
 			uint8_t opcode = ZEND_FRAMELESS_ICALL_0;
 			znode arg1, arg2, arg3;
 			if (args->children >= 1) {
@@ -4583,7 +4596,7 @@ static zend_result zend_compile_frameless_icall(znode *result, zend_ast_list *ar
 			if (args->children >= 3) {
 				zend_emit_op_data(&arg3);
 			}
-			opline->extended_value = find_frameless_function_offset(args->children, frameless_function_info->handler);
+			opline->extended_value = offset;
 			return SUCCESS;
 		}
 		frameless_function_info++;

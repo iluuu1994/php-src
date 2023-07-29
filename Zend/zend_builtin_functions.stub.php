@@ -71,6 +71,9 @@ function method_exists($object_or_class, string $method): bool {}
 /** @param object|string $object_or_class */
 function property_exists($object_or_class, string $property): bool {}
 
+/**
+ * @frameless-function {"arity": 1}
+ */
 function class_exists(string $class, bool $autoload = true): bool {}
 
 function interface_exists(string $interface, bool $autoload = true): bool {}
