@@ -55,6 +55,7 @@ ZEND_API void *zend_stack_top(const zend_stack *stack)
 ZEND_API void zend_stack_del_top(zend_stack *stack)
 {
 	--stack->top;
+	ZEND_ASSERT(stack->top >= 0);
 }
 
 

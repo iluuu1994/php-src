@@ -276,7 +276,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> inline_function union_type_element union_type intersection_type
 %type <ast> attributed_statement attributed_class_statement attributed_parameter
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
-%type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
+%type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list match_arm_body
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
 %type <ast> function_name non_empty_member_modifiers
 
@@ -726,10 +726,10 @@ non_empty_match_arm_list:
 ;
 
 match_arm:
-		match_arm_cond_list possible_comma T_DOUBLE_ARROW expr
-			{ $$ = zend_ast_create(ZEND_AST_MATCH_ARM, $1, $4); }
-	|	T_DEFAULT possible_comma T_DOUBLE_ARROW expr
-			{ $$ = zend_ast_create(ZEND_AST_MATCH_ARM, NULL, $4); }
+		match_arm_cond_list possible_comma match_arm_body
+			{ $$ = zend_ast_create(ZEND_AST_MATCH_ARM, $1, $3); }
+	|	T_DEFAULT possible_comma match_arm_body
+			{ $$ = zend_ast_create(ZEND_AST_MATCH_ARM, NULL, $3); }
 ;
 
 match_arm_cond_list:
@@ -737,6 +737,10 @@ match_arm_cond_list:
 	|	match_arm_cond_list ',' expr { $$ = zend_ast_list_add($1, $3); }
 ;
 
+match_arm_body:
+		T_DOUBLE_ARROW expr { $$ = $2; }
+	|	'{' inner_statement_list expr '}' { $$ = zend_ast_create(ZEND_AST_MATCH_ARM_BLOCK, $2, $3); }
+;
 
 while_statement:
 		statement { $$ = $1; }
@@ -1436,8 +1440,6 @@ callable_variable:
 			{ $$ = zend_ast_create(ZEND_AST_VAR, $1); }
 	|	array_object_dereferenceable '[' optional_expr ']'
 			{ $$ = zend_ast_create(ZEND_AST_DIM, $1, $3); }
-	|	array_object_dereferenceable '{' expr '}'
-			{ $$ = zend_ast_create_ex(ZEND_AST_DIM, ZEND_DIM_ALTERNATIVE_SYNTAX, $1, $3); }
 	|	array_object_dereferenceable T_OBJECT_OPERATOR property_name argument_list
 			{ $$ = zend_ast_create(ZEND_AST_METHOD_CALL, $1, $3, $4); }
 	|	array_object_dereferenceable T_NULLSAFE_OBJECT_OPERATOR property_name argument_list
@@ -1474,8 +1476,6 @@ new_variable:
 			{ $$ = zend_ast_create(ZEND_AST_VAR, $1); }
 	|	new_variable '[' optional_expr ']'
 			{ $$ = zend_ast_create(ZEND_AST_DIM, $1, $3); }
-	|	new_variable '{' expr '}'
-			{ $$ = zend_ast_create_ex(ZEND_AST_DIM, ZEND_DIM_ALTERNATIVE_SYNTAX, $1, $3); }
 	|	new_variable T_OBJECT_OPERATOR property_name
 			{ $$ = zend_ast_create(ZEND_AST_PROP, $1, $3); }
 	|	new_variable T_NULLSAFE_OBJECT_OPERATOR property_name
