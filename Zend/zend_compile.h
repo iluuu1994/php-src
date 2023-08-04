@@ -155,13 +155,20 @@ struct _zend_op {
 #endif
 };
 
+typedef enum {
+	ZEND_BRK_CONT_KIND_LOOP,
+	/* switch or match with unused result. */
+	ZEND_BRK_CONT_KIND_SWITCH_MATCH_STMT,
+	/* match with used result. */
+	ZEND_BRK_CONT_KIND_MATCH_EXPR,
+} zend_brk_cont_kind;
 
 typedef struct _zend_brk_cont_element {
 	int start;
 	int cont;
 	int brk;
 	int parent;
-	bool is_switch;
+	zend_brk_cont_kind kind;
 } zend_brk_cont_element;
 
 typedef struct _zend_label {
@@ -207,6 +214,7 @@ typedef struct _zend_oparray_context {
 	zend_string *active_property_info_name;
 	zend_property_hook_kind active_property_hook_kind;
 	bool       in_jmp_frameless_branch;
+	bool       in_block_expr;
 } zend_oparray_context;
 
 /* Class, property and method flags                  class|meth.|prop.|const*/
