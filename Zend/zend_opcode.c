@@ -1064,6 +1064,7 @@ ZEND_API void pass_two(zend_op_array *op_array)
 	 * happens correctly if any of the following fixups generate a fatal error. */
 	op_array->fn_flags |= ZEND_ACC_DONE_PASS_TWO;
 
+	bool has_goto = false;
 	opline = op_array->opcodes;
 	end = opline + op_array->last;
 	while (opline < end) {
@@ -1097,11 +1098,8 @@ ZEND_API void pass_two(zend_op_array *op_array)
 				}
 				break;
 			case ZEND_GOTO:
-				zend_resolve_goto_label(op_array, opline);
-				if (op_array->fn_flags & ZEND_ACC_HAS_FINALLY_BLOCK) {
-					zend_check_finally_breakout(op_array, opline - op_array->opcodes, opline->op1.opline_num);
-				}
-				ZEND_FALLTHROUGH;
+				has_goto = true;
+				break;
 			case ZEND_JMP:
 				ZEND_PASS_TWO_UPDATE_JMP_TARGET(op_array, opline, opline->op1);
 				break;
@@ -1180,7 +1178,21 @@ ZEND_API void pass_two(zend_op_array *op_array)
 
 	zend_calc_live_ranges(op_array, NULL);
 
-	return;
+	if (has_goto) {
+		opline = op_array->opcodes;
+		end = opline + op_array->last;
+		while (opline < end) {
+			if (opline->opcode == ZEND_GOTO) {
+				zend_resolve_goto_label(op_array, opline);
+				if (op_array->fn_flags &ZEND_ACC_HAS_FINALLY_BLOCK) {
+					zend_check_finally_breakout(op_array, opline - op_array->opcodes, opline->op1.opline_num);
+				}
+				ZEND_PASS_TWO_UPDATE_JMP_TARGET(op_array, opline, opline->op1);
+				ZEND_VM_SET_OPCODE_HANDLER(opline);
+			}
+			opline++;
+		}
+	}
 }
 
 ZEND_API unary_op_type get_unary_op(int opcode)

@@ -5200,11 +5200,15 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, uint32_t excluded_
 				SET_NODE(opline->op2, return_value);
 			}
 			opline->op1.num = loop_var->try_catch_offset;
+			/* Only used in pass_two(). */
+			opline->extended_value = loop_var->try_catch_offset;
 		} else if (loop_var->opcode == ZEND_DISCARD_EXCEPTION) {
 			zend_op *opline = get_next_op();
 			opline->opcode = ZEND_DISCARD_EXCEPTION;
 			opline->op1_type = IS_TMP_VAR;
 			opline->op1.var = loop_var->var_num;
+			/* Only used in pass_two(). */
+			opline->extended_value = loop_var->try_catch_offset;
 		} else {
 			ZEND_ASSERT(loop_var->opcode == ZEND_FREE || loop_var->opcode == ZEND_FE_FREE);
 			ZEND_ASSERT(loop_var->var_type & (IS_VAR|IS_TMP_VAR));
@@ -5427,9 +5431,8 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 	zend_label *dest;
 	int current, remove_oplines = opline->op1.num;
 	zval *label;
-	uint32_t opnum = opline - op_array->opcodes;
 
-	label = CT_CONSTANT_EX(op_array, opline->op2.constant);
+	label = RT_CONSTANT(opline, opline->op2);
 	if (CG(context).labels == NULL ||
 	    (dest = zend_hash_find_ptr(CG(context).labels, Z_STR_P(label))) == NULL
 	) {
@@ -5450,21 +5453,6 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 			CG(zend_lineno) = opline->lineno;
 			zend_error_noreturn(E_COMPILE_ERROR, "'goto' into loop or switch statement is disallowed");
 		}
-		if (CG(context).brk_cont_array[current].start >= 0) {
-			remove_oplines--;
-		}
-	}
-
-	for (current = 0; current < op_array->last_try_catch; ++current) {
-		zend_try_catch_element *elem = &op_array->try_catch_array[current];
-		if (elem->try_op > opnum) {
-			break;
-		}
-		if (elem->finally_op && opnum < elem->finally_op - 1
-			&& (dest->opline_num > elem->finally_end || dest->opline_num < elem->try_op)
-		) {
-			remove_oplines--;
-		}
 	}
 
 	opline->opcode = ZEND_JMP;
@@ -5474,16 +5462,43 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 	opline->op1.opline_num = dest->opline_num;
 	opline->extended_value = 0;
 
-	/* FIXME: This needs to be updated. The idea is to eliminate FREE/FE_FREE calls
-	 * based on live-ranges. I.e. if we're jumping out of a live-range the value needs
-	 * to be freed. Similarly, if we're jumping out of a try block, we need to keep the
-	 * opcodes for FAST_CALL. */
-	// ZEND_ASSERT(remove_oplines >= 0);
-	// while (remove_oplines--) {
-	// 	opline--;
-	// 	MAKE_NOP(opline);
-	// 	ZEND_VM_SET_OPCODE_HANDLER(opline);
-	// }
+	for (; remove_oplines > 0; remove_oplines--) {
+		zend_op *predecessor = opline - remove_oplines;
+		switch (predecessor->opcode) {
+			case ZEND_FREE:
+			case ZEND_FE_FREE:;
+				zend_live_range *range = op_array->live_range;
+				zend_live_range *range_end = range + op_array->last_live_range;
+				while (range < range_end) {
+					if ((range->var & ~ZEND_LIVE_MASK) == predecessor->op1.var) {
+						if (dest->opline_num >= range->start && dest->opline_num < range->end) {
+							MAKE_NOP(predecessor);
+							ZEND_VM_SET_OPCODE_HANDLER(predecessor);
+						}
+					}
+					range++;
+				}
+				break;
+			case ZEND_FAST_CALL: {
+				zend_try_catch_element *try_catch_elem = &op_array->try_catch_array[predecessor->extended_value];
+				/* We don't need to call finally if we stay within the try/catch block. */
+				if (dest->opline_num >= try_catch_elem->try_op && dest->opline_num < try_catch_elem->finally_op) {
+					MAKE_NOP(predecessor);
+					ZEND_VM_SET_OPCODE_HANDLER(predecessor);
+				}
+				break;
+			}
+			case ZEND_DISCARD_EXCEPTION: {
+				zend_try_catch_element *try_catch_elem = &op_array->try_catch_array[predecessor->extended_value];
+				/* We don't need to call finally if we stay within the finally block. */
+				if (dest->opline_num >= try_catch_elem->finally_op && dest->opline_num < try_catch_elem->finally_end) {
+					MAKE_NOP(predecessor);
+					ZEND_VM_SET_OPCODE_HANDLER(predecessor);
+				}
+				break;
+			}
+		}
+	}
 }
 /* }}} */
 
@@ -6341,6 +6356,7 @@ static void zend_compile_try(zend_ast *ast) /* {{{ */
 		discard_exception.opcode = ZEND_DISCARD_EXCEPTION;
 		discard_exception.var_type = IS_TMP_VAR;
 		discard_exception.var_num = CG(context).fast_call_var;
+		discard_exception.try_catch_offset = try_catch_offset;
 		zend_stack_push(&CG(loop_var_stack), &discard_exception);
 
 		CG(zend_lineno) = finally_ast->lineno;
