@@ -1,4 +1,8 @@
 name: apt
+inputs:
+  withSudo:
+    default: true
+    required: false
 runs:
   using: composite
   steps:
@@ -6,10 +10,16 @@ runs:
       run: |
         set -x
 
-        sudo apt-get update
-        sudo apt-get install \
+        export DEBIAN_FRONTEND=noninteractive
+        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} apt-get update -y | true
+        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} apt-get install -y \
+          autoconf \
+          gcc \
+          make \
           bison \
           re2c \
+          git \
+          curl \
           locales \
           ldap-utils \
           openssl \
@@ -20,6 +30,7 @@ runs:
           libtidy-dev \
           libenchant-2-dev \
           libaspell-dev \
+          libbz2-dev \
           libpspell-dev \
           libsasl2-dev \
           libxpm-dev \
@@ -59,16 +70,5 @@ runs:
           libqdbm-dev \
           libjpeg-dev \
           libpng-dev \
-          libfreetype6-dev
-
-        mkdir /opt/oracle
-        wget -nv https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip
-        unzip instantclient-basiclite-linuxx64.zip && rm instantclient-basiclite-linuxx64.zip
-        wget -nv https://download.oracle.com/otn_software/linux/instantclient/instantclient-sdk-linuxx64.zip
-        unzip instantclient-sdk-linuxx64.zip && rm instantclient-sdk-linuxx64.zip
-        mv instantclient_*_* /opt/oracle/instantclient
-        # interferes with libldap2 headers
-        rm /opt/oracle/instantclient/sdk/include/ldap.h
-        # fix debug build warning: zend_signal: handler was replaced for signal (2) after startup
-        echo DISABLE_INTERRUPT=on > /opt/oracle/instantclient/network/admin/sqlnet.ora
-        sudo sh -c 'echo /opt/oracle/instantclient >/etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig'
+          libfreetype6-dev \
+          unzip
