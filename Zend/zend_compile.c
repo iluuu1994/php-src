@@ -316,6 +316,7 @@ void zend_oparray_context_begin(zend_oparray_context *prev_context) /* {{{ */
 	CG(context).last_brk_cont = 0;
 	CG(context).brk_cont_array = NULL;
 	CG(context).labels = NULL;
+	CG(context).has_unfinished_calls = false;
 }
 /* }}} */
 
@@ -3991,6 +3992,9 @@ static bool zend_compile_call_common(znode *result, zend_ast *args_ast, zend_fun
 		return true;
 	}
 
+	bool prev_unfinished_calls = CG(context).has_unfinished_calls;
+	CG(context).has_unfinished_calls = true;
+
 	bool may_have_extra_named_args;
 	uint32_t arg_count = zend_compile_args(args_ast, fbc, &may_have_extra_named_args);
 
@@ -4009,6 +4013,7 @@ static bool zend_compile_call_common(znode *result, zend_ast *args_ast, zend_fun
 	}
 	opline->lineno = lineno;
 	zend_do_extended_fcall_end();
+	CG(context).has_unfinished_calls = prev_unfinished_calls;
 	return false;
 }
 /* }}} */
@@ -5175,6 +5180,11 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, uint32_t excluded_
 	if (!loop_var) {
 		return 1;
 	}
+
+	if (CG(context).has_unfinished_calls) {
+		zend_emit_op(NULL, ZEND_CLEAN_UNFINISHED_CALLS, NULL, NULL);
+	}
+
 	if (depth == -1) {
 		depth = zend_stack_count(&CG(loop_var_stack)) + 1;
 	}

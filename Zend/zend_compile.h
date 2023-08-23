@@ -189,6 +189,8 @@ typedef struct _zend_oparray_context {
 	int        last_brk_cont;
 	zend_brk_cont_element *brk_cont_array;
 	HashTable *labels;
+	/* Whether we're currently evaluating function arguments. */
+	bool       has_unfinished_calls;
 } zend_oparray_context;
 
 /* Class, property and method flags                  class|meth.|prop.|const*/

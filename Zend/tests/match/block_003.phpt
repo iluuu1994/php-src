@@ -1,6 +1,5 @@
 --TEST--
 Match blocks
---XFAIL--
 --FILE--
 <?php
 
