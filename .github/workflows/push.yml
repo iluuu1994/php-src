@@ -78,12 +78,8 @@ jobs:
         uses: ./.github/actions/setup-oracle
       - name: apt
         uses: ./.github/actions/apt-x64
-        with:
-          withSudo: ${{ !matrix.asan }}
       - name: Setup Caddy server
         uses: ./.github/actions/setup-caddy
-        with:
-          withSudo: ${{ !matrix.asan }}
       - name: glibc version
         run: ldd --version
       - name: ccache
@@ -106,8 +102,6 @@ jobs:
         run: make -j$(/usr/bin/nproc) >/dev/null
       - name: make install
         uses: ./.github/actions/install-linux
-        with:
-          withSudo: ${{ !matrix.asan }}
       - name: Setup
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/setup-x64

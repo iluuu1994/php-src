@@ -1,8 +1,4 @@
 name: apt
-inputs:
-  withSudo:
-    default: true
-    required: false
 runs:
   using: composite
   steps:
@@ -11,8 +7,15 @@ runs:
         set -x
 
         export DEBIAN_FRONTEND=noninteractive
-        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} apt-get update -y | true
-        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} apt-get install -y \
+
+        # Install sudo for consistent actions
+        if ! type "sudo" > /dev/null; then
+          apt-get update -y | true
+          apt-get install -y sudo
+        fi
+
+        sudo apt-get update -y | true
+        sudo apt-get install -y \
           autoconf \
           gcc \
           make \

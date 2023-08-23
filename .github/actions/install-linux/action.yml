@@ -1,16 +1,12 @@
 name: Install
-inputs:
-  withSudo:
-    default: true
-    required: false
 runs:
   using: composite
   steps:
     - shell: bash
       run: |
         set -x
-        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} make install
-        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} mkdir     /etc/php.d
-        ${{ inputs.withSudo == 'true' && 'sudo' || '' }} chmod 777 /etc/php.d
+        sudo make install
+        sudo mkdir     /etc/php.d
+        sudo chmod 777 /etc/php.d
         echo mysqli.default_socket=/var/run/mysqld/mysqld.sock    > /etc/php.d/mysqli.ini
         echo pdo_mysql.default_socket=/var/run/mysqld/mysqld.sock > /etc/php.d/pdo_mysql.ini
