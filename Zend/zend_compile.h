@@ -191,6 +191,7 @@ typedef struct _zend_oparray_context {
 	HashTable *labels;
 	/* Whether we're currently evaluating function arguments. */
 	bool       has_unfinished_calls;
+	bool       in_block_expr;
 } zend_oparray_context;
 
 /* Class, property and method flags                  class|meth.|prop.|const*/
