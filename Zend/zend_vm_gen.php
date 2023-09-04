@@ -413,7 +413,7 @@ $op1_get_obj_zval_ptr_ptr_undef = array(
     "CONST"    => "zend_get_bad_ptr()",
     "UNUSED"   => "&EX(This)",
     "CV"       => "EX_VAR(opline->op1.var)",
-    "TMPVAR"   => "???",
+    "TMPVAR"   => "_get_zval_ptr_ptr_var(opline->op1.var EXECUTE_DATA_CC)",
     "TMPVARCV" => "???",
 );
 

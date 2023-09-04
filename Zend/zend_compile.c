@@ -3089,10 +3089,7 @@ static zend_op *zend_delayed_compile_prop(znode *result, zend_ast *ast, uint32_t
 		 * properties. ASSIGN_OBJ and FETCH_OBJ_[R]W are missing handlers for CONST|TMP op1, we work
 		 * around this by converting the TMP to a VAR, and by assigning the CONST to a temporary VAR. */
 		if ((type == BP_VAR_W || type == BP_VAR_RW)) {
-			if (obj_node.op_type == IS_TMP_VAR) {
-				ZEND_ASSERT(obj_ast->kind == ZEND_AST_CONST);
-				obj_node.op_type = IS_VAR;
-			} else if (obj_node.op_type == IS_CONST) {
+			if (obj_node.op_type == IS_CONST) {
 				ZEND_ASSERT(obj_ast->kind == ZEND_AST_CONST);
 				zend_emit_op(&obj_node, ZEND_QM_ASSIGN, &obj_node, NULL);
 			}
