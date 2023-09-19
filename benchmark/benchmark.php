@@ -21,12 +21,12 @@ function main() {
     if (false !== $branch = getenv('GITHUB_REF_NAME')) {
         $data['branch'] = $branch;
     }
-    $data['Zend/bench.php'] = runBench(false);
-    $data['Zend/bench.php JIT'] = runBench(true);
+    // $data['Zend/bench.php'] = runBench(false);
+    // $data['Zend/bench.php JIT'] = runBench(true);
     $data['Symfony Demo 2.2.3'] = runSymfonyDemo(false);
-    $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
+    // $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
     $data['Wordpress 6.2'] = runWordpress(false);
-    $data['Wordpress 6.2 JIT'] = runWordpress(true);
+    // $data['Wordpress 6.2 JIT'] = runWordpress(true);
     $result = json_encode($data, JSON_PRETTY_PRINT) . "\n";
 
     fwrite(STDOUT, $result);
@@ -106,6 +106,16 @@ function runValgrindPhpCgiCommand(
     $profileOut = __DIR__ . "/profiles/callgrind.out.$name";
     if ($jit) {
         $profileOut .= '.jit';
+    }
+    $i = 1;
+    while (true) {
+        $tmp = $profileOut . '.' . $i;
+        if (file_exists($tmp)) {
+            $i++;
+        } else {
+            $profileOut = $tmp;
+            break;
+        }
     }
 
     $process = runCommand([

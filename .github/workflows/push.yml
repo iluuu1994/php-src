@@ -43,6 +43,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     services:
       mysql:
         image: mysql:8
@@ -135,6 +136,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-12
     steps:
       - name: git checkout
@@ -168,6 +170,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
@@ -223,6 +226,7 @@ jobs:
           set -x
           ./buildconf --force
           ./configure \
+            CFLAGS="-fno-builtin-memcpy -fno-builtin-memmove -fno-builtin-memset" \
             --disable-debug \
             --enable-mbstring \
             --enable-opcache \
@@ -263,6 +267,44 @@ jobs:
           ssh-key: ${{ secrets.BENCHMARKING_DATA_DEPLOY_KEY }}
           path: benchmark/repos/data
       - name: Benchmark
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 2
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 3
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 4
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 5
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 6
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 7
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 8
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 9
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 10
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 11
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 12
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 13
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 14
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 15
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 16
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 17
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 18
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 19
+        run: php benchmark/benchmark.php true
+      - name: Benchmark 20
         run: php benchmark/benchmark.php true
       - name: Store result
         if: github.event_name == 'push'

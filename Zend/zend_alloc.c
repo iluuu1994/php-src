@@ -3168,3 +3168,55 @@ size_t zend_mm_globals_size(void)
 	return sizeof(zend_alloc_globals);
 }
 #endif
+
+#ifdef HAVE_VALGRIND
+# if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC push_options
+#  pragma GCC optimize ("-fno-tree-loop-distribute-patterns")
+#  pragma GCC diagnostic ignored "-Wattributes"
+# endif
+
+/* Use custom memory copying implementations to avoid SSE when profiling. Depending on the memory
+ * alignment SSE can or cannot be effectively used, which leads to random noise in the profiling
+ * output. */
+
+void *memcpy(void *restrict dest, const void *restrict src, size_t n)
+{
+	const char *csrc = src;
+	char *cdest = dest;
+	for (int i = 0; i < n; i++) {
+		cdest[i] = csrc[i];
+	}
+	return dest;
+}
+void *memmove(void *dest, const void *src, size_t n)
+{
+	char *csrc = (char *)src;
+	char *cdest = (char *)dest;
+
+	if (cdest < csrc) {
+		while (n-- != 0) {
+			*cdest++ = *csrc++;
+		}
+	} else {
+		while (n-- != 0) {
+			cdest[n] = csrc[n];
+		}
+	}
+
+	return dest;
+}
+void *memset(void *s, int c, size_t n)
+{
+	unsigned char *cs = (unsigned char *)s;
+
+	for (int i = 0; i < n; i++) {
+		cs[i] = (unsigned char)c;
+	}
+
+	return s;
+}
+# if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC pop_options
+# endif
+#endif
