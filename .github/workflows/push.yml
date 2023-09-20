@@ -226,7 +226,6 @@ jobs:
           set -x
           ./buildconf --force
           ./configure \
-            CFLAGS="-fno-builtin-memcpy -fno-builtin-memmove -fno-builtin-memset -fno-builtin-memcmp" \
             --disable-debug \
             --enable-mbstring \
             --enable-opcache \

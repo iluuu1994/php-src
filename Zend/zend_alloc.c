@@ -80,10 +80,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef HAVE_VALGRIND
-# include "valgrind/callgrind.h"
-#endif
-
 #ifndef _WIN32
 # include <sys/mman.h>
 # ifndef MAP_ANON
@@ -3186,18 +3182,15 @@ size_t zend_mm_globals_size(void)
 
 void *memcpy(void *restrict dest, const void *restrict src, size_t n)
 {
-	CALLGRIND_TOGGLE_COLLECT;
 	const char *csrc = src;
 	char *cdest = dest;
 	for (int i = 0; i < n; i++) {
 		cdest[i] = csrc[i];
 	}
-	CALLGRIND_TOGGLE_COLLECT;
 	return dest;
 }
 void *memmove(void *dest, const void *src, size_t n)
 {
-	CALLGRIND_TOGGLE_COLLECT;
 	char *csrc = (char *)src;
 	char *cdest = (char *)dest;
 
@@ -3210,18 +3203,15 @@ void *memmove(void *dest, const void *src, size_t n)
 			cdest[n] = csrc[n];
 		}
 	}
-	CALLGRIND_TOGGLE_COLLECT;
 	return dest;
 }
 void *memset(void *s, int c, size_t n)
 {
-	CALLGRIND_TOGGLE_COLLECT;
 	unsigned char *cs = (unsigned char *)s;
 
 	for (int i = 0; i < n; i++) {
 		cs[i] = (unsigned char)c;
 	}
-	CALLGRIND_TOGGLE_COLLECT;
 	return s;
 }
 int memcmp(const void *s1, const void *s2, size_t n)
@@ -3230,18 +3220,15 @@ int memcmp(const void *s1, const void *s2, size_t n)
 		return 0;
 	}
 
-	CALLGRIND_TOGGLE_COLLECT;
 	unsigned char *p = (unsigned char *)s1;
 	unsigned char *q = (unsigned char *)s2;
 	while (n-- != 0) {
 		if (*p != *q) {
-			CALLGRIND_TOGGLE_COLLECT;
 			return (*p > *q) ? 1 : -1;
 		}
 		p++;
 		q++;
 	}
-	CALLGRIND_TOGGLE_COLLECT;
 	return 0;
 }
 # if defined(__GNUC__) && !defined(__clang__)
