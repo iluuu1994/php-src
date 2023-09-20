@@ -3216,6 +3216,23 @@ void *memset(void *s, int c, size_t n)
 
 	return s;
 }
+int memcmp(const void *s1, const void *s2, size_t n)
+{
+	if (s1 == s2) {
+		return 0;
+	}
+
+	unsigned char *p = (unsigned char *)s1;
+	unsigned char *q = (unsigned char *)s2;
+	while (n-- != 0) {
+		if (*p != *q) {
+			return (*p > *q) ? 1 : -1;
+		}
+		p++;
+		q++;
+	}
+	return 0;
+}
 # if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC pop_options
 # endif
