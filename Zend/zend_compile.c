@@ -6216,7 +6216,7 @@ static void zend_compile_is(znode *result, zend_ast *ast)
 	ZVAL_COPY(&pattern_node.u.constant, &pattern_zv);
 
 	zend_emit_op_tmp(result, ZEND_IS, &expr_node, &pattern_node);
-	if (expr_node.op_type != IS_CV) {
+	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
 		// FIXME: Verify live ranges recognizes that OP1 needs to be freed if an exception occurs
 		zend_emit_op(NULL, ZEND_FREE, &expr_node, NULL);
 	}
