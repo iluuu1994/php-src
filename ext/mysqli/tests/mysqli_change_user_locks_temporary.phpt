@@ -1,4 +1,4 @@
---TEST--
+
 mysqli_change_user() - table locks, GET_LOCK(), temporary tables
 --EXTENSIONS--
 mysqli

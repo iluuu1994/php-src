@@ -1,4 +1,4 @@
---TEST--
+
 Test krsort() function : basic functionality
 --FILE--
 <?php
