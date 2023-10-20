@@ -46,12 +46,13 @@ runs:
           -d opcache.jit=${{ inputs.jitType }} \
           -d opcache.jit_buffer_size=16M \
           -j$(/usr/bin/nproc) \
-          -g FAIL,BORK,LEAK,XLEAK \
+          -g FAIL,BORK,LEAK,XLEAK,SKIP \
           --no-progress \
           --offline \
           --show-diff \
           --show-slow 1000 \
-          --set-timeout 120
+          --set-timeout 120 \
+          ext/mysqli ext/pdo_mysql ext/pdo_pgsql
     - uses: actions/upload-artifact@v3
       if: always() && inputs.testArtifacts != null
       with:

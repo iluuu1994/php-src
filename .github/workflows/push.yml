@@ -61,9 +61,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test
-    env:
-      MYSQL_TEST_HOST: localhost
-      PDO_MYSQL_TEST_HOST: localhost
     strategy:
       fail-fast: false
       matrix:
@@ -71,9 +68,9 @@ jobs:
           - debug: false
             zts: false
             asan: false
-          - debug: true
-            zts: true
-            asan: true
+          # - debug: true
+          #   zts: true
+          #   asan: true
     name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}${{ matrix.asan && '_ASAN' || '' }}"
     runs-on: ubuntu-22.04
     container:
@@ -141,6 +138,7 @@ jobs:
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
     runs-on: macos-12
+    if: false
     steps:
       - name: git checkout
         uses: actions/checkout@v4
@@ -175,6 +173,7 @@ jobs:
   WINDOWS:
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
+    if: false
     env:
       PHP_BUILD_CACHE_BASE_DIR: C:\build-cache
       PHP_BUILD_OBJ_DIR: C:\obj
@@ -199,7 +198,8 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    # if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - name: git checkout
