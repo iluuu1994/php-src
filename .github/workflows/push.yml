@@ -192,7 +192,7 @@ jobs:
         run: |
           git clone https://github.com/laravel/framework.git --branch=master
           cd framework
-          git checkout a3b26b5088a372154490fdd6b9fe75306ca3c0c1
+          #git checkout a3b26b5088a372154490fdd6b9fe75306ca3c0c1
           git rev-parse HEAD
           php /usr/bin/composer install --no-progress --ignore-platform-reqs
           # Hack to disable a test that hangs
