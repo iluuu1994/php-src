@@ -190,14 +190,15 @@ jobs:
           #echo opcache.jit_buffer_size=1G >> /etc/php.d/opcache.ini
       - name: Test Laravel
         run: |
-          git clone https://github.com/laravel/framework.git --branch=master --depth=1
+          git clone https://github.com/laravel/framework.git --branch=master
           cd framework
+          git checkout a3b26b5088a372154490fdd6b9fe75306ca3c0c1
           git rev-parse HEAD
           php /usr/bin/composer install --no-progress --ignore-platform-reqs
           # Hack to disable a test that hangs
           php -r '$c = file_get_contents("tests/Filesystem/FilesystemTest.php"); $c = str_replace("*/\n    public function testSharedGet()", "* @group skip\n     */\n    public function testSharedGet()", $c); file_put_contents("tests/Filesystem/FilesystemTest.php", $c);'
           export ASAN_OPTIONS=exitcode=139
-          php vendor/bin/phpunit --testdox --exclude-group skip || EXIT_CODE=$?
+          php vendor/bin/phpunit --teamcity --exclude-group skip || EXIT_CODE=$?
           if [ $EXIT_CODE -gt 128 ]; then
             exit 1
           fi
