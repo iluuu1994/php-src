@@ -36,6 +36,8 @@
 #include "zend_observer.h"
 #include "zend_call_stack.h"
 
+
+
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
 		if ((src)->op_type == IS_CONST) { \
