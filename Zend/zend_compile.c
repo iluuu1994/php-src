@@ -77,6 +77,11 @@ static inline uint32_t zend_alloc_cache_slots(unsigned count) {
 	return ret;
 }
 
+
+
+
+
+
 static inline uint32_t zend_alloc_cache_slot(void) {
 	return zend_alloc_cache_slots(1);
 }
