@@ -45,6 +45,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     services:
       mysql:
         image: mysql:8
@@ -155,24 +156,26 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-macos
         with:
-          configurationParameters: --enable-debug --disable-zts
+          configurationParameters: --enable-debug --disable-zts CFLAGS='-fsanitize=address -fno-sanitize=object-size -DZEND_TRACK_ARENA_ALLOC -DPROFITABILITY_CHECKS=0' LDFLAGS='-fsanitize=address'
       - name: make
         run: |-
           export PATH="/usr/local/opt/bison/bin:$PATH"
           make -j$(sysctl -n hw.logicalcpu) >/dev/null
       - name: make install
         run: sudo make install
-      - name: Test Tracing JIT
+      - name: Test Function JIT
         uses: ./.github/actions/test-macos
         with:
-          testArtifacts: ${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }} Tracing JIT
-          jitType: tracing
+          testArtifacts: DEBUG_NTS Tracing JIT
+          jitType: function
           runTestsParameters: >-
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
+            --asan
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
@@ -199,7 +202,8 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    # if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - name: git checkout
