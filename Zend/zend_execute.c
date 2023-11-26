@@ -44,6 +44,7 @@
 #include "zend_system_id.h"
 #include "zend_call_stack.h"
 #include "Optimizer/zend_func_info.h"
+#include "zend_global_regs.h"
 
 /* Virtual current working directory support */
 #include "zend_virtual_cwd.h"
@@ -51,22 +52,16 @@
 #ifdef HAVE_GCC_GLOBAL_REGS
 # if defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(i386)
 #  define ZEND_VM_FP_GLOBAL_REG "%esi"
-#  define ZEND_VM_IP_GLOBAL_REG "%edi"
 # elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__x86_64__)
 #  define ZEND_VM_FP_GLOBAL_REG "%r14"
-#  define ZEND_VM_IP_GLOBAL_REG "%r15"
 # elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__powerpc64__)
 #  define ZEND_VM_FP_GLOBAL_REG "r14"
-#  define ZEND_VM_IP_GLOBAL_REG "r15"
 # elif defined(__IBMC__) && ZEND_GCC_VERSION >= 4002 && defined(__powerpc64__)
 #  define ZEND_VM_FP_GLOBAL_REG "r14"
-#  define ZEND_VM_IP_GLOBAL_REG "r15"
 # elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__aarch64__)
 #  define ZEND_VM_FP_GLOBAL_REG "x27"
-#  define ZEND_VM_IP_GLOBAL_REG "x28"
 #elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__riscv) && __riscv_xlen == 64
 #  define ZEND_VM_FP_GLOBAL_REG "x18"
-#  define ZEND_VM_IP_GLOBAL_REG "x19"
 # endif
 #endif
 
@@ -102,11 +97,10 @@
 # define OPLINE_CC          , OPLINE_C
 #endif
 
-#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+#if defined(ZEND_VM_IP_GLOBAL_REG) && !defined(ZEND_UNIVERSAL_GLOBAL_REGS)
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
-  register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
+register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
-#else
 #endif
 
 #define _CONST_CODE  0

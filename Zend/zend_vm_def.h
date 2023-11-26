@@ -4015,6 +4015,7 @@ ZEND_VM_HOT_HANDLER(129, ZEND_DO_ICALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 	}
 
 	if (UNEXPECTED(EG(exception) != NULL)) {
+		/* FIXME: Restore opline? */
 		zend_rethrow_exception(execute_data);
 		HANDLE_EXCEPTION();
 	}
@@ -4172,7 +4173,7 @@ ZEND_VM_HOT_HANDLER(60, ZEND_DO_FCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 			ZEND_OBSERVER_FCALL_BEGIN(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 			ZEND_OBSERVER_FCALL_BEGIN(execute_data);
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -8782,7 +8783,8 @@ ZEND_VM_HANDLER(158, ZEND_CALL_TRAMPOLINE, ANY, ANY, SPEC(OBSERVER))
 	uint32_t num_args = EX_NUM_ARGS();
 	zend_execute_data *call;
 
-	SAVE_OPLINE();
+	/* May we delay this? Probably doesn't matter too much. */
+	SAVE_OPLINE_EX2();
 
 	if (num_args) {
 		zval *p = ZEND_CALL_ARG(execute_data, 1);
@@ -8837,7 +8839,7 @@ ZEND_VM_HANDLER(158, ZEND_CALL_TRAMPOLINE, ANY, ANY, SPEC(OBSERVER))
 			ZEND_OBSERVER_FCALL_BEGIN(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 			ZEND_OBSERVER_FCALL_BEGIN(execute_data);
 			execute_data = EX(prev_execute_data);
 			if (execute_data) {

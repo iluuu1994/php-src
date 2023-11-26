@@ -30,6 +30,7 @@
 #include "zend_closures.h"
 #include "zend_compile.h"
 #include "zend_hash.h"
+#include "zend_global_regs.h"
 
 #define DEBUG_OBJECT_HANDLERS 0
 

@@ -29,6 +29,7 @@
 #include "zend_smart_str.h"
 #include "zend_exceptions_arginfo.h"
 #include "zend_observer.h"
+#include "zend_global_regs.h"
 
 ZEND_API zend_class_entry *zend_ce_throwable;
 ZEND_API zend_class_entry *zend_ce_exception;
@@ -159,6 +160,24 @@ void zend_exception_restore(void) /* {{{ */
 }
 /* }}} */
 
+static void zend_copy_exception_consts(bool op_data)
+{
+	uint32_t opnum = op_data ? 1 : 0;
+	const zend_op *orig_op = &EG(opline_before_exception)[opnum];
+	zend_op *exception_op = &EG(exception_op)[opnum];
+
+	if (orig_op->op1_type == IS_CONST) {
+		zval *op1 = &EG(exception_consts)[opnum * 2];
+		ZVAL_COPY_VALUE(op1, RT_CONSTANT(orig_op, orig_op->op1));
+		exception_op->op1.constant = (char *)op1 - (char *)&EG(opline_before_exception)[0];
+	}
+	if (orig_op->op2_type == IS_CONST) {
+		zval *op2 = &EG(exception_consts)[opnum * 2 + 1];
+		ZVAL_COPY_VALUE(op2, RT_CONSTANT(orig_op, orig_op->op2));
+		exception_op->op2.constant = (char *)op2 - (char *)&EG(opline_before_exception)[0];
+	}
+}
+
 static zend_always_inline bool is_handle_exception_set(void) {
 	zend_execute_data *execute_data = EG(current_execute_data);
 	return !execute_data
@@ -225,6 +244,24 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 	}
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 	EG(current_execute_data)->opline = EG(exception_op);
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	bool has_opdata = (opline + 1)->opcode == ZEND_OP_DATA;
+	opline = EG(exception_op);
+
+	/* The handler may still access opline. Make sure operands keep working. */
+	const void *handler = EG(exception_op)[0].handler;
+	memcpy(&EG(exception_op)[0], EG(opline_before_exception), sizeof(EG(exception_op)[0]));
+	EG(exception_op)[0].opcode = ZEND_HANDLE_EXCEPTION;
+	EG(exception_op)[0].handler = handler;
+	zend_copy_exception_consts(/* op_data */ false);
+	if (has_opdata) {
+		memcpy(&EG(exception_op)[1], EG(opline_before_exception) + 1, sizeof(EG(exception_op)[1]));
+		EG(exception_op)[1].opcode = ZEND_OP_DATA;
+		zend_copy_exception_consts(/* op_data */ true);
+	} else {
+		memcpy(&EG(exception_op)[1], &EG(exception_op)[2], sizeof(EG(exception_op)[1]));
+	}
+#endif
 }
 /* }}} */
 

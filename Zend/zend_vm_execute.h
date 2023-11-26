@@ -393,7 +393,16 @@ static const void *zend_vm_get_opcode_handler_func(uint8_t opcode, const zend_op
 typedef ZEND_OPCODE_HANDLER_RET (ZEND_FASTCALL *opcode_handler_t) (ZEND_OPCODE_HANDLER_ARGS);
 
 #define DCL_OPLINE
-#ifdef ZEND_VM_IP_GLOBAL_REG
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+# define OPLINE opline
+# define USE_OPLINE
+# define LOAD_OPLINE() opline = EX(opline)
+# define LOAD_OPLINE_EX()
+# define LOAD_NEXT_OPLINE() opline = EX(opline) + 1
+# define SAVE_OPLINE() EX(opline) = opline
+# define SAVE_OPLINE_EX() SAVE_OPLINE()
+# define SAVE_OPLINE_EX2() SAVE_OPLINE()
+#elif defined(ZEND_VM_IP_GLOBAL_REG)
 # define OPLINE opline
 # define USE_OPLINE
 # define LOAD_OPLINE() opline = EX(opline)
@@ -1305,6 +1314,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	}
 
 	if (UNEXPECTED(EG(exception) != NULL)) {
+		/* FIXME: Restore opline? */
 		zend_rethrow_exception(execute_data);
 		HANDLE_EXCEPTION();
 	}
@@ -1367,6 +1377,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	}
 
 	if (UNEXPECTED(EG(exception) != NULL)) {
+		/* FIXME: Restore opline? */
 		zend_rethrow_exception(execute_data);
 		HANDLE_EXCEPTION();
 	}
@@ -1431,6 +1442,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_OBS
 	}
 
 	if (UNEXPECTED(EG(exception) != NULL)) {
+		/* FIXME: Restore opline? */
 		zend_rethrow_exception(execute_data);
 		HANDLE_EXCEPTION();
 	}
@@ -1826,7 +1838,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -1935,7 +1947,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -2044,7 +2056,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 			zend_observer_fcall_begin(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 			zend_observer_fcall_begin(execute_data);
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -3400,7 +3412,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 	uint32_t num_args = EX_NUM_ARGS();
 	zend_execute_data *call;
 
-	SAVE_OPLINE();
+	/* May we delay this? Probably doesn't matter too much. */
+	SAVE_OPLINE_EX2();
 
 	if (num_args) {
 		zval *p = ZEND_CALL_ARG(execute_data, 1);
@@ -3455,7 +3468,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 
 			execute_data = EX(prev_execute_data);
 			if (execute_data) {
@@ -3540,7 +3553,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 	uint32_t num_args = EX_NUM_ARGS();
 	zend_execute_data *call;
 
-	SAVE_OPLINE();
+	/* May we delay this? Probably doesn't matter too much. */
+	SAVE_OPLINE_EX2();
 
 	if (num_args) {
 		zval *p = ZEND_CALL_ARG(execute_data, 1);
@@ -3595,7 +3609,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 			zend_observer_fcall_begin(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX();
+			SAVE_OPLINE_EX2();
 			zend_observer_fcall_begin(execute_data);
 			execute_data = EX(prev_execute_data);
 			if (execute_data) {
@@ -65809,13 +65823,21 @@ ZEND_API int ZEND_FASTCALL zend_vm_call_opcode_handler(zend_execute_data* ex)
 	if (EXPECTED(opline)) {
 #endif
 		ret = execute_data != ex ? (int)(execute_data->prev_execute_data != ex) + 1 : 0;
+#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)
+		EX(opline) = opline;
+#else
 		SAVE_OPLINE();
+#endif
 	} else {
 		ret = -1;
 	}
 #else
 	ret = ((opcode_handler_t)OPLINE->handler)(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)
+	EX(opline) = opline;
+#else
 	SAVE_OPLINE();
+#endif
 #endif
 #ifdef ZEND_VM_FP_GLOBAL_REG
 	execute_data = orig_execute_data;

@@ -86,6 +86,9 @@ static zend_always_inline void zend_rethrow_exception(zend_execute_data *execute
 		EG(opline_before_exception) = EX(opline);
 		EX(opline) = EG(exception_op);
 	}
+	if (EG(exception_op)[1].opcode != ZEND_HANDLE_EXCEPTION) {
+		memcpy(&EG(exception_op)[1], &EG(exception_op)[2], sizeof(EG(exception_op)[1]));
+	}
 }
 
 END_EXTERN_C()

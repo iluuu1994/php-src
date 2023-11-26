@@ -25,6 +25,7 @@
 #include "zend_closures.h"
 #include "zend_generators_arginfo.h"
 #include "zend_observer.h"
+#include "zend_global_regs.h"
 
 ZEND_API zend_class_entry *zend_ce_generator;
 ZEND_API zend_class_entry *zend_ce_ClosedGeneratorException;
@@ -458,6 +459,10 @@ static void zend_generator_throw_exception(zend_generator *generator, zval *exce
 	 * to pretend the exception happened during the YIELD opcode. */
 	EG(current_execute_data) = generator->execute_data;
 	generator->execute_data->opline--;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	original_execute_data->opline = opline;
+	opline = EG(current_execute_data)->opline;
+#endif
 
 	if (exception) {
 		zend_throw_exception_object(exception);
@@ -473,6 +478,9 @@ static void zend_generator_throw_exception(zend_generator *generator, zval *exce
 
 	generator->execute_data->opline++;
 	EG(current_execute_data) = original_execute_data;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	opline = original_execute_data->opline;
+#endif
 }
 
 static void zend_generator_add_child(zend_generator *generator, zend_generator *child)

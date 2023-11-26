@@ -22,6 +22,7 @@
 #include "zend_extensions.h"
 #include "zend_llist.h"
 #include "zend_vm.h"
+#include "zend_global_regs.h"
 
 #define ZEND_OBSERVER_DATA(function) \
 	ZEND_OP_ARRAY_EXTENSION((&(function)->common), zend_observer_fcall_op_array_extension)
