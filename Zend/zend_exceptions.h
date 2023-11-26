@@ -80,16 +80,7 @@ ZEND_API bool zend_is_graceful_exit(const zend_object *ex);
 
 #include "zend_globals.h"
 
-static zend_always_inline void zend_rethrow_exception(zend_execute_data *execute_data)
-{
-	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
-		EG(opline_before_exception) = EX(opline);
-		EX(opline) = EG(exception_op);
-	}
-	if (EG(exception_op)[1].opcode != ZEND_HANDLE_EXCEPTION) {
-		memcpy(&EG(exception_op)[1], &EG(exception_op)[2], sizeof(EG(exception_op)[1]));
-	}
-}
+ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data);
 
 END_EXTERN_C()
 

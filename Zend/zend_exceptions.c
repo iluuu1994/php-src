@@ -186,6 +186,40 @@ static zend_always_inline bool is_handle_exception_set(void) {
 		|| execute_data->opline->opcode == ZEND_HANDLE_EXCEPTION;
 }
 
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+static void zend_copy_exception_ops(void)
+{
+	const zend_op *orig_op = EG(opline_before_exception);
+	zend_op *exception_op = &EG(exception_op)[0];
+	bool has_opdata = orig_op[1].opcode == ZEND_OP_DATA;
+
+	/* The handler may still access opline. Make sure operands keep working. */
+	const void *handler = exception_op->handler;
+	memcpy(exception_op, orig_op, sizeof(*exception_op));
+	exception_op->opcode = ZEND_HANDLE_EXCEPTION;
+	exception_op->handler = handler;
+	zend_copy_exception_consts(/* op_data */ false);
+	if (has_opdata) {
+		memcpy(&exception_op[1], &orig_op[1], sizeof(exception_op[1]));
+		exception_op[1].opcode = ZEND_OP_DATA;
+		zend_copy_exception_consts(/* op_data */ true);
+	} else {
+		memcpy(&exception_op[1], &exception_op[2], sizeof(exception_op[1]));
+	}
+}
+#endif
+
+ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
+{
+	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
+		EG(opline_before_exception) = EX(opline);
+		EX(opline) = EG(exception_op);
+	}
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	zend_copy_exception_ops();
+#endif
+}
+
 ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /* {{{ */
 {
 #ifdef HAVE_DTRACE
@@ -245,22 +279,8 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 	EG(current_execute_data)->opline = EG(exception_op);
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
-	bool has_opdata = (opline + 1)->opcode == ZEND_OP_DATA;
 	opline = EG(exception_op);
-
-	/* The handler may still access opline. Make sure operands keep working. */
-	const void *handler = EG(exception_op)[0].handler;
-	memcpy(&EG(exception_op)[0], EG(opline_before_exception), sizeof(EG(exception_op)[0]));
-	EG(exception_op)[0].opcode = ZEND_HANDLE_EXCEPTION;
-	EG(exception_op)[0].handler = handler;
-	zend_copy_exception_consts(/* op_data */ false);
-	if (has_opdata) {
-		memcpy(&EG(exception_op)[1], EG(opline_before_exception) + 1, sizeof(EG(exception_op)[1]));
-		EG(exception_op)[1].opcode = ZEND_OP_DATA;
-		zend_copy_exception_consts(/* op_data */ true);
-	} else {
-		memcpy(&EG(exception_op)[1], &EG(exception_op)[2], sizeof(EG(exception_op)[1]));
-	}
+	zend_copy_exception_ops();
 #endif
 }
 /* }}} */
