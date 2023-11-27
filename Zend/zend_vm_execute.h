@@ -401,7 +401,6 @@ typedef ZEND_OPCODE_HANDLER_RET (ZEND_FASTCALL *opcode_handler_t) (ZEND_OPCODE_H
 # define LOAD_NEXT_OPLINE() opline = EX(opline) + 1
 # define SAVE_OPLINE() EX(opline) = opline
 # define SAVE_OPLINE_EX() SAVE_OPLINE()
-# define SAVE_OPLINE_EX2() SAVE_OPLINE()
 #elif defined(ZEND_VM_IP_GLOBAL_REG)
 # define OPLINE opline
 # define USE_OPLINE
@@ -1838,7 +1837,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX2();
+			SAVE_OPLINE_EX();
 
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -1947,7 +1946,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX2();
+			SAVE_OPLINE_EX();
 
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -2056,7 +2055,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 			zend_observer_fcall_begin(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX2();
+			SAVE_OPLINE_EX();
 			zend_observer_fcall_begin(execute_data);
 			execute_data = EX(prev_execute_data);
 			LOAD_OPLINE();
@@ -3412,8 +3411,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 	uint32_t num_args = EX_NUM_ARGS();
 	zend_execute_data *call;
 
-	/* May we delay this? Probably doesn't matter too much. */
-	SAVE_OPLINE_EX2();
+	SAVE_OPLINE_EX();
 
 	if (num_args) {
 		zval *p = ZEND_CALL_ARG(execute_data, 1);
@@ -3468,7 +3466,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX2();
+			SAVE_OPLINE_EX();
 
 			execute_data = EX(prev_execute_data);
 			if (execute_data) {
@@ -3553,8 +3551,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 	uint32_t num_args = EX_NUM_ARGS();
 	zend_execute_data *call;
 
-	/* May we delay this? Probably doesn't matter too much. */
-	SAVE_OPLINE_EX2();
+	SAVE_OPLINE_EX();
 
 	if (num_args) {
 		zval *p = ZEND_CALL_ARG(execute_data, 1);
@@ -3609,7 +3606,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 			zend_observer_fcall_begin(execute_data);
 			ZEND_VM_ENTER_EX();
 		} else {
-			SAVE_OPLINE_EX2();
+			SAVE_OPLINE_EX();
 			zend_observer_fcall_begin(execute_data);
 			execute_data = EX(prev_execute_data);
 			if (execute_data) {

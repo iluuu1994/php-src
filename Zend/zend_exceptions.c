@@ -276,7 +276,11 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 		/* no need to rethrow the exception */
 		return;
 	}
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EG(opline_before_exception) = opline;
+#else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
+#endif
 	EG(current_execute_data)->opline = EG(exception_op);
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
 	opline = EG(exception_op);
@@ -1074,7 +1078,11 @@ ZEND_API ZEND_COLD void zend_throw_unwind_exit(void)
 {
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_unwind_exit();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EG(opline_before_exception) = opline;
+#else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
+#endif
 	EG(current_execute_data)->opline = EG(exception_op);
 }
 
@@ -1082,7 +1090,11 @@ ZEND_API ZEND_COLD void zend_throw_graceful_exit(void)
 {
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_graceful_exit();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EG(opline_before_exception) = opline;
+#else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
+#endif
 	EG(current_execute_data)->opline = EG(exception_op);
 }
 

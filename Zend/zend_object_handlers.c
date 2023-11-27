@@ -868,10 +868,10 @@ found:;
 					if (execute_data
 					 && EX(func)
 					 && ZEND_USER_CODE(EX(func)->common.type)
-					 && EX(opline)
-					 && EX(opline)->opcode == ZEND_ASSIGN_OBJ
-					 && EX(opline)->result_type) {
-						ZVAL_COPY_DEREF(EX_VAR(EX(opline)->result.var), variable_ptr);
+					 && ZEND_CURRENT_OPLINE
+					 && ZEND_CURRENT_OPLINE->opcode == ZEND_ASSIGN_OBJ
+					 && ZEND_CURRENT_OPLINE->result_type) {
+						ZVAL_COPY_DEREF(EX_VAR(ZEND_CURRENT_OPLINE->result.var), variable_ptr);
 						variable_ptr = NULL;
 					}
 					rc_dtor_func(garbage);

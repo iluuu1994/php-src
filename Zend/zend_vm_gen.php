@@ -1905,10 +1905,10 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"# define USE_OPLINE\n");
                             out($f,"# define LOAD_OPLINE() opline = EX(opline)\n");
                             out($f,"# define LOAD_OPLINE_EX()\n");
+                            /* Called on restored frames with a valid EX(opline). */
                             out($f,"# define LOAD_NEXT_OPLINE() opline = EX(opline) + 1\n");
                             out($f,"# define SAVE_OPLINE() EX(opline) = opline\n");
                             out($f,"# define SAVE_OPLINE_EX() SAVE_OPLINE()\n");
-                            out($f,"# define SAVE_OPLINE_EX2() SAVE_OPLINE()\n");
                             out($f,"#elif defined(ZEND_VM_IP_GLOBAL_REG)\n");
                             out($f,"# define OPLINE opline\n");
                             out($f,"# define USE_OPLINE\n");
@@ -1966,7 +1966,7 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"# define LOAD_OPLINE_EX() LOAD_OPLINE()\n");
                             out($f,"#define LOAD_NEXT_OPLINE() opline = EX(opline) + 1\n");
                             out($f,"#define SAVE_OPLINE() EX(opline) = opline\n");
-                            out($f,"#define SAVE_OPLINE_EX()\n");
+                            out($f,"#define SAVE_OPLINE_EX() SAVE_OPLINE()\n");
                             out($f,"#define HANDLE_EXCEPTION() ZEND_ASSERT(EG(exception)); LOAD_OPLINE(); ZEND_VM_CONTINUE()\n");
                             out($f,"#define HANDLE_EXCEPTION_LEAVE() ZEND_ASSERT(EG(exception)); LOAD_OPLINE(); ZEND_VM_LEAVE()\n");
                             out($f,"#define ZEND_VM_CONTINUE() goto zend_vm_continue\n");
@@ -1992,7 +1992,7 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"#define LOAD_OPLINE_EX() LOAD_OPLINE()\n");
                             out($f,"#define LOAD_NEXT_OPLINE() opline = EX(opline) + 1\n");
                             out($f,"#define SAVE_OPLINE() EX(opline) = opline\n");
-                            out($f,"#define SAVE_OPLINE_EX()\n");
+                            out($f,"#define SAVE_OPLINE_EX() SAVE_OPLINE()\n");
                             if (ZEND_VM_SPEC) {
                                 out($f,"#define HANDLE_EXCEPTION() ZEND_ASSERT(EG(exception)); goto ZEND_HANDLE_EXCEPTION_SPEC_LABEL\n");
                                 out($f,"#define HANDLE_EXCEPTION_LEAVE() ZEND_ASSERT(EG(exception)); goto ZEND_HANDLE_EXCEPTION_SPEC_LABEL\n");

@@ -273,12 +273,12 @@ static zend_never_inline ZEND_COLD zval* zval_undefined_cv(uint32_t var EXECUTE_
 
 static zend_never_inline ZEND_COLD zval* ZEND_FASTCALL _zval_undefined_op1(EXECUTE_DATA_D)
 {
-	return zval_undefined_cv(EX(opline)->op1.var EXECUTE_DATA_CC);
+	return zval_undefined_cv(ZEND_CURRENT_OPLINE->op1.var EXECUTE_DATA_CC);
 }
 
 static zend_never_inline ZEND_COLD zval* ZEND_FASTCALL _zval_undefined_op2(EXECUTE_DATA_D)
 {
-	return zval_undefined_cv(EX(opline)->op2.var EXECUTE_DATA_CC);
+	return zval_undefined_cv(ZEND_CURRENT_OPLINE->op2.var EXECUTE_DATA_CC);
 }
 
 #define ZVAL_UNDEFINED_OP1() _zval_undefined_op1(EXECUTE_DATA_C)
@@ -1674,8 +1674,10 @@ try_again:
 ZEND_API ZEND_COLD void zend_wrong_string_offset_error(void)
 {
 	const char *msg = NULL;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
 	const zend_execute_data *execute_data = EG(current_execute_data);
 	const zend_op *opline = execute_data->opline;
+#endif
 
 	if (UNEXPECTED(EG(exception) != NULL)) {
 		return;
@@ -5128,11 +5130,15 @@ zval * ZEND_FASTCALL zend_handle_named_arg(
 	return arg;
 }
 
-static zend_execute_data *start_fake_frame(zend_execute_data *call, const zend_op *opline) {
+static zend_execute_data *start_fake_frame(zend_execute_data *call, const zend_op *op) {
 	zend_execute_data *old_prev_execute_data = call->prev_execute_data;
 	call->prev_execute_data = EG(current_execute_data);
-	call->opline = opline;
+	call->opline = op;
 	EG(current_execute_data) = call;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	old_prev_execute_data->opline = opline;
+	opline = op;
+#endif
 	return old_prev_execute_data;
 }
 
@@ -5140,6 +5146,9 @@ static void end_fake_frame(zend_execute_data *call, zend_execute_data *old_prev_
 	zend_execute_data *prev_execute_data = call->prev_execute_data;
 	EG(current_execute_data) = prev_execute_data;
 	call->prev_execute_data = old_prev_execute_data;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	opline = old_prev_execute_data->opline;
+#endif
 	if (UNEXPECTED(EG(exception)) && ZEND_USER_CODE(prev_execute_data->func->common.type)) {
 		zend_rethrow_exception(prev_execute_data);
 	}
@@ -5300,7 +5309,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 #define ZEND_VM_NEXT_OPCODE_EX(check_exception, skip) \
 	CHECK_SYMBOL_TABLES() \
 	if (check_exception) { \
-		OPLINE = EX(opline) + (skip); \
+		OPLINE = ZEND_CURRENT_OPLINE + (skip); \
 	} else { \
 		ZEND_ASSERT(!EG(exception)); \
 		OPLINE = opline + (skip); \
@@ -5348,7 +5357,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	ZEND_VM_CONTINUE()
 #define ZEND_VM_SMART_BRANCH(_result, _check) do { \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
-			OPLINE = EX(opline); \
+			OPLINE = ZEND_CURRENT_OPLINE; \
 		} else if (EXPECTED(opline->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR))) { \
 			if (_result) { \
 				ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
@@ -5369,7 +5378,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_JMPZ(_result, _check) do { \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
-			OPLINE = EX(opline); \
+			OPLINE = ZEND_CURRENT_OPLINE; \
 		} else if (_result) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 		} else { \
@@ -5379,7 +5388,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_JMPNZ(_result, _check) do { \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
-			OPLINE = EX(opline); \
+			OPLINE = ZEND_CURRENT_OPLINE; \
 		} else if (!(_result)) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 		} else { \

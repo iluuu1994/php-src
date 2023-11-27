@@ -44,6 +44,9 @@
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
 register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
+# define ZEND_CURRENT_OPLINE opline
+#else
+# define ZEND_CURRENT_OPLINE EX(opline)
 #endif
 
 #endif /* ZEND_GLOBAL_REGS_H */

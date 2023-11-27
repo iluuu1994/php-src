@@ -38,6 +38,7 @@
 #include "zend_inheritance.h"
 #include "zend_observer.h"
 #include "zend_call_stack.h"
+#include "zend_global_regs.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -644,15 +645,21 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 		ex = ex->prev_execute_data;
 	}
 	if (ex) {
-		if (!ex->opline) {
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+		const zend_op *op = ex == EG(current_execute_data) ? opline : ex->opline;
+#else
+		const zend_op *op = ex->opline;
+#endif
+
+		if (!op) {
 			/* Missing SAVE_OPLINE()? Falling back to first line of function */
 			return ex->func->op_array.opcodes[0].lineno;
 		}
-		if (EG(exception) && ex->opline->opcode == ZEND_HANDLE_EXCEPTION &&
-		    ex->opline->lineno == 0 && EG(opline_before_exception)) {
+		if (EG(exception) && op->opcode == ZEND_HANDLE_EXCEPTION &&
+		    op->lineno == 0 && EG(opline_before_exception)) {
 			return EG(opline_before_exception)->lineno;
 		}
-		return ex->opline->lineno;
+		return op->lineno;
 	} else {
 		return 0;
 	}
