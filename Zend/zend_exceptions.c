@@ -169,12 +169,12 @@ static void zend_copy_exception_consts(bool op_data)
 	if (orig_op->op1_type == IS_CONST) {
 		zval *op1 = &EG(exception_consts)[opnum * 2];
 		ZVAL_COPY_VALUE(op1, RT_CONSTANT(orig_op, orig_op->op1));
-		exception_op->op1.constant = (char *)op1 - (char *)&EG(opline_before_exception)[0];
+		exception_op->op1.constant = (char *)op1 - (char *)&EG(exception_op)[0];
 	}
 	if (orig_op->op2_type == IS_CONST) {
 		zval *op2 = &EG(exception_consts)[opnum * 2 + 1];
 		ZVAL_COPY_VALUE(op2, RT_CONSTANT(orig_op, orig_op->op2));
-		exception_op->op2.constant = (char *)op2 - (char *)&EG(opline_before_exception)[0];
+		exception_op->op2.constant = (char *)op2 - (char *)&EG(exception_op)[0];
 	}
 }
 
