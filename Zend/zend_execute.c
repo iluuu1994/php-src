@@ -5136,7 +5136,9 @@ static zend_execute_data *start_fake_frame(zend_execute_data *call, const zend_o
 	call->opline = op;
 	EG(current_execute_data) = call;
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
-	old_prev_execute_data->opline = opline;
+	if (call->prev_execute_data) {
+		call->prev_execute_data->opline = opline;
+	}
 	opline = op;
 #endif
 	return old_prev_execute_data;
@@ -5147,7 +5149,9 @@ static void end_fake_frame(zend_execute_data *call, zend_execute_data *old_prev_
 	EG(current_execute_data) = prev_execute_data;
 	call->prev_execute_data = old_prev_execute_data;
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
-	opline = old_prev_execute_data->opline;
+	if (prev_execute_data) {
+		opline = prev_execute_data->opline;
+	}
 #endif
 	if (UNEXPECTED(EG(exception)) && ZEND_USER_CODE(prev_execute_data->func->common.type)) {
 		zend_rethrow_exception(prev_execute_data);

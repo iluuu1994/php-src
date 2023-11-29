@@ -160,24 +160,6 @@ void zend_exception_restore(void) /* {{{ */
 }
 /* }}} */
 
-static void zend_copy_exception_consts(bool op_data)
-{
-	uint32_t opnum = op_data ? 1 : 0;
-	const zend_op *orig_op = &EG(opline_before_exception)[opnum];
-	zend_op *exception_op = &EG(exception_op)[opnum];
-
-	if (orig_op->op1_type == IS_CONST) {
-		zval *op1 = &EG(exception_consts)[opnum * 2];
-		ZVAL_COPY_VALUE(op1, RT_CONSTANT(orig_op, orig_op->op1));
-		exception_op->op1.constant = (char *)op1 - (char *)&EG(exception_op)[0];
-	}
-	if (orig_op->op2_type == IS_CONST) {
-		zval *op2 = &EG(exception_consts)[opnum * 2 + 1];
-		ZVAL_COPY_VALUE(op2, RT_CONSTANT(orig_op, orig_op->op2));
-		exception_op->op2.constant = (char *)op2 - (char *)&EG(exception_op)[0];
-	}
-}
-
 static zend_always_inline bool is_handle_exception_set(void) {
 	zend_execute_data *execute_data = EG(current_execute_data);
 	return !execute_data
@@ -187,6 +169,23 @@ static zend_always_inline bool is_handle_exception_set(void) {
 }
 
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+static void zend_copy_exception_consts(uint32_t opnum)
+{
+	const zend_op *orig_op = &EG(opline_before_exception)[opnum];
+	zend_op *exception_op = &EG(exception_op)[opnum];
+
+	if (orig_op->op1_type == IS_CONST) {
+		zval *op1 = &EG(exception_consts)[opnum * 2];
+		ZVAL_COPY_VALUE(op1, RT_CONSTANT(orig_op, orig_op->op1));
+		exception_op->op1.constant = (char *)op1 - (char *)exception_op;
+	}
+	if (orig_op->op2_type == IS_CONST) {
+		zval *op2 = &EG(exception_consts)[opnum * 2 + 1];
+		ZVAL_COPY_VALUE(op2, RT_CONSTANT(orig_op, orig_op->op2));
+		exception_op->op2.constant = (char *)op2 - (char *)exception_op;
+	}
+}
+
 static void zend_copy_exception_ops(void)
 {
 	const zend_op *orig_op = EG(opline_before_exception);
@@ -195,16 +194,16 @@ static void zend_copy_exception_ops(void)
 
 	/* The handler may still access opline. Make sure operands keep working. */
 	const void *handler = exception_op->handler;
-	memcpy(exception_op, orig_op, sizeof(*exception_op));
+	*exception_op = *orig_op;
 	exception_op->opcode = ZEND_HANDLE_EXCEPTION;
 	exception_op->handler = handler;
-	zend_copy_exception_consts(/* op_data */ false);
+	zend_copy_exception_consts(/* opnum */ 0);
 	if (has_opdata) {
-		memcpy(&exception_op[1], &orig_op[1], sizeof(exception_op[1]));
+		exception_op[1] = orig_op[1];
 		exception_op[1].opcode = ZEND_OP_DATA;
-		zend_copy_exception_consts(/* op_data */ true);
+		zend_copy_exception_consts(/* opnum */ 1);
 	} else {
-		memcpy(&exception_op[1], &exception_op[2], sizeof(exception_op[1]));
+		exception_op[1] = exception_op[2];
 	}
 }
 #endif
@@ -214,6 +213,7 @@ ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
 		EG(opline_before_exception) = EX(opline);
 		EX(opline) = EG(exception_op);
+		opline = EG(exception_op);
 	}
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
 	zend_copy_exception_ops();
