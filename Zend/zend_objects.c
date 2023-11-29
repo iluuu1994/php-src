@@ -174,6 +174,11 @@ ZEND_API void zend_objects_destroy_object(zend_object *object)
 
 		if (old_exception) {
 			EG(opline_before_exception) = old_opline_before_exception;
+			if (EG(current_execute_data)
+			 && EG(current_execute_data)->func
+			 && ZEND_USER_CODE(EG(current_execute_data)->func->common.type)) {
+				zend_rethrow_exception(EG(current_execute_data));
+			}
 			if (EG(exception)) {
 				zend_exception_set_previous(EG(exception), old_exception);
 			} else {
