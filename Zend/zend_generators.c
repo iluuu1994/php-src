@@ -457,12 +457,10 @@ static void zend_generator_throw_exception(zend_generator *generator, zval *exce
 
 	/* Throw the exception in the context of the generator. Decrementing the opline
 	 * to pretend the exception happened during the YIELD opcode. */
+	SAVE_CURRENT_OPLINE();
 	EG(current_execute_data) = generator->execute_data;
 	generator->execute_data->opline--;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
-	original_execute_data->opline = opline;
-	opline = EG(current_execute_data)->opline;
-#endif
+	LOAD_CURRENT_OPLINE();
 
 	if (exception) {
 		zend_throw_exception_object(exception);
@@ -478,9 +476,7 @@ static void zend_generator_throw_exception(zend_generator *generator, zval *exce
 
 	generator->execute_data->opline++;
 	EG(current_execute_data) = original_execute_data;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
-	opline = original_execute_data->opline;
-#endif
+	LOAD_CURRENT_OPLINE();
 }
 
 static void zend_generator_add_child(zend_generator *generator, zend_generator *child)
@@ -573,6 +569,10 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 				/* Throw the exception in the context of the generator */
 				zend_execute_data *original_execute_data = EG(current_execute_data);
 				EG(current_execute_data) = new_root->execute_data;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+				original_execute_data->opline = opline;
+				opline = EG(current_execute_data)->opline;
+#endif
 
 				if (new_root == generator) {
 					new_root->execute_data->prev_execute_data = original_execute_data;
@@ -586,6 +586,9 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 				zend_throw_exception(zend_ce_ClosedGeneratorException, "Generator yielded from aborted, no return value available", 0);
 
 				EG(current_execute_data) = original_execute_data;
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+				opline = EG(current_execute_data)->opline;
+#endif
 
 				if (!((old_root ? old_root : generator)->flags & ZEND_GENERATOR_CURRENTLY_RUNNING)) {
 					new_root->node.parent = NULL;
@@ -733,7 +736,9 @@ try_again:
 	uint32_t original_jit_trace_num = EG(jit_trace_num);
 
 	/* Set executor globals */
+	SAVE_CURRENT_OPLINE();
 	EG(current_execute_data) = generator->execute_data;
+	LOAD_CURRENT_OPLINE();
 	EG(jit_trace_num) = 0;
 
 	/* We want the backtrace to look as if the generator function was
@@ -753,6 +758,7 @@ try_again:
 		if (EXPECTED(zend_generator_get_next_delegated_value(generator) == SUCCESS)) {
 			/* Restore executor globals */
 			EG(current_execute_data) = original_execute_data;
+			LOAD_CURRENT_OPLINE();
 			EG(jit_trace_num) = original_jit_trace_num;
 
 			orig_generator->flags &= ~ZEND_GENERATOR_DO_INIT;
@@ -791,6 +797,7 @@ try_again:
 
 	/* Restore executor globals */
 	EG(current_execute_data) = original_execute_data;
+	LOAD_CURRENT_OPLINE();
 	EG(jit_trace_num) = original_jit_trace_num;
 
 	/* If an exception was thrown in the generator we have to internally

@@ -178,6 +178,12 @@ ZEND_API const zend_internal_function zend_pass_function = {
 	(((size) + ZEND_VM_STACK_HEADER_SLOTS * sizeof(zval) \
 	  + ((page_size) - 1)) & ~((page_size) - 1))
 
+void init_executor_ex(void)
+{
+	opline = NULL;
+	execute_data = NULL;
+}
+
 ZEND_API void zend_vm_stack_init(void)
 {
 	EG(vm_stack_page_size) = ZEND_VM_STACK_PAGE_SIZE;
@@ -1674,7 +1680,7 @@ try_again:
 ZEND_API ZEND_COLD void zend_wrong_string_offset_error(void)
 {
 	const char *msg = NULL;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifndef ZEND_UNIVERSAL_GLOBAL_REGS
 	const zend_execute_data *execute_data = EG(current_execute_data);
 	const zend_op *opline = execute_data->opline;
 #endif

@@ -133,6 +133,8 @@ void init_executor(void) /* {{{ */
 {
 	zend_init_fpu();
 
+	init_executor_ex();
+
 	ZVAL_NULL(&EG(uninitialized_zval));
 	ZVAL_ERROR(&EG(error_zval));
 /* destroys stack frame, therefore makes core dumps worthless */
@@ -817,6 +819,7 @@ zend_result zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_
 
 	call = zend_vm_stack_push_call_frame(call_info,
 		func, fci->param_count, object_or_called_scope);
+	SAVE_CURRENT_OPLINE();
 
 	if (UNEXPECTED(func->common.fn_flags & ZEND_ACC_DEPRECATED)) {
 		zend_deprecated_function(func);

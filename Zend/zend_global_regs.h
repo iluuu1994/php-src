@@ -45,8 +45,22 @@
 register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
 # define ZEND_CURRENT_OPLINE opline
+# define SAVE_CURRENT_OPLINE() \
+	do { \
+		if (EG(current_execute_data)) { \
+			EG(current_execute_data)->opline = opline; \
+		} \
+	} while (0)
+# define LOAD_CURRENT_OPLINE() \
+	do { \
+		if (EG(current_execute_data)) { \
+			opline = EG(current_execute_data)->opline; \
+		} \
+	} while (0)
 #else
 # define ZEND_CURRENT_OPLINE EX(opline)
+# define SAVE_CURRENT_OPLINE()
+# define LOAD_CURRENT_OPLINE()
 #endif
 
 #endif /* ZEND_GLOBAL_REGS_H */

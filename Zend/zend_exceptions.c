@@ -165,7 +165,11 @@ static zend_always_inline bool is_handle_exception_set(void) {
 	return !execute_data
 		|| !execute_data->func
 		|| !ZEND_USER_CODE(execute_data->func->common.type)
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+		|| opline->opcode == ZEND_HANDLE_EXCEPTION;
+#else
 		|| execute_data->opline->opcode == ZEND_HANDLE_EXCEPTION;
+#endif
 }
 
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
@@ -210,12 +214,18 @@ static void zend_copy_exception_ops(void)
 
 ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 {
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	if (opline->opcode != ZEND_HANDLE_EXCEPTION) {
+		EG(opline_before_exception) = opline;
+	}
+#else
 	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
 		EG(opline_before_exception) = EX(opline);
-		EX(opline) = EG(exception_op);
-		opline = EG(exception_op);
 	}
+#endif
+	EX(opline) = EG(exception_op);
 #ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	opline = EG(exception_op);
 	zend_copy_exception_ops();
 #endif
 }
@@ -305,6 +315,9 @@ ZEND_API void zend_clear_exception(void) /* {{{ */
 	OBJ_RELEASE(exception);
 	if (EG(current_execute_data)) {
 		EG(current_execute_data)->opline = EG(opline_before_exception);
+		if (ZEND_USER_CODE(EG(current_execute_data)->func->type)) {
+			LOAD_CURRENT_OPLINE();
+		}
 	}
 #if ZEND_DEBUG
 	EG(opline_before_exception) = NULL;

@@ -399,8 +399,8 @@ typedef ZEND_OPCODE_HANDLER_RET (ZEND_FASTCALL *opcode_handler_t) (ZEND_OPCODE_H
 # define LOAD_OPLINE() opline = EX(opline)
 # define LOAD_OPLINE_EX()
 # define LOAD_NEXT_OPLINE() opline = EX(opline) + 1
-# define SAVE_OPLINE() EX(opline) = opline
-# define SAVE_OPLINE_EX() SAVE_OPLINE()
+# define SAVE_OPLINE()
+# define SAVE_OPLINE_EX() EX(opline) = opline
 #elif defined(ZEND_VM_IP_GLOBAL_REG)
 # define OPLINE opline
 # define USE_OPLINE
@@ -1117,10 +1117,13 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_leave_helper
 {
 	zend_execute_data *old_execute_data;
 	uint32_t call_info = EX_CALL_INFO();
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 
 	if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP|ZEND_CALL_HAS_SYMBOL_TABLE|ZEND_CALL_FREE_EXTRA_ARGS|ZEND_CALL_ALLOCATED|ZEND_CALL_HAS_EXTRA_NAMED_PARAMS)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -1143,6 +1146,9 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_leave_helper
 		ZEND_VM_LEAVE();
 	} else if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -1187,6 +1193,9 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_leave_helper
 		efree_size(EX(func), sizeof(zend_op_array));
 		old_execute_data = execute_data;
 		execute_data = EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		zend_vm_stack_free_call_frame_ex(call_info, old_execute_data);
 
 		if (call_info & ZEND_CALL_NEEDS_REATTACH) {
@@ -1206,6 +1215,9 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_leave_helper
 	} else {
 		if (EXPECTED((call_info & ZEND_CALL_CODE) == 0)) {
 			EG(current_execute_data) = EX(prev_execute_data);
+			if (EG(current_execute_data)) {
+				opline = EG(current_execute_data)->opline;
+			}
 			i_free_compiled_variables(execute_data);
 #ifdef ZEND_PREFER_RELOAD
 			call_info = EX_CALL_INFO();
@@ -1247,6 +1259,9 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_leave_helper
 				}
 			}
 			EG(current_execute_data) = EX(prev_execute_data);
+			if (EG(current_execute_data)) {
+				opline = EG(current_execute_data)->opline;
+			}
 			ZEND_VM_RETURN();
 		}
 	}
@@ -1267,7 +1282,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1330,7 +1345,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1393,7 +1408,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_OBS
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1457,7 +1472,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1481,7 +1496,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1505,7 +1520,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_OBS
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1530,7 +1545,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_S
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1625,7 +1640,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_S
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1720,7 +1735,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1818,7 +1833,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1927,7 +1942,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -2036,7 +2051,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -4985,7 +5000,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CONST_HAN
 	zend_op_array *new_op_array;
 	zval *inc_filename;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	inc_filename = RT_CONSTANT(opline, opline->op1);
 	new_op_array = zend_include_or_eval(inc_filename, opline->extended_value);
 	if (UNEXPECTED(EG(exception) != NULL)) {
@@ -5068,7 +5083,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_OBSERVER_
 	zend_op_array *new_op_array;
 	zval *inc_filename;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	inc_filename = get_zval_ptr(opline->op1_type, opline->op1, BP_VAR_R);
 	new_op_array = zend_include_or_eval(inc_filename, opline->extended_value);
 	if (UNEXPECTED(EG(exception) != NULL)) {
@@ -5606,6 +5621,9 @@ yield_from_try_again:
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -7766,6 +7784,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_CONST_HANDLER
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -10048,6 +10069,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_TMPVAR_HANDLE
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -10897,6 +10921,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_UNUSED_HANDLE
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -12432,6 +12459,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_CV_HANDLER(ZE
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -14801,7 +14831,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_TMPVAR_HA
 	zend_op_array *new_op_array;
 	zval *inc_filename;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	inc_filename = _get_zval_ptr_var(opline->op1.var EXECUTE_DATA_CC);
 	new_op_array = zend_include_or_eval(inc_filename, opline->extended_value);
 	if (UNEXPECTED(EG(exception) != NULL)) {
@@ -14980,6 +15010,9 @@ yield_from_try_again:
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -20299,6 +20332,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_CONST_HANDLER(Z
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -20744,6 +20780,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_TMPVAR_HANDLER(
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -21204,6 +21243,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_UNUSED_HANDLER(
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -21608,6 +21650,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_CV_HANDLER(ZEND
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -25572,6 +25617,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_CONST_HANDLER(Z
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -28025,6 +28073,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_TMPVAR_HANDLER(
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -29980,6 +30031,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_UNUSED_HANDLER(
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -32410,6 +32464,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_CV_HANDLER(ZEND
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -34602,6 +34659,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_CONST_HANDLE
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -36486,6 +36546,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_TMPVAR_HANDL
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -37027,6 +37090,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_UNUSED_HANDL
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -38979,6 +39045,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_CV_HANDLER(Z
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -39836,7 +39905,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CV_HANDLE
 	zend_op_array *new_op_array;
 	zval *inc_filename;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	inc_filename = _get_zval_ptr_cv_BP_VAR_R(opline->op1.var EXECUTE_DATA_CC);
 	new_op_array = zend_include_or_eval(inc_filename, opline->extended_value);
 	if (UNEXPECTED(EG(exception) != NULL)) {
@@ -40338,6 +40407,9 @@ yield_from_try_again:
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -44322,6 +44394,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_CONST_HANDLER(ZE
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -47921,6 +47996,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_TMPVAR_HANDLER(Z
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -49779,6 +49857,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_UNUSED_HANDLER(Z
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -53404,6 +53485,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_CV_HANDLER(ZEND_
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
+#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+	EX(opline) = opline;
+#endif
 
 	ZEND_VM_RETURN();
 }
@@ -57083,10 +57167,13 @@ zend_leave_helper_SPEC_LABEL:
 {
 	zend_execute_data *old_execute_data;
 	uint32_t call_info = EX_CALL_INFO();
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 
 	if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP|ZEND_CALL_HAS_SYMBOL_TABLE|ZEND_CALL_FREE_EXTRA_ARGS|ZEND_CALL_ALLOCATED|ZEND_CALL_HAS_EXTRA_NAMED_PARAMS)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -57109,6 +57196,9 @@ zend_leave_helper_SPEC_LABEL:
 		ZEND_VM_LEAVE();
 	} else if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -57153,6 +57243,9 @@ zend_leave_helper_SPEC_LABEL:
 		efree_size(EX(func), sizeof(zend_op_array));
 		old_execute_data = execute_data;
 		execute_data = EG(current_execute_data) = EX(prev_execute_data);
+		if (EG(current_execute_data)) {
+			opline = EG(current_execute_data)->opline;
+		}
 		zend_vm_stack_free_call_frame_ex(call_info, old_execute_data);
 
 		if (call_info & ZEND_CALL_NEEDS_REATTACH) {
@@ -57172,6 +57265,9 @@ zend_leave_helper_SPEC_LABEL:
 	} else {
 		if (EXPECTED((call_info & ZEND_CALL_CODE) == 0)) {
 			EG(current_execute_data) = EX(prev_execute_data);
+			if (EG(current_execute_data)) {
+				opline = EG(current_execute_data)->opline;
+			}
 			i_free_compiled_variables(execute_data);
 #ifdef ZEND_PREFER_RELOAD
 			call_info = EX_CALL_INFO();
@@ -57213,6 +57309,9 @@ zend_leave_helper_SPEC_LABEL:
 				}
 			}
 			EG(current_execute_data) = EX(prev_execute_data);
+			if (EG(current_execute_data)) {
+				opline = EG(current_execute_data)->opline;
+			}
 			ZEND_VM_RETURN();
 		}
 	}
@@ -65364,6 +65463,7 @@ void zend_vm_init(void)
 #if (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID)
 	zend_opcode_handler_funcs = labels;
 	zend_spec_handlers = specs;
+	execute_data = NULL;
 	execute_ex(NULL);
 #else
 	zend_opcode_handlers = labels;

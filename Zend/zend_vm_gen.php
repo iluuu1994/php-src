@@ -1907,8 +1907,8 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"# define LOAD_OPLINE_EX()\n");
                             /* Called on restored frames with a valid EX(opline). */
                             out($f,"# define LOAD_NEXT_OPLINE() opline = EX(opline) + 1\n");
-                            out($f,"# define SAVE_OPLINE() EX(opline) = opline\n");
-                            out($f,"# define SAVE_OPLINE_EX() SAVE_OPLINE()\n");
+                            out($f,"# define SAVE_OPLINE()\n");
+                            out($f,"# define SAVE_OPLINE_EX() EX(opline) = opline\n");
                             out($f,"#elif defined(ZEND_VM_IP_GLOBAL_REG)\n");
                             out($f,"# define OPLINE opline\n");
                             out($f,"# define USE_OPLINE\n");
@@ -2066,6 +2066,11 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                         out($f,"#endif\n");
                         out($f,$m[1]."} vm_stack_data;\n");
                         out($f,"#endif\n");
+                        // out($f,"#ifdef ZEND_UNIVERSAL_GLOBAL_REGS\n");
+                        // out($f,$m[1]."if (EG(current_execute_data) && EG(current_execute_data) != ex && opline) {\n");
+                        // out($f,$m[1]."\tEG(current_execute_data)->opline = opline;\n");
+                        // out($f,$m[1]."}\n");
+                        // out($f,"#endif\n");
                         out($f,"#ifdef ZEND_VM_IP_GLOBAL_REG\n");
                         out($f,$m[1]."vm_stack_data.orig_opline = opline;\n");
                         out($f,"#endif\n");
@@ -2217,6 +2222,7 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"#if (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID)\n");
                             out($f,$prolog."zend_opcode_handler_funcs = labels;\n");
                             out($f,$prolog."zend_spec_handlers = specs;\n");
+                            out($f,$prolog."execute_data = NULL;\n");
                             out($f,$prolog.$executor_name."_ex(NULL);\n");
                             out($f,"#else\n");
                         }

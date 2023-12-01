@@ -45,6 +45,7 @@
 #include "zend_smart_str.h"
 #include "zend_enum.h"
 #include "zend_fibers.h"
+#include "zend_global_regs.h"
 
 #define REFLECTION_ATTRIBUTE_IS_INSTANCEOF (1 << 1)
 
@@ -2250,6 +2251,8 @@ ZEND_METHOD(ReflectionGenerator, getTrace)
 		RETURN_THROWS();
 	}
 
+	SAVE_CURRENT_OPLINE();
+
 	REFLECTION_CHECK_VALID_GENERATOR(ex)
 
 	root_generator = zend_generator_get_current(generator);
@@ -2264,8 +2267,10 @@ ZEND_METHOD(ReflectionGenerator, getTrace)
 	}
 
 	EG(current_execute_data) = root_generator->execute_data;
+	LOAD_CURRENT_OPLINE();
 	zend_fetch_debug_backtrace(return_value, 0, options, 0);
 	EG(current_execute_data) = ex_backup;
+	LOAD_CURRENT_OPLINE();
 
 	root_generator->execute_data->prev_execute_data = root_prev;
 	generator->execute_data->prev_execute_data = cur_prev;
@@ -6673,7 +6678,7 @@ static int call_attribute_constructor(
 		/* Set up dummy call frame that makes it look like the attribute was invoked
 		 * from where it occurs in the code. */
 		zend_function dummy_func;
-		zend_op *opline;
+		zend_op *op;
 
 		memset(&dummy_func, 0, sizeof(zend_function));
 
@@ -6683,15 +6688,16 @@ static int call_attribute_constructor(
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_function), sizeof(zval)),
 			0, &dummy_func, 0, NULL);
 
-		opline = (zend_op*)(call + 1);
-		memset(opline, 0, sizeof(zend_op));
-		opline->opcode = ZEND_DO_FCALL;
-		opline->lineno = attr->lineno;
+		op = (zend_op*)(call + 1);
+		memset(op, 0, sizeof(zend_op));
+		op->opcode = ZEND_DO_FCALL;
+		op->lineno = attr->lineno;
 
-		call->opline = opline;
+		call->opline = op;
 		call->call = NULL;
 		call->return_value = NULL;
 		call->func = (zend_function*)(call->opline + 1);
+		SAVE_CURRENT_OPLINE();
 		call->prev_execute_data = EG(current_execute_data);
 
 		memset(call->func, 0, sizeof(zend_function));
@@ -6702,12 +6708,14 @@ static int call_attribute_constructor(
 		call->func->op_array.filename = filename;
 
 		EG(current_execute_data) = call;
+		LOAD_CURRENT_OPLINE();
 	}
 
 	zend_call_known_function(ctor, obj, obj->ce, NULL, argc, args, named_params);
 
 	if (filename) {
 		EG(current_execute_data) = call->prev_execute_data;
+		LOAD_CURRENT_OPLINE();
 		zend_vm_stack_free_call_frame(call);
 	}
 
@@ -7093,6 +7101,7 @@ ZEND_METHOD(ReflectionFiber, getTrace)
 	fiber->stack_bottom->prev_execute_data = NULL;
 
 	if (EG(active_fiber) != fiber) {
+		SAVE_CURRENT_OPLINE();
 		// No need to replace current execute data if within the current fiber.
 		EG(current_execute_data) = fiber->execute_data;
 	}
@@ -7100,6 +7109,7 @@ ZEND_METHOD(ReflectionFiber, getTrace)
 	zend_fetch_debug_backtrace(return_value, 0, options, 0);
 
 	EG(current_execute_data) = execute_data; // Restore original execute data.
+	LOAD_CURRENT_OPLINE();
 	fiber->stack_bottom->prev_execute_data = prev_execute_data; // Restore prev execute data on fiber stack.
 }
 
