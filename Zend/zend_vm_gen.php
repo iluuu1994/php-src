@@ -2066,11 +2066,6 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                         out($f,"#endif\n");
                         out($f,$m[1]."} vm_stack_data;\n");
                         out($f,"#endif\n");
-                        // out($f,"#ifdef ZEND_UNIVERSAL_IP\n");
-                        // out($f,$m[1]."if (EG(current_execute_data) && EG(current_execute_data) != ex && opline) {\n");
-                        // out($f,$m[1]."\tEG(current_execute_data)->opline = opline;\n");
-                        // out($f,$m[1]."}\n");
-                        // out($f,"#endif\n");
                         out($f,"#ifdef ZEND_VM_IP_GLOBAL_REG\n");
                         out($f,$m[1]."vm_stack_data.orig_opline = opline;\n");
                         out($f,"#endif\n");
@@ -2222,7 +2217,6 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"#if (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID)\n");
                             out($f,$prolog."zend_opcode_handler_funcs = labels;\n");
                             out($f,$prolog."zend_spec_handlers = specs;\n");
-                            out($f,$prolog."execute_data = NULL;\n");
                             out($f,$prolog.$executor_name."_ex(NULL);\n");
                             out($f,"#else\n");
                         }
@@ -2990,21 +2984,13 @@ function gen_vm($def, $skel) {
             out($f, "\tif (EXPECTED(opline)) {\n");
         }
         out($f, "\t\tret = execute_data != ex ? (int)(execute_data->prev_execute_data != ex) + 1 : 0;\n");
-        out($f,"#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)\n");
-        out($f, "\t\tEX(opline) = opline;\n");
-        out($f,"#else\n");
-        out($f, "\t\tSAVE_OPLINE();\n");
-        out($f,"#endif\n");
+        out($f, "\t\tSAVE_OPLINE_EX();\n");
         out($f, "\t} else {\n");
         out($f, "\t\tret = -1;\n");
         out($f, "\t}\n");
         out($f, "#else\n");
         out($f, "\tret = ((opcode_handler_t)OPLINE->handler)(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);\n");
-        out($f,"#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)\n");
-        out($f, "\tEX(opline) = opline;\n");
-        out($f,"#else\n");
-        out($f, "\tSAVE_OPLINE();\n");
-        out($f,"#endif\n");
+        out($f, "\tSAVE_OPLINE_EX();\n");
         out($f, "#endif\n");
         out($f, "#ifdef ZEND_VM_FP_GLOBAL_REG\n");
         out($f, "\texecute_data = orig_execute_data;\n");

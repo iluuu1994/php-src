@@ -65443,7 +65443,6 @@ void zend_vm_init(void)
 #if (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID)
 	zend_opcode_handler_funcs = labels;
 	zend_spec_handlers = specs;
-	execute_data = NULL;
 	execute_ex(NULL);
 #else
 	zend_opcode_handlers = labels;
@@ -65900,21 +65899,13 @@ ZEND_API int ZEND_FASTCALL zend_vm_call_opcode_handler(zend_execute_data* ex)
 	if (EXPECTED(opline)) {
 #endif
 		ret = execute_data != ex ? (int)(execute_data->prev_execute_data != ex) + 1 : 0;
-#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)
-		EX(opline) = opline;
-#else
-		SAVE_OPLINE();
-#endif
+		SAVE_OPLINE_EX();
 	} else {
 		ret = -1;
 	}
 #else
 	ret = ((opcode_handler_t)OPLINE->handler)(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
-#if defined(ZEND_VM_FP_GLOBAL_REG) && defined(ZEND_VM_IP_GLOBAL_REG)
-	EX(opline) = opline;
-#else
-	SAVE_OPLINE();
-#endif
+	SAVE_OPLINE_EX();
 #endif
 #ifdef ZEND_VM_FP_GLOBAL_REG
 	execute_data = orig_execute_data;
