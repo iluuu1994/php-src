@@ -8346,7 +8346,7 @@ ZEND_VM_HANDLER(160, ZEND_YIELD, CONST|TMP|VAR|CV|UNUSED, CONST|TMPVAR|CV|UNUSED
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	EX(opline) = opline;
 #endif
 
@@ -8455,7 +8455,7 @@ ZEND_VM_C_LABEL(yield_from_try_again):
 	/* The GOTO VM uses a local opline variable. We need to set the opline
 	 * variable in execute_data so we don't resume at an old position. */
 	SAVE_OPLINE();
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	EX(opline) = opline;
 #endif
 

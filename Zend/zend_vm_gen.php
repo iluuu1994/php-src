@@ -1900,7 +1900,7 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"typedef ZEND_OPCODE_HANDLER_RET (ZEND_FASTCALL *opcode_handler_t) (ZEND_OPCODE_HANDLER_ARGS);\n");
                             out($f,"\n");
                             out($f,"#define DCL_OPLINE\n");
-                            out($f,"#ifdef ZEND_UNIVERSAL_GLOBAL_REGS\n");
+                            out($f,"#ifdef ZEND_UNIVERSAL_IP\n");
                             out($f,"# define OPLINE opline\n");
                             out($f,"# define USE_OPLINE\n");
                             out($f,"# define LOAD_OPLINE() opline = EX(opline)\n");
@@ -2066,7 +2066,7 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                         out($f,"#endif\n");
                         out($f,$m[1]."} vm_stack_data;\n");
                         out($f,"#endif\n");
-                        // out($f,"#ifdef ZEND_UNIVERSAL_GLOBAL_REGS\n");
+                        // out($f,"#ifdef ZEND_UNIVERSAL_IP\n");
                         // out($f,$m[1]."if (EG(current_execute_data) && EG(current_execute_data) != ex && opline) {\n");
                         // out($f,$m[1]."\tEG(current_execute_data)->opline = opline;\n");
                         // out($f,$m[1]."}\n");

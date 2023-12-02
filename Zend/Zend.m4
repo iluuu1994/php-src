@@ -337,12 +337,6 @@ AC_ARG_ENABLE([gcc-global-regs],
   [ZEND_GCC_GLOBAL_REGS=$enableval],
   [ZEND_GCC_GLOBAL_REGS=yes])
 
-AC_ARG_ENABLE([universal-global-regs],
-  [AS_HELP_STRING([--enable-universal-global-regs],
-    [whether to use GCC global register variables universally])],
-  [ZEND_UNIVERSAL_GLOBAL_REGS=$enableval],
-  [ZEND_UNIVERSAL_GLOBAL_REGS=no])
-
 AC_MSG_CHECKING(for global register variables support)
 if test "$ZEND_GCC_GLOBAL_REGS" != "no"; then
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -391,13 +385,59 @@ int emu(const opcode_handler_t *ip, void *fp) {
     ZEND_GCC_GLOBAL_REGS=no
   ])
 fi
+
 if test "$ZEND_GCC_GLOBAL_REGS" = "yes"; then
   AC_DEFINE([HAVE_GCC_GLOBAL_REGS], 1, [Define if the target system has support for global register variables])
-  if test "$ZEND_UNIVERSAL_GLOBAL_REGS" = "yes"; then
-    AC_DEFINE([ZEND_UNIVERSAL_GLOBAL_REGS], 1, [Define whether to use global register variables universally])
-  fi
 fi
 AC_MSG_RESULT($ZEND_GCC_GLOBAL_REGS)
+
+AC_ARG_ENABLE([universal-ip],
+  [AS_HELP_STRING([--enable-universal-ip],
+    [whether to use a GCC global register variables for IP universally])],
+  [ZEND_UNIVERSAL_IP=$enableval],
+  [ZEND_UNIVERSAL_IP=no])
+
+if test "$ZEND_UNIVERSAL_IP" = "yes"; then
+  if test "$ZEND_GCC_GLOBAL_REGS" != "yes"; then
+    AC_MSG_ERROR(May not enable universal IP without --enable-universal-ip)
+  fi
+
+  AC_RUN_IFELSE(
+    [AC_LANG_SOURCE([[
+#include <stdio.h>
+
+#if defined(__GNUC__)
+# define ZEND_GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
+#else
+# define ZEND_GCC_VERSION 0
+#endif
+#if defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(i386)
+# define ZEND_VM_IP_GLOBAL_REG "edi"
+#elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__x86_64__)
+# define ZEND_VM_IP_GLOBAL_REG "r15"
+#elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__powerpc64__)
+# define ZEND_VM_IP_GLOBAL_REG "r29"
+#elif defined(__IBMC__) && ZEND_GCC_VERSION >= 4002 && defined(__powerpc64__)
+# define ZEND_VM_IP_GLOBAL_REG "r29"
+#elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__aarch64__)
+# define ZEND_VM_IP_GLOBAL_REG "x28"
+#elif defined(__GNUC__) && ZEND_GCC_VERSION >= 4008 && defined(__riscv) && __riscv_xlen == 64
+# define ZEND_VM_IP_GLOBAL_REG "x19"
+#else
+# error "global register variables are not supported"
+#endif
+
+int main(void) {
+  fprintf(stderr, "%s\n", ZEND_VM_IP_GLOBAL_REG);
+  return 0;
+}
+    ]])],
+    [zend_ip_reg=$(./conftest$EXEEXT 2>&1)],
+    [AC_MSG_ERROR(Unexpected, guarded above)])
+
+  AC_DEFINE([ZEND_UNIVERSAL_IP], 1, [Define whether to use global register variables universally])
+  CFLAGS="$CFLAGS -ffixed-$zend_ip_reg"
+fi
 
 dnl Check whether __cpuid_count is available.
 AC_CACHE_CHECK(whether __cpuid_count is available, ac_cv_cpuid_count_available, [

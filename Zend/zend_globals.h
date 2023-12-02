@@ -246,7 +246,7 @@ struct _zend_executor_globals {
 	zend_object *exception, *prev_exception;
 	const zend_op *opline_before_exception;
 	zend_op exception_op[3];
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	/* Consts copied over from opline during exceptions. Allows the throwing handler to access
 	 * constants even after the opline register has been adjusted. */
 	zval exception_consts[4];

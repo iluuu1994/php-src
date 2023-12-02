@@ -38,7 +38,7 @@
 #include "zend_inheritance.h"
 #include "zend_observer.h"
 #include "zend_call_stack.h"
-#include "zend_global_regs.h"
+#include "zend_universal_ip.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -647,7 +647,7 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 		ex = ex->prev_execute_data;
 	}
 	if (ex) {
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 		const zend_op *op = ex == EG(current_execute_data) ? opline : ex->opline;
 #else
 		const zend_op *op = ex->opline;

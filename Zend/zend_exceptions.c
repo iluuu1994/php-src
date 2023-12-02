@@ -29,7 +29,7 @@
 #include "zend_smart_str.h"
 #include "zend_exceptions_arginfo.h"
 #include "zend_observer.h"
-#include "zend_global_regs.h"
+#include "zend_universal_ip.h"
 
 ZEND_API zend_class_entry *zend_ce_throwable;
 ZEND_API zend_class_entry *zend_ce_exception;
@@ -165,14 +165,14 @@ static zend_always_inline bool is_handle_exception_set(void) {
 	return !execute_data
 		|| !execute_data->func
 		|| !ZEND_USER_CODE(execute_data->func->common.type)
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 		|| opline->opcode == ZEND_HANDLE_EXCEPTION;
 #else
 		|| execute_data->opline->opcode == ZEND_HANDLE_EXCEPTION;
 #endif
 }
 
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 static void zend_copy_exception_consts(uint32_t opnum)
 {
 	const zend_op *orig_op = &EG(opline_before_exception)[opnum];
@@ -214,7 +214,7 @@ static void zend_copy_exception_ops(void)
 
 ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 {
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	if (opline->opcode != ZEND_HANDLE_EXCEPTION) {
 		EG(opline_before_exception) = opline;
 	}
@@ -224,7 +224,7 @@ ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 	}
 #endif
 	EX(opline) = EG(exception_op);
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	opline = EG(exception_op);
 	zend_copy_exception_ops();
 #endif
@@ -286,13 +286,13 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 		/* no need to rethrow the exception */
 		return;
 	}
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	EG(opline_before_exception) = opline;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 #endif
 	EG(current_execute_data)->opline = EG(exception_op);
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	opline = EG(exception_op);
 	zend_copy_exception_ops();
 #endif
@@ -1091,7 +1091,7 @@ ZEND_API ZEND_COLD void zend_throw_unwind_exit(void)
 {
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_unwind_exit();
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	EG(opline_before_exception) = opline;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
@@ -1103,7 +1103,7 @@ ZEND_API ZEND_COLD void zend_throw_graceful_exit(void)
 {
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_graceful_exit();
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	EG(opline_before_exception) = opline;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;

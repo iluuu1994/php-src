@@ -40,7 +40,7 @@
 # endif
 #endif
 
-#if defined(ZEND_UNIVERSAL_GLOBAL_REGS) && defined(ZEND_VM_IP_GLOBAL_REG)
+#if defined(ZEND_UNIVERSAL_IP) && defined(ZEND_VM_IP_GLOBAL_REG)
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
 register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"

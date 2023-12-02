@@ -25,7 +25,7 @@
 #include "zend_closures.h"
 #include "zend_generators_arginfo.h"
 #include "zend_observer.h"
-#include "zend_global_regs.h"
+#include "zend_universal_ip.h"
 
 ZEND_API zend_class_entry *zend_ce_generator;
 ZEND_API zend_class_entry *zend_ce_ClosedGeneratorException;
@@ -569,7 +569,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 				/* Throw the exception in the context of the generator */
 				zend_execute_data *original_execute_data = EG(current_execute_data);
 				EG(current_execute_data) = new_root->execute_data;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 				original_execute_data->opline = opline;
 				opline = EG(current_execute_data)->opline;
 #endif
@@ -586,7 +586,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 				zend_throw_exception(zend_ce_ClosedGeneratorException, "Generator yielded from aborted, no return value available", 0);
 
 				EG(current_execute_data) = original_execute_data;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 				opline = EG(current_execute_data)->opline;
 #endif
 

@@ -45,7 +45,7 @@
 #include "zend_smart_str.h"
 #include "zend_enum.h"
 #include "zend_fibers.h"
-#include "zend_global_regs.h"
+#include "zend_universal_ip.h"
 
 #define REFLECTION_ATTRIBUTE_IS_INSTANCEOF (1 << 1)
 

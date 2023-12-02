@@ -44,7 +44,7 @@
 #include "zend_system_id.h"
 #include "zend_call_stack.h"
 #include "Optimizer/zend_func_info.h"
-#include "zend_global_regs.h"
+#include "zend_universal_ip.h"
 
 /* Virtual current working directory support */
 #include "zend_virtual_cwd.h"
@@ -97,7 +97,7 @@
 # define OPLINE_CC          , OPLINE_C
 #endif
 
-#if defined(ZEND_VM_IP_GLOBAL_REG) && !defined(ZEND_UNIVERSAL_GLOBAL_REGS)
+#if defined(ZEND_VM_IP_GLOBAL_REG) && !defined(ZEND_UNIVERSAL_IP)
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
 register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
@@ -1680,7 +1680,7 @@ try_again:
 ZEND_API ZEND_COLD void zend_wrong_string_offset_error(void)
 {
 	const char *msg = NULL;
-#ifndef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifndef ZEND_UNIVERSAL_IP
 	const zend_execute_data *execute_data = EG(current_execute_data);
 	const zend_op *opline = execute_data->opline;
 #endif
@@ -5141,7 +5141,7 @@ static zend_execute_data *start_fake_frame(zend_execute_data *call, const zend_o
 	call->prev_execute_data = EG(current_execute_data);
 	call->opline = op;
 	EG(current_execute_data) = call;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	if (call->prev_execute_data) {
 		call->prev_execute_data->opline = opline;
 	}
@@ -5154,7 +5154,7 @@ static void end_fake_frame(zend_execute_data *call, zend_execute_data *old_prev_
 	zend_execute_data *prev_execute_data = call->prev_execute_data;
 	EG(current_execute_data) = prev_execute_data;
 	call->prev_execute_data = old_prev_execute_data;
-#ifdef ZEND_UNIVERSAL_GLOBAL_REGS
+#ifdef ZEND_UNIVERSAL_IP
 	if (prev_execute_data) {
 		opline = prev_execute_data->opline;
 	}
