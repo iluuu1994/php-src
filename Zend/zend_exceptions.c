@@ -166,7 +166,7 @@ static zend_always_inline bool is_handle_exception_set(void) {
 		|| !execute_data->func
 		|| !ZEND_USER_CODE(execute_data->func->common.type)
 #ifdef ZEND_UNIVERSAL_IP
-		|| opline->opcode == ZEND_HANDLE_EXCEPTION;
+		|| zend_universal_ip->opcode == ZEND_HANDLE_EXCEPTION;
 #else
 		|| execute_data->opline->opcode == ZEND_HANDLE_EXCEPTION;
 #endif
@@ -215,8 +215,8 @@ static void zend_copy_exception_ops(void)
 ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 {
 #ifdef ZEND_UNIVERSAL_IP
-	if (opline->opcode != ZEND_HANDLE_EXCEPTION) {
-		EG(opline_before_exception) = opline;
+	if (zend_universal_ip->opcode != ZEND_HANDLE_EXCEPTION) {
+		EG(opline_before_exception) = zend_universal_ip;
 	}
 #else
 	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
@@ -225,7 +225,7 @@ ZEND_API void zend_rethrow_exception(zend_execute_data *execute_data)
 #endif
 	EX(opline) = EG(exception_op);
 #ifdef ZEND_UNIVERSAL_IP
-	opline = EG(exception_op);
+	zend_universal_ip = EG(exception_op);
 	zend_copy_exception_ops();
 #endif
 }
@@ -287,13 +287,13 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 		return;
 	}
 #ifdef ZEND_UNIVERSAL_IP
-	EG(opline_before_exception) = opline;
+	EG(opline_before_exception) = zend_universal_ip;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 #endif
 	EG(current_execute_data)->opline = EG(exception_op);
 #ifdef ZEND_UNIVERSAL_IP
-	opline = EG(exception_op);
+	zend_universal_ip = EG(exception_op);
 	zend_copy_exception_ops();
 #endif
 }
@@ -1092,7 +1092,7 @@ ZEND_API ZEND_COLD void zend_throw_unwind_exit(void)
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_unwind_exit();
 #ifdef ZEND_UNIVERSAL_IP
-	EG(opline_before_exception) = opline;
+	EG(opline_before_exception) = zend_universal_ip;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 #endif
@@ -1104,7 +1104,7 @@ ZEND_API ZEND_COLD void zend_throw_graceful_exit(void)
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_graceful_exit();
 #ifdef ZEND_UNIVERSAL_IP
-	EG(opline_before_exception) = opline;
+	EG(opline_before_exception) = zend_universal_ip;
 #else
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
 #endif

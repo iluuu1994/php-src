@@ -568,11 +568,9 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 			if (Z_ISUNDEF(new_root_parent->retval)) {
 				/* Throw the exception in the context of the generator */
 				zend_execute_data *original_execute_data = EG(current_execute_data);
+				SAVE_CURRENT_OPLINE();
 				EG(current_execute_data) = new_root->execute_data;
-#ifdef ZEND_UNIVERSAL_IP
-				original_execute_data->opline = opline;
-				opline = EG(current_execute_data)->opline;
-#endif
+				LOAD_CURRENT_OPLINE();
 
 				if (new_root == generator) {
 					new_root->execute_data->prev_execute_data = original_execute_data;
@@ -586,9 +584,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 				zend_throw_exception(zend_ce_ClosedGeneratorException, "Generator yielded from aborted, no return value available", 0);
 
 				EG(current_execute_data) = original_execute_data;
-#ifdef ZEND_UNIVERSAL_IP
-				opline = EG(current_execute_data)->opline;
-#endif
+				LOAD_CURRENT_OPLINE();
 
 				if (!((old_root ? old_root : generator)->flags & ZEND_GENERATOR_CURRENTLY_RUNNING)) {
 					new_root->node.parent = NULL;

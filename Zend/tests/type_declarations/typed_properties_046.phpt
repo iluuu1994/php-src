@@ -16,7 +16,7 @@ function bar() {
 
 for ($i = 0; $i < 5; $i++) {
     try {
-        foo()->{'bbb'} = str_repeat("a", 3);
+        foo()->{bar()} = str_repeat("a", 3);
     } catch (Throwable $e) {
         echo $e->getMessage() . "\n";
     }

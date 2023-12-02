@@ -648,7 +648,7 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 	}
 	if (ex) {
 #ifdef ZEND_UNIVERSAL_IP
-		const zend_op *op = ex == EG(current_execute_data) ? opline : ex->opline;
+		const zend_op *op = ex == EG(current_execute_data) ? zend_universal_ip : ex->opline;
 #else
 		const zend_op *op = ex->opline;
 #endif

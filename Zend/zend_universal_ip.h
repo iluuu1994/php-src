@@ -42,19 +42,19 @@
 
 #if defined(ZEND_UNIVERSAL_IP) && defined(ZEND_VM_IP_GLOBAL_REG)
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
-register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
+register const zend_op* volatile zend_universal_ip __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
-# define ZEND_CURRENT_OPLINE opline
+# define ZEND_CURRENT_OPLINE zend_universal_ip
 # define SAVE_CURRENT_OPLINE() \
 	do { \
 		if (EG(current_execute_data)) { \
-			EG(current_execute_data)->opline = opline; \
+			EG(current_execute_data)->opline = zend_universal_ip; \
 		} \
 	} while (0)
 # define LOAD_CURRENT_OPLINE() \
 	do { \
 		if (EG(current_execute_data)) { \
-			opline = EG(current_execute_data)->opline; \
+			zend_universal_ip = EG(current_execute_data)->opline; \
 		} \
 	} while (0)
 #else

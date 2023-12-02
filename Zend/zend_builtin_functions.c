@@ -31,7 +31,6 @@
 #include "zend_generators.h"
 #include "zend_builtin_functions_arginfo.h"
 #include "zend_smart_str.h"
-#include "zend_universal_ip.h"
 
 /* }}} */
 

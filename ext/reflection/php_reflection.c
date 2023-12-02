@@ -6678,7 +6678,7 @@ static int call_attribute_constructor(
 		/* Set up dummy call frame that makes it look like the attribute was invoked
 		 * from where it occurs in the code. */
 		zend_function dummy_func;
-		zend_op *op;
+		zend_op *opline;
 
 		memset(&dummy_func, 0, sizeof(zend_function));
 
@@ -6688,12 +6688,12 @@ static int call_attribute_constructor(
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_function), sizeof(zval)),
 			0, &dummy_func, 0, NULL);
 
-		op = (zend_op*)(call + 1);
-		memset(op, 0, sizeof(zend_op));
-		op->opcode = ZEND_DO_FCALL;
-		op->lineno = attr->lineno;
+		opline = (zend_op*)(call + 1);
+		memset(opline, 0, sizeof(zend_op));
+		opline->opcode = ZEND_DO_FCALL;
+		opline->lineno = attr->lineno;
 
-		call->opline = op;
+		call->opline = opline;
 		call->call = NULL;
 		call->return_value = NULL;
 		call->func = (zend_function*)(call->opline + 1);
