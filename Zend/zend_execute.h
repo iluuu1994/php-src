@@ -37,7 +37,6 @@ ZEND_API extern void (*zend_execute_internal)(zend_execute_data *execute_data, z
 ZEND_API extern zend_class_entry *(*zend_autoload)(zend_string *name, zend_string *lc_name);
 
 void init_executor(void);
-void init_executor_ex(void);
 void shutdown_executor(void);
 void shutdown_destructors(void);
 ZEND_API void zend_shutdown_executor_values(bool fast_shutdown);

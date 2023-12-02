@@ -27,7 +27,6 @@
 #include "zend_mmap.h"
 #include "zend_compile.h"
 #include "zend_closures.h"
-#include "zend_universal_ip.h"
 
 #include "zend_fibers.h"
 #include "zend_fibers_arginfo.h"

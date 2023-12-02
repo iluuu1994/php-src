@@ -110,8 +110,15 @@
 
 #ifdef ZEND_UNIVERSAL_IP
 # define ZEND_CURRENT_OPLINE opline
+# define LOAD_CURRENT_OPLINE() \
+	do { \
+		if (EG(current_execute_data)) { \
+			opline = EG(current_execute_data)->opline; \
+		} \
+	} while (0)
 #else
 # define ZEND_CURRENT_OPLINE EX(opline)
+# define LOAD_CURRENT_OPLINE()
 #endif
 
 #define _CONST_CODE  0
@@ -188,12 +195,6 @@ ZEND_API const zend_internal_function zend_pass_function = {
 #define ZEND_VM_STACK_PAGE_ALIGNED_SIZE(size, page_size) \
 	(((size) + ZEND_VM_STACK_HEADER_SLOTS * sizeof(zval) \
 	  + ((page_size) - 1)) & ~((page_size) - 1))
-
-void init_executor_ex(void)
-{
-	opline = NULL;
-	execute_data = NULL;
-}
 
 ZEND_API void zend_vm_stack_init(void)
 {

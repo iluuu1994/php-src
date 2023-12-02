@@ -2857,9 +2857,7 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 
 	if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP|ZEND_CALL_HAS_SYMBOL_TABLE|ZEND_CALL_FREE_EXTRA_ARGS|ZEND_CALL_ALLOCATED|ZEND_CALL_HAS_EXTRA_NAMED_PARAMS)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
-		if (EG(current_execute_data)) {
-			opline = EG(current_execute_data)->opline;
-		}
+		LOAD_CURRENT_OPLINE();
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -2882,9 +2880,7 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 		ZEND_VM_LEAVE();
 	} else if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
-		if (EG(current_execute_data)) {
-			opline = EG(current_execute_data)->opline;
-		}
+		LOAD_CURRENT_OPLINE();
 		i_free_compiled_variables(execute_data);
 
 #ifdef ZEND_PREFER_RELOAD
@@ -2929,9 +2925,7 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 		efree_size(EX(func), sizeof(zend_op_array));
 		old_execute_data = execute_data;
 		execute_data = EG(current_execute_data) = EX(prev_execute_data);
-		if (EG(current_execute_data)) {
-			opline = EG(current_execute_data)->opline;
-		}
+		LOAD_CURRENT_OPLINE();
 		zend_vm_stack_free_call_frame_ex(call_info, old_execute_data);
 
 		if (call_info & ZEND_CALL_NEEDS_REATTACH) {
@@ -2951,9 +2945,7 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 	} else {
 		if (EXPECTED((call_info & ZEND_CALL_CODE) == 0)) {
 			EG(current_execute_data) = EX(prev_execute_data);
-			if (EG(current_execute_data)) {
-				opline = EG(current_execute_data)->opline;
-			}
+			LOAD_CURRENT_OPLINE();
 			i_free_compiled_variables(execute_data);
 #ifdef ZEND_PREFER_RELOAD
 			call_info = EX_CALL_INFO();
@@ -2995,9 +2987,7 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 				}
 			}
 			EG(current_execute_data) = EX(prev_execute_data);
-			if (EG(current_execute_data)) {
-				opline = EG(current_execute_data)->opline;
-			}
+			LOAD_CURRENT_OPLINE();
 			ZEND_VM_RETURN();
 		}
 	}

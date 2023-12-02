@@ -133,8 +133,6 @@ void init_executor(void) /* {{{ */
 {
 	zend_init_fpu();
 
-	init_executor_ex();
-
 	ZVAL_NULL(&EG(uninitialized_zval));
 	ZVAL_ERROR(&EG(error_zval));
 /* destroys stack frame, therefore makes core dumps worthless */
@@ -648,20 +646,20 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 	}
 	if (ex) {
 #ifdef ZEND_UNIVERSAL_IP
-		const zend_op *op = ex == EG(current_execute_data) ? zend_universal_ip : ex->opline;
+		const zend_op *opline = ex == EG(current_execute_data) ? zend_universal_ip : ex->opline;
 #else
-		const zend_op *op = ex->opline;
+		const zend_op *opline = ex->opline;
 #endif
 
-		if (!op) {
+		if (!opline) {
 			/* Missing SAVE_OPLINE()? Falling back to first line of function */
 			return ex->func->op_array.opcodes[0].lineno;
 		}
-		if (EG(exception) && op->opcode == ZEND_HANDLE_EXCEPTION &&
-		    op->lineno == 0 && EG(opline_before_exception)) {
+		if (EG(exception) && opline->opcode == ZEND_HANDLE_EXCEPTION &&
+		    opline->lineno == 0 && EG(opline_before_exception)) {
 			return EG(opline_before_exception)->lineno;
 		}
-		return op->lineno;
+		return opline->lineno;
 	} else {
 		return 0;
 	}
