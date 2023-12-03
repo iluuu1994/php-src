@@ -581,6 +581,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 
 				/* ZEND_YIELD(_FROM) already advance, so decrement opline to throw from correct place */
 				new_root->execute_data->opline--;
+				LOAD_CURRENT_OPLINE();
 				zend_throw_exception(zend_ce_ClosedGeneratorException, "Generator yielded from aborted, no return value available", 0);
 
 				EG(current_execute_data) = original_execute_data;
@@ -609,6 +610,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 static zend_result zend_generator_get_next_delegated_value(zend_generator *generator) /* {{{ */
 {
 	--generator->execute_data->opline;
+	LOAD_CURRENT_OPLINE();
 
 	zval *value;
 	if (Z_TYPE(generator->values) == IS_ARRAY) {
@@ -692,6 +694,7 @@ static zend_result zend_generator_get_next_delegated_value(zend_generator *gener
 	}
 
 	++generator->execute_data->opline;
+	LOAD_CURRENT_OPLINE();
 	return SUCCESS;
 
 failure:
@@ -699,6 +702,7 @@ failure:
 	ZVAL_UNDEF(&generator->values);
 
 	++generator->execute_data->opline;
+	LOAD_CURRENT_OPLINE();
 	return FAILURE;
 }
 /* }}} */
