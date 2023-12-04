@@ -399,8 +399,8 @@ typedef ZEND_OPCODE_HANDLER_RET (ZEND_FASTCALL *opcode_handler_t) (ZEND_OPCODE_H
 # define LOAD_OPLINE() opline = EX(opline)
 # define LOAD_OPLINE_EX()
 # define LOAD_NEXT_OPLINE() opline = EX(opline) + 1
-# define SAVE_OPLINE() EX(opline) = opline
-# define SAVE_OPLINE_EX() SAVE_OPLINE()
+# define SAVE_OPLINE()
+# define SAVE_OPLINE_EX() EX(opline) = opline
 #else
 # define OPLINE EX(opline)
 # define USE_OPLINE const zend_op *opline = EX(opline);
@@ -1259,7 +1259,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1321,7 +1321,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_RETV
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1383,7 +1383,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_OBS
 	zval *ret;
 	zval retval;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	call->prev_execute_data = execute_data;
@@ -1446,7 +1446,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1470,7 +1470,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1494,7 +1494,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_OBS
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
@@ -1519,7 +1519,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_S
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1614,7 +1614,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_S
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1709,7 +1709,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1807,7 +1807,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -1916,7 +1916,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_RETV
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -2025,7 +2025,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 	zend_function *fbc = call->func;
 	zval *ret;
 
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 	EX(call) = call->prev_execute_data;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
@@ -65815,13 +65815,13 @@ ZEND_API int ZEND_FASTCALL zend_vm_call_opcode_handler(zend_execute_data* ex)
 	if (EXPECTED(opline)) {
 #endif
 		ret = execute_data != ex ? (int)(execute_data->prev_execute_data != ex) + 1 : 0;
-		SAVE_OPLINE();
+		SAVE_OPLINE_EX();
 	} else {
 		ret = -1;
 	}
 #else
 	ret = ((opcode_handler_t)OPLINE->handler)(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
-	SAVE_OPLINE();
+	SAVE_OPLINE_EX();
 #endif
 #ifdef ZEND_VM_FP_GLOBAL_REG
 	execute_data = orig_execute_data;

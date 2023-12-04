@@ -1906,8 +1906,8 @@ function gen_executor($f, $skl, $spec, $kind, $executor_name, $initializer_name)
                             out($f,"# define LOAD_OPLINE() opline = EX(opline)\n");
                             out($f,"# define LOAD_OPLINE_EX()\n");
                             out($f,"# define LOAD_NEXT_OPLINE() opline = EX(opline) + 1\n");
-                            out($f,"# define SAVE_OPLINE() EX(opline) = opline\n");
-                            out($f,"# define SAVE_OPLINE_EX() SAVE_OPLINE()\n");
+                            out($f,"# define SAVE_OPLINE()\n");
+                            out($f,"# define SAVE_OPLINE_EX() EX(opline) = opline\n");
                             out($f,"#else\n");
                             out($f,"# define OPLINE EX(opline)\n");
                             out($f,"# define USE_OPLINE const zend_op *opline = EX(opline);\n");
@@ -2975,13 +2975,13 @@ function gen_vm($def, $skel) {
             out($f, "\tif (EXPECTED(opline)) {\n");
         }
         out($f, "\t\tret = execute_data != ex ? (int)(execute_data->prev_execute_data != ex) + 1 : 0;\n");
-        out($f, "\t\tSAVE_OPLINE();\n");
+        out($f, "\t\tSAVE_OPLINE_EX();\n");
         out($f, "\t} else {\n");
         out($f, "\t\tret = -1;\n");
         out($f, "\t}\n");
         out($f, "#else\n");
         out($f, "\tret = ((opcode_handler_t)OPLINE->handler)(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);\n");
-        out($f, "\tSAVE_OPLINE();\n");
+        out($f, "\tSAVE_OPLINE_EX();\n");
         out($f, "#endif\n");
         out($f, "#ifdef ZEND_VM_FP_GLOBAL_REG\n");
         out($f, "\texecute_data = orig_execute_data;\n");

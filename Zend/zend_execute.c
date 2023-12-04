@@ -5305,12 +5305,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 
 #define ZEND_VM_NEXT_OPCODE_EX(check_exception, skip) \
 	CHECK_SYMBOL_TABLES() \
-	if (check_exception) { \
-		OPLINE = EX(opline) + (skip); \
-	} else { \
-		ZEND_ASSERT(!EG(exception)); \
-		OPLINE = opline + (skip); \
-	} \
+	OPLINE = opline + (skip); \
 	ZEND_VM_CONTINUE()
 
 #define ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION() \
@@ -5374,9 +5369,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_VM_CONTINUE(); \
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_JMPZ(_result, _check) do { \
-		if ((_check) && UNEXPECTED(EG(exception))) { \
-			OPLINE = EX(opline); \
-		} else if (_result) { \
+		if (_result) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 		} else { \
 			ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
@@ -5384,9 +5377,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_VM_CONTINUE(); \
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_JMPNZ(_result, _check) do { \
-		if ((_check) && UNEXPECTED(EG(exception))) { \
-			OPLINE = EX(opline); \
-		} else if (!(_result)) { \
+		if (!(_result)) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 		} else { \
 			ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
