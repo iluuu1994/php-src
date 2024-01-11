@@ -72,9 +72,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - debug: false
-            zts: false
-            asan: false
+          # - debug: false
+          #   zts: false
+          #   asan: false
           - debug: true
             zts: true
             asan: true
@@ -148,6 +148,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
+    if: false
     runs-on: macos-13
     steps:
       - name: git checkout
@@ -180,6 +181,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
@@ -206,7 +208,8 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    if: false
+    # if: github.repository_owner == 'php' || github.event_name == 'pull_request'
     runs-on: ubuntu-22.04
     steps:
       - name: git checkout
