@@ -4209,6 +4209,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 	uint32_t num_args;
 
 	if (UNEXPECTED(opline->opcode == ZEND_INIT_FCALL ||
+		opline->opcode == ZEND_INIT_ICALL ||
 		opline->opcode == ZEND_INIT_FCALL_BY_NAME ||
 		opline->opcode == ZEND_INIT_NS_FCALL_BY_NAME ||
 		opline->opcode == ZEND_INIT_DYNAMIC_CALL ||
@@ -4234,6 +4235,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 					level++;
 					break;
 				case ZEND_INIT_FCALL:
+				case ZEND_INIT_ICALL:
 				case ZEND_INIT_FCALL_BY_NAME:
 				case ZEND_INIT_NS_FCALL_BY_NAME:
 				case ZEND_INIT_DYNAMIC_CALL:
@@ -4289,6 +4291,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 						level++;
 						break;
 					case ZEND_INIT_FCALL:
+					case ZEND_INIT_ICALL:
 					case ZEND_INIT_FCALL_BY_NAME:
 					case ZEND_INIT_NS_FCALL_BY_NAME:
 					case ZEND_INIT_DYNAMIC_CALL:
@@ -4340,6 +4343,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 		int do_exit;
 
 		if (UNEXPECTED(opline->opcode == ZEND_INIT_FCALL ||
+			opline->opcode == ZEND_INIT_ICALL ||
 			opline->opcode == ZEND_INIT_FCALL_BY_NAME ||
 			opline->opcode == ZEND_INIT_NS_FCALL_BY_NAME ||
 			opline->opcode == ZEND_INIT_DYNAMIC_CALL ||
@@ -4367,6 +4371,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 						level++;
 						break;
 					case ZEND_INIT_FCALL:
+					case ZEND_INIT_ICALL:
 					case ZEND_INIT_FCALL_BY_NAME:
 					case ZEND_INIT_NS_FCALL_BY_NAME:
 					case ZEND_INIT_DYNAMIC_CALL:
@@ -4422,6 +4427,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 							level++;
 							break;
 						case ZEND_INIT_FCALL:
+						case ZEND_INIT_ICALL:
 						case ZEND_INIT_FCALL_BY_NAME:
 						case ZEND_INIT_NS_FCALL_BY_NAME:
 						case ZEND_INIT_DYNAMIC_CALL:
