@@ -1,0 +1,7 @@
+
+--AaB03x
+content-disposition: form-data; name="file"; filename="file.txt"
+Content-Type: text/plain
+
+foo
+--AaB03x--
