@@ -1201,6 +1201,11 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, zend_string *subject_str,
 	/* Calculate the size of the offsets array, and allocate memory for it. */
 	num_subpats = pce->capture_count + 1;
 
+	if (subpats) {
+		/* Prime sub-pattern size to avoid reallocations. */
+		zend_hash_extend(Z_ARR_P(subpats), num_subpats, /* packed */ pce->name_count == 0);
+	}
+
 	/*
 	 * Build a mapping from subpattern numbers to their names. We will
 	 * allocate the table only if there are any named subpatterns.
