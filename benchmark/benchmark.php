@@ -21,12 +21,21 @@ function main() {
     if (false !== $branch = getenv('GITHUB_REF_NAME')) {
         $data['branch'] = $branch;
     }
-    $data['Zend/bench.php'] = runBench(false);
-    $data['Zend/bench.php JIT'] = runBench(true);
+    // $data['Zend/bench.php'] = runBench(false);
+    // $data['Zend/bench.php JIT'] = runBench(true);
     $data['Symfony Demo 2.2.3'] = runSymfonyDemo(false);
-    $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
-    $data['Wordpress 6.2'] = runWordpress(false);
-    $data['Wordpress 6.2 JIT'] = runWordpress(true);
+    $data['Symfony Demo 2.2.3 2'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 3'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 4'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 5'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 6'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 7'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 8'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 9'] = runSymfonyDemo(false);
+    $data['Symfony Demo 2.2.3 10'] = runSymfonyDemo(false);
+    // $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
+    // $data['Wordpress 6.2'] = runWordpress(false);
+    // $data['Wordpress 6.2 JIT'] = runWordpress(true);
     $result = json_encode($data, JSON_PRETTY_PRINT) . "\n";
 
     fwrite(STDOUT, $result);
