@@ -1,0 +1,10 @@
+{
+  "name": "php-src-docs",
+  "scripts": {
+    "prettier": "npx prettier --write src",
+    "prettier-check": "npx prettier --check src"
+  },
+  "dependencies": {
+    "prettier": "^3.2.4"
+  }
+}

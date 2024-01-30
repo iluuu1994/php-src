@@ -1,0 +1,6 @@
+[book]
+authors = ["The PHP Group"]
+language = "en"
+multilingual = false
+src = "src"
+title = "php-src docs"
