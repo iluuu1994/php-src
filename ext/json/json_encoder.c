@@ -208,7 +208,7 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 			recursion_rc = (zend_refcounted *)prop_ht;
 		} else {
 			/* Protecting the object itself is fine here because myht is temporary and can't be
-			* referenced from a different place in the object graph. */
+			 * referenced from a different place in the object graph. */
 			recursion_rc = (zend_refcounted *)obj;
 		}
 		r = PHP_JSON_OUTPUT_OBJECT;

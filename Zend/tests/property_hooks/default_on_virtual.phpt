@@ -12,4 +12,4 @@ class Test {
 
 ?>
 --EXPECTF--
-Fatal error: Cannot specify default value for hooked property Test::$prop in %s on line %d
+Fatal error: Cannot specify default value for virtual hooked property Test::$prop in %s on line %d

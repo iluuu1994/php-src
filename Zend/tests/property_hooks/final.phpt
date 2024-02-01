@@ -1,5 +1,5 @@
 --TEST--
-Final accessors
+Final hooks
 --FILE--
 <?php
 
@@ -17,4 +17,4 @@ class B extends A {
 
 ?>
 --EXPECTF--
-Fatal error: Cannot override final accessor A::$prop::get() in %s on line %d
+Fatal error: Cannot override final property hook A::$prop::get() in %s on line %d

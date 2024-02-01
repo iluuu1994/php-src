@@ -877,12 +877,12 @@ static void _function_string(smart_str *str, zend_function *fptr, zend_class_ent
 
 static zval *property_get_default(zend_property_info *prop_info) {
 	zend_class_entry *ce = prop_info->ce;
-	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-		return NULL;
-	} else if (prop_info->flags & ZEND_ACC_STATIC) {
+	if (prop_info->flags & ZEND_ACC_STATIC) {
 		zval *prop = &ce->default_static_members_table[prop_info->offset];
 		ZVAL_DEINDIRECT(prop);
 		return prop;
+	} else if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+		return NULL;
 	} else {
 		return &ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
 	}

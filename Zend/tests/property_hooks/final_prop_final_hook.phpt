@@ -5,11 +5,11 @@ Cannot make hook explicitly final in final property
 
 class Test {
     final public $prop {
-        final get;
-        final set;
+        final get => $field;
     }
 }
 
 ?>
---EXPECTF--
-Fatal error: Hook on final property cannot be explicitly final in %s on line %d
+===DONE===
+--EXPECT--
+===DONE===

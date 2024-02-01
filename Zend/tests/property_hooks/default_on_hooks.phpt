@@ -4,10 +4,6 @@ Backed property may have default value
 <?php
 
 class A {
-    private $prop { get {} set {} }
-}
-
-class B extends A {
     public $prop = 42 {
         get {
             echo __METHOD__, "\n";
@@ -20,20 +16,20 @@ class B extends A {
     }
 }
 
-$b = new B();
-var_dump($b);
-var_dump($b->prop);
-$b->prop = 43;
-var_dump($b->prop);
+$a = new A();
+var_dump($a);
+var_dump($a->prop);
+$a->prop = 43;
+var_dump($a->prop);
 
 ?>
 --EXPECT--
-object(B)#1 (1) {
+object(A)#1 (1) {
   ["prop"]=>
   int(42)
 }
-B::$prop::get
+A::$prop::get
 int(42)
-B::$prop::set
-B::$prop::get
+A::$prop::set
+A::$prop::get
 int(43)

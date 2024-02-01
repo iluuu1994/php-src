@@ -26,7 +26,7 @@ typedef struct {
 	zval current_data;
 } zend_hooked_object_iterator;
 
-static int zend_hooked_object_it_valid(zend_object_iterator *iter);
+static zend_result zend_hooked_object_it_valid(zend_object_iterator *iter);
 
 ZEND_API zend_array *zend_hooked_object_build_properties(zend_object *zobj)
 {
@@ -119,9 +119,6 @@ static zend_result zend_hooked_object_it_fetch_current_data(zend_object_iterator
 		}
 		ZVAL_COPY(&hooked_iter->current_data, property);
 	}
-	if (!hooked_iter->by_ref) {
-		SEPARATE_ZVAL(&hooked_iter->current_data);
-	}
 	return SUCCESS;
 }
 
@@ -133,7 +130,7 @@ static void zend_hooked_object_it_dtor(zend_object_iterator *iter)
 	zval_ptr_dtor(&hooked_iter->current_data);
 }
 
-static int zend_hooked_object_it_valid(zend_object_iterator *iter)
+static zend_result zend_hooked_object_it_valid(zend_object_iterator *iter)
 {
 	zend_hooked_object_iterator *hooked_iter = (zend_hooked_object_iterator*)iter;
 	zend_array *properties = Z_ARR(hooked_iter->properties);

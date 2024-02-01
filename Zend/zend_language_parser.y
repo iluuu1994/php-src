@@ -281,7 +281,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
 %type <ast> function_name non_empty_member_modifiers
-%type <ast> property_hook property_hook_list hooked_property optional_property_hook_list property_hook_body
+%type <ast> property_hook property_hook_list optional_property_hook_list hooked_property property_hook_body
 %type <ast> optional_parameter_list
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
@@ -806,11 +806,6 @@ optional_cpp_modifiers:
 			  if (!$$) { YYERROR; } }
 ;
 
-optional_property_hook_list:
-		%empty	{ $$ = NULL; }
-	|	'{' property_hook_list '}'	{ $$ = $2; }
-;
-
 parameter:
 		optional_cpp_modifiers optional_type_without_static
 		is_reference is_variadic T_VARIABLE backup_doc_comment optional_property_hook_list
@@ -1097,7 +1092,7 @@ hooked_property:
 			{ $$ = zend_ast_create(ZEND_AST_PROP_ELEM, $1, $3, ($4 ? zend_ast_create_zval_from_str($4) : NULL), $6); }
 	|	T_VARIABLE T_DOUBLE_ARROW expr backup_doc_comment ';' {
 			zend_ast *return_ast = zend_ast_create_list(1, ZEND_AST_STMT_LIST, zend_ast_create(ZEND_AST_RETURN, $3));
-			zend_ast *get_ast = zend_ast_create_decl(ZEND_AST_PROPERTY_HOOK, 0, 0, NULL, ZSTR_INIT_LITERAL("get", 0), NULL, NULL, return_ast, NULL, NULL);
+			zend_ast *get_ast = zend_ast_create_decl(ZEND_AST_PROPERTY_HOOK, 0, 0, NULL, ZSTR_KNOWN(ZEND_STR_GET), NULL, NULL, return_ast, NULL, NULL);
 			$$ = zend_ast_create(ZEND_AST_PROP_ELEM, $1, NULL, ($4 ? zend_ast_create_zval_from_str($4) : NULL), zend_ast_create_list(1, ZEND_AST_STMT_LIST, get_ast));
 		}
 ;
@@ -1110,28 +1105,34 @@ property_hook_list:
 		}
 ;
 
+optional_property_hook_list:
+		%empty	{ $$ = NULL; }
+	|	'{' property_hook_list '}'	{ $$ = $2; }
+;
+
 property_hook_modifiers:
 		%empty { $$ = 0; }
-	|	non_empty_member_modifiers
-			{ $$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_PROPERTY_HOOK, $1); 
-			  if (!$$) { YYERROR; } }
+	|	non_empty_member_modifiers {
+			$$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_PROPERTY_HOOK, $1); 
+			if (!$$) { YYERROR; }
+		}
 ;
 
 property_hook:
 		property_hook_modifiers returns_ref T_STRING
 		backup_doc_comment { $<num>$ = CG(zend_lineno); }
-		optional_parameter_list property_hook_body
-			{ $$ = zend_ast_create_decl(
-					ZEND_AST_PROPERTY_HOOK, $1 | $2, $<num>5, $4, zend_ast_get_str($3),
-					$6, NULL, $7, NULL, NULL); }
+		optional_parameter_list property_hook_body {
+			$$ = zend_ast_create_decl(
+				ZEND_AST_PROPERTY_HOOK, $1 | $2, $<num>5, $4, zend_ast_get_str($3),
+				$6, NULL, $7, NULL, NULL);
+		}
 ;
 
 property_hook_body:
 		';' { $$ = NULL; }
 	|	'{' inner_statement_list '}' { $$ = $2; }
 	|	T_DOUBLE_ARROW expr ';'
-			{ $$ = zend_ast_create_list(1, ZEND_AST_STMT_LIST,
-				zend_ast_create(ZEND_AST_RETURN, $2)); }
+			{ $$ = zend_ast_create_list(1, ZEND_AST_STMT_LIST, zend_ast_create(ZEND_AST_RETURN, $2)); }
 ;
 
 optional_parameter_list:

@@ -1366,10 +1366,12 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 
 			if (UNEXPECTED((child_info->flags & ZEND_ACC_PPP_MASK) > (parent_info->flags & ZEND_ACC_PPP_MASK))) {
 				zend_error_noreturn(E_COMPILE_ERROR, "Access level to %s::$%s must be %s (as in class %s)%s", ZSTR_VAL(ce->name), ZSTR_VAL(key), zend_visibility_string(parent_info->flags), ZSTR_VAL(parent_info->ce->name), (parent_info->flags&ZEND_ACC_PUBLIC) ? "" : " or weaker");
-			} else if (!(child_info->flags & ZEND_ACC_STATIC) && !(parent_info->flags & ZEND_ACC_VIRTUAL)) {
-				if (!(child_info->flags & ZEND_ACC_VIRTUAL)) {
+			}
+			if (!(child_info->flags & ZEND_ACC_STATIC) && !(parent_info->flags & ZEND_ACC_VIRTUAL)) {
+				if (child_info->offset != (uint32_t)-1) {
 					int parent_num = OBJ_PROP_TO_NUM(parent_info->offset);
 					int child_num = OBJ_PROP_TO_NUM(child_info->offset);
+
 					/* Don't keep default properties in GC (they may be freed by opcache) */
 					zval_ptr_dtor_nogc(&(ce->default_properties_table[parent_num]));
 					ce->default_properties_table[parent_num] = ce->default_properties_table[child_num];
@@ -1567,7 +1569,7 @@ void zend_build_properties_info_table(zend_class_entry *ce)
 
 	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, prop) {
 		if (prop->ce == ce && (prop->flags & ZEND_ACC_STATIC) == 0
-			&& !(prop->flags & ZEND_ACC_VIRTUAL)) {
+		 && !(prop->flags & ZEND_ACC_VIRTUAL)) {
 			table[OBJ_PROP_TO_NUM(prop->offset)] = prop;
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -1582,7 +1584,7 @@ ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_in
 	 * removed during inheritance. */
 	if ((prop_info->flags & ZEND_ACC_VIRTUAL) && prop_info->offset != (uint32_t)-1) {
 		zend_error_noreturn(E_COMPILE_ERROR,
-			"Cannot specify default value for hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
+			"Cannot specify default value for virtual hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 	}
 	/* If the property turns backed during inheritance and no type and default value are set, we want
 	 * the default value to be null. */
@@ -1591,15 +1593,13 @@ ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_in
 	 && Z_TYPE(ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)]) == IS_UNDEF) {
 		ZVAL_NULL(&ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)]);
 	}
-	if (prop_info->hooks) {
-		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
-			zend_function *func = prop_info->hooks[i];
-			if (func) {
-				if ((func->op_array.fn_flags & ZEND_ACC_RETURN_REFERENCE)
-				 && (!(prop_info->flags & ZEND_ACC_VIRTUAL)
-				  || (zend_property_hook_kind)i != ZEND_PROPERTY_HOOK_GET)) {
-					zend_error_noreturn(E_COMPILE_ERROR, "Only virtual get hooks may return by reference");
-				}
+	for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+		zend_function *func = prop_info->hooks[i];
+		if (func) {
+			if ((func->op_array.fn_flags & ZEND_ACC_RETURN_REFERENCE)
+			 && (!(prop_info->flags & ZEND_ACC_VIRTUAL)
+			  || (zend_property_hook_kind)i != ZEND_PROPERTY_HOOK_GET)) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Only virtual get hooks may return by reference");
 			}
 		}
 	}
@@ -2709,6 +2709,7 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 			}
 
 			/* property not found, so lets add it */
+			zval tmp_prop_value;
 			if (!(flags & ZEND_ACC_VIRTUAL)) {
 				if (flags & ZEND_ACC_STATIC) {
 					prop_value = &traits[i]->default_static_members_table[property_info->offset];
@@ -2718,7 +2719,8 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 				}
 				Z_TRY_ADDREF_P(prop_value);
 			} else {
-				prop_value = NULL;
+				prop_value = &tmp_prop_value;
+				ZVAL_UNDEF(&tmp_prop_value);
 			}
 			doc_comment = property_info->doc_comment ? zend_string_copy(property_info->doc_comment) : NULL;
 
@@ -2746,7 +2748,7 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 						}
 					}
 				}
-				ce->ce_flags |= traits[i]->ce_flags & ZEND_ACC_USE_GUARDS;
+				ce->ce_flags |= ZEND_ACC_USE_GUARDS;
 			}
 		} ZEND_HASH_FOREACH_END();
 	}
@@ -3017,12 +3019,13 @@ static void check_variance_obligation(variance_obligation *obligation) {
 		if (status != INHERITANCE_SUCCESS) {
 			emit_incompatible_class_constant_error(obligation->child_const, obligation->parent_const, obligation->const_name);
 		}
-	} else {
-		ZEND_ASSERT(obligation->type == OBLIGATION_PROPERTY_HOOK);
+	} else if (obligation->type == OBLIGATION_PROPERTY_HOOK) {
 		inheritance_status status = zend_verify_property_hook_variance(obligation->hooked_prop, obligation->hook_func);
 		if (status != INHERITANCE_SUCCESS) {
 			zend_hooked_property_variance_error(obligation->hooked_prop);
 		}
+	} else {
+		ZEND_UNREACHABLE();
 	}
 }
 
@@ -3097,25 +3100,12 @@ static zend_op_array *zend_lazy_method_load(
 	ZEND_ASSERT(op_array->type == ZEND_USER_FUNCTION);
 	ZEND_ASSERT(op_array->scope == pce);
 	ZEND_ASSERT(op_array->prototype == NULL);
-	size_t alloc_size = sizeof(zend_op_array) + sizeof(void *);
-	if (op_array->static_variables) {
-		alloc_size += sizeof(HashTable *);
-	}
-
-	zend_op_array *new_op_array = zend_arena_alloc(&CG(arena), alloc_size);
+	zend_op_array *new_op_array = zend_arena_alloc(&CG(arena), sizeof(zend_op_array));
 	memcpy(new_op_array, op_array, sizeof(zend_op_array));
 	new_op_array->fn_flags &= ~ZEND_ACC_IMMUTABLE;
 	new_op_array->scope = ce;
-
-	void ***run_time_cache_ptr = (void***)(new_op_array + 1);
-	*run_time_cache_ptr = NULL;
-	ZEND_MAP_PTR_INIT(new_op_array->run_time_cache, *run_time_cache_ptr);
-
-	if (op_array->static_variables) {
-		HashTable **static_variables_ptr = (HashTable **) (run_time_cache_ptr + 1);
-		*static_variables_ptr = NULL;
-		ZEND_MAP_PTR_INIT(new_op_array->static_variables_ptr, *static_variables_ptr);
-	}
+	ZEND_MAP_PTR_INIT(new_op_array->run_time_cache, NULL);
+	ZEND_MAP_PTR_INIT(new_op_array->static_variables_ptr, NULL);
 
 	return new_op_array;
 }
@@ -3421,7 +3411,7 @@ ZEND_API zend_class_entry *zend_do_link_class(zend_class_entry *ce, zend_string 
 		if (ce->ce_flags & ZEND_ACC_ENUM) {
 			zend_verify_enum(ce);
 		}
-		if (ce->num_prop_hooks_variance_checks) {
+		if (ce->num_hooked_prop_variance_checks) {
 			zend_property_info *prop_info;
 			ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&ce->properties_info, key, prop_info) {
 				if (prop_info->ce == ce && prop_info->hooks && prop_info->hooks[ZEND_PROPERTY_HOOK_SET]) {

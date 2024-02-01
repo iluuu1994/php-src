@@ -4,7 +4,7 @@ Virtual property cannot have default value
 <?php
 
 class A {
-    private $prop;
+    public $prop { get {} set {} }
 }
 
 class B extends A {
@@ -16,4 +16,4 @@ class B extends A {
 
 ?>
 --EXPECTF--
-Fatal error: Cannot specify default value for hooked property B::$prop in %s on line %d
+Fatal error: Cannot specify default value for virtual hooked property B::$prop in %s on line %d

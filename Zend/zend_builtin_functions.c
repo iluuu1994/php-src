@@ -777,10 +777,8 @@ ZEND_FUNCTION(get_object_vars)
 
 	if (!zobj->ce->default_properties_count && properties == zobj->properties && !GC_IS_RECURSIVE(properties)) {
 		/* fast copy */
-		if (EXPECTED(zobj->handlers == &std_object_handlers)) {
-			RETURN_ARR(zend_proptable_to_symtable(properties, 0));
-		}
-		RETURN_ARR(zend_proptable_to_symtable(properties, 1));
+		bool always_duplicate = zobj->handlers != &std_object_handlers;
+		RETVAL_ARR(zend_proptable_to_symtable(properties, always_duplicate));
 	} else {
 		array_init_size(return_value, zend_hash_num_elements(properties));
 
@@ -809,9 +807,7 @@ ZEND_FUNCTION(get_object_vars)
 				zend_property_info *prop_info = Z_PTR_P(value);
 				zend_read_property_ex(prop_info->ce, zobj, prop_info->name, /* silent */ true, &tmp);
 				if (EG(exception)) {
-					if (zobj->properties != properties) {
-						zend_release_properties(properties);
-					}
+					zend_release_properties(properties);
 					zval_ptr_dtor(return_value);
 					RETURN_THROWS();
 				}
@@ -838,9 +834,7 @@ ZEND_FUNCTION(get_object_vars)
 			zval_ptr_dtor(&tmp);
 		} ZEND_HASH_FOREACH_END();
 	}
-	if (zobj->properties != properties) {
-		zend_release_properties(properties);
-	}
+	zend_release_properties(properties);
 }
 /* }}} */
 

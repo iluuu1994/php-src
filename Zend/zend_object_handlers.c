@@ -627,7 +627,7 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 {
 	zval *retval;
 	uintptr_t property_offset;
-	zend_property_info *prop_info = NULL;
+	const zend_property_info *prop_info = NULL;
 	uint32_t *guard = NULL;
 	zend_string *tmp_name = NULL;
 
@@ -636,7 +636,7 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 #endif
 
 	/* make zend_get_property_info silent if we have getter - we may want to use it */
-	property_offset = zend_get_property_offset(zobj->ce, name, (type == BP_VAR_IS) || (zobj->ce->__get != NULL), cache_slot, (const zend_property_info **) &prop_info);
+	property_offset = zend_get_property_offset(zobj->ce, name, (type == BP_VAR_IS) || (zobj->ce->__get != NULL), cache_slot, &prop_info);
 
 try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
@@ -708,30 +708,29 @@ try_again:
 				zend_throw_error(NULL, "Property %s::$%s is write-only",
 					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 				return &EG(uninitialized_zval);
-			} else {
-				/* Cache the fact that this hook has trivial read. This only applies to
-				 * BP_VAR_R and BP_VAR_IS fetches. */
-				ZEND_SET_PROPERTY_HOOK_SIMPLE_READ(cache_slot);
-
-				retval = OBJ_PROP(zobj, prop_info->offset);
-				if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
-					/* As hooked properties can't be unset, the only way to end up with an undef
-					* value is via an uninitialized property. */
-					ZEND_ASSERT(Z_PROP_FLAG_P(retval) == IS_PROP_UNINIT);
-					goto uninit_error;
-				}
-
-				if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-					if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
-						zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
-							ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-						goto exit;
-					}
-					ZVAL_COPY(rv, retval);
-					retval = rv;
-				}
-				goto exit;
 			}
+			/* Cache the fact that this hook has trivial read. This only applies to
+			 * BP_VAR_R and BP_VAR_IS fetches. */
+			ZEND_SET_PROPERTY_HOOK_SIMPLE_READ(cache_slot);
+
+			retval = OBJ_PROP(zobj, prop_info->offset);
+			if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
+				/* As hooked properties can't be unset, the only way to end up with an undef
+				 * value is via an uninitialized property. */
+				ZEND_ASSERT(Z_PROP_FLAG_P(retval) == IS_PROP_UNINIT);
+				goto uninit_error;
+			}
+
+			if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
+				if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
+					zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
+						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+					goto exit;
+				}
+				ZVAL_COPY(rv, retval);
+				retval = rv;
+			}
+			goto exit;
 		}
 
 		guard = zend_get_property_guard(zobj, name);
@@ -755,12 +754,11 @@ try_again:
 
 		if (Z_TYPE_P(rv) != IS_UNDEF) {
 			retval = rv;
-			if (!Z_ISREF_P(rv) &&
-				(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-				if (UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
-					zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
-						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-				}
+			if (!Z_ISREF_P(rv)
+			 && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)
+			 && UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
+				zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
+					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 			}
 		} else {
 			retval = &EG(uninitialized_zval);
@@ -902,10 +900,10 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 {
 	zval *variable_ptr, tmp;
 	uintptr_t property_offset;
-	zend_property_info *prop_info = NULL;
+	const zend_property_info *prop_info = NULL;
 	ZEND_ASSERT(!Z_ISREF_P(value));
 
-	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__set != NULL), cache_slot, (const zend_property_info **) &prop_info);
+	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__set != NULL), cache_slot, &prop_info);
 
 try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
@@ -987,14 +985,12 @@ found:;
 	} else if (IS_HOOKED_PROPERTY_OFFSET(property_offset)) {
 		zend_function *set = prop_info->hooks[ZEND_PROPERTY_HOOK_SET];
 
-		if (!set && prop_info->flags & ZEND_ACC_VIRTUAL) {
-			zend_throw_error(NULL, "Property %s::$%s is read-only", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
-			variable_ptr = &EG(error_zval);
-			goto exit;
-		}
-
 		if (!set) {
-			ZEND_ASSERT(!(prop_info->flags & ZEND_ACC_VIRTUAL));
+			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+				zend_throw_error(NULL, "Property %s::$%s is read-only", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+				variable_ptr = &EG(error_zval);
+				goto exit;
+			}
 			ZEND_SET_PROPERTY_HOOK_SIMPLE_WRITE(cache_slot);
 			property_offset = prop_info->offset;
 			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -1543,7 +1539,7 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 	zval *value;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-			Z_PARAM_ZVAL(value)
+		Z_PARAM_ZVAL(value)
 	ZEND_PARSE_PARAMETERS_END_EX(goto clean);
 
 	zval *retval = obj->handlers->write_property(obj, prop_name, value, NULL);
@@ -2037,10 +2033,10 @@ ZEND_API int zend_std_has_property(zend_object *zobj, zend_string *name, int has
 	int result;
 	zval *value = NULL;
 	uintptr_t property_offset;
-	zend_property_info *prop_info = NULL;
+	const zend_property_info *prop_info = NULL;
 	zend_string *tmp_name = NULL;
 
-	property_offset = zend_get_property_offset(zobj->ce, name, 1, cache_slot, (const zend_property_info **) &prop_info);
+	property_offset = zend_get_property_offset(zobj->ce, name, 1, cache_slot, &prop_info);
 
 try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
