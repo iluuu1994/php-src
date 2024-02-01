@@ -4403,18 +4403,6 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		property_info = pemalloc(sizeof(zend_property_info), 1);
 	} else {
 		property_info = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
-	}
-
-	if ((access_type & ZEND_ACC_VIRTUAL)) {
-		/* Virtual properties have no backing storage, the offset should never be used. The virtual
-		 * flag may still be removed during inheritance. So allow adding it, but throw if the flag
-		 * hasn't been removed after inheritance. */
-		if ((!property || Z_TYPE_P(property) == IS_UNDEF)) {
-			property_info->offset = (uint32_t)-1;
-			goto skip_default_property;
-		}
-	}
-	if (!(ce->type == ZEND_INTERNAL_CLASS)) {
 		if (Z_TYPE_P(property) == IS_CONSTANT_AST) {
 			ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
 			if (access_type & ZEND_ACC_STATIC) {
@@ -4431,6 +4419,16 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 
 	if (!(access_type & ZEND_ACC_PPP_MASK)) {
 		access_type |= ZEND_ACC_PUBLIC;
+	}
+
+	/* Virtual properties have no backing storage, the offset should never be used. However, the
+	 * virtual flag cannot be definitively determined at compile time. Allow using default values
+	 * anyway, and assert after inheritance that the property is not actually virtual. */
+	if (access_type & ZEND_ACC_VIRTUAL) {
+		if (Z_TYPE_P(property) == IS_UNDEF) {
+			property_info->offset = (uint32_t)-1;
+			goto skip_property_storage;
+		}
 	}
 	if (access_type & ZEND_ACC_STATIC) {
 		if ((property_info_ptr = zend_hash_find_ptr(&ce->properties_info, name)) != NULL) {
@@ -4481,14 +4479,14 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		ZVAL_COPY_VALUE(property_default_ptr, property);
 		Z_PROP_FLAG_P(property_default_ptr) = Z_ISUNDEF_P(property) ? IS_PROP_UNINIT : 0;
 	}
-skip_default_property:
+skip_property_storage:
 	if (ce->type & ZEND_INTERNAL_CLASS) {
 		/* Must be interned to avoid ZTS data races */
 		if (is_persistent_class(ce)) {
 			name = zend_new_interned_string(zend_string_copy(name));
 		}
 
-		if (property && Z_REFCOUNTED_P(property)) {
+		if (Z_REFCOUNTED_P(property)) {
 			zend_error_noreturn(E_CORE_ERROR, "Internal zvals cannot be refcounted");
 		}
 	}

@@ -188,6 +188,13 @@ typedef struct _zend_live_range {
 	uint32_t end;
 } zend_live_range;
 
+typedef struct _zend_property_info zend_property_info;
+
+typedef enum {
+	ZEND_PROPERTY_HOOK_GET = 0,
+	ZEND_PROPERTY_HOOK_SET = 1,
+} zend_property_hook_kind;
+
 /* Compilation context that is different for each op array. */
 typedef struct _zend_oparray_context {
 	uint32_t   opcodes_size;
@@ -200,6 +207,8 @@ typedef struct _zend_oparray_context {
 	zend_brk_cont_element *brk_cont_array;
 	HashTable *labels;
 	bool       in_jmp_frameless_branch;
+	const zend_property_info *active_property_info;
+	zend_property_hook_kind active_property_hook_kind;
 } zend_oparray_context;
 
 /* Class, property and method flags                  class|meth.|prop.|const*/
@@ -401,11 +410,6 @@ typedef struct _zend_oparray_context {
 #define ZEND_JMP_NULL_BP_VAR_IS 4
 
 char *zend_visibility_string(uint32_t fn_flags);
-
-typedef enum {
-	ZEND_PROPERTY_HOOK_GET = 0,
-	ZEND_PROPERTY_HOOK_SET = 1,
-} zend_property_hook_kind;
 
 #define ZEND_PROPERTY_HOOK_COUNT 2
 #define ZEND_PROPERTY_HOOK_STRUCT_SIZE (sizeof(zend_function*) * ZEND_PROPERTY_HOOK_COUNT)

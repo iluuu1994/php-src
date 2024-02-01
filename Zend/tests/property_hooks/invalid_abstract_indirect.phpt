@@ -4,7 +4,7 @@ Class with abstract property hook not declared abstract (inherited 1)
 <?php
 
 abstract class A {
-    public $prop { abstract get; }
+    public abstract $prop { get; }
 }
 
 class B extends A {

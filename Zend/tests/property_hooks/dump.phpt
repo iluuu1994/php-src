@@ -12,6 +12,9 @@ class Test {
         get { return strtoupper($field); }
         set { $field = $value; }
     }
+    public $writeOnly {
+        set {}
+    }
     private $private = 'private' {
         get { return strtoupper($field); }
         set { $field = $value; }
@@ -25,6 +28,7 @@ class Test {
         var_export($this);
         echo "\n";
         echo json_encode($this), "\n";
+        var_dump((array) $this);
     }
 }
 
@@ -41,6 +45,7 @@ class Child extends Test {
         var_export($this);
         echo "\n";
         echo json_encode($this), "\n";
+        var_dump((array) $this);
     }
 }
 
@@ -50,6 +55,7 @@ function dump($test) {
     var_export($test);
     echo "\n";
     echo json_encode($test), "\n";
+    var_dump((array) $test);
 }
 
 dump(new Test);
@@ -58,7 +64,7 @@ dump(new Child);
 (new Child)->dumpChild();
 
 ?>
---EXPECT--
+--EXPECTF--
 object(Test)#1 (4) {
   ["addedHooks"]=>
   string(10) "addedHooks"
@@ -84,6 +90,16 @@ array(5) {
    'changed' => 'changed Test',
 ))
 {"addedHooks":"addedHooks","virtual":"VIRTUAL","backed":"BACKED"}
+array(4) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["%0Test%0private"]=>
+  string(7) "private"
+  ["%0Test%0changed"]=>
+  string(12) "changed Test"
+}
 object(Child)#1 (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
@@ -112,6 +128,18 @@ array(5) {
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
+array(5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["%0Test%0private"]=>
+  string(7) "private"
+  ["%0Test%0changed"]=>
+  string(12) "changed Test"
+  ["%0Child%0changed"]=>
+  string(13) "changed Child"
+}
 object(Child)#1 (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
@@ -140,6 +168,18 @@ array(5) {
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
+array(5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["%0Test%0private"]=>
+  string(7) "private"
+  ["%0Test%0changed"]=>
+  string(12) "changed Test"
+  ["%0Child%0changed"]=>
+  string(13) "changed Child"
+}
 object(Child)#1 (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
@@ -170,3 +210,15 @@ array(6) {
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
+array(5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["%0Test%0private"]=>
+  string(7) "private"
+  ["%0Test%0changed"]=>
+  string(12) "changed Test"
+  ["%0Child%0changed"]=>
+  string(13) "changed Child"
+}

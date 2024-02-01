@@ -4,9 +4,7 @@ Property hook cannot be both abstract and private
 <?php
 
 class Test {
-    private $prop {
-        abstract get;
-    }
+    private abstract $prop { get; }
 }
 
 ?>

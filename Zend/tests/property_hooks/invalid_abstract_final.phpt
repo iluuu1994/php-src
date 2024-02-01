@@ -4,7 +4,7 @@ Property hook cannot be both abstract and final
 <?php
 
 class Test {
-    public $prop { abstract final get; }
+    public abstract $prop { final get; }
 }
 
 ?>

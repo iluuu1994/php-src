@@ -4,15 +4,15 @@ Implementing abstract property hooks
 <?php
 
 abstract class A {
-    public $prop1 {
-        abstract get;
+    public abstract $prop1 {
+        get;
         set { echo __METHOD__, "\n"; }
     }
-    public $prop2 {
+    public abstract $prop2 {
         get { echo __METHOD__, "\n"; }
-        abstract set;
+        set;
     }
-    public $prop3 { abstract get; abstract set; }
+    public abstract $prop3 { get; set; }
 }
 
 class B extends A {

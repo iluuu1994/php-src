@@ -208,7 +208,7 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 			recursion_rc = (zend_refcounted *)prop_ht;
 		} else {
 			/* Protecting the object itself is fine here because myht is temporary and can't be
-			* referenced from a different place in the object graph. */
+			 * referenced from a different place in the object graph. */
 			recursion_rc = (zend_refcounted *)obj;
 		}
 		r = PHP_JSON_OUTPUT_OBJECT;
@@ -239,6 +239,32 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 		zend_ulong index;
 
 		ZEND_HASH_FOREACH_KEY_VAL_IND(myht, index, key, data) {
+			if (r == PHP_JSON_OUTPUT_OBJECT
+			 && key
+			 && ZSTR_VAL(key)[0] == '\0'
+			 && ZSTR_LEN(key) > 0
+			 && Z_TYPE_P(val) == IS_OBJECT) {
+				/* Skip protected and private members. */
+				continue;
+			}
+
+			/* data is IS_PTR for properties with hooks. */
+			zval tmp;
+			ZVAL_UNDEF(&tmp);
+			if (UNEXPECTED(Z_TYPE_P(data) == IS_PTR)) {
+				zend_property_info *prop_info = Z_PTR_P(data);
+				if ((prop_info->flags & ZEND_ACC_VIRTUAL) && !prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
+					continue;
+				}
+				zend_read_property_ex(prop_info->ce, Z_OBJ_P(val), prop_info->name, /* silent */ true, &tmp);
+				if (EG(exception)) {
+					PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
+					zend_release_properties(prop_ht);
+					return FAILURE;
+				}
+				data = &tmp;
+			}
+
 			if (r == PHP_JSON_OUTPUT_ARRAY) {
 				if (need_comma) {
 					smart_str_appendc(buf, ',');
@@ -250,11 +276,6 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 				php_json_pretty_print_indent(buf, options, encoder);
 			} else if (r == PHP_JSON_OUTPUT_OBJECT) {
 				if (key) {
-					if (ZSTR_VAL(key)[0] == '\0' && ZSTR_LEN(key) > 0 && Z_TYPE_P(val) == IS_OBJECT) {
-						/* Skip protected and private members. */
-						continue;
-					}
-
 					if (need_comma) {
 						smart_str_appendc(buf, ',');
 					} else {
@@ -290,19 +311,6 @@ static zend_result php_json_encode_array(smart_str *buf, zval *val, int options,
 				php_json_pretty_print_char(buf, options, ' ');
 			}
 
-			/* data is IS_PTR for properties with hooks. */
-			zval tmp;
-			ZVAL_UNDEF(&tmp);
-			if (UNEXPECTED(Z_TYPE_P(data) == IS_PTR)) {
-				zend_property_info *prop_info = Z_PTR_P(data);
-				zend_read_property_ex(prop_info->ce, Z_OBJ_P(val), prop_info->name, /* silent */ true, &tmp);
-				if (EG(exception)) {
-					PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);
-					zend_release_properties(prop_ht);
-					return FAILURE;
-				}
-				data = &tmp;
-			}
 			if (php_json_encode_zval(buf, data, options, encoder) == FAILURE &&
 					!(options & PHP_JSON_PARTIAL_OUTPUT_ON_ERROR)) {
 				PHP_JSON_HASH_UNPROTECT_RECURSION(recursion_rc);

@@ -4,8 +4,8 @@ Abstract hooks compile successfully
 <?php
 
 abstract class A {
-    public $prop {
-        abstract get;
+    public abstract $prop {
+        get;
         set {}
     }
 }

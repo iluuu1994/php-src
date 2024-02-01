@@ -10,7 +10,7 @@ class A {
 class B extends A {
     public int $prop {
         set {
-            return parent::$prop::set($value, 42);
+            parent::$prop::set($value, 42);
         }
     }
 }

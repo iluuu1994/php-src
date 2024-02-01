@@ -4,8 +4,8 @@ Abstract hooks that are not implemented throw an error
 <?php
 
 abstract class A {
-    public $prop {
-        abstract get;
+    public abstract $prop {
+        get;
         set {}
     }
 }
