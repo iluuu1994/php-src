@@ -97,11 +97,6 @@ static void zend_try_inline_call(zend_op_array *op_array, zend_op *fcall, zend_o
 				return;
 			}
 
-			if (fcall->opcode == ZEND_INIT_PARENT_PROPERTY_HOOK_CALL) {
-				/* Don't inline property hook method */
-				return;
-			}
-
 			for (i = 0; i < num_args; i++) {
 				/* Don't inline functions with by-reference arguments. This would require
 				 * correct handling of INDIRECT arguments. */
@@ -181,7 +176,9 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 				call_stack[call].func = zend_optimizer_get_called_func(
 					ctx->script, op_array, opline, &call_stack[call].is_prototype);
 				call_stack[call].try_inline =
-					!call_stack[call].is_prototype && opline->opcode != ZEND_NEW;
+					!call_stack[call].is_prototype
+					&& opline->opcode != ZEND_NEW
+					&& opline->opcode != ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
 				ZEND_FALLTHROUGH;
 			case ZEND_INIT_DYNAMIC_CALL:
 			case ZEND_INIT_USER_CALL:

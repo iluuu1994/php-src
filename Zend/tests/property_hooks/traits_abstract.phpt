@@ -4,7 +4,7 @@ Abstract property hooks from trait
 <?php
 
 trait T {
-    public $prop { abstract get; abstract set; }
+    public abstract $prop { get; set; }
 }
 
 class C {

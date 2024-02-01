@@ -4,9 +4,9 @@ Property hooks in interfaces cannot be explicitly abstract
 <?php
 
 interface I {
-    public $prop { abstract get; }
+    public abstract $prop { get; }
 }
 
 ?>
 --EXPECTF--
-Fatal error: Property hook in interface cannot be explicitly abstract. All interface members are implicitly abstract in %s on line %d
+Fatal error: Property in interface cannot be explicitly abstract. All interface members are implicitly abstract in %s on line %d

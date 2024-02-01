@@ -877,12 +877,12 @@ static void _function_string(smart_str *str, zend_function *fptr, zend_class_ent
 
 static zval *property_get_default(zend_property_info *prop_info) {
 	zend_class_entry *ce = prop_info->ce;
-	if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-		return NULL;
-	} else if (prop_info->flags & ZEND_ACC_STATIC) {
+	if (prop_info->flags & ZEND_ACC_STATIC) {
 		zval *prop = &ce->default_static_members_table[prop_info->offset];
 		ZVAL_DEINDIRECT(prop);
 		return prop;
+	} else if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+		return NULL;
 	} else {
 		return &ce->default_properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
 	}
@@ -5768,6 +5768,74 @@ ZEND_METHOD(ReflectionProperty, setValue)
 	}
 }
 /* }}} */
+
+ZEND_METHOD(ReflectionProperty, getRawValue)
+{
+	reflection_object *intern;
+	property_reference *ref;
+	zval *object;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|o", &object) == FAILURE) {
+		RETURN_THROWS();
+	}
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	if (prop_get_flags(ref) & ZEND_ACC_STATIC) {
+		_DO_THROW("May not use getRawValue on static properties");
+		RETURN_THROWS();
+	}
+
+	if (!instanceof_function(Z_OBJCE_P(object), intern->ce)) {
+		_DO_THROW("Given object is not an instance of the class this property was declared in");
+		RETURN_THROWS();
+	}
+
+	uint32_t *guard = zend_get_property_guard(Z_OBJ_P(object), ref->unmangled_name);
+	uint32_t guard_backup = *guard;
+	*guard |= ZEND_GUARD_PROPERTY_HOOK;
+
+	zval rv;
+	zval *member_p = zend_read_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, 0, &rv);
+
+	*guard = guard_backup;
+
+	if (member_p != &rv) {
+		RETURN_COPY_DEREF(member_p);
+	} else {
+		if (Z_ISREF_P(member_p)) {
+			zend_unwrap_reference(member_p);
+		}
+		RETURN_COPY_VALUE(member_p);
+	}
+}
+
+ZEND_METHOD(ReflectionProperty, setRawValue)
+{
+	reflection_object *intern;
+	property_reference *ref;
+	zval *object;
+	zval *value;
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	if (prop_get_flags(ref) & ZEND_ACC_STATIC) {
+		_DO_THROW("May not use setRawValue on static properties");
+		RETURN_THROWS();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "oz", &object, &value) == FAILURE) {
+		RETURN_THROWS();
+	}
+
+	uint32_t *guard = zend_get_property_guard(Z_OBJ_P(object), ref->unmangled_name);
+	uint32_t guard_backup = *guard;
+	*guard |= ZEND_GUARD_PROPERTY_HOOK;
+
+	zend_update_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, value);
+
+	*guard = guard_backup;
+}
 
 /* {{{ Returns true if property was initialized */
 ZEND_METHOD(ReflectionProperty, isInitialized)

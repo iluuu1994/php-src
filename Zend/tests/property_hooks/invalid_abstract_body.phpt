@@ -4,11 +4,11 @@ Abstract property hook cannot have body
 <?php
 
 class Test {
-    public $prop {
-        abstract get {}
+    public abstract $prop {
+        get {}
     }
 }
 
 ?>
 --EXPECTF--
-Fatal error: Abstract property hook cannot have body in %s on line %d
+Fatal error: Abstract property Test::$prop must specify at least one abstract hook in %s on line %d

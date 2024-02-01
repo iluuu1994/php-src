@@ -17,5 +17,6 @@ class B extends A {
 }
 
 ?>
---EXPECTF--
-Fatal error: Type of B::$prop must be int (as in class A) in %s on line %d
+===DONE===
+--EXPECT--
+===DONE===

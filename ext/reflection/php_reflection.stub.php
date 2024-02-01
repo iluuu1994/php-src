@@ -456,6 +456,10 @@ class ReflectionProperty implements Reflector
     /** @tentative-return-type */
     public function setValue(mixed $objectOrValue, mixed $value = UNKNOWN): void {}
 
+    public function getRawValue(object $object): mixed {}
+
+    public function setRawValue(object $object, mixed $value): void {}
+
     /** @tentative-return-type */
     public function isInitialized(?object $object = null): bool {}
 

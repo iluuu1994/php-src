@@ -239,6 +239,37 @@ ZEND_API zend_ast * ZEND_FASTCALL zend_ast_create_4(zend_ast_kind kind, zend_ast
 	return ast;
 }
 
+ZEND_API zend_ast * ZEND_FASTCALL zend_ast_create_5(zend_ast_kind kind, zend_ast *child1, zend_ast *child2, zend_ast *child3, zend_ast *child4, zend_ast *child5) {
+	zend_ast *ast;
+	uint32_t lineno;
+
+	ZEND_ASSERT(kind >> ZEND_AST_NUM_CHILDREN_SHIFT == 5);
+	ast = zend_ast_alloc(zend_ast_size(5));
+	ast->kind = kind;
+	ast->attr = 0;
+	ast->child[0] = child1;
+	ast->child[1] = child2;
+	ast->child[2] = child3;
+	ast->child[3] = child4;
+	ast->child[4] = child5;
+	if (child1) {
+		lineno = zend_ast_get_lineno(child1);
+	} else if (child2) {
+		lineno = zend_ast_get_lineno(child2);
+	} else if (child3) {
+		lineno = zend_ast_get_lineno(child3);
+	} else if (child4) {
+		lineno = zend_ast_get_lineno(child4);
+	} else if (child5) {
+		lineno = zend_ast_get_lineno(child5);
+	} else {
+		lineno = CG(zend_lineno);
+	}
+	ast->lineno = lineno;
+
+	return ast;
+}
+
 ZEND_API zend_ast * ZEND_FASTCALL zend_ast_create_va(
 		zend_ast_kind kind, zend_ast_attr attr, va_list *va) {
 	uint32_t lineno = (uint32_t)-1;
@@ -2358,9 +2389,6 @@ simple_list:
 				for (uint32_t i = 0; i < hook_list->children; i++) {
 					zend_ast_decl *hook = (zend_ast_decl *)hook_list->child[i];
 					zend_ast_export_visibility(str, hook->flags);
-					if (hook->flags & ZEND_ACC_ABSTRACT) {
-						smart_str_appends(str, "abstract ");
-					}
 					if (hook->flags & ZEND_ACC_FINAL) {
 						smart_str_appends(str, "final ");
 					}
@@ -2372,14 +2400,18 @@ simple_list:
 							smart_str_appends(str, "set");
 							break;
 					}
-					zend_ast *statement_list = hook->child[2];
-					if (statement_list != NULL) {
+					zend_ast *body = hook->child[2];
+					if (body == NULL) {
+						smart_str_appendc(str, ';');
+					} else if (body->kind == ZEND_AST_PROPERTY_HOOK_IMPLICIT_RETURN) {
+						smart_str_appends(str, " => ");
+						zend_ast_export_ex(str, body->child[0], 0, indent);
+						smart_str_appendc(str, ';');
+					} else {
 						smart_str_appends(str, " {\n");
-						zend_ast_export_stmt(str, statement_list, indent + 1);
+						zend_ast_export_stmt(str, body, indent + 1);
 						zend_ast_export_indent(str, indent);
 						smart_str_appendc(str, '}');
-					} else {
-						smart_str_appendc(str, ';');
 					}
 					if (i < (hook_list->children - 1)) {
 						smart_str_appendc(str, '\n');

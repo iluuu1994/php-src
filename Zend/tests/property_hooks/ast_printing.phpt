@@ -41,9 +41,7 @@ assert(false && new class {
         }
     }
     public $prop3 = 1 {
-        get {
-            return 42;
-        }
+        get => 42;
     }
     public $prop4 {
         get {

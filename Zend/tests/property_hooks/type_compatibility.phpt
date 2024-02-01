@@ -13,4 +13,6 @@ class B extends A {
 }
 
 ?>
+===DONE===
 --EXPECT--
+===DONE===

@@ -916,7 +916,7 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
-		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL:;
+		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL: {
 			zend_class_entry *scope = op_array->scope;
 			ZEND_ASSERT(scope != NULL);
 			if (scope && (scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
@@ -931,12 +931,13 @@ zend_function *zend_optimizer_get_called_func(
 					&& prop_info->hooks) {
 					zend_function *fbc = prop_info->hooks[hook_kind];
 					if (fbc) {
-						*is_prototype = true;
+						*is_prototype = false;
 						return fbc;
 					}
 				}
 			}
 			break;
+		}
 		case ZEND_NEW:
 		{
 			zend_class_entry *ce = zend_optimizer_get_class_entry_from_op1(
@@ -1474,7 +1475,6 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 {
 	zval *zv;
 	zend_op_array *op_array;
-	zend_property_info *property;
 
 	zend_foreach_op_array_helper(&script->main_op_array, func, context);
 
@@ -1495,9 +1495,11 @@ void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void 
 				zend_foreach_op_array_helper(op_array, func, context);
 			}
 		} ZEND_HASH_FOREACH_END();
+
+		zend_property_info *property;
 		ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property) {
 			zend_function **hooks = property->hooks;
-			if (hooks) {
+			if (property->ce == ce && property->hooks) {
 				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 					zend_function *hook = hooks[i];
 					if (hook && hook->common.scope == ce) {
