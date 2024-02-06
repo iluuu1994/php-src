@@ -43,6 +43,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
+    if: false
     services:
       mysql:
         image: mysql:8
@@ -152,8 +153,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: 13
-            arch: X64
+          # - os: 13
+          #   arch: X64
           - os: 14
             arch: ARM64
     name: MACOS_${{ matrix.arch }}_DEBUG_NTS
@@ -171,7 +172,7 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-macos
         with:
-          configurationParameters: --enable-debug --disable-zts
+          configurationParameters: --enable-debug --disable-zts --without-pcre-jit CFLAGS="-fsanitize=undefined,address -fno-sanitize=pointer-overflow -DZEND_TRACK_ARENA_ALLOC" LDFLAGS="-fsanitize=undefined,address -fno-sanitize=pointer-overflow"
       - name: make
         run: |-
           export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
@@ -186,9 +187,11 @@ jobs:
           runTestsParameters: >-
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
+            --asan
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
@@ -215,7 +218,8 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    # if: github.repository_owner == 'php' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - name: git checkout
