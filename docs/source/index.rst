@@ -3,6 +3,12 @@
 ##############
 
 .. toctree::
+   :caption: Introduction
+   :hidden:
+
+   introduction/high-level-overview
+
+.. toctree::
    :caption: Core
    :hidden:
 
