@@ -202,10 +202,10 @@ VM is quite complex, and will be discussed separately in the `virtual machine <t
 
 As you may imagine, running this whole pipeline every time PHP serves a request is time consuming.
 Luckily, it is also not necessary. We can cache the opcodes in memory between requests. When a file
-is included, we can in the cache whether the file is already there, and verify via timestamp that it
-has not been modified since it was compiled. If it has not, we may reuse the opcodes from cache.
-This dramatically speeds up the execution of PHP programs. This is precisely what the opcache
-extension does. It lives in the ``ext/opcache`` directory.
+is included, we can look for the file in cache, and verify via timestamp that it has not been
+modified since it was compiled. If it has not, we may reuse the opcodes from cache. This
+dramatically speeds up the execution of PHP programs. This is precisely what the opcache extension
+does. It lives in the ``ext/opcache`` directory.
 
 Opcache also performs some optimizations on the opcodes before caching them. As opcaches are
 expected to be reused many times, it is profitable to spend some additional time simplifying them if

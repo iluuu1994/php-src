@@ -30,9 +30,6 @@ as various extensions that provide common functionality. This documentation is i
 understand how the interpreter works, how you can build and test changes, and how you can create
 extensions yourself.
 
-This documentation is not intended to be comprehensive, but is meant to explain core concepts that
-are not easy to grasp by reading code alone.
-
 ******************
  How to get help?
 ******************
@@ -55,3 +52,11 @@ is advisable that you have *some* knowledge of C.
 
 It is also advisable to get familiar with the semantics of PHP itself, as this will help you
 determine correct behavior for bugs, and desireable behavior for new language features.
+
+*********
+ Content
+*********
+
+This documentation is not intended to be comprehensive, but is meant to explain core concepts that
+are not easy to grasp by reading code alone. It describes best practices, and will frequently omit
+APIs that are discouraged for general use.

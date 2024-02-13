@@ -99,16 +99,6 @@ naming is not always consistent.
       -  Yes
       -  Decreases the reference count and frees the value if the reference count reaches zero.
 
-   -  -  ``Z_DELREF[_P]``
-      -  No
-      -  Decreases the reference count. Note that this will not actually free the value if the
-         reference count reaches zero. You should usually use ``zval_ptr_dtor`` instead.
-
-   -  -  ``Z_TRY_DELREF[_P]``
-      -  Yes
-      -  Decreases the reference count. Note that this will not actually free the value if the
-         reference count reaches zero. You should usually use ``zval_ptr_dtor`` instead.
-
 .. [#non-rc]
 
    Whether the macro works with non-reference counted types. If it does, the operation is usually a
@@ -137,19 +127,18 @@ naming is not always consistent.
       -  Yes
       -  Decreases the reference count and frees the value if the reference count reaches zero.
 
-   -  -  ``GC_DELREF[_P]``
-      -  No
-      -  Decreases the reference count. Note that this will not actually free the value if the
-         reference count reaches zero. You should usually use ``GC_DTOR_[P]`` instead.
-
-   -  -  ``GC_TRY_DELREF[_P]``
-      -  Yes
-      -  Decreases the reference count. Note that this will not actually free the value if the
-         reference count reaches zero. You should usually use ``GC_DTOR_[P]`` instead.
-
 .. [#immutable]
 
    Whether the macro works with immutable types, described under `Immutable reference counted types`_.
+
+************
+ Separation
+************
+
+..
+   ::
+
+   _TODO
 
 ***********************************
  Immutable reference counted types
