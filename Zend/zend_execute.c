@@ -4216,6 +4216,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 		opline->opcode == ZEND_INIT_DYNAMIC_CALL ||
 		opline->opcode == ZEND_INIT_USER_CALL ||
 		opline->opcode == ZEND_INIT_METHOD_CALL ||
+		opline->opcode == ZEND_INIT_METHOD_CALL_PTR ||
 		opline->opcode == ZEND_INIT_STATIC_METHOD_CALL ||
 		opline->opcode == ZEND_NEW)) {
 		ZEND_ASSERT(op_num);
@@ -4241,6 +4242,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 				case ZEND_INIT_DYNAMIC_CALL:
 				case ZEND_INIT_USER_CALL:
 				case ZEND_INIT_METHOD_CALL:
+				case ZEND_INIT_METHOD_CALL_PTR:
 				case ZEND_INIT_STATIC_METHOD_CALL:
 				case ZEND_NEW:
 					if (level == 0) {
@@ -4296,6 +4298,7 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 					case ZEND_INIT_DYNAMIC_CALL:
 					case ZEND_INIT_USER_CALL:
 					case ZEND_INIT_METHOD_CALL:
+					case ZEND_INIT_METHOD_CALL_PTR:
 					case ZEND_INIT_STATIC_METHOD_CALL:
 					case ZEND_NEW:
 						if (level == 0) {
@@ -4347,6 +4350,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 			opline->opcode == ZEND_INIT_DYNAMIC_CALL ||
 			opline->opcode == ZEND_INIT_USER_CALL ||
 			opline->opcode == ZEND_INIT_METHOD_CALL ||
+			opline->opcode == ZEND_INIT_METHOD_CALL_PTR ||
 			opline->opcode == ZEND_INIT_STATIC_METHOD_CALL ||
 			opline->opcode == ZEND_NEW)) {
 			ZEND_ASSERT(op_num);
@@ -4374,6 +4378,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 					case ZEND_INIT_DYNAMIC_CALL:
 					case ZEND_INIT_USER_CALL:
 					case ZEND_INIT_METHOD_CALL:
+					case ZEND_INIT_METHOD_CALL_PTR:
 					case ZEND_INIT_STATIC_METHOD_CALL:
 					case ZEND_NEW:
 						if (level == 0) {
@@ -4429,6 +4434,7 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 						case ZEND_INIT_DYNAMIC_CALL:
 						case ZEND_INIT_USER_CALL:
 						case ZEND_INIT_METHOD_CALL:
+						case ZEND_INIT_METHOD_CALL_PTR:
 						case ZEND_INIT_STATIC_METHOD_CALL:
 						case ZEND_NEW:
 							if (level == 0) {

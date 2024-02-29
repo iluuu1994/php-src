@@ -3621,6 +3621,74 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 	ZEND_VM_NEXT_OPCODE();
 }
 
+ZEND_VM_HOT_OBJ_HANDLER(209, ZEND_INIT_METHOD_CALL_PTR, CONST|TMPVAR|UNUSED|THIS|CV, CONST, NUM)
+{
+	USE_OPLINE
+	zval *object;
+	zend_function *fbc;
+	zend_object *obj;
+	zend_execute_data *call;
+	uint32_t call_info;
+
+	SAVE_OPLINE();
+
+	object = GET_OP1_OBJ_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if (OP1_TYPE == IS_UNUSED) {
+		obj = Z_OBJ_P(object);
+	} else if (OP1_TYPE != IS_CONST && EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
+		obj = Z_OBJ_P(object);
+	} else {
+		if ((OP1_TYPE & (IS_VAR|IS_CV)) && EXPECTED(Z_ISREF_P(object))) {
+			zend_reference *ref = Z_REF_P(object);
+
+			object = &ref->val;
+			if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
+				obj = Z_OBJ_P(object);
+				if (OP1_TYPE & IS_VAR) {
+					if (UNEXPECTED(GC_DELREF(ref) == 0)) {
+						efree_size(ref, sizeof(zend_reference));
+					} else {
+						Z_ADDREF_P(object);
+					}
+				}
+				ZEND_VM_C_GOTO(fetched_obj);
+			}
+		}
+		if (OP1_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(object) == IS_UNDEF)) {
+			object = ZVAL_UNDEFINED_OP1();
+			if (UNEXPECTED(EG(exception) != NULL)) {
+				HANDLE_EXCEPTION();
+			}
+		}
+		zval *func_name = RT_CONSTANT(opline, opline->op2) + 1;
+		zend_invalid_method_call(object, func_name);
+		FREE_OP1();
+		HANDLE_EXCEPTION();
+	}
+ZEND_VM_C_LABEL(fetched_obj):
+
+	fbc = Z_PTR_P(RT_CONSTANT(opline, opline->op2));
+	if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+		init_func_run_time_cache(&fbc->op_array);
+	}
+
+	call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+	if (OP1_TYPE & (IS_VAR|IS_TMP_VAR|IS_CV)) {
+		if (OP1_TYPE == IS_CV) {
+			GC_ADDREF(obj); /* For $this pointer */
+		}
+		/* CV may be changed indirectly (e.g. when it's a reference) */
+		call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS | ZEND_CALL_RELEASE_THIS;
+	}
+
+	call = zend_vm_stack_push_call_frame(call_info,
+		fbc, opline->extended_value, obj);
+	call->prev_execute_data = EX(call);
+	EX(call) = call;
+
+	ZEND_VM_NEXT_OPCODE();
+}
+
 ZEND_VM_HANDLER(113, ZEND_INIT_STATIC_METHOD_CALL, UNUSED|CLASS_FETCH|CONST|VAR, CONST|TMPVAR|UNUSED|CONSTRUCTOR|CV, NUM|CACHE_SLOT)
 {
 	USE_OPLINE

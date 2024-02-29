@@ -1080,6 +1080,7 @@ static const zend_op *zend_jit_trace_find_init_fcall_op(zend_jit_trace_rec *p, c
 				 || p->opline->opcode == ZEND_INIT_USER_CALL
 				 || p->opline->opcode == ZEND_NEW
 				 || p->opline->opcode == ZEND_INIT_METHOD_CALL
+				 || p->opline->opcode == ZEND_INIT_METHOD_CALL_PTR
 				 || p->opline->opcode == ZEND_INIT_STATIC_METHOD_CALL) {
 					return p->opline;
 				}
@@ -1116,6 +1117,7 @@ static const zend_op *zend_jit_trace_find_init_fcall_op(zend_jit_trace_rec *p, c
 					case ZEND_INIT_FCALL_BY_NAME:
 					case ZEND_INIT_NS_FCALL_BY_NAME:
 					case ZEND_INIT_METHOD_CALL:
+					case ZEND_INIT_METHOD_CALL_PTR:
 					case ZEND_INIT_DYNAMIC_CALL:
 					case ZEND_INIT_STATIC_METHOD_CALL:
 					case ZEND_INIT_USER_CALL:
@@ -2165,6 +2167,9 @@ propagate_arg:
 					}
 					ADD_OP1_TRACE_GUARD();
 					break;
+				case ZEND_INIT_METHOD_CALL_PTR:
+					ADD_OP1_TRACE_GUARD();
+					break;
 				case ZEND_INIT_DYNAMIC_CALL:
 					if (orig_op2_type == IS_OBJECT && op2_ce == zend_ce_closure) {
 						ADD_OP2_TRACE_GUARD();
@@ -2544,6 +2549,7 @@ propagate_arg:
 						case ZEND_INIT_FCALL_BY_NAME:
 						case ZEND_INIT_NS_FCALL_BY_NAME:
 						case ZEND_INIT_METHOD_CALL:
+						case ZEND_INIT_METHOD_CALL_PTR:
 						case ZEND_INIT_DYNAMIC_CALL:
 						//case ZEND_INIT_STATIC_METHOD_CALL:
 						//case ZEND_INIT_USER_CALL:
@@ -3354,6 +3360,8 @@ static bool zend_jit_may_delay_fetch_this(const zend_op_array *op_array, zend_ss
 	if (opline->opcode == ZEND_INIT_METHOD_CALL) {
 		return (opline->op2_type == IS_CONST &&
 			Z_TYPE_P(RT_CONSTANT(opline, opline->op2)) == IS_STRING);
+	} else if (opline->opcode == ZEND_INIT_METHOD_CALL_PTR) {
+		return 1;
 	} else if (opline->opcode == ZEND_FETCH_OBJ_FUNC_ARG) {
 		if (!JIT_G(current_frame)
 		 || !JIT_G(current_frame)->call
@@ -4314,6 +4322,7 @@ static const void *zend_jit_trace(zend_jit_trace_rec *trace_buffer, uint32_t par
 				case ZEND_INIT_FCALL_BY_NAME:
 				case ZEND_INIT_NS_FCALL_BY_NAME:
 				case ZEND_INIT_METHOD_CALL:
+				case ZEND_INIT_METHOD_CALL_PTR:
 				case ZEND_INIT_DYNAMIC_CALL:
 				case ZEND_INIT_STATIC_METHOD_CALL:
 				case ZEND_INIT_USER_CALL:
@@ -6209,6 +6218,9 @@ static const void *zend_jit_trace(zend_jit_trace_rec *trace_buffer, uint32_t par
 							goto jit_failure;
 						}
 						goto done;
+					case ZEND_INIT_METHOD_CALL_PTR:
+						// FIXME: Implement
+						break;
 					case ZEND_INIT_DYNAMIC_CALL:
 						if (orig_op2_type != IS_OBJECT || op2_ce != zend_ce_closure) {
 							break;
@@ -6815,7 +6827,7 @@ done:
 			}
 			if (init_opline) {
 				if (init_opline->opcode != ZEND_NEW
-				 && (init_opline->opcode != ZEND_INIT_METHOD_CALL
+				 && ((init_opline->opcode != ZEND_INIT_METHOD_CALL && init_opline->opcode != ZEND_INIT_METHOD_CALL_PTR)
 				  || init_opline->op1_type == IS_UNDEF
 				  || (!(p->info & ZEND_JIT_TRACE_FAKE_INIT_CALL)
 				   && ssa_op
@@ -6828,7 +6840,7 @@ done:
 				) {
 					TRACE_FRAME_SET_NO_NEED_RELEASE_THIS(call);
 				} else if (init_opline->opcode == ZEND_NEW
-				 || (init_opline->opcode == ZEND_INIT_METHOD_CALL
+				 || ((init_opline->opcode == ZEND_INIT_METHOD_CALL || init_opline->opcode == ZEND_INIT_METHOD_CALL_PTR)
 				  && init_opline->op1_type != IS_UNDEF
 				  && !(p->info & ZEND_JIT_TRACE_FAKE_INIT_CALL)
 				  && p->func && p->func->common.scope && !(p->func->common.fn_flags & ZEND_ACC_STATIC))) {
@@ -6886,7 +6898,7 @@ done:
 									if (init_opline->opcode == ZEND_INIT_STATIC_METHOD_CALL
 									 && init_opline->op1_type != IS_CONST) {
 										break;
-									} else if (init_opline->opcode == ZEND_INIT_METHOD_CALL) {
+									} else if (init_opline->opcode == ZEND_INIT_METHOD_CALL || init_opline->opcode == ZEND_INIT_METHOD_CALL_PTR) {
 										break;
 									}
 								}
@@ -6934,6 +6946,7 @@ done:
 					case ZEND_INIT_FCALL_BY_NAME:
 					case ZEND_INIT_NS_FCALL_BY_NAME:
 					case ZEND_INIT_METHOD_CALL:
+					case ZEND_INIT_METHOD_CALL_PTR:
 					case ZEND_INIT_DYNAMIC_CALL:
 					//case ZEND_INIT_STATIC_METHOD_CALL:
 					//case ZEND_INIT_USER_CALL:

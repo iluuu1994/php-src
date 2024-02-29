@@ -679,14 +679,18 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 				}
 			} ZEND_HASH_FOREACH_END();
 			fprintf(stderr, " default:");
-		} else if (opline->opcode == ZEND_INIT_FCALL) {
+		} else if (opline->opcode == ZEND_INIT_FCALL || opline->opcode == ZEND_INIT_METHOD_CALL_PTR) {
 			zval *func_zv = CRT_CONSTANT(opline->op2);
 			if (Z_TYPE_P(func_zv) == IS_STRING) {
 				zend_dump_const(op);
 			} else {
 				ZEND_ASSERT(Z_TYPE_P(func_zv) == IS_PTR);
 				zend_function *func = Z_PTR_P(func_zv);
-				fprintf(stderr, " (%s)", ZSTR_VAL(func->common.function_name));
+				fprintf(stderr, " (");
+				if (func->common.scope) {
+					fprintf(stderr, "%s::", ZSTR_VAL(func->common.scope->name));
+				}
+				fprintf(stderr, "%s)", ZSTR_VAL(func->common.function_name));
 			}
 		} else {
 			zend_dump_const(op);

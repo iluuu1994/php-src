@@ -922,6 +922,8 @@ zend_function *zend_optimizer_get_called_func(
 				}
 			}
 			break;
+		case ZEND_INIT_METHOD_CALL_PTR:
+			return Z_PTR_P(CRT_CONSTANT(opline->op2));
 		case ZEND_NEW:
 		{
 			zend_class_entry *ce = zend_optimizer_get_class_entry_from_op1(

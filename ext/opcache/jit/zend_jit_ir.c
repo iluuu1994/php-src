@@ -8278,6 +8278,7 @@ static int zend_jit_push_call_frame(zend_jit_ctx *jit, const zend_op *opline, co
 	ir_STORE(ref, ir_ADD_A(top, used_stack_ref));
 
 	// JIT: zend_vm_init_call_frame(call, call_info, func, num_args, called_scope, object);
+	// INIT_METHOD_CALL_PTR: ???
 	if (JIT_G(trigger) != ZEND_JIT_ON_HOT_TRACE || opline->opcode != ZEND_INIT_METHOD_CALL) {
 		// JIT: ZEND_SET_CALL_INFO(call, 0, call_info);
 		ir_STORE(jit_CALL(rx, This.u1.type_info), ir_CONST_U32(IS_UNDEF | ZEND_CALL_NESTED_FUNCTION));
@@ -8307,6 +8308,7 @@ static int zend_jit_push_call_frame(zend_jit_ctx *jit, const zend_op *opline, co
 			rx = jit_IP(jit);
 		}
 	}
+	// INIT_METHOD_CALL_PTR: ???
 	if (opline->opcode == ZEND_INIT_METHOD_CALL) {
 		// JIT: Z_PTR(call->This) = obj;
 		ZEND_ASSERT(this_ref != IR_NULL);
@@ -16005,6 +16007,7 @@ static bool zend_jit_fetch_reference(zend_jit_ctx  *jit,
 		ref = jit_Z_TYPE(jit, var_addr);
 		ir_GUARD(ir_EQ(ref, ir_CONST_U8(IS_REFERENCE)), ir_CONST_ADDR(exit_addr));
 	}
+	// INIT_METHOD_CALL_PTR: ???
 	if (opline->opcode == ZEND_INIT_METHOD_CALL && opline->op1_type == IS_VAR) {
 		/* Hack: Convert reference to regular value to simplify JIT code for INIT_METHOD_CALL */
 		ir_CALL_1(IR_VOID, ir_CONST_FC_FUNC(zend_jit_unref_helper),

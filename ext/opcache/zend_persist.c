@@ -563,7 +563,8 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 					(char*)opline;
 			}
 #endif
-			if (opline->opcode == ZEND_INIT_FCALL && opline->op2_type == IS_CONST) {
+			if ((opline->opcode == ZEND_INIT_FCALL || opline->opcode == ZEND_INIT_METHOD_CALL_PTR)
+			 && opline->op2_type == IS_CONST) {
 				zval *op2 =  RT_CONSTANT(opline, opline->op2);
 				if (Z_TYPE_P(op2) == IS_PTR) {
 					zend_function *old_ptr = Z_PTR_P(op2);

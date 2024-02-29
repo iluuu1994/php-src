@@ -60,6 +60,7 @@ ZEND_API void zend_analyze_calls(zend_arena **arena, zend_script *script, uint32
 		switch (opline->opcode) {
 			case ZEND_INIT_FCALL:
 			case ZEND_INIT_METHOD_CALL:
+			case ZEND_INIT_METHOD_CALL_PTR:
 			case ZEND_INIT_STATIC_METHOD_CALL:
 				call_stack[call] = call_info;
 				func = zend_optimizer_get_called_func(

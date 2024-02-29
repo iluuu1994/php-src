@@ -697,7 +697,9 @@ static zend_always_inline bool zend_jit_may_be_polymorphic_call(const zend_op *o
 	} else if (opline->opcode == ZEND_INIT_METHOD_CALL
      || opline->opcode == ZEND_INIT_DYNAMIC_CALL) {
 		return 1;
-	} else if (opline->opcode == ZEND_INIT_STATIC_METHOD_CALL) {
+	} else if (opline->opcode == ZEND_INIT_METHOD_CALL_PTR) {
+		return 0;
+	}else if (opline->opcode == ZEND_INIT_STATIC_METHOD_CALL) {
 		return (opline->op1_type != IS_CONST || opline->op2_type != IS_CONST);
 	} else if (opline->opcode == ZEND_INIT_USER_CALL) {
 		return (opline->op2_type != IS_CONST);

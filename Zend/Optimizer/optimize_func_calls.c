@@ -47,6 +47,7 @@ static void zend_delete_call_instructions(zend_op_array *op_array, zend_op *opli
 			case ZEND_INIT_NS_FCALL_BY_NAME:
 			case ZEND_INIT_STATIC_METHOD_CALL:
 			case ZEND_INIT_METHOD_CALL:
+			case ZEND_INIT_METHOD_CALL_PTR:
 			case ZEND_INIT_FCALL:
 				if (call == 0) {
 					MAKE_NOP(opline);
@@ -167,6 +168,7 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 			case ZEND_INIT_NS_FCALL_BY_NAME:
 			case ZEND_INIT_STATIC_METHOD_CALL:
 			case ZEND_INIT_METHOD_CALL:
+			case ZEND_INIT_METHOD_CALL_PTR:
 			case ZEND_INIT_FCALL:
 			case ZEND_NEW:
 				/* The argument passing optimizations are valid for prototypes as well,
@@ -212,8 +214,33 @@ void zend_optimize_func_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 						if (opline->opcode != ZEND_CALLABLE_CONVERT) {
 							opline->opcode = zend_get_call_op(fcall, call_stack[call].func);
 						}
+					} else if (fcall->opcode == ZEND_INIT_METHOD_CALL) {
+						zend_function *func = call_stack[call].func;
+						// FIXME: Check create_object and get_method object handlers
+						if (!call_stack[call].is_prototype
+						 /* Allows us to drop an user check in the handler. */
+						 && ZEND_USER_CODE(func->type)
+						 && !(func->common.fn_flags & ZEND_ACC_STATIC)
+						 && (func->common.scope->ce_flags & ZEND_ACC_LINKED)) {
+							fcall->opcode = ZEND_INIT_METHOD_CALL_PTR;
+							zend_string *orig_function_name;
+							if (fcall->op2_type == IS_CONST) {
+								orig_function_name = Z_STR(op_array->literals[fcall->op2.constant]);
+								ZVAL_NULL(&op_array->literals[fcall->op2.constant]);
+								literal_dtor(&op_array->literals[fcall->op2.constant + 1]);
+							} else {
+								orig_function_name = zend_string_copy(func->common.function_name);
+							}
+							zval func_zv;
+							ZVAL_PTR(&func_zv, func);
+							fcall->op2_type = IS_CONST;
+							fcall->op2.constant = zend_optimizer_add_literal(op_array, &func_zv);
+							zval func_name_zv;
+							ZVAL_STR(&func_name_zv, orig_function_name);
+							zend_optimizer_add_literal(op_array, &func_name_zv);
+						}
 					} else if (fcall->opcode == ZEND_INIT_STATIC_METHOD_CALL
-							|| fcall->opcode == ZEND_INIT_METHOD_CALL
+							|| fcall->opcode == ZEND_INIT_METHOD_CALL_PTR
 							|| fcall->opcode == ZEND_NEW) {
 						/* We don't have specialized opcodes for this, do nothing */
 					} else {

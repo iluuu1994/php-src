@@ -259,6 +259,7 @@ static int zend_jit_needs_call_chain(zend_call_info *call_info, uint32_t b, cons
 					case ZEND_SEND_UNPACK:
 					case ZEND_INIT_FCALL:
 					case ZEND_INIT_METHOD_CALL:
+					case ZEND_INIT_METHOD_CALL_PTR:
 					case ZEND_INIT_STATIC_METHOD_CALL:
 					case ZEND_INIT_FCALL_BY_NAME:
 					case ZEND_INIT_NS_FCALL_BY_NAME:
@@ -343,6 +344,7 @@ static int zend_jit_needs_call_chain(zend_call_info *call_info, uint32_t b, cons
 				case ZEND_SEND_UNPACK:
 				case ZEND_INIT_FCALL:
 				case ZEND_INIT_METHOD_CALL:
+				case ZEND_INIT_METHOD_CALL_PTR:
 				case ZEND_INIT_STATIC_METHOD_CALL:
 				case ZEND_INIT_FCALL_BY_NAME:
 				case ZEND_INIT_NS_FCALL_BY_NAME:
@@ -1454,6 +1456,7 @@ static int zend_jit(const zend_op_array *op_array, zend_ssa *ssa, const zend_op 
 				case ZEND_INIT_FCALL_BY_NAME:
 				case ZEND_INIT_NS_FCALL_BY_NAME:
 				case ZEND_INIT_METHOD_CALL:
+				case ZEND_INIT_METHOD_CALL_PTR:
 				case ZEND_INIT_DYNAMIC_CALL:
 				case ZEND_INIT_STATIC_METHOD_CALL:
 				case ZEND_INIT_USER_CALL:
@@ -2457,6 +2460,9 @@ static int zend_jit(const zend_op_array *op_array, zend_ssa *ssa, const zend_op 
 							goto jit_failure;
 						}
 						goto done;
+					case ZEND_INIT_METHOD_CALL_PTR:
+						// FIXME: Implement
+						break;
 					case ZEND_ROPE_INIT:
 					case ZEND_ROPE_ADD:
 					case ZEND_ROPE_END:

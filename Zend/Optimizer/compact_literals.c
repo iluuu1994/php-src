@@ -189,6 +189,14 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 						LITERAL_INFO(opline->op2.constant, 2);
 					}
 					break;
+				case ZEND_INIT_METHOD_CALL_PTR:
+					if (opline->op1_type == IS_CONST) {
+						LITERAL_INFO(opline->op1.constant, 1);
+					}
+					if (opline->op2_type == IS_CONST) {
+						LITERAL_INFO(opline->op2.constant, 2);
+					}
+					break;
 				case ZEND_INIT_STATIC_METHOD_CALL:
 					if (opline->op1_type == IS_CONST) {
 						LITERAL_INFO(opline->op1.constant, 2);
@@ -460,6 +468,22 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 						break;
 					}
 					ZEND_FALLTHROUGH;
+				case IS_PTR:
+					// FIXME: Support IS_PTR+IS_STRING
+					map[i] = j;
+					if (i != j) {
+						op_array->literals[j] = op_array->literals[i];
+						info[j] = info[i];
+					}
+					j++;
+					n = info[i].num_related;
+					while (n > 1) {
+						i++;
+						if (i != j) op_array->literals[j] = op_array->literals[i];
+						j++;
+						n--;
+					}
+					break;
 				default:
 					/* don't merge other types */
 					ZEND_ASSERT(info[i].num_related == 1);
@@ -611,6 +635,7 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 					}
 					break;
 				case ZEND_INIT_METHOD_CALL:
+				case ZEND_INIT_METHOD_CALL_PTR:
 					if (opline->op2_type == IS_CONST) {
 						// op2 method
 						if (opline->op1_type == IS_UNUSED &&
