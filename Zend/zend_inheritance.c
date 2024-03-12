@@ -1624,11 +1624,16 @@ ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_in
 	}
 }
 
+ZEND_API ZEND_COLD ZEND_NORETURN void zend_hooked_property_variance_error_ex(zend_string *value_param_name, zend_string *class_name, zend_string *prop_name)
+{
+	zend_error_noreturn(E_COMPILE_ERROR, "Type of parameter $%s of hook %s::$%s::set must be compatible with property type",
+		ZSTR_VAL(value_param_name), ZSTR_VAL(class_name), zend_get_unmangled_property_name(prop_name));
+}
+
 ZEND_API ZEND_COLD ZEND_NORETURN void zend_hooked_property_variance_error(const zend_property_info *prop_info)
 {
 	zend_string *value_param_name = prop_info->hooks[ZEND_PROPERTY_HOOK_SET]->op_array.arg_info[0].name;
-	zend_error_noreturn(E_COMPILE_ERROR, "Type of parameter $%s of hook %s::$%s::set must be compatible with property type",
-		ZSTR_VAL(value_param_name), ZSTR_VAL(prop_info->ce->name), zend_get_unmangled_property_name(prop_info->name));
+	zend_hooked_property_variance_error_ex(value_param_name, prop_info->ce->name, prop_info->name);
 }
 
 ZEND_API inheritance_status zend_verify_property_hook_variance(const zend_property_info *prop_info, const zend_function *func)

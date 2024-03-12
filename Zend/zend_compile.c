@@ -8134,9 +8134,8 @@ static void zend_compile_property_hooks(
 					zend_error_noreturn(E_COMPILE_ERROR, "Parameter $%s of %s hook %s::$%s must not be variadic",
 						ZSTR_VAL(zend_ast_get_str(value_param_ast->child[1])), ZSTR_VAL(name), ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 				}
-				if (!value_param_ast->child[0]) {
-					value_type_ast_ptr = &value_param_ast->child[0];
-					value_param_ast->child[0] = prop_type_ast;
+				if ((prop_type_ast != NULL) != (value_param_ast->child[0] != NULL)) {
+					zend_hooked_property_variance_error_ex(zend_ast_get_str(value_param_ast->child[1]), ce->name, prop_info->name);
 				}
 			} else {
 				zend_ast *param_name_ast = zend_ast_create_zval_from_str(ZSTR_KNOWN(ZEND_STR_VALUE));
