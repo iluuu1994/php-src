@@ -4,7 +4,7 @@ Backed property is invariant
 <?php
 
 class A {
-    public string|int $prop => $field;
+    public string|int $prop => $this->prop;
 }
 
 class B extends A {

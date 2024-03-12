@@ -5,8 +5,8 @@ foreach by-ref on object with by-val hooked property
 
 class ByVal {
     public $byVal = 'byValue' {
-        get => $field;
-        set => $field = $value;
+        get => $this->byVal;
+        set => $this->byVal = $value;
     }
 }
 

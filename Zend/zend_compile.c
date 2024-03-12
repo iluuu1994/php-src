@@ -7190,19 +7190,6 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 
 	if (ast == NULL) {
 		return;
-	} else if (ast->kind == ZEND_AST_VAR
-	 && ast->child[0]->kind == ZEND_AST_ZVAL) {
-		zval *var_name = zend_ast_get_zval(ast->child[0]);
-		if (Z_TYPE_P(var_name) == IS_STRING
-		 && zend_string_equals_literal(Z_STR_P(var_name), "field")) {
-			context->uses_property = true;
-			zend_ast_destroy(ast);
-			*ast_ptr = zend_ast_create(ZEND_AST_PROP, 
-				zend_ast_create(ZEND_AST_VAR, zend_ast_create_zval_from_str(ZSTR_KNOWN(ZEND_STR_THIS))),
-				zend_ast_create_zval_from_str(zend_string_copy(context->property_name)));
-			/* We just replaced the AST, no need to look for references in this branch. */
-			return;
-		}
 	} else if (ast->kind == ZEND_AST_PROP || ast->kind == ZEND_AST_NULLSAFE_PROP) {
 		zend_ast *object_ast = ast->child[0];
 		zend_ast *property_ast = ast->child[1];

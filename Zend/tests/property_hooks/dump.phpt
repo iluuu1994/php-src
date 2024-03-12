@@ -9,18 +9,18 @@ class Test {
         get { return strtoupper('virtual'); }
     }
     public $backed = 'backed' {
-        get { return strtoupper($field); }
-        set { $field = $value; }
+        get { return strtoupper($this->backed); }
+        set { $this->backed = $value; }
     }
     public $writeOnly {
         set {}
     }
     private $private = 'private' {
-        get { return strtoupper($field); }
-        set { $field = $value; }
+        get { return strtoupper($this->private); }
+        set { $this->private = $value; }
     }
     private $changed = 'changed Test' {
-        get { return strtoupper($field); }
+        get { return strtoupper($this->changed); }
     }
     public function dumpTest() {
         var_dump($this);
@@ -37,7 +37,7 @@ class Child extends Test {
         get { return strtoupper(parent::$addedHooks::get()); }
     }
     private $changed = 'changed Child' {
-        get { return strtoupper($field); }
+        get { return strtoupper($this->changed); }
     }
     public function dumpChild() {
         var_dump($this);

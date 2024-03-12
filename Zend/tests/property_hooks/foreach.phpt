@@ -33,22 +33,22 @@ class ByVal extends ByRef {
     public $backed = 'backed' {
         get {
           echo __METHOD__, "\n";
-          return $field;
+          return $this->backed;
         }
         set {
           echo __METHOD__, "\n";
-          $field = $value;
+          $this->backed = $value;
         }
     }
     public string $backedUninitialized {
         get {
           echo __METHOD__, "\n";
-          $field ??= 'backedUninitialized';
-          return $field;
+          $this->backedUninitialized ??= 'backedUninitialized';
+          return $this->backedUninitialized;
         }
         set {
           echo __METHOD__, "\n";
-          $field = $value;
+          $this->backedUninitialized = $value;
         }
     }
 }

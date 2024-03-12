@@ -7,11 +7,11 @@ class A {
     public $prop = 42 {
         get {
             echo __METHOD__, "\n";
-            return $field;
+            return $this->prop;
         }
         set {
             echo __METHOD__, "\n";
-            $field = $value;
+            $this->prop = $value;
         }
     }
 }

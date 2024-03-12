@@ -1,17 +1,17 @@
 --TEST--
-$field refers to backing store from either hook
+$this->prop refers to backing store from either hook
 --FILE--
 <?php
 
 class Test {
     public $prop {
-        get { 
+        get {
             echo "get\n";
-            $field = 'prop';
+            $this->prop = 'prop';
         }
         set {
             echo "set\n";
-            var_dump($field);
+            var_dump($this->prop);
         }
     }
 }
