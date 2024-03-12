@@ -4,11 +4,11 @@ Backed property is invariant
 <?php
 
 class A {
-    public string|int $prop => $this->prop;
+    public string|int $prop { get => $this->prop; }
 }
 
 class B extends A {
-    public string $prop => 'foo';
+    public string $prop { get => 'foo'; }
 }
 
 ?>

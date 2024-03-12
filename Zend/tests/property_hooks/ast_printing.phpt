@@ -18,7 +18,6 @@ try {
         public $prop3 = 1 {
             get => 42;
         }
-        public $prop4 => 42;
     });
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
@@ -42,10 +41,5 @@ assert(false && new class {
     }
     public $prop3 = 1 {
         get => 42;
-    }
-    public $prop4 {
-        get {
-            return 42;
-        }
     }
 })
