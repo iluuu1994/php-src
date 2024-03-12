@@ -25,6 +25,7 @@ class Test {
     public function dumpTest() {
         var_dump($this);
         var_dump(get_object_vars($this));
+        var_dump(get_mangled_object_vars($this));
         var_export($this);
         echo "\n";
         echo json_encode($this), "\n";
@@ -159,6 +160,18 @@ array(5) {
   string(7) "VIRTUAL"
   ["backed"]=>
   string(6) "BACKED"
+}
+array(5) {
+  ["addedHooks"]=>
+  string(10) "addedHooks"
+  ["backed"]=>
+  string(6) "backed"
+  ["%0Test%0private"]=>
+  string(7) "private"
+  ["%0Test%0changed"]=>
+  string(12) "changed Test"
+  ["%0Child%0changed"]=>
+  string(13) "changed Child"
 }
 \Child::__set_state(array(
    'addedHooks' => 'addedHooks',
