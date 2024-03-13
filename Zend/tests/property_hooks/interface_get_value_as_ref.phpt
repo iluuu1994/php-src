@@ -26,6 +26,6 @@ var_dump($a);
 ?>
 --EXPECT--
 object(A)#1 (1) {
-  ["prop"]=>
+  ["_prop":"A":private]=>
   int(42)
 }
