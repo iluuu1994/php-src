@@ -11,7 +11,6 @@ class A implements I {
     private $_prop;
     public $prop {
         &get => $this->_prop;
-        set => $this->_prop = $value;
     }
 }
 

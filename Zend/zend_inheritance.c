@@ -1407,12 +1407,6 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 						inherit_property_hook(ce, &parent_hooks[i], &child_hooks[i]);
 					}
 				} else {
-					if (parent_info->flags & ZEND_ACC_VIRTUAL) {
-						zend_error_noreturn(E_COMPILE_ERROR,
-							"Non-virtual property %s::$%s must not redeclare virtual property %s::$%s",
-							ZSTR_VAL(ce->name), ZSTR_VAL(key),
-							ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key));
-					}
 					ce->num_hooked_props++;
 				}
 			}

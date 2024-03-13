@@ -1,5 +1,5 @@
 --TEST--
-Interface may declare by reference get hooks
+Virtual prop satisfies interface get hook by-reference
 --FILE--
 <?php
 
@@ -26,6 +26,6 @@ var_dump($a);
 ?>
 --EXPECT--
 object(A)#1 (1) {
-  ["prop"]=>
+  ["_prop":"A":private]=>
   int(42)
 }
