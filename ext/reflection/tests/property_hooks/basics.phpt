@@ -27,14 +27,14 @@ function dumpFlags(ReflectionProperty $rp) {
 $test = new Test;
 
 $rp1 = new ReflectionProperty(Test::class, 'prop1');
-var_dump($rp1->getHook('get'));
-var_dump($rp1->getHook('set'));
+var_dump($rp1->getHook(ReflectionPropertyHookType::Get));
+var_dump($rp1->getHook(ReflectionPropertyHookType::Set));
 dumpFlags($rp1);
 echo "\n";
 
 $rp2 = new ReflectionProperty(Test::class, 'prop2');
-var_dump($g = $rp2->getHook('get'));
-var_dump($s = $rp2->getHook('set'));
+var_dump($g = $rp2->getHook(ReflectionPropertyHookType::Get));
+var_dump($s = $rp2->getHook(ReflectionPropertyHookType::Set));
 var_dump($g->invoke($test));
 try {
     $s->invoke($test, 42);
@@ -48,8 +48,8 @@ dumpFlags($rp2);
 echo "\n";
 
 $rp3 = new ReflectionProperty(Test::class, 'prop3');
-var_dump($g = $rp3->getHook('get'));
-var_dump($s = $rp3->getHook('set'));
+var_dump($g = $rp3->getHook(ReflectionPropertyHookType::Get));
+var_dump($s = $rp3->getHook(ReflectionPropertyHookType::Set));
 $g->invoke($test);
 $s->invoke($test, 42);
 dumpFlags($rp3);
@@ -64,13 +64,13 @@ NULL
 NULL
 Abstract: false false
 
-object(ReflectionMethod)#4 (2) {
+object(ReflectionMethod)#6 (2) {
   ["name"]=>
   string(11) "$prop2::get"
   ["class"]=>
   string(4) "Test"
 }
-object(ReflectionMethod)#5 (2) {
+object(ReflectionMethod)#7 (2) {
   ["name"]=>
   string(11) "$prop2::set"
   ["class"]=>
@@ -80,13 +80,13 @@ NULL
 NULL
 Abstract: false false
 
-object(ReflectionMethod)#7 (2) {
+object(ReflectionMethod)#9 (2) {
   ["name"]=>
   string(11) "$prop3::get"
   ["class"]=>
   string(4) "Test"
 }
-object(ReflectionMethod)#4 (2) {
+object(ReflectionMethod)#6 (2) {
   ["name"]=>
   string(11) "$prop3::set"
   ["class"]=>

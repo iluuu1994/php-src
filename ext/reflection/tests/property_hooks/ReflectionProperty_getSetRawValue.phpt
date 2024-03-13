@@ -7,7 +7,7 @@ class Test {
     public $publicProp {
         get {
             echo __FUNCTION__, "\n";
-            return $field;
+            return $this->publicProp;
         }
         set {
             echo __FUNCTION__, "\n";
@@ -17,7 +17,7 @@ class Test {
     public $privateProp {
         get {
             echo __FUNCTION__, "\n";
-            return $field;
+            return $this->privateProp;
         }
         set {
             echo __FUNCTION__, "\n";

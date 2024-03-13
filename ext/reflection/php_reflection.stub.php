@@ -421,6 +421,12 @@ class ReflectionObject extends ReflectionClass
     public function __construct(object $object) {}
 }
 
+enum ReflectionPropertyHookType: string
+{
+    case Get = 'get';
+    case Set = 'set';
+}
+
 /** @not-serializable */
 class ReflectionProperty implements Reflector
 {
@@ -514,7 +520,7 @@ class ReflectionProperty implements Reflector
     /** @return array<string, ReflectionMethod> */
     public function getHooks(): array {}
 
-    public function getHook(string $name): ?ReflectionMethod {}
+    public function getHook(ReflectionPropertyHookType $type): ?ReflectionMethod {}
 }
 
 /** @not-serializable */

@@ -97,6 +97,7 @@ PHPAPI zend_class_entry *reflection_enum_ptr;
 PHPAPI zend_class_entry *reflection_enum_unit_case_ptr;
 PHPAPI zend_class_entry *reflection_enum_backed_case_ptr;
 PHPAPI zend_class_entry *reflection_fiber_ptr;
+PHPAPI zend_class_entry *reflection_property_hook_type_ptr;
 
 /* Exception throwing macro */
 #define _DO_THROW(msg) \
@@ -6077,23 +6078,19 @@ ZEND_METHOD(ReflectionProperty, getHook)
 {
 	reflection_object *intern;
 	property_reference *ref;
-	zend_string *name;
+	zend_object *type;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_STR(name)
+		Z_PARAM_OBJ_OF_CLASS(type, reflection_property_hook_type_ptr)
 	ZEND_PARSE_PARAMETERS_END();
 
 	GET_REFLECTION_OBJECT_PTR(ref);
 
 	zend_function *hook;
-	if (zend_string_equals_literal_ci(name, "get")) {
+	if (zend_string_equals_literal(Z_STR_P(zend_enum_fetch_case_name(type)), "Get")) {
 		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_GET] : NULL;
-	} else if (zend_string_equals_literal_ci(name, "set")) {
-		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_SET] : NULL;
 	} else {
-		zend_throw_exception_ex(reflection_exception_ptr, 0,
-			"Property hook \"%s\" does not exist", ZSTR_VAL(name));
-		RETURN_THROWS();
+		hook = ref->prop->hooks ? ref->prop->hooks[ZEND_PROPERTY_HOOK_SET] : NULL;
 	}
 
 	if (!hook) {
@@ -7427,6 +7424,8 @@ PHP_MINIT_FUNCTION(reflection) /* {{{ */
 	reflection_fiber_ptr = register_class_ReflectionFiber();
 	reflection_fiber_ptr->create_object = reflection_objects_new;
 	reflection_fiber_ptr->default_object_handlers = &reflection_object_handlers;
+
+	reflection_property_hook_type_ptr = register_class_ReflectionPropertyHookType();
 
 	REFLECTION_G(key_initialized) = 0;
 

@@ -25,13 +25,13 @@ class B extends A {
 $a = new A();
 $b = new B();
 
-echo ((new ReflectionProperty(A::class, 'foo'))->getHook('get')->invoke($a)), "\n";
-echo ((new ReflectionProperty(A::class, 'foo'))->getHook('get')->invoke($b)), "\n";
-echo ((new ReflectionProperty(B::class, 'foo'))->getHook('get')->invoke($b)), "\n";
+echo ((new ReflectionProperty(A::class, 'foo'))->getHook(ReflectionPropertyHookType::Get)->invoke($a)), "\n";
+echo ((new ReflectionProperty(A::class, 'foo'))->getHook(ReflectionPropertyHookType::Get)->invoke($b)), "\n";
+echo ((new ReflectionProperty(B::class, 'foo'))->getHook(ReflectionPropertyHookType::Get)->invoke($b)), "\n";
 
-((new ReflectionProperty(A::class, 'foo'))->getHook('set')->invoke($a, null));
-((new ReflectionProperty(A::class, 'foo'))->getHook('set')->invoke($b, null));
-((new ReflectionProperty(B::class, 'foo'))->getHook('set')->invoke($b, null));
+((new ReflectionProperty(A::class, 'foo'))->getHook(ReflectionPropertyHookType::Set)->invoke($a, null));
+((new ReflectionProperty(A::class, 'foo'))->getHook(ReflectionPropertyHookType::Set)->invoke($b, null));
+((new ReflectionProperty(B::class, 'foo'))->getHook(ReflectionPropertyHookType::Set)->invoke($b, null));
 
 ?>
 --EXPECT--

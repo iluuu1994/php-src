@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 11ae68f681368ee76e98e5e7fd8428a79ab11fc7 */
+ * Stub hash: d80c16859b37a5f9bf959c88e7364b01cdd89b80 */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -403,7 +403,7 @@ ZEND_END_ARG_INFO()
 #define arginfo_class_ReflectionProperty_getHooks arginfo_class_ReflectionFunctionAbstract_getClosureUsedVariables
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_ReflectionProperty_getHook, 0, 1, ReflectionMethod, 1)
-	ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+	ZEND_ARG_OBJ_INFO(0, type, ReflectionPropertyHookType, 0)
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_ReflectionClassConstant___clone arginfo_class_ReflectionFunctionAbstract___clone
@@ -1029,6 +1029,10 @@ static const zend_function_entry class_ReflectionObject_methods[] = {
 	ZEND_FE_END
 };
 
+static const zend_function_entry class_ReflectionPropertyHookType_methods[] = {
+	ZEND_FE_END
+};
+
 static const zend_function_entry class_ReflectionProperty_methods[] = {
 	ZEND_MALIAS(ReflectionClass, __clone, __clone, arginfo_class_ReflectionProperty___clone, ZEND_ACC_PRIVATE)
 	ZEND_ME(ReflectionProperty, __construct, arginfo_class_ReflectionProperty___construct, ZEND_ACC_PUBLIC)
@@ -1391,6 +1395,23 @@ static zend_class_entry *register_class_ReflectionObject(zend_class_entry *class
 
 	INIT_CLASS_ENTRY(ce, "ReflectionObject", class_ReflectionObject_methods);
 	class_entry = zend_register_internal_class_ex(&ce, class_entry_ReflectionClass);
+
+	return class_entry;
+}
+
+static zend_class_entry *register_class_ReflectionPropertyHookType(void)
+{
+	zend_class_entry *class_entry = zend_register_internal_enum("ReflectionPropertyHookType", IS_STRING, class_ReflectionPropertyHookType_methods);
+
+	zval enum_case_Get_value;
+	zend_string *enum_case_Get_value_str = zend_string_init("get", strlen("get"), 1);
+	ZVAL_STR(&enum_case_Get_value, enum_case_Get_value_str);
+	zend_enum_add_case_cstr(class_entry, "Get", &enum_case_Get_value);
+
+	zval enum_case_Set_value;
+	zend_string *enum_case_Set_value_str = zend_string_init("set", strlen("set"), 1);
+	ZVAL_STR(&enum_case_Set_value, enum_case_Set_value_str);
+	zend_enum_add_case_cstr(class_entry, "Set", &enum_case_Set_value);
 
 	return class_entry;
 }
