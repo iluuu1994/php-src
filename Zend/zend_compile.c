@@ -7929,7 +7929,7 @@ static zend_op_array *zend_compile_func_decl_ex(
 	if (decl->child[4]) {
 		int target = ZEND_ATTRIBUTE_TARGET_FUNCTION;
 
-		if (is_method) {
+		if (is_method || is_hook) {
 			target = ZEND_ATTRIBUTE_TARGET_METHOD;
 		}
 
