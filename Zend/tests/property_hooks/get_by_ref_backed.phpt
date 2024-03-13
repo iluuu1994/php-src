@@ -17,4 +17,4 @@ class B extends A {
 
 ?>
 --EXPECTF--
-Fatal error: Only virtual get hooks may return by reference in %s on line %d
+Fatal error: Get hook of backed property B::prop with set hook may not return by reference in %s on line %d

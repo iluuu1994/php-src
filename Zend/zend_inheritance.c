@@ -1318,6 +1318,10 @@ static void inherit_property_hook(
 			ZSTR_VAL(parent->common.function_name));
 	}
 
+	do_inheritance_check_on_method_ex(
+		child, child->common.scope, parent, parent->common.scope, ce, /* child */ NULL,
+		/* check_visibility */ false, /* check_only */ false, /* checked */ false, /* force_mutable */ false);
+
 	/* Other signature compatibility issues should already be covered either by the
 	 * properties being compatible (types), or certain signatures being forbidden by the
 	 * compiler (variadic and by-ref args, etc). */
@@ -1608,10 +1612,12 @@ ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_in
 	for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 		zend_function *func = prop_info->hooks[i];
 		if (func) {
-			if ((func->op_array.fn_flags & ZEND_ACC_RETURN_REFERENCE)
-			 && (!(prop_info->flags & ZEND_ACC_VIRTUAL)
-			  || (zend_property_hook_kind)i != ZEND_PROPERTY_HOOK_GET)) {
-				zend_error_noreturn(E_COMPILE_ERROR, "Only virtual get hooks may return by reference");
+			if ((zend_property_hook_kind)i == ZEND_PROPERTY_HOOK_GET
+			 && (func->op_array.fn_flags & ZEND_ACC_RETURN_REFERENCE)
+			 && !(prop_info->flags & ZEND_ACC_VIRTUAL)
+			 && prop_info->hooks[ZEND_PROPERTY_HOOK_SET]) {
+				zend_error_noreturn(E_COMPILE_ERROR, "Get hook of backed property %s::%s with set hook may not return by reference",
+					ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 			}
 			if (func->common.fn_flags & ZEND_ACC_ABSTRACT) {
 				abstract_error = false;

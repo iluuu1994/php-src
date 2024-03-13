@@ -12,4 +12,4 @@ class B extends A {
 
 ?>
 --EXPECTF--
-Fatal error: Type of B::$a must be supertype of int|float (as in class A) in %s on line %d
+Fatal error: Declaration of B::$a::set(int $value): void must be compatible with A::$a::set(int|float $value): void in %s on line %d
