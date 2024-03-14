@@ -2264,13 +2264,13 @@ ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purp
 			ZEND_FALLTHROUGH;
 		case ZEND_PROP_PURPOSE_JSON:
 		case ZEND_PROP_PURPOSE_GET_OJBECT_VARS:
+		case ZEND_PROP_PURPOSE_VAR_EXPORT:
 			if (obj->ce->num_hooked_props) {
 				return zend_hooked_object_build_properties(obj);
 			}
 			ZEND_FALLTHROUGH;
 		case ZEND_PROP_PURPOSE_ARRAY_CAST:
 		case ZEND_PROP_PURPOSE_SERIALIZE:
-		case ZEND_PROP_PURPOSE_VAR_EXPORT:
 			ht = obj->handlers->get_properties(obj);
 			if (ht) {
 				GC_TRY_ADDREF(ht);
