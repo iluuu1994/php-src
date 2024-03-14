@@ -7425,7 +7425,7 @@ PHP_MINIT_FUNCTION(reflection) /* {{{ */
 	reflection_fiber_ptr->create_object = reflection_objects_new;
 	reflection_fiber_ptr->default_object_handlers = &reflection_object_handlers;
 
-	reflection_property_hook_type_ptr = register_class_ReflectionPropertyHookType();
+	reflection_property_hook_type_ptr = register_class_PropertyHookType();
 
 	REFLECTION_G(key_initialized) = 0;
 

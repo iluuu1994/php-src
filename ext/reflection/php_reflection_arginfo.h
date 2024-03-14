@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: d80c16859b37a5f9bf959c88e7364b01cdd89b80 */
+ * Stub hash: ffcff8b1221a63eeeb15bb61d6b5e599f7ed9b3b */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -403,7 +403,7 @@ ZEND_END_ARG_INFO()
 #define arginfo_class_ReflectionProperty_getHooks arginfo_class_ReflectionFunctionAbstract_getClosureUsedVariables
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_ReflectionProperty_getHook, 0, 1, ReflectionMethod, 1)
-	ZEND_ARG_OBJ_INFO(0, type, ReflectionPropertyHookType, 0)
+	ZEND_ARG_OBJ_INFO(0, type, PropertyHookType, 0)
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_ReflectionClassConstant___clone arginfo_class_ReflectionFunctionAbstract___clone
@@ -1029,7 +1029,7 @@ static const zend_function_entry class_ReflectionObject_methods[] = {
 	ZEND_FE_END
 };
 
-static const zend_function_entry class_ReflectionPropertyHookType_methods[] = {
+static const zend_function_entry class_PropertyHookType_methods[] = {
 	ZEND_FE_END
 };
 
@@ -1399,9 +1399,9 @@ static zend_class_entry *register_class_ReflectionObject(zend_class_entry *class
 	return class_entry;
 }
 
-static zend_class_entry *register_class_ReflectionPropertyHookType(void)
+static zend_class_entry *register_class_PropertyHookType(void)
 {
-	zend_class_entry *class_entry = zend_register_internal_enum("ReflectionPropertyHookType", IS_STRING, class_ReflectionPropertyHookType_methods);
+	zend_class_entry *class_entry = zend_register_internal_enum("PropertyHookType", IS_STRING, class_PropertyHookType_methods);
 
 	zval enum_case_Get_value;
 	zend_string *enum_case_Get_value_str = zend_string_init("get", strlen("get"), 1);

@@ -129,9 +129,9 @@ array(25) {
     ["name"]=>
     string(15) "ReflectionFiber"
   }
-  ["ReflectionPropertyHookType"]=>
+  ["PropertyHookType"]=>
   object(ReflectionEnum)#26 (1) {
     ["name"]=>
-    string(26) "ReflectionPropertyHookType"
+    string(16) "PropertyHookType"
   }
 }

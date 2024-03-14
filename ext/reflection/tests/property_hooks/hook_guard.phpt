@@ -21,8 +21,8 @@ class B extends A {
 }
 
 $b = new B();
-(new ReflectionProperty(B::class, 'prop'))->getHook(ReflectionPropertyHookType::Set)->invoke($b, 43);
-var_dump((new ReflectionProperty(B::class, 'prop'))->getHook(ReflectionPropertyHookType::Get)->invoke($b));
+(new ReflectionProperty(B::class, 'prop'))->getHook(PropertyHookType::Set)->invoke($b, 43);
+var_dump((new ReflectionProperty(B::class, 'prop'))->getHook(PropertyHookType::Get)->invoke($b));
 
 ?>
 --EXPECT--
