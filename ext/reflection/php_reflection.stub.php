@@ -507,6 +507,8 @@ class ReflectionProperty implements Reflector
     /** @tentative-return-type */
     public function getType(): ?ReflectionType {}
 
+    public function getSettableType(): ?ReflectionType {}
+
     /** @tentative-return-type */
     public function hasType(): bool {}
 

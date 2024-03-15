@@ -18,6 +18,8 @@
    +----------------------------------------------------------------------+
 */
 
+#include "zend_compile.h"
+#include "zend_type_info.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -5965,6 +5967,47 @@ ZEND_METHOD(ReflectionProperty, getType)
 	reflection_type_factory(ref->prop->type, return_value, 1);
 }
 /* }}} */
+
+ZEND_METHOD(ReflectionProperty, getSettableType)
+{
+	reflection_object *intern;
+	property_reference *ref;
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
+	}
+
+	GET_REFLECTION_OBJECT_PTR(ref);
+
+	zend_property_info *prop = ref->prop;
+	/* Dynamic property is untyped. */
+	if (!ref->prop) {
+		RETURN_NULL();
+	}
+
+	/* Get-only virtual property can never be written to. */
+	if ((prop->flags & ZEND_ACC_VIRTUAL) && !prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+		zend_type never_type = ZEND_TYPE_INIT_CODE(IS_NEVER, 0, 0);
+		reflection_type_factory(never_type, return_value, 0);
+		return;
+	}
+
+	/* Extract set $value parameter type. */
+	if (prop->hooks && prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+		zend_arg_info *arg_info = &prop->hooks[ZEND_PROPERTY_HOOK_SET]->common.arg_info[0];
+		if (!ZEND_TYPE_IS_SET(arg_info->type)) {
+			RETURN_NULL();
+		}
+		reflection_type_factory(arg_info->type, return_value, 0);
+		return;
+	}
+
+	/* Fall back to property type */
+	if (!ZEND_TYPE_IS_SET(ref->prop->type)) {
+		RETURN_NULL();
+	}
+	reflection_type_factory(ref->prop->type, return_value, 0);
+}
 
 /* {{{ Returns whether property has a type */
 ZEND_METHOD(ReflectionProperty, hasType)

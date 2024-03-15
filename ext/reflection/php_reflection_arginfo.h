@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: ffcff8b1221a63eeeb15bb61d6b5e599f7ed9b3b */
+ * Stub hash: d824428f57060ca682714de4772b9049e13036ce */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -391,6 +391,8 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_class_ReflectionProperty_getType arginfo_class_ReflectionFunctionAbstract_getReturnType
 
+#define arginfo_class_ReflectionProperty_getSettableType arginfo_class_ReflectionFunctionAbstract_getTentativeReturnType
+
 #define arginfo_class_ReflectionProperty_hasType arginfo_class_ReflectionFunctionAbstract_inNamespace
 
 #define arginfo_class_ReflectionProperty_hasDefaultValue arginfo_class_ReflectionFunctionAbstract_hasTentativeReturnType
@@ -774,6 +776,7 @@ ZEND_METHOD(ReflectionProperty, getDeclaringClass);
 ZEND_METHOD(ReflectionProperty, getDocComment);
 ZEND_METHOD(ReflectionProperty, setAccessible);
 ZEND_METHOD(ReflectionProperty, getType);
+ZEND_METHOD(ReflectionProperty, getSettableType);
 ZEND_METHOD(ReflectionProperty, hasType);
 ZEND_METHOD(ReflectionProperty, hasDefaultValue);
 ZEND_METHOD(ReflectionProperty, getDefaultValue);
@@ -1057,6 +1060,7 @@ static const zend_function_entry class_ReflectionProperty_methods[] = {
 	ZEND_ME(ReflectionProperty, getDocComment, arginfo_class_ReflectionProperty_getDocComment, ZEND_ACC_PUBLIC)
 	ZEND_ME(ReflectionProperty, setAccessible, arginfo_class_ReflectionProperty_setAccessible, ZEND_ACC_PUBLIC)
 	ZEND_ME(ReflectionProperty, getType, arginfo_class_ReflectionProperty_getType, ZEND_ACC_PUBLIC)
+	ZEND_ME(ReflectionProperty, getSettableType, arginfo_class_ReflectionProperty_getSettableType, ZEND_ACC_PUBLIC)
 	ZEND_ME(ReflectionProperty, hasType, arginfo_class_ReflectionProperty_hasType, ZEND_ACC_PUBLIC)
 	ZEND_ME(ReflectionProperty, hasDefaultValue, arginfo_class_ReflectionProperty_hasDefaultValue, ZEND_ACC_PUBLIC)
 	ZEND_ME(ReflectionProperty, getDefaultValue, arginfo_class_ReflectionProperty_getDefaultValue, ZEND_ACC_PUBLIC)
