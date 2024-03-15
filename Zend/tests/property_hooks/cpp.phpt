@@ -7,7 +7,7 @@ class Test {
     public function __construct(
         public $prop = 42 {
             get => print("Getting\n");
-            set => print("Setting\n");
+            set { print("Setting\n"); }
         }
     ) {
         echo "Constructor\n";

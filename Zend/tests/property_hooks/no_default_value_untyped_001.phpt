@@ -6,7 +6,7 @@ Hooked properties with no default value are initialized to null
 class Test {
     public $prop {
         get => $this->prop;
-        set => $this->prop = $value;
+        set => $value;
     }
 }
 

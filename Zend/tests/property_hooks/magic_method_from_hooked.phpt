@@ -6,7 +6,7 @@ Accessing property from hook does not call magic method
 class Test {
     public $prop {
         get => $this->prop;
-        set => $this->prop = $value;
+        set => $value;
     }
 
     public function __get($name) {

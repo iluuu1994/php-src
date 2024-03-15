@@ -9,7 +9,9 @@ class P {
 
 class C extends P {
     public $prop {
-        set => var_dump(parent::$prop::set($value));
+        set {
+            var_dump(parent::$prop::set($value));
+        }
     }
 }
 

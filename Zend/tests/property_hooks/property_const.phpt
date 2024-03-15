@@ -6,7 +6,7 @@ __PROPERTY__ magic constant
 class Test {
     public $prop {
         get => __PROPERTY__;
-        set => var_dump(__PROPERTY__);
+        set { var_dump(__PROPERTY__); }
     }
 
     public function method() {

@@ -7216,8 +7216,13 @@ static void zend_property_hook_find_property_usage(zend_ast **ast_ptr, void *_co
 	}
 }
 
-static bool zend_property_hook_uses_property(zend_string *property_name, zend_ast *hook_ast)
+static bool zend_property_hook_uses_property(zend_string *property_name, zend_string *hook_name, zend_ast *hook_ast)
 {
+	if (zend_string_equals_literal_ci(hook_name, "set")
+	 && hook_ast->kind == ZEND_AST_PROPERTY_HOOK_IMPLICIT_RETURN) {
+		return true;
+	}
+
 	find_property_usage_context context = { property_name, false };
 	zend_property_hook_find_property_usage(&hook_ast, &context);
 	return context.uses_property;
@@ -7238,7 +7243,7 @@ static bool zend_property_is_virtual(zend_class_entry *ce, zend_string *property
 		zend_ast_decl *hook = (zend_ast_decl *) hooks->child[i];
 		zend_ast *body = hook->child[2];
 		/* Abstract properties aren't virtual. */
-		if (!body || zend_property_hook_uses_property(property_name, body)) {
+		if (!body || zend_property_hook_uses_property(property_name, hook->name, body)) {
 			is_virtual = false;
 		}
 	}
@@ -8106,6 +8111,13 @@ static void zend_compile_property_hooks(
 			stmt_ast = stmt_ast->child[0];
 			if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
 				stmt_ast = zend_ast_create(ZEND_AST_RETURN, stmt_ast);
+			} else {
+				ZEND_ASSERT(hook_kind == ZEND_PROPERTY_HOOK_SET);
+				stmt_ast = zend_ast_create(ZEND_AST_ASSIGN,
+					zend_ast_create(ZEND_AST_PROP,
+						zend_ast_create(ZEND_AST_VAR, zend_ast_create_zval_from_str(ZSTR_KNOWN(ZEND_STR_THIS))),
+						zend_ast_create_zval_from_str(zend_string_copy(prop_info->name))),
+					stmt_ast);
 			}
 			stmt_ast = zend_ast_create_list(1, ZEND_AST_STMT_LIST, stmt_ast);
 			hook->child[2] = stmt_ast;

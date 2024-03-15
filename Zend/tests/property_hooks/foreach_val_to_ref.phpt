@@ -12,7 +12,7 @@ class ByVal {
     }
     public $byVal = 'byValue' {
         get => $this->byVal;
-        set => $this->byVal = $value;
+        set => $value;
     }
 }
 
