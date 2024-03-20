@@ -225,6 +225,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Disable ASLR
+        run: echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
       - name: apt
         run: |
           set -x
