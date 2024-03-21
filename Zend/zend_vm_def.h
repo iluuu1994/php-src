@@ -2405,6 +2405,9 @@ ZEND_VM_HANDLER(24, ZEND_ASSIGN_OBJ, VAR|UNUSED|THIS|CV, CONST|TMPVAR|CV, CACHE_
 	}
 
 ZEND_VM_C_LABEL(assign_object):
+	if (OP1_TYPE & (IS_CV|IS_VAR)) {
+		SEPARATE_DATA_OBJ(object);
+	}
 	zobj = Z_OBJ_P(object);
 	if (OP2_TYPE == IS_CONST) {
 		if (EXPECTED(zobj->ce == CACHED_PTR(opline->extended_value))) {
@@ -3476,10 +3479,21 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 	zend_object *obj;
 	zend_execute_data *call;
 	uint32_t call_info;
+	bool needs_addref = false;
 
 	SAVE_OPLINE();
 
-	object = GET_OP1_OBJ_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if ((OP1_TYPE & IS_VAR)
+	 && UNEXPECTED(opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING)) {
+		object = EX_VAR(opline->op1.var);
+		if (EXPECTED(Z_TYPE_P(object) == IS_INDIRECT)) {
+			object = Z_INDIRECT_P(object);
+			/* Object was fetched through BP_VAR_RW, we need to addref. */
+			needs_addref = true;
+		}
+	} else {
+		object = GET_OP1_OBJ_ZVAL_PTR_UNDEF(BP_VAR_R);
+	}
 
 	if (OP2_TYPE != IS_CONST) {
 		function_name = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
@@ -3512,6 +3526,9 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 	} else {
 		do {
 			if (OP1_TYPE != IS_CONST && EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
+				if (OP1_TYPE & (IS_CV|IS_VAR)) {
+					SEPARATE_DATA_OBJ(object);
+				}
 				obj = Z_OBJ_P(object);
 			} else {
 				if ((OP1_TYPE & (IS_VAR|IS_CV)) && EXPECTED(Z_ISREF_P(object))) {
@@ -3519,6 +3536,7 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 
 					object = &ref->val;
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
+						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
 						if (OP1_TYPE & IS_VAR) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
@@ -3606,7 +3624,7 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 		obj = (zend_object*)called_scope;
 		call_info = ZEND_CALL_NESTED_FUNCTION;
 	} else if (OP1_TYPE & (IS_VAR|IS_TMP_VAR|IS_CV)) {
-		if (OP1_TYPE == IS_CV) {
+		if (OP1_TYPE == IS_CV || needs_addref) {
 			GC_ADDREF(obj); /* For $this pointer */
 		}
 		/* CV may be changed indirectly (e.g. when it's a reference) */
@@ -3614,7 +3632,7 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 	}
 
 	call = zend_vm_stack_push_call_frame(call_info,
-		fbc, opline->extended_value, obj);
+		fbc, opline->extended_value & ~ZEND_INIT_METHOD_CALL_MUTATING, obj);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
 
