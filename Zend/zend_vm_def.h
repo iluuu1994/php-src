@@ -1311,6 +1311,7 @@ ZEND_VM_HANDLER(132, ZEND_PRE_INC_OBJ, VAR|UNUSED|THIS|CV, CONST|TMPVAR|CV, CACH
 
 ZEND_VM_C_LABEL(pre_incdec_object):
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (OP2_TYPE == IS_CONST) {
 			name = Z_STR_P(property);
@@ -1384,6 +1385,7 @@ ZEND_VM_HANDLER(134, ZEND_POST_INC_OBJ, VAR|UNUSED|THIS|CV, CONST|TMPVAR|CV, CAC
 
 ZEND_VM_C_LABEL(post_incdec_object):
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (OP2_TYPE == IS_CONST) {
 			name = Z_STR_P(property);
