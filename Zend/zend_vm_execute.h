@@ -23129,6 +23129,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_CONST_H
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CONST == IS_CONST) {
 			name = Z_STR_P(property);
@@ -26064,6 +26065,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_TMPVAR_
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if ((IS_TMP_VAR|IS_VAR) == IS_CONST) {
 			name = Z_STR_P(property);
@@ -30375,6 +30377,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_CV_HAND
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CV == IS_CONST) {
 			name = Z_STR_P(property);
@@ -32993,6 +32996,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_CONS
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CONST == IS_CONST) {
 			name = Z_STR_P(property);
@@ -35085,6 +35089,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_TMPV
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if ((IS_TMP_VAR|IS_VAR) == IS_CONST) {
 			name = Z_STR_P(property);
@@ -37628,6 +37633,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_CV_H
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CV == IS_CONST) {
 			name = Z_STR_P(property);
@@ -41691,6 +41697,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_CONST_HA
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CONST == IS_CONST) {
 			name = Z_STR_P(property);
@@ -45566,6 +45573,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_TMPVAR_H
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if ((IS_TMP_VAR|IS_VAR) == IS_CONST) {
 			name = Z_STR_P(property);
@@ -50996,6 +51004,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_CV_HANDL
 
 assign_op_object:
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (IS_CV == IS_CONST) {
 			name = Z_STR_P(property);

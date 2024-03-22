@@ -1039,6 +1039,7 @@ ZEND_VM_HANDLER(28, ZEND_ASSIGN_OBJ_OP, VAR|UNUSED|THIS|CV, CONST|TMPVAR|CV, OP)
 
 ZEND_VM_C_LABEL(assign_op_object):
 		/* here we are sure we are dealing with an object */
+		SEPARATE_DATA_OBJ(object);
 		zobj = Z_OBJ_P(object);
 		if (OP2_TYPE == IS_CONST) {
 			name = Z_STR_P(property);
