@@ -3188,7 +3188,9 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 		} while (0);
 	}
 
-	SEPARATE_DATA_OBJ(container);
+	if (container_op_type & (IS_VAR|IS_CV)) {
+		SEPARATE_DATA_OBJ(container);
+	}
 
 	zobj = Z_OBJ_P(container);
 	if (prop_op_type == IS_CONST &&

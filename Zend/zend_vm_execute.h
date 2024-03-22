@@ -6935,13 +6935,17 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			} else if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -6963,7 +6967,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CONST & IS_VAR) {
+						if ((IS_CONST & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -6987,7 +6991,9 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -9470,13 +9476,17 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			} else if ((IS_TMP_VAR|IS_VAR) == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -9498,7 +9508,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CONST & IS_VAR) {
+						if ((IS_CONST & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -9522,7 +9532,9 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				}
 				zend_invalid_method_call(object, function_name);
 				zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -11872,13 +11884,17 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			} else if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -11900,7 +11916,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CONST & IS_VAR) {
+						if ((IS_CONST & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -11924,7 +11940,9 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -16240,13 +16258,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 			} else if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
-					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					if (!needs_addref) {
+						zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
-			zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			if (!needs_addref) {
+				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -16268,7 +16290,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if ((IS_TMP_VAR|IS_VAR) & IS_VAR) {
+						if (((IS_TMP_VAR|IS_VAR) & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -16292,7 +16314,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 				}
 				zend_invalid_method_call(object, function_name);
 
-				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				if (!needs_addref) {
+					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -17700,13 +17724,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_T
 			} else if ((IS_TMP_VAR|IS_VAR) == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
-					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					if (!needs_addref) {
+						zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
-			zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			if (!needs_addref) {
+				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -17728,7 +17756,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_T
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if ((IS_TMP_VAR|IS_VAR) & IS_VAR) {
+						if (((IS_TMP_VAR|IS_VAR) & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -17752,7 +17780,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_T
 				}
 				zend_invalid_method_call(object, function_name);
 				zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
-				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				if (!needs_addref) {
+					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -19075,13 +19105,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 			} else if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
-					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					if (!needs_addref) {
+						zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
-			zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			if (!needs_addref) {
+				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -19103,7 +19137,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if ((IS_TMP_VAR|IS_VAR) & IS_VAR) {
+						if (((IS_TMP_VAR|IS_VAR) & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -19127,7 +19161,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 				}
 				zend_invalid_method_call(object, function_name);
 
-				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				if (!needs_addref) {
+					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -34202,13 +34238,17 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 			} else if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -34230,7 +34270,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_UNUSED & IS_VAR) {
+						if ((IS_UNUSED & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -34254,7 +34294,9 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -36284,13 +36326,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_T
 			} else if ((IS_TMP_VAR|IS_VAR) == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -36312,7 +36358,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_T
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_UNUSED & IS_VAR) {
+						if ((IS_UNUSED & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -36336,7 +36382,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_T
 				}
 				zend_invalid_method_call(object, function_name);
 				zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -38816,13 +38864,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_C
 			} else if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -38844,7 +38896,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_C
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_UNUSED & IS_VAR) {
+						if ((IS_UNUSED & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -38868,7 +38920,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_C
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -43834,13 +43888,17 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 			} else if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -43862,7 +43920,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CV & IS_VAR) {
+						if ((IS_CV & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -43886,7 +43944,9 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -47642,13 +47702,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_TMPVA
 			} else if ((IS_TMP_VAR|IS_VAR) == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -47670,7 +47734,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_TMPVA
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CV & IS_VAR) {
+						if ((IS_CV & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -47694,7 +47758,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_TMPVA
 				}
 				zend_invalid_method_call(object, function_name);
 				zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
@@ -53156,13 +53222,17 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_CV_HA
 			} else if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
+					if (!needs_addref) {
 
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 
+			if (!needs_addref) {
 
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -53184,7 +53254,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_CV_HA
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (IS_CV & IS_VAR) {
+						if ((IS_CV & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -53208,7 +53278,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_CV_HA
 				}
 				zend_invalid_method_call(object, function_name);
 
+				if (!needs_addref) {
 
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);

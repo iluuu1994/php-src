@@ -3510,13 +3510,17 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 			} else if (OP2_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(function_name) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 				if (UNEXPECTED(EG(exception) != NULL)) {
-					FREE_OP1();
+					if (!needs_addref) {
+						FREE_OP1();
+					}
 					HANDLE_EXCEPTION();
 				}
 			}
 			zend_throw_error(NULL, "Method name must be a string");
 			FREE_OP2();
-			FREE_OP1();
+			if (!needs_addref) {
+				FREE_OP1();
+			}
 			HANDLE_EXCEPTION();
 		} while (0);
 	}
@@ -3538,7 +3542,7 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 					if (EXPECTED(Z_TYPE_P(object) == IS_OBJECT)) {
 						SEPARATE_DATA_OBJ(object);
 						obj = Z_OBJ_P(object);
-						if (OP1_TYPE & IS_VAR) {
+						if ((OP1_TYPE & IS_VAR) && !needs_addref) {
 							if (UNEXPECTED(GC_DELREF(ref) == 0)) {
 								efree_size(ref, sizeof(zend_reference));
 							} else {
@@ -3562,7 +3566,9 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 				}
 				zend_invalid_method_call(object, function_name);
 				FREE_OP2();
-				FREE_OP1();
+				if (!needs_addref) {
+					FREE_OP1();
+				}
 				HANDLE_EXCEPTION();
 			}
 		} while (0);
