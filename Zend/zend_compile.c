@@ -3439,7 +3439,7 @@ static void zend_compile_assign(znode *result, zend_ast *ast) /* {{{ */
 		case ZEND_AST_NULLSAFE_PROP:
 			offset = zend_delayed_compile_begin();
 			zend_delayed_compile_prop(result, var_ast, BP_VAR_W);
-			zend_compile_expr(&expr_node, expr_ast);
+			zend_compile_expr_with_potential_assign_to_self(&expr_node, expr_ast, var_ast);
 
 			opline = zend_delayed_compile_end(offset);
 			opline->opcode = ZEND_ASSIGN_OBJ;
