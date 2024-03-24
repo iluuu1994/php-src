@@ -13,6 +13,10 @@ $a = new Box(42);
 $a->value = $a;
 var_dump($a);
 
+$b = new Box(42);
+$b->value = &$b;
+var_dump($b);
+
 ?>
 --EXPECT--
 object(Box)#2 (1) {
@@ -21,4 +25,8 @@ object(Box)#2 (1) {
     ["value"]=>
     int(42)
   }
+}
+object(Box)#3 (1) {
+  ["value"]=>
+  *RECURSION*
 }
