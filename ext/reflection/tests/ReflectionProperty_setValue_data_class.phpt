@@ -69,13 +69,13 @@ $reflection->setValue($prop->box, 2);
 var_dump($prop->box->value);
 var_dump($copy->value);
 
-// FIXME: Can we throw here? The value is passed by reference, but not stored back to the property.
 echo "\nReadonly prop\n";
 $readonlyProp = new ReadonlyProp(new Box(1));
-$copy = $readonlyProp->box;
-$reflection->setValue($readonlyProp->box, 2);
-var_dump($readonlyProp->box->value);
-var_dump($copy->value);
+try {
+    $reflection->setValue($readonlyProp->box, 2);
+} catch (Error $e) {
+    echo $e->getMessage(), "\n";
+}
 
 ?>
 --EXPECT--
@@ -98,5 +98,4 @@ int(2)
 int(1)
 
 Readonly prop
-int(1)
-int(1)
+Cannot modify readonly property ReadonlyProp::$box
