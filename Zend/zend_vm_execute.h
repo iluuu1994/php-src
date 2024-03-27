@@ -37427,8 +37427,14 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_THIS_SPEC_UN
 	if (EXPECTED(Z_TYPE(EX(This)) == IS_OBJECT)) {
 		zval *result = EX_VAR(opline->result.var);
 
-		ZVAL_OBJ(result, Z_OBJ(EX(This)));
-		Z_ADDREF_P(result);
+		if (!(Z_OBJCE(EX(This))->ce_flags & ZEND_ACC_DATA_CLASS)) {
+			ZVAL_OBJ(result, Z_OBJ(EX(This)));
+			Z_ADDREF_P(result);
+		} else {
+			zend_object_clone_obj_t clone_call = Z_OBJ(EX(This))->handlers->clone_obj;
+			ZEND_ASSERT(clone_call);
+			ZVAL_OBJ(result, clone_call(Z_OBJ(EX(This))));
+		}
 		ZEND_VM_NEXT_OPCODE();
 	} else {
 		ZEND_VM_TAIL_CALL(zend_this_not_in_object_context_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
