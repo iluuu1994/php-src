@@ -318,7 +318,7 @@ typedef struct _zend_oparray_context {
 /* Data classes are value types                           |     |     |     */
 #define ZEND_ACC_DATA_CLASS              (1 << 30) /*  X  |     |     |     */
 /*                                                        |     |     |     */
-/* Function Flags (unused: 29-30)                         |     |     |     */
+/* Function Flags (unused: 30)                            |     |     |     */
 /* ==============                                         |     |     |     */
 /*                                                        |     |     |     */
 /* deprecation flag                                       |     |     |     */
@@ -379,6 +379,9 @@ typedef struct _zend_oparray_context {
 /*                                                        |     |     |     */
 /* has #[\Override] attribute                             |     |     |     */
 #define ZEND_ACC_OVERRIDE                (1 << 28) /*     |  X  |     |     */
+/*                                                        |     |     |     */
+/* Mutating function of a data class                      |     |     |     */
+#define ZEND_ACC_MUTATING                (1 << 29) /*     |  X  |     |     */
 /*                                                        |     |     |     */
 /* op_array uses strict mode types                        |     |     |     */
 #define ZEND_ACC_STRICT_TYPES            (1U << 31) /*    |  X  |     |     */

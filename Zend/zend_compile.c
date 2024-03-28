@@ -844,6 +844,8 @@ static char *zend_modifier_token_to_string(uint32_t token)
 			return "readonly";
 		case T_ABSTRACT:
 			return "abstract";
+		case T_MUTATING:
+			return "mutating";
 		EMPTY_SWITCH_DEFAULT_CASE()
 	}
 }
@@ -875,6 +877,11 @@ uint32_t zend_modifier_token_to_flag(zend_modifier_target target, uint32_t token
 		case T_STATIC:
 			if (target == ZEND_MODIFIER_TARGET_PROPERTY || target == ZEND_MODIFIER_TARGET_METHOD) {
 				return ZEND_ACC_STATIC;
+			}
+			break;
+		case T_MUTATING:
+			if (target == ZEND_MODIFIER_TARGET_METHOD) {
+				return ZEND_ACC_MUTATING;
 			}
 			break;
 	}

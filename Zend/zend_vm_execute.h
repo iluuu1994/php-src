@@ -7023,6 +7023,21 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_CONST & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if (IS_CONST == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -9564,6 +9579,21 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if ((IS_CONST & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if ((IS_TMP_VAR|IS_VAR) == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -11968,6 +11998,21 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 			}
 
 			if ((IS_CONST & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_CONST & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();
@@ -16346,6 +16391,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if (((IS_TMP_VAR|IS_VAR) & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if (IS_CONST == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -17812,6 +17872,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_T
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if (((IS_TMP_VAR|IS_VAR) & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if ((IS_TMP_VAR|IS_VAR) == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -19189,6 +19264,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 			}
 
 			if (((IS_TMP_VAR|IS_VAR) & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if (((IS_TMP_VAR|IS_VAR) & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();
@@ -34362,6 +34452,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_UNUSED & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if (IS_CONST == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -36455,6 +36560,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_T
 			}
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
 			if ((IS_UNUSED & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if ((IS_UNUSED & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();
@@ -39008,6 +39128,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_C
 			}
 
 			if ((IS_UNUSED & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_UNUSED & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();
@@ -44045,6 +44180,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_CV & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if (IS_CONST == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {
@@ -47864,6 +48014,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_TMPVA
 			}
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
 			if ((IS_CV & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
+			if ((IS_CV & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();
@@ -53393,6 +53558,21 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_CV_HA
 			}
 
 			if ((IS_CV & (IS_VAR|IS_TMP_VAR)) && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+
+			if ((IS_CV & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
 				zend_objects_store_del(orig_obj);
 			}
 			HANDLE_EXCEPTION();

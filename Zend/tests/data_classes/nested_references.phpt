@@ -9,7 +9,7 @@ data class Point {
         public int $y,
     ) {}
 
-    public /* mutating */ function zero() {
+    public mutating function zero() {
         $this->x = 0;
         $this->y = 0;
     }

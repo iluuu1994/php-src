@@ -3607,6 +3607,21 @@ ZEND_VM_HOT_OBJ_HANDLER(112, ZEND_INIT_METHOD_CALL, CONST|TMPVAR|UNUSED|THIS|CV,
 			}
 			HANDLE_EXCEPTION();
 		}
+		if (UNEXPECTED(
+			((fbc->common.fn_flags & ZEND_ACC_MUTATING) != 0)
+			!= ((opline->extended_value & ZEND_INIT_METHOD_CALL_MUTATING) != 0)
+		)) {
+			if (fbc->common.fn_flags & ZEND_ACC_MUTATING) {
+				zend_throw_error(NULL, "Mutating method must be called with $object->func!() syntax");
+			} else {
+				zend_throw_error(NULL, "Non-mutating method must not be called with $object->func!() syntax");
+			}
+			FREE_OP2();
+			if ((OP1_TYPE & (IS_VAR|IS_TMP_VAR)) && !needs_addref && GC_DELREF(orig_obj) == 0) {
+				zend_objects_store_del(orig_obj);
+			}
+			HANDLE_EXCEPTION();
+		}
 		if (OP2_TYPE == IS_CONST &&
 		    EXPECTED(!(fbc->common.fn_flags & (ZEND_ACC_CALL_VIA_TRAMPOLINE|ZEND_ACC_NEVER_CACHE))) &&
 		    EXPECTED(obj == orig_obj)) {

@@ -151,6 +151,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_STATIC        "'static'"
 %token <ident> T_ABSTRACT      "'abstract'"
 %token <ident> T_FINAL         "'final'"
+%token <ident> T_MUTATING      "'mutating'"
 %token <ident> T_PRIVATE       "'private'"
 %token <ident> T_PROTECTED     "'protected'"
 %token <ident> T_PUBLIC        "'public'"
@@ -308,7 +309,7 @@ reserved_non_modifiers:
 
 semi_reserved:
 	  reserved_non_modifiers
-	| T_STATIC | T_ABSTRACT | T_FINAL | T_PRIVATE | T_PROTECTED | T_PUBLIC | T_READONLY
+	| T_STATIC | T_ABSTRACT | T_FINAL | T_PRIVATE | T_PROTECTED | T_PUBLIC | T_READONLY | T_MUTATING
 ;
 
 ampersand:
@@ -1067,6 +1068,7 @@ member_modifier:
 	|	T_ABSTRACT				{ $$ = T_ABSTRACT; }
 	|	T_FINAL					{ $$ = T_FINAL; }
 	|	T_READONLY				{ $$ = T_READONLY; }
+	|	T_MUTATING				{ $$ = T_MUTATING; }
 ;
 
 property_list:
