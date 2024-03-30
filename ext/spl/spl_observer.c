@@ -27,6 +27,7 @@
 #include "zend_smart_str.h"
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
+#include "zend_stricthash.h"
 
 #include "php_spl.h"
 #include "spl_functions.h"
@@ -105,7 +106,13 @@ static zend_result spl_object_storage_get_hash(zend_hash_key *key, spl_SplObject
 		}
 	} else {
 		key->key = NULL;
-		key->h = obj->handle;
+		if (obj->ce->ce_flags & ZEND_ACC_DATA_CLASS) {
+			key->h = obj->handle;
+		} else {
+			zval tmp;
+			ZVAL_OBJ(&tmp, obj);
+			key->h = zend_stricthash_hash(&tmp);
+		}
 		return SUCCESS;
 	}
 }
