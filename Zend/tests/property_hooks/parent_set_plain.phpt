@@ -1,5 +1,5 @@
 --TEST--
-Using parent::$prop::set() on plain property
+Using call_property_set_hook(parent::class, 'prop', $this, ) on plain property
 --FILE--
 <?php
 
@@ -10,7 +10,7 @@ class P {
 class C extends P {
     public $prop {
         set {
-            var_dump(parent::$prop::set($value));
+            var_dump(call_property_set_hook(parent::class, 'prop', $this, $value));
         }
     }
 }

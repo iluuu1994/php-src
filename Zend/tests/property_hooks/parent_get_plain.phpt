@@ -1,5 +1,5 @@
 --TEST--
-Using parent::$prop::get() on plain property
+Using call_property_get_hook(parent::class, 'prop', $this) on plain property
 --FILE--
 <?php
 
@@ -9,7 +9,7 @@ class P {
 
 class C extends P {
     public $prop {
-        get => parent::$prop::get();
+        get => call_property_get_hook(parent::class, 'prop', $this);
     }
 }
 

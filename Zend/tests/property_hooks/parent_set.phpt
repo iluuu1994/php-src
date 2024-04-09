@@ -14,7 +14,7 @@ class A {
 class B extends A {
     public int $prop {
         set {
-            parent::$prop::set($value + 1);
+            call_property_set_hook(parent::class, 'prop', $this, $value + 1);
         }
     }
 }

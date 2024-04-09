@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: b8ea4527467c70a6f665129cd5d5f34ea2386a70 */
+ * Stub hash: 15410cdc942be13d2144dcf20aac5bfa87a525fd */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_set_time_limit, 0, 1, _IS_BOOL, 0)
 	ZEND_ARG_TYPE_INFO(0, seconds, IS_LONG, 0)
@@ -453,6 +453,19 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_call_user_func_array, 0, 2, IS_MIXED, 0)
 	ZEND_ARG_TYPE_INFO(0, callback, IS_CALLABLE, 0)
 	ZEND_ARG_TYPE_INFO(0, args, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_call_property_get_hook, 0, 3, IS_MIXED, 0)
+	ZEND_ARG_TYPE_INFO(0, class_name, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, prop_name, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, obj, IS_OBJECT, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_call_property_set_hook, 0, 4, IS_MIXED, 0)
+	ZEND_ARG_TYPE_INFO(0, class_name, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, prop_name, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, obj, IS_OBJECT, 0)
+	ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 
 #define arginfo_forward_static_call arginfo_call_user_func
@@ -2430,6 +2443,8 @@ ZEND_FUNCTION(error_get_last);
 ZEND_FUNCTION(error_clear_last);
 ZEND_FUNCTION(call_user_func);
 ZEND_FUNCTION(call_user_func_array);
+ZEND_FUNCTION(call_property_get_hook);
+ZEND_FUNCTION(call_property_set_hook);
 ZEND_FUNCTION(forward_static_call);
 ZEND_FUNCTION(forward_static_call_array);
 ZEND_FUNCTION(register_shutdown_function);
@@ -3053,6 +3068,8 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(error_clear_last, arginfo_error_clear_last)
 	ZEND_FE(call_user_func, arginfo_call_user_func)
 	ZEND_FE(call_user_func_array, arginfo_call_user_func_array)
+	ZEND_FE(call_property_get_hook, arginfo_call_property_get_hook)
+	ZEND_FE(call_property_set_hook, arginfo_call_property_set_hook)
 	ZEND_FE(forward_static_call, arginfo_forward_static_call)
 	ZEND_FE(forward_static_call_array, arginfo_forward_static_call_array)
 	ZEND_FE(register_shutdown_function, arginfo_register_shutdown_function)

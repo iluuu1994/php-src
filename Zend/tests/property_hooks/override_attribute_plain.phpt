@@ -10,7 +10,7 @@ class A {
 class B extends A {
     public $prop {
         #[Override]
-        get => parent::$prop::get();
+        get => call_property_get_hook(parent::class, 'prop', $this);
     }
 }
 

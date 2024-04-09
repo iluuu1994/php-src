@@ -14,7 +14,7 @@ class A {
 class B extends A {
     public int $prop {
         get {
-            return parent::$prop::get() + 1;
+            return call_property_get_hook(parent::class, 'prop', $this) + 1;
         }
     }
 }

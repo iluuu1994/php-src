@@ -1,5 +1,5 @@
 --TEST--
-Calling hook method with parent::$prop::get() from reflection
+Calling hook method with call_property_get_hook(parent::class, 'prop', $this) from reflection
 --FILE--
 <?php
 
@@ -11,11 +11,11 @@ class B extends A {
     public $prop {
         get {
             echo __FUNCTION__, "\n";
-            return parent::$prop::get();
+            return call_property_get_hook(parent::class, 'prop', $this);
         }
         set {
             echo __FUNCTION__, "\n";
-            parent::$prop::set($value);
+            call_property_set_hook(parent::class, 'prop', $this, $value);
         }
     }
 }

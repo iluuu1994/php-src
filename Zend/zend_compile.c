@@ -4814,6 +4814,10 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	if (!ce) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use \"parent\" when no class scope is active");
 	}
+	/* FIXME: Traits. Should be done at runtime. */
+	if (!ce->parent_name) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use \"parent\" when current class scope has no parent");
+	}
 
 	zend_ast *name_ast = ast->child[0];
 	zend_ast *args_ast = ast->child[1];
@@ -4841,14 +4845,46 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	}
 	zend_string_release_ex(hook_name, /* persistent */ false);
 
+	zend_string *function_name;
+	if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
+		function_name = ZSTR_KNOWN(ZEND_STR_CALL_PROPERTY_GET_HOOK);
+	} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
+		function_name = ZSTR_KNOWN(ZEND_STR_CALL_PROPERTY_SET_HOOK);
+	} else {
+		ZEND_UNREACHABLE();
+	}
+
+	uint32_t opnum_init = get_next_op_number();
 	zend_op *opline = get_next_op();
-	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
+	opline->opcode = ZEND_INIT_FCALL_BY_NAME;
+	opline->op2_type = IS_CONST;
+	opline->op2.constant = zend_add_func_name_literal(function_name);
+	opline->result.num = zend_alloc_cache_slot();
+
+	/* Pass class name as string. */
+	zend_string *class_name = ce->parent_name;
+	opline = get_next_op();
+	opline->opcode = ZEND_SEND_VAL;
+	opline->op1_type = IS_CONST;
+	opline->op1.constant = zend_add_literal_string(&class_name);
+
+	/* Pass property name as string. */
+	opline = get_next_op();
+	opline->opcode = ZEND_SEND_VAL;
 	opline->op1_type = IS_CONST;
 	opline->op1.constant = zend_add_literal_string(&property_name);
-	opline->op2.num = hook_kind;
+
+	/* Fetch and send $this. */
+	znode this_result;
+	zend_emit_op(&this_result, ZEND_FETCH_THIS, NULL, NULL);
+	zend_emit_op(NULL, ZEND_SEND_VAR, &this_result, NULL);
 
 	zend_function *fbc = NULL;
 	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
+
+	opline = &CG(active_op_array)->opcodes[opnum_init];
+	/* Increase arg count for class, property name and $this. */
+	opline->extended_value += 3;
 }
 
 static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */

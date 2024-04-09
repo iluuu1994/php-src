@@ -35,7 +35,7 @@ class Test {
 
 class Child extends Test {
     public $addedHooks {
-        get { return strtoupper(parent::$addedHooks::get()); }
+        get { return strtoupper(call_property_get_hook(parent::class, 'addedHooks', $this)); }
     }
     private $changed = 'changed Child' {
         get { return strtoupper($this->changed); }

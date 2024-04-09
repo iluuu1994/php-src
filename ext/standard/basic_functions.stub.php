@@ -2000,6 +2000,10 @@ function call_user_func(callable $callback, mixed ...$args): mixed {}
 
 function call_user_func_array(callable $callback, array $args): mixed {}
 
+function call_property_get_hook(string $class_name, string $prop_name, object $obj): mixed {}
+
+function call_property_set_hook(string $class_name, string $prop_name, object $obj, mixed $value): mixed {}
+
 function forward_static_call(callable $callback, mixed ...$args): mixed {}
 
 function forward_static_call_array(callable $callback, array $args): mixed {}

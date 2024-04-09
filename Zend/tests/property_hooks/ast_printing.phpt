@@ -8,7 +8,7 @@ try {
         public $prop1 { get; set; }
         public $prop2 {
             get {
-                return parent::$prop1::get();
+                return call_property_get_hook(parent::class, 'prop1', $this);
             }
             final set {
                 echo 'Foo';
@@ -32,7 +32,7 @@ assert(false && new class {
     }
     public $prop2 {
         get {
-            return parent::$prop1::get();
+            return call_property_get_hook(parent::class, 'prop1', $this);
         }
         final set {
             echo 'Foo';

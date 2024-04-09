@@ -2553,6 +2553,98 @@ PHP_FUNCTION(parse_ini_string)
 }
 /* }}} */
 
+static void call_property_hook(zval *return_value, zend_string *class_name, zend_string *prop_name, zend_object *obj, zval *set_value)
+{
+	zend_class_entry *prop_ce = zend_fetch_class_by_name(class_name, NULL, ZEND_FETCH_CLASS_NO_AUTOLOAD);
+	if (!prop_ce) {
+		RETURN_THROWS();
+	}
+
+	if (!instanceof_function(obj->ce, prop_ce)) {
+		zend_throw_error(NULL, "Class %s is not a super class of %s", ZSTR_VAL(prop_ce->name), ZSTR_VAL(obj->ce->name));
+		RETURN_THROWS();
+	}
+
+	zend_property_info *prop_info = zend_get_property_info(prop_ce, prop_name, /* silent */ false);
+	if (!prop_info) {
+		zend_throw_error(NULL, "Undeclared property %s::%s", ZSTR_VAL(prop_ce->name), ZSTR_VAL(prop_name));
+		RETURN_THROWS();
+	} else if (prop_info == ZEND_WRONG_PROPERTY_INFO) {
+		RETURN_THROWS();
+	}
+
+	zend_function *hook = NULL;
+	if (prop_info->hooks) {
+		hook = prop_info->hooks[set_value ? ZEND_PROPERTY_HOOK_SET : ZEND_PROPERTY_HOOK_GET];
+	}
+
+	if (hook) {
+		if (set_value) {
+			zend_call_known_instance_method_with_1_params(hook, obj, return_value, set_value);
+		} else {
+			zend_call_known_instance_method_with_0_params(hook, obj, return_value);
+		}
+	} else {
+		if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+			zend_throw_error(NULL, "Cannot call %s hook of virtual property %s::%s",
+				set_value ? "set" : "get",
+				ZSTR_VAL(prop_ce->name), ZSTR_VAL(prop_name));
+			RETURN_THROWS();
+		}
+
+		uint32_t *guard = zend_get_property_guard(obj, prop_name);
+		uint32_t guard_backup = *guard;
+		*guard |= ZEND_GUARD_PROPERTY_HOOK;
+
+		if (set_value) {
+			obj->handlers->write_property(obj, prop_name, set_value, NULL);
+			RETURN_COPY(set_value);
+		} else {
+			zval rv;
+			zval *retval = obj->handlers->read_property(obj, prop_name, BP_VAR_R, NULL, &rv);
+			if (retval == &rv) {
+				RETVAL_COPY_VALUE(retval);
+			} else {
+				RETVAL_COPY(retval);
+			}
+		}
+
+		*guard = guard_backup;
+	}
+}
+
+PHP_FUNCTION(call_property_get_hook)
+{
+	zend_string *class_name;
+	zend_string *prop_name;
+	zend_object *obj;
+
+	ZEND_PARSE_PARAMETERS_START(3, 3)
+		Z_PARAM_STR(class_name)
+		Z_PARAM_STR(prop_name)
+		Z_PARAM_OBJ(obj)
+	ZEND_PARSE_PARAMETERS_END();
+
+	call_property_hook(return_value, class_name, prop_name, obj, NULL);
+}
+
+PHP_FUNCTION(call_property_set_hook)
+{
+	zend_string *class_name;
+	zend_string *prop_name;
+	zend_object *obj;
+	zval *set_value;
+
+	ZEND_PARSE_PARAMETERS_START(4, 4)
+		Z_PARAM_STR(class_name)
+		Z_PARAM_STR(prop_name)
+		Z_PARAM_OBJ(obj)
+		Z_PARAM_ZVAL(set_value)
+	ZEND_PARSE_PARAMETERS_END();
+
+	call_property_hook(return_value, class_name, prop_name, obj, set_value);
+}
+
 #if ZEND_DEBUG
 /* This function returns an array of ALL valid ini options with values and
  *  is not the same as ini_get_all() which returns only registered ini options. Only useful for devs to debug php.ini scanner/parser! */

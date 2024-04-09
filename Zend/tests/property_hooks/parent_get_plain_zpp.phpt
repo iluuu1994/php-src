@@ -1,5 +1,5 @@
 --TEST--
-parent::$prop::get() ZPP
+call_property_get_hook(parent::class, 'prop', $this) ZPP
 --FILE--
 <?php
 
