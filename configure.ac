@@ -1560,26 +1560,26 @@ dnl Enable -fsanitize=memory late, because interceptors may break linking detect
 if test "$PHP_MEMORY_SANITIZER" = "yes"; then
   AX_CHECK_COMPILE_FLAG([-fsanitize=memory -fsanitize-memory-track-origins], [
     CFLAGS="$CFLAGS -fsanitize=memory -fsanitize-memory-track-origins"
-    CXXFLAGS="$CXXFLAGS -fsanitize=memory -fsanitize-memory-track-origins"
+    dnl CXXFLAGS="$CXXFLAGS -fsanitize=memory -fsanitize-memory-track-origins"
   ], [AC_MSG_ERROR([MemorySanitizer is not available])])
 fi
 
 if test "$PHP_ADDRESS_SANITIZER" = "yes"; then
   AX_CHECK_COMPILE_FLAG([-fsanitize=address], [
     CFLAGS="$CFLAGS -fsanitize=address -DZEND_TRACK_ARENA_ALLOC"
-    CXXFLAGS="$CXXFLAGS -fsanitize=address -DZEND_TRACK_ARENA_ALLOC"
+    dnl CXXFLAGS="$CXXFLAGS -fsanitize=address -DZEND_TRACK_ARENA_ALLOC"
   ], [AC_MSG_ERROR([AddressSanitizer is not available])])
 fi
 
 if test "$PHP_UNDEFINED_SANITIZER" = "yes"; then
   AX_CHECK_COMPILE_FLAG([-fsanitize=undefined], [
     CFLAGS="$CFLAGS -fsanitize=undefined -fno-sanitize-recover=undefined"
-    CXXFLAGS="$CXXFLAGS -fsanitize=undefined -fno-sanitize-recover=undefined"
+    dnl CXXFLAGS="$CXXFLAGS -fsanitize=undefined -fno-sanitize-recover=undefined"
     AX_CHECK_COMPILE_FLAG([-fno-sanitize=object-size], [
       dnl Disable object-size sanitizer, because it is incompatible with our zend_function
       dnl union, and this can't be easily fixed.
       CFLAGS="$CFLAGS -fno-sanitize=object-size"
-      CXXFLAGS="$CFLAGS -fno-sanitize=object-size"
+      dnl CXXFLAGS="$CFLAGS -fno-sanitize=object-size"
     ])
 
     dnl Clang 17 adds stricter function pointer compatibility checks where pointer args cannot be
@@ -1597,7 +1597,7 @@ int main(void) {
     CFLAGS="$OLD_CFLAGS"
     if test "$php_cv_ubsan_no_function" = yes; then
       CFLAGS="$CFLAGS -fno-sanitize=function"
-      CXXFLAGS="$CFLAGS -fno-sanitize=function"
+      dnl CXXFLAGS="$CFLAGS -fno-sanitize=function"
     fi
   ], [AC_MSG_ERROR([UndefinedBehaviorSanitizer is not available])])
 fi
@@ -1606,7 +1606,7 @@ if test "$PHP_MEMORY_SANITIZER" = "yes" ||
    test "$PHP_ADDRESS_SANITIZER" = "yes" ||
    test "$PHP_UNDEFINED_SANITIZER" = "yes"; then
     CFLAGS="$CFLAGS -fno-omit-frame-pointer"
-    CXXFLAGS="$CXXFLAGS -fno-omit-frame-pointer"
+    dnl CXXFLAGS="$CXXFLAGS -fno-omit-frame-pointer"
 fi
 
 dnl
