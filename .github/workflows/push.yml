@@ -112,7 +112,7 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-macos
         with:
-          configurationParameters: --enable-debug --disable-zts
+          configurationParameters: --enable-debug --disable-zts --enable-address-sanitizer
       - name: make
         run: |-
           export PATH="/usr/local/opt/bison/bin:$PATH"
@@ -128,6 +128,7 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
             -d opcache.protect_memory=1
+            --asan
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
