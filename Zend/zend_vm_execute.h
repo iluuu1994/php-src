@@ -3456,7 +3456,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 	fbc = call->func;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
-		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
 			init_func_run_time_cache(&fbc->op_array);
 		}
 		execute_data = call;
@@ -3480,6 +3480,10 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_HANDLER(Z
 		zval retval;
 
 		ZEND_ASSERT(fbc->type == ZEND_INTERNAL_FUNCTION);
+
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			init_internal_func_run_time_cache(&fbc->internal_function);
+		}
 
 		EG(current_execute_data) = call;
 
@@ -3599,7 +3603,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 	fbc = call->func;
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
-		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
 			init_func_run_time_cache(&fbc->op_array);
 		}
 		execute_data = call;
@@ -3623,6 +3627,10 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CALL_TRAMPOLINE_SPEC_OBSERVER_
 		zval retval;
 
 		ZEND_ASSERT(fbc->type == ZEND_INTERNAL_FUNCTION);
+
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			init_internal_func_run_time_cache(&fbc->internal_function);
+		}
 
 		EG(current_execute_data) = call;
 
@@ -3791,8 +3799,12 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_FCALL_BY_NAME
 			ZEND_VM_TAIL_CALL(zend_undefined_function_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 		}
 		fbc = Z_FUNC_P(func);
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
@@ -3876,8 +3888,12 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_NS_FCALL_BY_N
 			}
 		}
 		fbc = Z_FUNC_P(func);
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
@@ -3904,8 +3920,12 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_FCALL_SPEC_CO
 		func = zend_hash_find_known_hash(EG(function_table), Z_STR_P(fname));
 		ZEND_ASSERT(func != NULL && "Function existence must be checked at compile time");
 		fbc = Z_FUNC_P(func);
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
@@ -7013,8 +7033,12 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -7131,8 +7155,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CONST != IS_CONST) {
 
@@ -7147,8 +7175,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -7225,8 +7257,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_USER_CALL_SPEC_CONST_CONS
 			HANDLE_EXCEPTION();
 		}
 
-		if (EXPECTED(func->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&func->op_array))) {
-			init_func_run_time_cache(&func->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&func->common))) {
+			if (func->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&func->op_array);
+			} else {
+				init_internal_func_run_time_cache(&func->internal_function);
+			}
 		}
 	} else {
 		zend_type_error("%s(): Argument #1 ($callback) must be a valid callback, %s", Z_STRVAL_P(RT_CONSTANT(opline, opline->op1)), error);
@@ -9533,8 +9569,12 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -9651,8 +9691,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
@@ -9667,8 +9711,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -9746,8 +9794,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_USER_CALL_SPEC_CONST_TMPV
 			HANDLE_EXCEPTION();
 		}
 
-		if (EXPECTED(func->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&func->op_array))) {
-			init_func_run_time_cache(&func->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&func->common))) {
+			if (func->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&func->op_array);
+			} else {
+				init_internal_func_run_time_cache(&func->internal_function);
+			}
 		}
 	} else {
 		zend_type_error("%s(): Argument #1 ($callback) must be a valid callback, %s", Z_STRVAL_P(RT_CONSTANT(opline, opline->op1)), error);
@@ -10404,8 +10456,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_UNUSED != IS_CONST) {
 
@@ -10420,8 +10476,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -10677,8 +10737,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_NEW_SPEC_CONST_UNUSED_HANDLER(
 			ZEND_CALL_FUNCTION, (zend_function *) &zend_pass_function,
 			opline->extended_value, NULL);
 	} else {
-		if (EXPECTED(constructor->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&constructor->op_array))) {
-			init_func_run_time_cache(&constructor->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&constructor->common))) {
+			if (constructor->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&constructor->op_array);
+			} else {
+				init_internal_func_run_time_cache(&constructor->internal_function);
+			}
 		}
 		/* We are not handling overloaded classes right now */
 		call = zend_vm_stack_push_call_frame(
@@ -11920,8 +11984,12 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -12038,8 +12106,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CV != IS_CONST) {
 
@@ -12054,8 +12126,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_C
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -12132,8 +12208,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_USER_CALL_SPEC_CONST_CV_H
 			HANDLE_EXCEPTION();
 		}
 
-		if (EXPECTED(func->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&func->op_array))) {
-			init_func_run_time_cache(&func->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&func->common))) {
+			if (func->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&func->op_array);
+			} else {
+				init_internal_func_run_time_cache(&func->internal_function);
+			}
 		}
 	} else {
 		zend_type_error("%s(): Argument #1 ($callback) must be a valid callback, %s", Z_STRVAL_P(RT_CONSTANT(opline, opline->op1)), error);
@@ -16273,8 +16353,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -17718,8 +17802,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_T
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -19078,8 +19166,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_TMPVAR_C
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -24847,8 +24939,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CONST != IS_CONST) {
 
@@ -24863,8 +24959,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -27715,8 +27815,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
@@ -27731,8 +27835,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -29229,8 +29337,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_UNUSED != IS_CONST) {
 
@@ -29245,8 +29357,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -29827,8 +29943,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_NEW_SPEC_VAR_UNUSED_HANDLER(ZE
 			ZEND_CALL_FUNCTION, (zend_function *) &zend_pass_function,
 			opline->extended_value, NULL);
 	} else {
-		if (EXPECTED(constructor->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&constructor->op_array))) {
-			init_func_run_time_cache(&constructor->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&constructor->common))) {
+			if (constructor->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&constructor->op_array);
+			} else {
+				init_internal_func_run_time_cache(&constructor->internal_function);
+			}
 		}
 		/* We are not handling overloaded classes right now */
 		call = zend_vm_stack_push_call_frame(
@@ -32103,8 +32223,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CV != IS_CONST) {
 
@@ -32119,8 +32243,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_V
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -34142,8 +34270,12 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -34260,8 +34392,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CONST != IS_CONST) {
 
@@ -34276,8 +34412,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -36197,8 +36337,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_T
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -36315,8 +36459,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if ((IS_TMP_VAR|IS_VAR) != IS_CONST) {
 			zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
@@ -36331,8 +36479,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -36730,8 +36882,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_UNUSED != IS_CONST) {
 
@@ -36746,8 +36902,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -36986,8 +37146,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_NEW_SPEC_UNUSED_UNUSED_HANDLER
 			ZEND_CALL_FUNCTION, (zend_function *) &zend_pass_function,
 			opline->extended_value, NULL);
 	} else {
-		if (EXPECTED(constructor->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&constructor->op_array))) {
-			init_func_run_time_cache(&constructor->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&constructor->common))) {
+			if (constructor->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&constructor->op_array);
+			} else {
+				init_internal_func_run_time_cache(&constructor->internal_function);
+			}
 		}
 		/* We are not handling overloaded classes right now */
 		call = zend_vm_stack_push_call_frame(
@@ -38702,8 +38866,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_UNUSED_C
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -38820,8 +38988,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			EXPECTED(!(fbc->common.scope->ce_flags & ZEND_ACC_TRAIT))) {
 			CACHE_POLYMORPHIC_PTR(opline->result.num, ce, fbc);
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 		if (IS_CV != IS_CONST) {
 
@@ -38836,8 +39008,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_STATIC_METHOD_CALL_SPEC_U
 			HANDLE_EXCEPTION();
 		}
 		fbc = ce->constructor;
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -43693,8 +43869,12 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_S
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -47474,8 +47654,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_TMPVA
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 
@@ -52961,8 +53145,12 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INIT_METHOD_CALL_SPEC_CV_CV_HA
 				zend_objects_store_del(orig_obj);
 			}
 		}
-		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
-			init_func_run_time_cache(&fbc->op_array);
+		if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->common))) {
+			if (fbc->type == ZEND_USER_FUNCTION) {
+				init_func_run_time_cache(&fbc->op_array);
+			} else {
+				init_internal_func_run_time_cache(&fbc->internal_function);
+			}
 		}
 	}
 

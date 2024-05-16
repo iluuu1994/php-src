@@ -1278,7 +1278,7 @@ static void cls_method_dtor(zval *el) /* {{{ */ {
 	if (func->common.function_name) {
 		zend_string_release_ex(func->common.function_name, 0);
 	}
-	if (ZEND_MAP_PTR(func->common.run_time_cache)) {
+	if (ZEND_MAP_PTR(func->common.run_time_cache) && ZEND_MAP_PTR(func->common.run_time_cache) != (void **)(uintptr_t)-1) {
 		efree(ZEND_MAP_PTR(func->common.run_time_cache));
 	}
 	efree(func);

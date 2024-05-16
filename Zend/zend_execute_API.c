@@ -972,6 +972,7 @@ cleanup_args:
 		EG(jit_trace_num) = orig_jit_trace_num;
 	} else {
 		ZEND_ASSERT(func->type == ZEND_INTERNAL_FUNCTION);
+		zend_init_internal_func_run_time_cache(&func->internal_function);
 		ZVAL_NULL(fci->retval);
 		call->prev_execute_data = EG(current_execute_data);
 		EG(current_execute_data) = call;
