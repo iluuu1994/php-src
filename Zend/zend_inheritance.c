@@ -1419,7 +1419,7 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 						child_hooks[i]->common.fn_flags &= ~ZEND_ACC_OVERRIDE;
 					}
 				}
-			} else {
+			} else if (parent_hooks) {
 				ce->num_hooked_props++;
 			}
 

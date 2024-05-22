@@ -35,13 +35,13 @@ ZEND_API zend_array *zend_hooked_object_build_properties(zend_object *zobj)
 	zend_hash_real_init_mixed(properties);
 
 	zend_property_info *prop_info;
-	int virtual_property_count = 0;
+	int backed_property_count = 0;
 	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, prop_info) {
 		if (prop_info->flags & ZEND_ACC_STATIC) {
 			continue;
 		}
-		if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-			virtual_property_count++;
+		if (!(prop_info->flags & ZEND_ACC_VIRTUAL)) {
+			backed_property_count++;
 		}
 		if (prop_info->hooks) {
 			_zend_hash_append_ptr(properties, prop_info->name, prop_info);
@@ -54,10 +54,9 @@ ZEND_API zend_array *zend_hooked_object_build_properties(zend_object *zobj)
 	} ZEND_HASH_FOREACH_END();
 
 	if (zobj->properties) {
-		int stored_property_count = zend_array_count(&zobj->ce->properties_info) - virtual_property_count;
 		zend_string *prop_name;
 		zval *prop_value;
-		ZEND_HASH_FOREACH_STR_KEY_VAL_FROM(zobj->properties, prop_name, prop_value, stored_property_count) {
+		ZEND_HASH_FOREACH_STR_KEY_VAL_FROM(zobj->properties, prop_name, prop_value, backed_property_count) {
 			Z_TRY_ADDREF_P(_zend_hash_append(properties, prop_name, prop_value));
 		} ZEND_HASH_FOREACH_END();
 	}
