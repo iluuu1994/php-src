@@ -7764,14 +7764,10 @@ static zend_string *zend_begin_func_decl(znode *result, zend_op_array *op_array,
 			"__autoload() is no longer supported, use spl_autoload_register() instead");
 	}
 
-	if (
-		zend_string_equals_literal_ci(unqualified_name, "assert")
-		|| zend_string_equals_literal_ci(unqualified_name, "exit")
-		|| zend_string_equals_literal_ci(unqualified_name, "die")
-	) {
+	if (zend_string_equals_literal_ci(unqualified_name, "assert")) {
 		zend_error(E_COMPILE_ERROR,
-			"Defining a custom %s() function is not allowed, "
-			"as the function has special semantics", ZSTR_VAL(unqualified_name));
+			"Defining a custom assert() function is not allowed, "
+			"as the function has special semantics");
 	}
 
 	zend_register_seen_symbol(lcname, ZEND_SYMBOL_FUNCTION);
@@ -8714,13 +8710,6 @@ static void zend_compile_const_decl(zend_ast *ast) /* {{{ */
 		value_node.op_type = IS_CONST;
 		zend_const_expr_to_zval(value_zv, value_ast_ptr, /* allow_dynamic */ true);
 
-		if (UNEXPECTED(
-			zend_string_equals_literal_ci(unqualified_name, "exit")
-			|| zend_string_equals_literal_ci(unqualified_name, "die")
-		)) {
-			zend_throw_error(NULL, "Cannot define constant with name %s", ZSTR_VAL(unqualified_name));
-			return;
-		}
 		if (zend_get_special_const(ZSTR_VAL(unqualified_name), ZSTR_LEN(unqualified_name))) {
 			zend_error_noreturn(E_COMPILE_ERROR,
 				"Cannot redeclare constant '%s'", ZSTR_VAL(unqualified_name));
@@ -10016,34 +10005,6 @@ static void zend_compile_const(znode *result, zend_ast *ast) /* {{{ */
 
 	bool is_fully_qualified;
 	zend_string *orig_name = zend_ast_get_str(name_ast);
-
-	/* The fake "constants" exit and die must be converted to a function call for exit() */
-	if (UNEXPECTED(
-		zend_string_equals_literal_ci(orig_name, "exit")
-		|| zend_string_equals_literal_ci(orig_name, "die")
-	)) {
-		zval *fbc_zv = zend_hash_find(CG(function_table), ZSTR_KNOWN(ZEND_STR_EXIT));
-		ZEND_ASSERT(fbc_zv && "exit() function should always exist");
-		zend_function *fbc = Z_PTR_P(fbc_zv);
-
-		znode name_node;
-		name_node.op_type = IS_CONST;
-		ZVAL_STR(&name_node.u.constant, ZSTR_KNOWN(ZEND_STR_EXIT));
-
-		opline = zend_emit_op(NULL, ZEND_INIT_FCALL, NULL, &name_node);
-		opline->result.num = zend_alloc_cache_slot();
-
-		/* Store offset to function from symbol table in op2.extra. */
-		{
-			Bucket *fbc_bucket = (Bucket*)((uintptr_t)fbc_zv - XtOffsetOf(Bucket, val));
-			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = fbc_bucket - CG(function_table)->arData;
-		}
-
-		zend_ast *args_list = zend_ast_create_list_0(ZEND_AST_ARG_LIST);
-		zend_compile_call_common(result, args_list, fbc, ast->lineno);
-		return;
-	}
-
 	zend_string *resolved_name = zend_resolve_const_name(orig_name, name_ast->attr, &is_fully_qualified);
 
 	if (zend_string_equals_literal(resolved_name, "__COMPILER_HALT_OFFSET__") || (name_ast->attr != ZEND_NAME_RELATIVE && zend_string_equals_literal(orig_name, "__COMPILER_HALT_OFFSET__"))) {
