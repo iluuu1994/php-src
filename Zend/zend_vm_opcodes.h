@@ -293,8 +293,7 @@ END_EXTERN_C()
 #define ZEND_JMP_FRAMELESS              208
 #define ZEND_SEND_EXPLICIT_REF          209
 #define ZEND_SEND_EXPLICIT_REF_FUNC     210
-#define ZEND_SEND_EXPLICIT_VAL          211
 
-#define ZEND_VM_LAST_OPCODE             211
+#define ZEND_VM_LAST_OPCODE             210
 
 #endif

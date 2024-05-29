@@ -4394,7 +4394,6 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 					case ZEND_SEND_VAR_NO_REF:
 					case ZEND_SEND_VAR_NO_REF_EX:
 					case ZEND_SEND_USER:
-					case ZEND_SEND_EXPLICIT_VAL:
 					case ZEND_SEND_EXPLICIT_REF:
 					case ZEND_SEND_EXPLICIT_REF_FUNC:
 						if (level == 0) {

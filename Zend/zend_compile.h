@@ -103,7 +103,6 @@ static zend_always_inline znode *zend_ast_get_znode(zend_ast *ast) {
 
 typedef struct _zend_declarables {
 	zend_long ticks;
-	bool require_explicit_send_by_ref;
 } zend_declarables;
 
 /* Compilation context that is different for each file, but shared between op arrays. */
