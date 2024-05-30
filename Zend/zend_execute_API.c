@@ -847,7 +847,7 @@ zend_result zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_
 
 		if (ARG_SHOULD_BE_SENT_BY_REF(func, i + 1)) {
 			if (UNEXPECTED(!Z_ISREF_P(arg))) {
-				if (ARG_MUST_BE_SENT_BY_REF(func, i + 1)) {
+				if (!ARG_MAY_BE_SENT_BY_REF(func, i + 1)) {
 					/* By-value send is not allowed -- emit a warning,
 					 * and perform the call with the value wrapped in a reference. */
 					zend_param_must_be_ref(func, i + 1);
@@ -905,7 +905,7 @@ cleanup_args:
 
 			if (ARG_SHOULD_BE_SENT_BY_REF(func, arg_num)) {
 				if (UNEXPECTED(!Z_ISREF_P(arg))) {
-					if (ARG_MUST_BE_SENT_BY_REF(func, arg_num)) {
+					if (!ARG_MAY_BE_SENT_BY_REF(func, arg_num)) {
 						/* By-value send is not allowed -- emit a warning,
 						 * and perform the call with the value wrapped in a reference. */
 						zend_param_must_be_ref(func, arg_num);

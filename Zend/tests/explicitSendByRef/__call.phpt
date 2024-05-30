@@ -22,7 +22,11 @@ class ForwardCalls {
 $forward = new ForwardCalls(new Incrementor);
 
 $i = 0;
-$forward->inc(&$i);
+try {
+    $forward->inc(&$i);
+} catch (Error $e) {
+    echo $e->getMessage(), "\n";
+}
 var_dump($i);
 
 $i = 0;
@@ -31,5 +35,6 @@ var_dump($i);
 
 ?>
 --EXPECT--
-int(1)
+Cannot pass reference to by-value parameter 1
+int(0)
 int(0)

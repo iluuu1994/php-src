@@ -4301,19 +4301,16 @@ static zend_result zend_compile_func_cuf(znode *result, zend_ast_list *args, zen
 		zend_ast *arg_ast = args->child[i];
 		znode arg_node;
 		zend_op *opline;
-		bool by_ref = 0;
 
 		if (arg_ast->kind == ZEND_AST_REF) {
-			zend_compile_var(&arg_node, arg_ast->child[0], BP_VAR_W, 1);
-			by_ref = 1;
-		} else {
-			zend_compile_expr(&arg_node, arg_ast);
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Cannot pass reference to by-value parameter %" PRIu32, i + 1);
 		}
+		zend_compile_expr(&arg_node, arg_ast);
 
 		opline = zend_emit_op(NULL, ZEND_SEND_USER, &arg_node, NULL);
 		opline->op2.num = i;
 		opline->result.var = EX_NUM_TO_VAR(i - 1);
-		opline->extended_value = by_ref;
 	}
 	zend_emit_op(result, ZEND_DO_FCALL, NULL, NULL);
 
@@ -6602,6 +6599,7 @@ static void zend_compile_declare(zend_ast *ast) /* {{{ */
 			if (Z_LVAL(value_zv) == 1) {
 				CG(active_op_array)->fn_flags |= ZEND_ACC_STRICT_TYPES;
 			}
+
 		} else {
 			zend_error(E_COMPILE_WARNING, "Unsupported declare '%s'", ZSTR_VAL(name));
 		}

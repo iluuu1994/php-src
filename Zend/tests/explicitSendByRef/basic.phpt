@@ -14,10 +14,10 @@ var_dump($b);
 
 // Works (prefer-ref arg)
 $c = 42;
-$vars = ['d' => &$c];
-extract(&$vars, EXTR_REFS);
-$d++;
-var_dump($c);
+$vars = ['b' => 2, 'a' => 1];
+$vars2 = [2, 1];
+array_multisort(&$vars, $vars2);
+var_dump($vars, $vars2);
 
 // Works (by-ref arg, by-ref function)
 $e = 42;
@@ -68,7 +68,18 @@ array(1) {
     int(43)
   }
 }
-int(43)
+array(2) {
+  ["a"]=>
+  int(1)
+  ["b"]=>
+  int(2)
+}
+array(2) {
+  [0]=>
+  int(1)
+  [1]=>
+  int(2)
+}
 int(43)
 Cannot pass reference to by-value parameter 1
 Cannot pass result of by-value function by reference

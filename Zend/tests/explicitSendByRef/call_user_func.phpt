@@ -3,33 +3,12 @@ call_user_func() with explicit pass by ref
 --FILE--
 <?php
 
-// Avoid VM builtin.
-namespace Foo;
-
 function inc(&$i) { $i++; }
-
-$i = 0;
-call_user_func('Foo\inc', $i);
-var_dump($i);
 
 $i = 0;
 call_user_func('Foo\inc', &$i);
 var_dump($i);
 
-$i = 0;
-\call_user_func('Foo\inc', $i);
-var_dump($i);
-
-$i = 0;
-\call_user_func('Foo\inc', &$i);
-var_dump($i);
-
 ?>
 --EXPECTF--
-Warning: Foo\inc(): Argument #1 ($i) must be passed by reference, value given in %s on line %d
-int(0)
-int(1)
-
-Warning: Foo\inc(): Argument #1 ($i) must be passed by reference, value given in %s on line %d
-int(0)
-int(1)
+Fatal error: Cannot pass reference to by-value parameter 2 in %s on line %d

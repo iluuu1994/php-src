@@ -1044,8 +1044,7 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 
 #define ZEND_SEND_BY_VAL     0u
 #define ZEND_SEND_BY_REF     1u
-#define ZEND_SEND_PREFER_VAL 2u
-#define ZEND_SEND_PREFER_REF 3u
+#define ZEND_SEND_PREFER_REF 2u
 
 #define ZEND_THROW_IS_EXPR 1u
 
@@ -1078,7 +1077,7 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 #define IS_CONSTANT_CLASS                    0x400 /* __CLASS__ in trait */
 #define IS_CONSTANT_UNQUALIFIED_IN_NAMESPACE 0x800
 
-static zend_always_inline bool zend_check_arg_must_be_sent_by_ref(const zend_function *zf, uint32_t arg_num)
+static zend_always_inline bool zend_check_arg_send_type(const zend_function *zf, uint32_t arg_num, uint32_t mask)
 {
 	arg_num--;
 	if (UNEXPECTED(arg_num >= zf->common.num_args)) {
@@ -1087,44 +1086,17 @@ static zend_always_inline bool zend_check_arg_must_be_sent_by_ref(const zend_fun
 		}
 		arg_num = zf->common.num_args;
 	}
-	return ZEND_ARG_SEND_MODE(&zf->common.arg_info[arg_num]) == ZEND_SEND_BY_REF;
-}
-
-static zend_always_inline int zend_check_arg_should_be_sent_by_ref(const zend_function *zf, uint32_t arg_num)
-{
-	arg_num--;
-	if (UNEXPECTED(arg_num >= zf->common.num_args)) {
-		if (EXPECTED((zf->common.fn_flags & ZEND_ACC_VARIADIC) == 0)) {
-			return 0;
-		}
-		arg_num = zf->common.num_args;
-	}
-
-	/* The SEND_BY_REF bit is set for PREFER_REF as well. */
-	return (ZEND_ARG_SEND_MODE(&zf->common.arg_info[arg_num]) & ZEND_SEND_BY_REF) != 0;
-}
-
-static zend_always_inline int zend_check_arg_may_be_sent_by_ref(const zend_function *zf, uint32_t arg_num)
-{
-	arg_num--;
-	if (UNEXPECTED(arg_num >= zf->common.num_args)) {
-		if (EXPECTED((zf->common.fn_flags & ZEND_ACC_VARIADIC) == 0)) {
-			return 0;
-		}
-		arg_num = zf->common.num_args;
-	}
-
-	return ZEND_ARG_SEND_MODE(&zf->common.arg_info[arg_num]) != ZEND_SEND_BY_VAL;
+	return UNEXPECTED((ZEND_ARG_SEND_MODE(&zf->common.arg_info[arg_num]) & mask) != 0);
 }
 
 #define ARG_MUST_BE_SENT_BY_REF(zf, arg_num) \
-	zend_check_arg_must_be_sent_by_ref(zf, arg_num)
+	zend_check_arg_send_type(zf, arg_num, ZEND_SEND_BY_REF)
 
 #define ARG_SHOULD_BE_SENT_BY_REF(zf, arg_num) \
-	zend_check_arg_should_be_sent_by_ref(zf, arg_num)
+	zend_check_arg_send_type(zf, arg_num, ZEND_SEND_BY_REF|ZEND_SEND_PREFER_REF)
 
 #define ARG_MAY_BE_SENT_BY_REF(zf, arg_num) \
-	zend_check_arg_may_be_sent_by_ref(zf, arg_num)
+	zend_check_arg_send_type(zf, arg_num, ZEND_SEND_PREFER_REF)
 
 /* Quick API to check first 12 arguments */
 #define MAX_ARG_FLAG_NUM 12
@@ -1133,24 +1105,24 @@ static zend_always_inline int zend_check_arg_may_be_sent_by_ref(const zend_funct
 # define ZEND_SET_ARG_FLAG(zf, arg_num, mask) do { \
 		(zf)->quick_arg_flags |= ((mask) << ((arg_num) - 1) * 2); \
 	} while (0)
-# define ZEND_GET_ARG_FLAG(zf, arg_num) \
-	(((zf)->quick_arg_flags >> (((arg_num) - 1) * 2)) & 0x3u)
+# define ZEND_CHECK_ARG_FLAG(zf, arg_num, mask) \
+	(((zf)->quick_arg_flags >> (((arg_num) - 1) * 2)) & (mask))
 #else
 # define ZEND_SET_ARG_FLAG(zf, arg_num, mask) do { \
 		(zf)->quick_arg_flags |= (((mask) << 6) << (arg_num) * 2); \
 	} while (0)
-# define ZEND_GET_ARG_FLAG(zf, arg_num) \
-	(((zf)->quick_arg_flags >> (((arg_num) + 3) * 2)) & 0x3u)
+# define ZEND_CHECK_ARG_FLAG(zf, arg_num, mask) \
+	(((zf)->quick_arg_flags >> (((arg_num) + 3) * 2)) & (mask))
 #endif
 
 #define QUICK_ARG_MUST_BE_SENT_BY_REF(zf, arg_num) \
-	(ZEND_GET_ARG_FLAG(zf, arg_num) == ZEND_SEND_BY_REF)
+	ZEND_CHECK_ARG_FLAG(zf, arg_num, ZEND_SEND_BY_REF)
 
 #define QUICK_ARG_SHOULD_BE_SENT_BY_REF(zf, arg_num) \
-	((ZEND_GET_ARG_FLAG(zf, arg_num) & ZEND_SEND_BY_REF) != 0)
+	ZEND_CHECK_ARG_FLAG(zf, arg_num, ZEND_SEND_BY_REF|ZEND_SEND_PREFER_REF)
 
 #define QUICK_ARG_MAY_BE_SENT_BY_REF(zf, arg_num) \
-	(ZEND_GET_ARG_FLAG(zf, arg_num) != ZEND_SEND_BY_VAL)
+	ZEND_CHECK_ARG_FLAG(zf, arg_num, ZEND_SEND_PREFER_REF)
 
 #define ZEND_RETURN_VAL 0
 #define ZEND_RETURN_REF 1
