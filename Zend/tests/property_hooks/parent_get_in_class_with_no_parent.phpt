@@ -3,10 +3,14 @@ Using parent::$prop::get() in class with no parent
 --FILE--
 <?php
 
-class Foo {
+trait T {
     public $prop {
         get => parent::$prop::get();
     }
+}
+
+class Foo {
+    use T;
 }
 
 $foo = new Foo();
@@ -18,4 +22,4 @@ try {
 
 ?>
 --EXPECT--
-Cannot use "parent" when current class scope has no parent
+Cannot access "parent" when current class scope has no parent

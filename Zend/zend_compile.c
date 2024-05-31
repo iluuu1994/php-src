@@ -4856,6 +4856,9 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 	if (!ce) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use \"parent\" when no class scope is active");
 	}
+	if (!(ce->ce_flags & ZEND_ACC_TRAIT)) {
+		zend_ensure_valid_class_fetch_type(ZEND_FETCH_CLASS_PARENT);
+	}
 
 	zend_ast *name_ast = ast->child[0];
 	zend_ast *args_ast = ast->child[1];
@@ -4886,16 +4889,25 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() in a different property hook (%s)",
 			ZSTR_VAL(property_name), ZSTR_VAL(hook_name), zend_get_cstring_from_property_hook_kind(CG(context).active_property_hook_kind));
 	}
+	zend_string_release_ex(property_name, /* persistent */ false);
 	zend_string_release_ex(hook_name, /* persistent */ false);
 
-	zend_op *opline = get_next_op();
-	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
-	opline->op1_type = IS_CONST;
-	opline->op1.constant = zend_add_literal_string(&property_name);
-	opline->op2.num = hook_kind;
+	znode class_node;
+	class_node.op_type = IS_UNUSED;
+	class_node.u.op.num = ZEND_FETCH_CLASS_PARENT | ZEND_FETCH_CLASS_EXCEPTION;
 
-	zend_function *fbc = NULL;
-	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
+	zend_op *opline = get_next_op();
+	opline = get_next_op();
+	opline->opcode = ZEND_INIT_STATIC_METHOD_CALL;
+
+	zend_set_class_name_op1(opline, &class_node);
+
+	opline->op2_type = IS_CONST;
+	opline->op2.constant = zend_add_func_name_literal(
+		zend_string_init(property_name_start - 1, ZSTR_LEN(name) - strlen("parent::"), /* persistent */ false));
+	opline->result.num = zend_alloc_cache_slots(2);
+
+	zend_compile_call_common(result, args_ast, /* fbc */ NULL, zend_ast_get_lineno(name_ast));
 }
 
 static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
@@ -8151,14 +8163,18 @@ static zend_op_array *zend_compile_func_decl(znode *result, zend_ast *ast, bool 
 	return zend_compile_func_decl_ex(result, ast, toplevel, /* property_info */ NULL, (zend_property_hook_kind)-1);
 }
 
-zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name) {
-	if (zend_string_equals_literal_ci(name, "get")) {
+zend_property_hook_kind zend_get_property_hook_kind_from_name_cstr(const char *name) {
+	if (strcasecmp(name, "get") == 0) {
 		return ZEND_PROPERTY_HOOK_GET;
-	} else if (zend_string_equals_literal_ci(name, "set")) {
+	} else if (strcasecmp(name, "set") == 0) {
 		return ZEND_PROPERTY_HOOK_SET;
 	} else {
 		return (zend_property_hook_kind)-1;
 	}
+}
+
+zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name) {
+	return zend_get_property_hook_kind_from_name_cstr(ZSTR_VAL(name));
 }
 
 static void zend_compile_property_hooks(

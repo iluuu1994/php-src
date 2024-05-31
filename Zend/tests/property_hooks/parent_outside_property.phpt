@@ -3,7 +3,9 @@ Using parent::$prop::get() outside a property hook
 --FILE--
 <?php
 
-class A {
+class A {}
+
+class B extends A {
     public function test() {
         return parent::$prop::get();
     }

@@ -3,7 +3,9 @@ Using parent::$prop::get() in a different property
 --FILE--
 <?php
 
-class A {
+class A {}
+
+class B extends A {
     public $foo {
         get {
             return parent::$bar::get();

@@ -22,4 +22,4 @@ try {
 
 ?>
 --EXPECT--
-Cannot access private property A::$prop
+Call to undefined method A::$prop::get()

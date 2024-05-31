@@ -3,7 +3,7 @@ Using parent::$prop::get() in a different hook
 --FILE--
 <?php
 
-class A {
+class A extends B {
     public $foo {
         set {
             parent::$foo::get();

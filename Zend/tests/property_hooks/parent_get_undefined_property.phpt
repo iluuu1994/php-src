@@ -22,4 +22,4 @@ try {
 
 ?>
 --EXPECT--
-Undefined property P::$prop
+Call to undefined method P::$prop::get()

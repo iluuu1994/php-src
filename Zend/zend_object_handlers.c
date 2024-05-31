@@ -1567,9 +1567,8 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 
 static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 {
-	zend_parent_hook_call_info *parent_hook_call_info = Z_PTR_P(ZEND_THIS);
-	zend_object *obj = parent_hook_call_info->object;
-	zend_string *prop_name = parent_hook_call_info->property;
+	zend_object *obj = Z_PTR_P(ZEND_THIS);
+	zend_string *prop_name = EX(func)->internal_function.reserved[0];
 
 	if (UNEXPECTED(ZEND_NUM_ARGS() != 0)) {
 		zend_wrong_parameters_none_error();
@@ -1591,16 +1590,15 @@ static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 	*guard = guard_backup;
 
 clean:
+	zend_string_release(EX(func)->common.function_name);
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
-	efree(parent_hook_call_info);
 }
 
 static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 {
-	zend_parent_hook_call_info *parent_hook_call_info = Z_PTR_P(ZEND_THIS);
-	zend_object *obj = parent_hook_call_info->object;
-	zend_string *prop_name = parent_hook_call_info->property;
+	zend_object *obj = Z_PTR_P(ZEND_THIS);
+	zend_string *prop_name = EX(func)->internal_function.reserved[0];
 
 	zval *value;
 
@@ -1618,12 +1616,13 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 	*guard = guard_backup;
 
 clean:
+	zend_string_release(EX(func)->common.function_name);
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
-	efree(parent_hook_call_info);
 }
 
-static zend_result zend_property_hook_trampoline(zend_function **fptr_ptr, zend_string *name, uint32_t args, zif_handler handler)
+zend_function *zend_property_hook_trampoline(
+	zend_property_info *prop_info, zend_property_hook_kind kind)
 {
 	zend_function *func;
 	if (EXPECTED(EG(trampoline).common.function_name == NULL)) {
@@ -1636,32 +1635,25 @@ static zend_result zend_property_hook_trampoline(zend_function **fptr_ptr, zend_
 	func->common.arg_flags[1] = 0;
 	func->common.arg_flags[2] = 0;
 	func->common.fn_flags = ZEND_ACC_CALL_VIA_TRAMPOLINE;
-	func->common.function_name = name;
+	func->common.function_name = zend_strpprintf(0, "$%s::%s",
+		zend_get_unmangled_property_name(prop_info->name),
+		ZSTR_VAL(ZSTR_KNOWN(kind == ZEND_PROPERTY_HOOK_GET ? ZEND_STR_GET : ZEND_STR_SET)));
 	/* set to 0 to avoid arg_info[] allocation, because all values are passed by value anyway */
+	uint32_t args = kind == ZEND_PROPERTY_HOOK_GET ? 0 : 1;
 	func->common.num_args = args;
 	func->common.required_num_args = args;
-	func->common.scope = NULL;
+	func->common.scope = prop_info->ce;
 	func->common.prototype = NULL;
 	func->common.arg_info = NULL;
-	func->internal_function.handler = handler;
+	func->internal_function.handler = kind == ZEND_PROPERTY_HOOK_GET
+		? ZEND_FN(zend_parent_hook_get_trampoline)
+		: ZEND_FN(zend_parent_hook_set_trampoline);
 	func->internal_function.module = NULL;
 
-	func->internal_function.reserved[0] = NULL;
+	func->internal_function.reserved[0] = prop_info->name;
 	func->internal_function.reserved[1] = NULL;
 
-	*fptr_ptr = func;
-
-	return SUCCESS;
-}
-
-ZEND_API zend_result zend_property_hook_get_trampoline(zend_function **fptr_ptr)
-{
-	return zend_property_hook_trampoline(fptr_ptr, ZSTR_KNOWN(ZEND_STR_GET), 0, ZEND_FN(zend_parent_hook_get_trampoline));
-}
-
-ZEND_API zend_result zend_property_hook_set_trampoline(zend_function **fptr_ptr)
-{
-	return zend_property_hook_trampoline(fptr_ptr, ZSTR_KNOWN(ZEND_STR_SET), 1, ZEND_FN(zend_parent_hook_set_trampoline));
+	return func;
 }
 
 static zend_always_inline zend_function *zend_get_user_call_function(zend_class_entry *ce, zend_string *method_name) /* {{{ */
@@ -1792,7 +1784,7 @@ ZEND_API zend_function *zend_std_get_static_method(zend_class_entry *ce, zend_st
 		lc_function_name = zend_string_tolower(function_name);
 	}
 
-	zend_function *fbc;
+	zend_function *fbc = NULL;
 	zval *func = zend_hash_find(&ce->function_table, lc_function_name);
 	if (EXPECTED(func)) {
 		fbc = Z_FUNC_P(func);
@@ -1810,7 +1802,31 @@ ZEND_API zend_function *zend_std_get_static_method(zend_class_entry *ce, zend_st
 			}
 		}
 	} else {
-		fbc = get_static_method_fallback(ce, function_name);
+		/* Handle parent property hook calls. */
+		if (ZSTR_VAL(function_name)[0] == '$') {
+			const char *prop_name_start = ZSTR_VAL(function_name) + 1;
+			const char *colon_start = strchr(prop_name_start, ':');
+			if (colon_start && *(colon_start + 1) == ':' && prop_name_start != colon_start) {
+				const char *hook_name_start = colon_start + 2;
+				zend_property_hook_kind hook_kind = zend_get_property_hook_kind_from_name_cstr(hook_name_start);
+				if (hook_kind != (zend_property_hook_kind)-1) {
+					// FIXME: Do we need to unmangle?
+					zend_string *prop_name = zend_string_init(prop_name_start, colon_start - prop_name_start, false);
+					zend_property_info *prop_info = zend_get_property_info(ce, prop_name, /* silent */ true);
+					zend_string_release(prop_name);
+					if (prop_info && prop_info != ZEND_WRONG_PROPERTY_INFO) {
+						if (prop_info->hooks && prop_info->hooks[hook_kind]) {
+							fbc = prop_info->hooks[hook_kind];
+						} else {
+							fbc = zend_property_hook_trampoline(prop_info, hook_kind);
+						}
+					}
+				}
+			}
+		}
+		if (!fbc) {
+			fbc = get_static_method_fallback(ce, function_name);
+		}
 	}
 
 	if (UNEXPECTED(!key)) {

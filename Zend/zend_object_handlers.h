@@ -23,15 +23,13 @@
 #include <stdint.h>
 
 #include "zend_types.h"
+#include "zend_property_hooks.h"
 
 struct _zend_property_info;
 struct _zend_object;
 struct _zend_string;
 
-typedef struct {
-	struct _zend_object *object;
-	struct _zend_string *property;
-} zend_parent_hook_call_info;
+typedef struct _zend_property_info zend_property_info;
 
 #define ZEND_WRONG_PROPERTY_INFO \
 	((struct _zend_property_info*)((intptr_t)-1))
@@ -287,8 +285,8 @@ ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purp
  * consumers of the get_properties_for API. */
 ZEND_API HashTable *zend_get_properties_for(zval *obj, zend_prop_purpose purpose);
 
-ZEND_API zend_result zend_property_hook_get_trampoline(zend_function **fptr_ptr);
-ZEND_API zend_result zend_property_hook_set_trampoline(zend_function **fptr_ptr);
+zend_function *zend_property_hook_trampoline(
+	zend_property_info *prop_info, zend_property_hook_kind kind);
 
 #define zend_release_properties(ht) do { \
 	if ((ht) && !(GC_FLAGS(ht) & GC_IMMUTABLE) && !GC_DELREF(ht)) { \

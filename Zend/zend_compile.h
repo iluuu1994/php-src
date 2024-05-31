@@ -30,6 +30,7 @@
 
 #include "zend_llist.h"
 #include "zend_frameless_function.h"
+#include "zend_property_hooks.h"
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
@@ -189,11 +190,6 @@ typedef struct _zend_live_range {
 } zend_live_range;
 
 typedef struct _zend_property_info zend_property_info;
-
-typedef enum {
-	ZEND_PROPERTY_HOOK_GET = 0,
-	ZEND_PROPERTY_HOOK_SET = 1,
-} zend_property_hook_kind;
 
 /* Compilation context that is different for each op array. */
 typedef struct _zend_oparray_context {
@@ -417,6 +413,7 @@ char *zend_visibility_string(uint32_t fn_flags);
 #define ZEND_PROPERTY_HOOK_STRUCT_SIZE (sizeof(zend_function*) * ZEND_PROPERTY_HOOK_COUNT)
 
 zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name);
+zend_property_hook_kind zend_get_property_hook_kind_from_name_cstr(const char *name);
 
 typedef struct _zend_property_info {
 	uint32_t offset; /* property offset for object properties or
