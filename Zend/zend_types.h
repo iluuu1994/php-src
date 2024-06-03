@@ -658,10 +658,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 #define Z_TYPE(zval)				zval_get_type(&(zval))
 #define Z_TYPE_P(zval_p)			Z_TYPE(*(zval_p))
 
-/* Assign type without affecting other u1.v flags. */
-#define Z_TYPE_EX(zval)				(zval).u1.v.type
-#define Z_TYPE_EX_P(zval_p)			Z_TYPE_EX(*(zval_p))
-
 #define Z_TYPE_FLAGS(zval)			(zval).u1.v.type_flags
 #define Z_TYPE_FLAGS_P(zval_p)		Z_TYPE_FLAGS(*(zval_p))
 

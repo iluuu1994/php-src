@@ -9788,9 +9788,7 @@ ZEND_VM_HANDLER(209, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 	if (hook) {
 		call = zend_vm_stack_push_call_frame(
 			ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-			hook,
-			opline->extended_value,
-			Z_OBJ_P(ZEND_THIS));
+			hook, opline->extended_value, Z_OBJ_P(ZEND_THIS));
 		if (EXPECTED(hook->type == ZEND_USER_FUNCTION)) {
 			if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
 				init_func_run_time_cache(&hook->op_array);
@@ -9798,22 +9796,10 @@ ZEND_VM_HANDLER(209, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 			call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 		}
 	} else {
-		zend_function *fbc;
-		if (hook_kind == ZEND_PROPERTY_HOOK_GET) {
-			zend_property_hook_get_trampoline(&fbc);
-		} else if (hook_kind == ZEND_PROPERTY_HOOK_SET) {
-			zend_property_hook_set_trampoline(&fbc);
-		} else {
-			ZEND_UNREACHABLE();
-		}
-		zend_parent_hook_call_info *hook_call_info = emalloc(sizeof(zend_parent_hook_call_info));
-		hook_call_info->object = Z_PTR_P(ZEND_THIS);
-		hook_call_info->property = property_name;
-		call = zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION,
-			fbc, opline->extended_value, hook_call_info);
-		/* zend_vm_stack_push_call_frame stores this as IS_OBJECT, we need to convert it to IS_PTR.
-		 * Assign using Z_TYPE_EX to avoid overriding ZEND_CALL_INFO. */
-		Z_TYPE_EX(call->This) = IS_PTR;
+		zend_function *fbc = zend_get_property_hook_trampoline(hook_kind, property_name);
+		call = zend_vm_stack_push_call_frame(
+			ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+			fbc, opline->extended_value, Z_OBJ_P(ZEND_THIS));
 	}
 
 	call->prev_execute_data = EX(call);

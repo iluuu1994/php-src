@@ -1569,9 +1569,8 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 
 static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 {
-	zend_parent_hook_call_info *parent_hook_call_info = Z_PTR_P(ZEND_THIS);
-	zend_object *obj = parent_hook_call_info->object;
-	zend_string *prop_name = parent_hook_call_info->property;
+	zend_object *obj = Z_PTR_P(ZEND_THIS);
+	zend_string *prop_name = EX(func)->internal_function.reserved[0];
 
 	if (UNEXPECTED(ZEND_NUM_ARGS() != 0)) {
 		zend_wrong_parameters_none_error();
@@ -1595,14 +1594,12 @@ static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 clean:
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
-	efree(parent_hook_call_info);
 }
 
 static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 {
-	zend_parent_hook_call_info *parent_hook_call_info = Z_PTR_P(ZEND_THIS);
-	zend_object *obj = parent_hook_call_info->object;
-	zend_string *prop_name = parent_hook_call_info->property;
+	zend_object *obj = Z_PTR_P(ZEND_THIS);
+	zend_string *prop_name = EX(func)->internal_function.reserved[0];
 
 	zval *value;
 
@@ -1622,10 +1619,9 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 clean:
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
-	efree(parent_hook_call_info);
 }
 
-static zend_result zend_property_hook_trampoline(zend_function **fptr_ptr, zend_string *name, uint32_t args, zif_handler handler)
+ZEND_API zend_function *zend_get_property_hook_trampoline(zend_property_hook_kind kind, zend_string *prop_name)
 {
 	zend_function *func;
 	if (EXPECTED(EG(trampoline).common.function_name == NULL)) {
@@ -1638,32 +1634,23 @@ static zend_result zend_property_hook_trampoline(zend_function **fptr_ptr, zend_
 	func->common.arg_flags[1] = 0;
 	func->common.arg_flags[2] = 0;
 	func->common.fn_flags = ZEND_ACC_CALL_VIA_TRAMPOLINE;
-	func->common.function_name = name;
+	func->common.function_name = kind == ZEND_PROPERTY_HOOK_GET ? ZSTR_KNOWN(ZEND_STR_GET) : ZSTR_KNOWN(ZEND_STR_SET);
 	/* set to 0 to avoid arg_info[] allocation, because all values are passed by value anyway */
+	uint32_t args = kind == ZEND_PROPERTY_HOOK_GET ? 0 : 1;
 	func->common.num_args = args;
 	func->common.required_num_args = args;
 	func->common.scope = NULL;
 	func->common.prototype = NULL;
 	func->common.arg_info = NULL;
-	func->internal_function.handler = handler;
+	func->internal_function.handler = kind == ZEND_PROPERTY_HOOK_GET
+		? ZEND_FN(zend_parent_hook_get_trampoline)
+		: ZEND_FN(zend_parent_hook_set_trampoline);
 	func->internal_function.module = NULL;
 
-	func->internal_function.reserved[0] = NULL;
+	func->internal_function.reserved[0] = prop_name;
 	func->internal_function.reserved[1] = NULL;
 
-	*fptr_ptr = func;
-
-	return SUCCESS;
-}
-
-ZEND_API zend_result zend_property_hook_get_trampoline(zend_function **fptr_ptr)
-{
-	return zend_property_hook_trampoline(fptr_ptr, ZSTR_KNOWN(ZEND_STR_GET), 0, ZEND_FN(zend_parent_hook_get_trampoline));
-}
-
-ZEND_API zend_result zend_property_hook_set_trampoline(zend_function **fptr_ptr)
-{
-	return zend_property_hook_trampoline(fptr_ptr, ZSTR_KNOWN(ZEND_STR_SET), 1, ZEND_FN(zend_parent_hook_set_trampoline));
+	return func;
 }
 
 static zend_always_inline zend_function *zend_get_user_call_function(zend_class_entry *ce, zend_string *method_name) /* {{{ */
