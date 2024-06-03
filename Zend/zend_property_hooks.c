@@ -17,6 +17,7 @@
 */
 
 #include "zend.h"
+#include "zend_API.h"
 #include "zend_property_hooks.h"
 
 typedef struct {
