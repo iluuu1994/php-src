@@ -77,7 +77,30 @@ static zend_always_inline void zval_ptr_dtor_str(zval *zval_ptr)
 	}
 }
 
-ZEND_API void zval_ptr_dtor(zval *zval_ptr);
+ZEND_API void _zval_ptr_dtor(zval *zval_ptr);
+
+#if defined(HAVE_BUILTIN_CONSTANT_P)
+static zend_always_inline void zval_ptr_dtor(zval *zval_ptr)
+{
+	/* Inlined for optimizer. */
+	uint8_t type = zval_ptr->u1.v.type;
+	if (ZEND_CONST_COND(type == IS_STRING, false)) {
+		fprintf(stderr, "zval_ptr_dtor: string\n");
+	} else if (ZEND_CONST_COND(type == IS_ARRAY, false)) {
+		fprintf(stderr, "zval_ptr_dtor: array\n");
+	} else if (ZEND_CONST_COND(type == IS_OBJECT, false)) {
+		fprintf(stderr, "zval_ptr_dtor: object\n");
+	} else if (ZEND_CONST_COND(type == IS_RESOURCE, false)) {
+		fprintf(stderr, "zval_ptr_dtor: resource\n");
+	} else if (ZEND_CONST_COND(type == IS_REFERENCE, false)) {
+		fprintf(stderr, "zval_ptr_dtor: reference\n");
+	}
+	_zval_ptr_dtor(zval_ptr);
+}
+#else
+# define zval_ptr_dtor _zval_ptr_dtor
+#endif
+
 ZEND_API void zval_internal_ptr_dtor(zval *zvalue);
 
 /* Kept for compatibility */

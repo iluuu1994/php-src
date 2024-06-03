@@ -512,6 +512,10 @@ static zend_function *zend_closure_get_method(zend_object **object, zend_string 
 }
 /* }}} */
 
+static zend_never_inline int _get_num(void) {
+	return 42;
+}
+
 static void zend_closure_free_storage(zend_object *object) /* {{{ */
 {
 	zend_closure *closure = (zend_closure *)object;
@@ -530,10 +534,22 @@ static void zend_closure_free_storage(zend_object *object) /* {{{ */
 	}
 
 	if (Z_TYPE(closure->this_ptr) != IS_UNDEF) {
+		ZEND_ASSERT(closure->this_ptr.u1.v.type == IS_OBJECT);
+		// if (ZEND_CONST_COND(closure->this_ptr.u1.v.type == IS_OBJECT, false)) {
+		// 	abort();
+		// }
+
+		// int x = _get_num();
+		// ZEND_ASSUME(x == 42);
+		// if (ZEND_CONST_COND(x == 42, false)) {
+		// 	abort();
+		// }
 		zval_ptr_dtor(&closure->this_ptr);
 	}
 }
 /* }}} */
+
+#define ZSTR_FAT_PTR(name) const char *#name, usize_t 
 
 static zend_object *zend_closure_new(zend_class_entry *class_type) /* {{{ */
 {
