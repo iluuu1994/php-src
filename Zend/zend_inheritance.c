@@ -1395,7 +1395,7 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 				zend_error_noreturn(E_COMPILE_ERROR, "Access level to %s::$%s must be %s (as in class %s)%s", ZSTR_VAL(ce->name), ZSTR_VAL(key), zend_visibility_string(parent_info->flags), ZSTR_VAL(parent_info->ce->name), (parent_info->flags&ZEND_ACC_PUBLIC) ? "" : " or weaker");
 			}
 			if (!(child_info->flags & ZEND_ACC_STATIC) && !(parent_info->flags & ZEND_ACC_VIRTUAL)) {
-				if (child_info->offset != (uint32_t)-1) {
+				if (child_info->offset != ZEND_VIRTUAL_PROPERTY_OFFSET) {
 					int parent_num = OBJ_PROP_TO_NUM(parent_info->offset);
 					int child_num = OBJ_PROP_TO_NUM(child_info->offset);
 
@@ -1604,7 +1604,7 @@ ZEND_API void zend_verify_hooked_property(zend_class_entry *ce, zend_property_in
 	bool abstract_error = prop_info->flags & ZEND_ACC_ABSTRACT;
 	/* We specified a default value (otherwise offset would be -1), but the virtual flag wasn't
 	 * removed during inheritance. */
-	if ((prop_info->flags & ZEND_ACC_VIRTUAL) && prop_info->offset != (uint32_t)-1) {
+	if ((prop_info->flags & ZEND_ACC_VIRTUAL) && prop_info->offset != ZEND_VIRTUAL_PROPERTY_OFFSET) {
 		zend_error_noreturn(E_COMPILE_ERROR,
 			"Cannot specify default value for virtual hooked property %s::$%s", ZSTR_VAL(ce->name), ZSTR_VAL(prop_name));
 	}
@@ -1805,7 +1805,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 		if (property_info->ce == ce) {
 			if (property_info->flags & ZEND_ACC_STATIC) {
 				property_info->offset += parent_ce->default_static_members_count;
-			} else if (property_info->offset != (uint32_t)-1) {
+			} else if (property_info->offset != ZEND_VIRTUAL_PROPERTY_OFFSET) {
 				property_info->offset += parent_ce->default_properties_count * sizeof(zval);
 			}
 		}
