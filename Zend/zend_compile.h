@@ -412,6 +412,9 @@ char *zend_visibility_string(uint32_t fn_flags);
 #define ZEND_PROPERTY_HOOK_COUNT 2
 #define ZEND_PROPERTY_HOOK_STRUCT_SIZE (sizeof(zend_function*) * ZEND_PROPERTY_HOOK_COUNT)
 
+/* Stored in zend_property_info.offset, not returned by zend_get_property_offset(). */
+#define ZEND_VIRTUAL_PROPERTY_OFFSET ((uint32_t)-1)
+
 zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name);
 
 typedef struct _zend_property_info {
