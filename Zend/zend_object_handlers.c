@@ -684,6 +684,29 @@ static ZEND_COLD void zend_throw_forbidden_prop_backing_value_access(zend_string
 		ZSTR_VAL(class_name), ZSTR_VAL(prop_name));
 }
 
+static bool zend_call_get_hook(
+	const zend_property_info *prop_info, zend_string *prop_name,
+	zend_function *get, zend_object *zobj, zval *rv)
+{
+	uint32_t *guard = zend_get_property_guard(zobj, prop_name);
+	if (UNEXPECTED((*guard) & IN_HOOK)) {
+		if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+			zend_throw_no_prop_backing_value_access(zobj->ce->name, prop_name, /* is_read */ true);
+		} else if (UNEXPECTED(!is_in_hook(prop_info))) {
+			zend_throw_forbidden_prop_backing_value_access(zobj->ce->name, prop_name);
+		}
+		return false;
+	}
+
+	GC_ADDREF(zobj);
+	*guard |= IN_HOOK;
+	zend_call_known_instance_method_with_0_params(get, zobj, rv);
+	*guard &= ~IN_HOOK;
+	OBJ_RELEASE(zobj);
+
+	return true;
+}
+
 ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int type, void **cache_slot, zval *rv) /* {{{ */
 {
 	zval *retval;
@@ -793,13 +816,10 @@ try_again:
 			goto exit;
 		}
 
-		guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED((*guard) & IN_HOOK)) {
-			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-				zend_throw_no_prop_backing_value_access(zobj->ce->name, name, /* is_read */ true);
-				return &EG(uninitialized_zval);
-			} else if (UNEXPECTED(!is_in_hook(prop_info))) {
-				zend_throw_forbidden_prop_backing_value_access(zobj->ce->name, name);
+		zend_class_entry *ce = zobj->ce;
+
+		if (!zend_call_get_hook(prop_info, name, get, zobj, rv)) {
+			if (EG(exception)) {
 				return &EG(uninitialized_zval);
 			}
 			property_offset = prop_info->offset;
@@ -809,25 +829,18 @@ try_again:
 			goto try_again;
 		}
 
-		GC_ADDREF(zobj);
-		*guard |= IN_HOOK;
-		zend_call_known_instance_method_with_0_params(get, zobj, rv);
-		*guard &= ~IN_HOOK;
-
 		if (Z_TYPE_P(rv) != IS_UNDEF) {
 			retval = rv;
 			if (!Z_ISREF_P(rv)
 			 && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)
 			 && UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
 				zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
-					ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
+					ZSTR_VAL(ce->name), ZSTR_VAL(name));
 			}
 		} else {
 			retval = &EG(uninitialized_zval);
 		}
 
-		/* The return type is already enforced through the method return type. */
-		OBJ_RELEASE(zobj);
 		goto exit;
 	} else if (UNEXPECTED(EG(exception))) {
 		retval = &EG(uninitialized_zval);
@@ -2166,13 +2179,9 @@ found:
 			return 1;
 		}
 
-		uint32_t *guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED(*guard & IN_HOOK)) {
-			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
-				zend_throw_no_prop_backing_value_access(zobj->ce->name, name, /* is_read */ true);
-				return 0;
-			} else if (UNEXPECTED(!is_in_hook(prop_info))) {
-				zend_throw_forbidden_prop_backing_value_access(zobj->ce->name, name);
+		zval rv;
+		if (!zend_call_get_hook(prop_info, name, get, zobj, &rv)) {
+			if (EG(exception)) {
 				return 0;
 			}
 			property_offset = prop_info->offset;
@@ -2181,13 +2190,6 @@ found:
 			}
 			goto try_again;
 		}
-
-		zval rv;
-		GC_ADDREF(zobj);
-		*guard |= IN_HOOK;
-		zend_call_known_instance_method_with_0_params(get, zobj, &rv);
-		*guard &= ~IN_HOOK;
-		OBJ_RELEASE(zobj);
 
 		if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
 			result = zend_is_true(&rv);
