@@ -7464,7 +7464,7 @@ static bool zend_property_hook_uses_property(zend_string *property_name, zend_st
 
 static bool zend_property_is_virtual(zend_class_entry *ce, zend_string *property_name, zend_ast *hooks_ast, uint32_t flags)
 {
-	if (ce->ce_flags & ZEND_ACC_INTERFACE || (flags & ZEND_ACC_ABSTRACT)) {
+	if (ce->ce_flags & ZEND_ACC_INTERFACE) {
 		return true;
 	}
 	if (!hooks_ast) {
@@ -7477,8 +7477,7 @@ static bool zend_property_is_virtual(zend_class_entry *ce, zend_string *property
 	for (uint32_t i = 0; i < hooks->children; i++) {
 		zend_ast_decl *hook = (zend_ast_decl *) hooks->child[i];
 		zend_ast *body = hook->child[2];
-		/* Abstract properties aren't virtual. */
-		if (!body || zend_property_hook_uses_property(property_name, hook->name, body)) {
+		if (body && zend_property_hook_uses_property(property_name, hook->name, body)) {
 			is_virtual = false;
 		}
 	}
