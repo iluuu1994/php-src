@@ -1,5 +1,5 @@
 --TEST--
-Assign by reference to backed property is allowed for &get-only
+Assign by reference to backed property is forbidden for &get-only
 --FILE--
 <?php
 
@@ -14,19 +14,12 @@ class Test {
 
 $test = new Test();
 $test->prop = &$ref;
-$ref = 42;
-var_dump($test);
-$test->prop++;
-var_dump($test);
 
 ?>
 --EXPECTF--
-object(Test)#%d (1) {
-  ["prop"]=>
-  &int(42)
-}
 Test::$prop::get
-object(Test)#%d (1) {
-  ["prop"]=>
-  &int(43)
-}
+
+Fatal error: Uncaught Error: Cannot assign by reference to overloaded object in %s:%d
+Stack trace:
+#0 {main}
+  thrown in %s on line %d
