@@ -3747,9 +3747,30 @@ static uint32_t zend_compile_args(
 			arg_count++;
 		}
 
-		/* Treat passing of $GLOBALS the same as passing a call.
-		 * This will error at runtime if the argument is by-ref. */
-		if (zend_is_call(arg) || is_globals_fetch(arg)) {
+		if (arg->kind == ZEND_AST_REF) {
+			arg = arg->child[0];
+			ZEND_ASSERT(zend_is_variable_or_call(arg));
+
+			if (fbc && !ARG_SHOULD_BE_SENT_BY_REF(fbc, arg_num)) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"Cannot pass reference to by-value parameter %" PRIu32, arg_num);
+			}
+
+			zend_compile_var(&arg_node, arg, BP_VAR_W, 1);
+			if (zend_is_call(arg)) {
+				if (arg_node.op_type & (IS_CONST|IS_TMP_VAR)) {
+					/* Function call was converted into builtin instruction */
+					zend_error_noreturn(E_COMPILE_ERROR,
+						"Cannot pass result of by-value function by reference");
+				}
+
+				opcode = ZEND_SEND_EXPLICIT_REF_FUNC;
+			} else {
+				opcode = fbc ? ZEND_SEND_REF : ZEND_SEND_EXPLICIT_REF;
+			}
+		} else if (zend_is_call(arg) || is_globals_fetch(arg)) {
+			/* Treat passing of $GLOBALS the same as passing a call.
+			 * This will error at runtime if the argument is by-ref. */
 			zend_compile_var(&arg_node, arg, BP_VAR_R, 0);
 			if (arg_node.op_type & (IS_CONST|IS_TMP_VAR)) {
 				/* Function call was converted into builtin instruction */
@@ -4281,6 +4302,10 @@ static zend_result zend_compile_func_cuf(znode *result, zend_ast_list *args, zen
 		znode arg_node;
 		zend_op *opline;
 
+		if (arg_ast->kind == ZEND_AST_REF) {
+			zend_error_noreturn(E_COMPILE_ERROR,
+				"Cannot pass reference to by-value parameter %" PRIu32, i + 1);
+		}
 		zend_compile_expr(&arg_node, arg_ast);
 
 		opline = zend_emit_op(NULL, ZEND_SEND_USER, &arg_node, NULL);
