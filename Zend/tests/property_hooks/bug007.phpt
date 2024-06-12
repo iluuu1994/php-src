@@ -26,6 +26,7 @@ object(Test)#%d (1) {
   &int(42)
 }
 Test::$prop::get
+Test::$prop::get
 object(Test)#%d (1) {
   ["prop"]=>
   &int(43)
