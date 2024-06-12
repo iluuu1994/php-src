@@ -1056,12 +1056,41 @@ found:;
 		zend_function *set = prop_info->hooks[ZEND_PROPERTY_HOOK_SET];
 
 		if (!set) {
+			zend_function *get = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+			if (get && (get->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+				zval rv;
+				if (!zend_call_get_hook(prop_info, name, get, zobj, &rv)) {
+					if (EG(exception)) {
+						variable_ptr = &EG(error_zval);
+						goto exit;
+					}
+					zval_ptr_dtor(&rv);
+					if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+						goto virtual_error;
+					} else {
+						goto native_write;
+					}
+				}
+
+				zend_refcounted *garbage = NULL;
+				zval *new_value = zend_assign_to_variable_ex(&rv, value, IS_VAR, property_uses_strict_types(), &garbage);
+				ZVAL_COPY(value, new_value);
+				variable_ptr = value;
+
+				zval_ptr_dtor(&rv);
+				if (garbage) {
+					GC_DTOR_NO_REF(garbage);
+				}
+				goto exit;
+			}
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+virtual_error:
 				zend_throw_error(NULL, "Property %s::$%s is read-only", ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 				variable_ptr = &EG(error_zval);
 				goto exit;
 			}
 			ZEND_SET_PROPERTY_HOOK_SIMPLE_WRITE(cache_slot);
+native_write:
 			property_offset = prop_info->offset;
 			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
 				prop_info = NULL;
