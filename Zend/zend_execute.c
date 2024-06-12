@@ -3358,7 +3358,7 @@ static zend_always_inline void zend_assign_to_property_reference(zval *container
 				prop_info = zend_object_fetch_property_type_info(Z_OBJ_P(container), variable_ptr);
 			}
 
-			if (prop_info) {
+			if (prop_info && ZEND_TYPE_IS_SET(prop_info->type)) {
 				variable_ptr = zend_assign_to_typed_property_reference(prop_info, variable_ptr, value_ptr, &garbage EXECUTE_DATA_CC);
 			} else {
 				zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
