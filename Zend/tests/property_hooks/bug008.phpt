@@ -1,5 +1,5 @@
 --TEST--
-Assign by reference to backed property is allowed for &get-only
+Assign by reference to backed property is forbidden for &get-only
 --FILE--
 <?php
 
@@ -15,12 +15,10 @@ class Foo {
 
 $foo = new Foo;
 $foo->bar = 'bar';
-var_dump($foo);
 
 ?>
 --EXPECTF--
-Foo::$bar::get
-object(Foo)#%d (1) {
-  ["_bar":"Foo":private]=>
-  string(3) "bar"
-}
+Fatal error: Uncaught Error: Property Foo::$bar is read-only in %s:%d
+Stack trace:
+#0 {main}
+  thrown in %s on line %d
