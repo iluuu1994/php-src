@@ -3296,31 +3296,30 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(53, ZEND_FAST_CONCAT, CONST|TMPVAR|CV, CONST|TMP
 ZEND_VM_HANDLER(54, ZEND_ROPE_INIT, UNUSED, CONST|TMPVAR|CV, NUM)
 {
 	USE_OPLINE
-	zend_string **rope;
+	zval *rope;
 	zval *var;
 
 	/* Compiler allocates the necessary number of zval slots to keep the rope */
-	rope = (zend_string**)EX_VAR(opline->result.var);
+	rope = (zval*)EX_VAR(opline->result.var);
 	if (OP2_TYPE == IS_CONST) {
 		var = GET_OP2_ZVAL_PTR(BP_VAR_R);
-		rope[0] = Z_STR_P(var);
-		if (UNEXPECTED(Z_REFCOUNTED_P(var))) {
-			Z_ADDREF_P(var);
-		}
+		ZVAL_COPY(rope, var);
 	} else {
 		var = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 		if (EXPECTED(Z_TYPE_P(var) == IS_STRING)) {
 			if (OP2_TYPE == IS_CV) {
-				rope[0] = zend_string_copy(Z_STR_P(var));
+				ZVAL_COPY(rope, var);
 			} else {
-				rope[0] = Z_STR_P(var);
+				ZVAL_COPY_VALUE(rope, var);
 			}
+		} else if (EXPECTED(Z_TYPE_P(var) == IS_LONG)) {
+			ZVAL_COPY(rope, var);
 		} else {
 			SAVE_OPLINE();
 			if (OP2_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(var) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 			}
-			rope[0] = zval_get_string_func(var);
+			ZVAL_STR(rope, zval_get_string_func(var));
 			FREE_OP2();
 			ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 		}
@@ -3331,31 +3330,30 @@ ZEND_VM_HANDLER(54, ZEND_ROPE_INIT, UNUSED, CONST|TMPVAR|CV, NUM)
 ZEND_VM_HANDLER(55, ZEND_ROPE_ADD, TMP, CONST|TMPVAR|CV, NUM)
 {
 	USE_OPLINE
-	zend_string **rope;
+	zval *rope;
 	zval *var;
 
 	/* op1 and result are the same */
-	rope = (zend_string**)EX_VAR(opline->op1.var);
+	rope = (zval*)EX_VAR(opline->result.var);
 	if (OP2_TYPE == IS_CONST) {
 		var = GET_OP2_ZVAL_PTR(BP_VAR_R);
-		rope[opline->extended_value] = Z_STR_P(var);
-		if (UNEXPECTED(Z_REFCOUNTED_P(var))) {
-			Z_ADDREF_P(var);
-		}
+		ZVAL_COPY(rope + opline->extended_value, var);
 	} else {
 		var = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 		if (EXPECTED(Z_TYPE_P(var) == IS_STRING)) {
 			if (OP2_TYPE == IS_CV) {
-				rope[opline->extended_value] = zend_string_copy(Z_STR_P(var));
+				ZVAL_COPY(rope + opline->extended_value, var);
 			} else {
-				rope[opline->extended_value] = Z_STR_P(var);
+				ZVAL_COPY_VALUE(rope + opline->extended_value, var);
 			}
+		} else if (EXPECTED(Z_TYPE_P(var) == IS_LONG)) {
+			ZVAL_COPY(rope + opline->extended_value, var);
 		} else {
 			SAVE_OPLINE();
 			if (OP2_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(var) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 			}
-			rope[opline->extended_value] = zval_get_string_func(var);
+			ZVAL_STR(rope + opline->extended_value, zval_get_string_func(var));
 			FREE_OP2();
 			ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 		}
@@ -3366,35 +3364,34 @@ ZEND_VM_HANDLER(55, ZEND_ROPE_ADD, TMP, CONST|TMPVAR|CV, NUM)
 ZEND_VM_HANDLER(56, ZEND_ROPE_END, TMP, CONST|TMPVAR|CV, NUM)
 {
 	USE_OPLINE
-	zend_string **rope;
+	zval *rope;
 	zval *var, *ret;
 	uint32_t i;
 
-	rope = (zend_string**)EX_VAR(opline->op1.var);
+	rope = (zval*)EX_VAR(opline->op1.var);
 	if (OP2_TYPE == IS_CONST) {
 		var = GET_OP2_ZVAL_PTR(BP_VAR_R);
-		rope[opline->extended_value] = Z_STR_P(var);
-		if (UNEXPECTED(Z_REFCOUNTED_P(var))) {
-			Z_ADDREF_P(var);
-		}
+		ZVAL_COPY(rope + opline->extended_value, var);
 	} else {
 		var = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 		if (EXPECTED(Z_TYPE_P(var) == IS_STRING)) {
 			if (OP2_TYPE == IS_CV) {
-				rope[opline->extended_value] = zend_string_copy(Z_STR_P(var));
+				ZVAL_COPY(rope + opline->extended_value, var);
 			} else {
-				rope[opline->extended_value] = Z_STR_P(var);
+				ZVAL_COPY_VALUE(rope + opline->extended_value, var);
 			}
+		} else if (EXPECTED(Z_TYPE_P(var) == IS_LONG)) {
+			ZVAL_COPY(rope + opline->extended_value, var);
 		} else {
 			SAVE_OPLINE();
 			if (OP2_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(var) == IS_UNDEF)) {
 				ZVAL_UNDEFINED_OP2();
 			}
-			rope[opline->extended_value] = zval_get_string_func(var);
+			ZVAL_STR(rope + opline->extended_value, zval_get_string_func(var));
 			FREE_OP2();
 			if (UNEXPECTED(EG(exception))) {
 				for (i = 0; i <= opline->extended_value; i++) {
-					zend_string_release_ex(rope[i], 0);
+					zval_ptr_dtor_nogc(rope + i);
 				}
 				ZVAL_UNDEF(EX_VAR(opline->result.var));
 				HANDLE_EXCEPTION();
@@ -3405,8 +3402,29 @@ ZEND_VM_HANDLER(56, ZEND_ROPE_END, TMP, CONST|TMPVAR|CV, NUM)
 	size_t len = 0;
 	uint32_t flags = ZSTR_COPYABLE_CONCAT_PROPERTIES;
 	for (i = 0; i <= opline->extended_value; i++) {
-		flags &= ZSTR_GET_COPYABLE_CONCAT_PROPERTIES(rope[i]);
-		len += ZSTR_LEN(rope[i]);
+		if (Z_TYPE_P(rope + i) == IS_STRING) {
+			flags &= ZSTR_GET_COPYABLE_CONCAT_PROPERTIES(Z_STR_P(rope + i));
+			len += ZSTR_LEN(Z_STR_P(rope + i));
+		} else {
+			ZEND_ASSERT(Z_TYPE_P(rope + i) == IS_LONG);
+			flags &= IS_STR_VALID_UTF8;
+			zend_long num = Z_LVAL_P(rope + i);
+			if (num == 0) {
+				len += 1;
+			} else {
+				zend_ulong unum;
+				if (num < 0) {
+					len += 1;
+					unum = ~((zend_ulong) num) + 1;
+				} else {
+					unum = num;
+				}
+				do {
+					len += 1;
+					unum /= 10;
+				} while (unum > 0);
+			}
+		}
 	}
 	ret = EX_VAR(opline->result.var);
 	ZVAL_STR(ret, zend_string_alloc(len, 0));
@@ -3414,9 +3432,19 @@ ZEND_VM_HANDLER(56, ZEND_ROPE_END, TMP, CONST|TMPVAR|CV, NUM)
 
 	char *target = Z_STRVAL_P(ret);
 	for (i = 0; i <= opline->extended_value; i++) {
-		memcpy(target, ZSTR_VAL(rope[i]), ZSTR_LEN(rope[i]));
-		target += ZSTR_LEN(rope[i]);
-		zend_string_release_ex(rope[i], 0);
+		if (Z_TYPE_P(rope + i) == IS_STRING) {
+			zend_string *rope_str = Z_STR_P(rope + i);
+			memcpy(target, ZSTR_VAL(rope_str), ZSTR_LEN(rope_str));
+			target += ZSTR_LEN(rope_str);
+			zend_string_release_ex(rope_str, 0);
+		} else {
+			ZEND_ASSERT(Z_TYPE_P(rope + i) == IS_LONG);
+			char buf[MAX_LENGTH_OF_LONG + 1];
+			char *res = zend_print_long_to_buf(buf + sizeof(buf) - 1, Z_LVAL_P(rope + i));
+			size_t len = buf + sizeof(buf) - 1 - res;
+			memcpy(target, res, len);
+			target += len;
+		}
 	}
 	*target = '\0';
 

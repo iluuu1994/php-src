@@ -4555,7 +4555,7 @@ static void cleanup_live_vars(zend_execute_data *execute_data, uint32_t op_num, 
 					}
 					zval_ptr_dtor_nogc(var);
 				} else if (kind == ZEND_LIVE_ROPE) {
-					zend_string **rope = (zend_string **)var;
+					zval *rope = var;
 					zend_op *last = EX(func)->op_array.opcodes + op_num;
 					while ((last->opcode != ZEND_ROPE_ADD && last->opcode != ZEND_ROPE_INIT)
 							|| last->result.var != var_num) {
@@ -4563,11 +4563,11 @@ static void cleanup_live_vars(zend_execute_data *execute_data, uint32_t op_num, 
 						last--;
 					}
 					if (last->opcode == ZEND_ROPE_INIT) {
-						zend_string_release_ex(*rope, 0);
+						zval_ptr_dtor_nogc(rope);
 					} else {
 						int j = last->extended_value;
 						do {
-							zend_string_release_ex(rope[j], 0);
+							zval_ptr_dtor_nogc(rope + j);
 						} while (j--);
 					}
 				} else if (kind == ZEND_LIVE_SILENCE) {

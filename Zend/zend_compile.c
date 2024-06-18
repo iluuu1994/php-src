@@ -10387,7 +10387,7 @@ static void zend_compile_rope_finalize(znode *result, uint32_t rope_elements, ze
 		var = opline->op1.var = get_temporary_variable();
 
 		/* Allocates the necessary number of zval slots to keep the rope */
-		uint32_t i = ((rope_elements * sizeof(zend_string*)) + (sizeof(zval) - 1)) / sizeof(zval);
+		uint32_t i = rope_elements;
 		while (i > 1) {
 			get_temporary_variable();
 			i--;

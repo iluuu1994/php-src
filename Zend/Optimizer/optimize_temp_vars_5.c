@@ -79,7 +79,7 @@ void zend_optimize_temporary_variables(zend_op_array *op_array, zend_optimizer_c
 		if ((opline->op1_type & (IS_VAR | IS_TMP_VAR))) {
 			currT = VAR_NUM(opline->op1.var) - offset;
 			if (opline->opcode == ZEND_ROPE_END) {
-				int num = (((opline->extended_value + 1) * sizeof(zend_string*)) + (sizeof(zval) - 1)) / sizeof(zval);
+				int num = opline->extended_value;
 				int var;
 
 				var = max;
@@ -160,7 +160,7 @@ void zend_optimize_temporary_variables(zend_op_array *op_array, zend_optimizer_c
 					zend_bitset_excl(taken_T, map_T[currT]);
 				}
 				if (opline->opcode == ZEND_ROPE_INIT) {
-					uint32_t num = ((opline->extended_value * sizeof(zend_string*)) + (sizeof(zval) - 1)) / sizeof(zval);
+					uint32_t num = opline->extended_value;
 					while (num > 1) {
 						num--;
 						zend_bitset_excl(taken_T, map_T[currT]+num);

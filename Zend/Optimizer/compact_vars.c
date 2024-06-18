@@ -44,7 +44,7 @@ void zend_optimizer_compact_vars(zend_op_array *op_array) {
 		if (opline->result_type & (IS_CV|IS_VAR|IS_TMP_VAR)) {
 			zend_bitset_incl(used_vars, VAR_NUM(opline->result.var));
 			if (opline->opcode == ZEND_ROPE_INIT) {
-				uint32_t num = ((opline->extended_value * sizeof(zend_string*)) + (sizeof(zval) - 1)) / sizeof(zval);
+				uint32_t num = opline->extended_value;
 				while (num > 1) {
 					num--;
 					zend_bitset_incl(used_vars, VAR_NUM(opline->result.var) + num);
