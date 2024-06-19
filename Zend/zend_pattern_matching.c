@@ -175,11 +175,14 @@ static pm_result match_binding(zval *zv, zend_ast *pattern)
 	if (!bindings) {
 		bindings = &context->bindings_spare;
 		context->bindings = bindings;
+		context->last_bindings = bindings;
 	} else if (bindings->num_used == ZEND_PM_BINDINGS_SLOTS) {
 		zend_pm_bindings *new_bindings = emalloc(sizeof(zend_pm_bindings));
-		new_bindings->next = bindings;
+		new_bindings->num_used = 0;
+		new_bindings->next = NULL;
+		context->last_bindings->next = new_bindings;
+		context->last_bindings = new_bindings;
 		bindings = new_bindings;
-		context->bindings = bindings;
 	}
 
 	zend_pm_binding *binding = &bindings->list[bindings->num_used++];
@@ -317,7 +320,6 @@ static void pm_context_free(bool free_values)
 		if (bindings != &context->bindings_spare) {
 			efree(bindings);
 		}
-		bindings = bindings->next;
 		bindings = next;
 	}
 

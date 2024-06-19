@@ -13,12 +13,11 @@ $foo = new Foo();
 $bar = 'bar';
 
 try {
-    42 is $foo or $bar;
+    42 is $foo & $bar;
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }
 
-// FIXME: This will change once bindings are delayed
 var_dump($foo);
 var_dump($bar);
 

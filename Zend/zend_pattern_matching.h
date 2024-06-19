@@ -36,6 +36,7 @@ struct _zend_pm_bindings {
 typedef struct _zend_pm_context zend_pm_context;
 typedef struct _zend_pm_context {
 	zend_pm_bindings *bindings;
+	zend_pm_bindings *last_bindings;
 	zend_pm_bindings bindings_spare;
 	zend_pm_context *prev;
 } zend_pm_context;
