@@ -6600,12 +6600,23 @@ static void zend_compile_and_pattern(zend_ast **ast_ptr)
 	verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_OR_PATTERN);
 }
 
+struct zend_compile_pattern_context {
+	bool inside_or_pattern;
+};
+
 static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 {
 	zend_ast *ast = *ast_ptr;
 	if (ast == NULL || ast->kind == ZEND_AST_ZVAL) {
 		return;
 	}
+
+	struct zend_compile_pattern_context *pattern_context = context;
+	struct zend_compile_pattern_context tmp_context = {0};
+	if (!pattern_context) {
+		pattern_context = &tmp_context;
+	}
+	bool prev_inside_or_pattern = pattern_context->inside_or_pattern;
 
 	switch (ast->kind) {
 		case ZEND_AST_OBJECT_PATTERN:
@@ -6615,6 +6626,9 @@ static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 			zend_compile_type_pattern(ast_ptr);
 			break;
 		case ZEND_AST_BINDING_PATTERN:
+			if (pattern_context->inside_or_pattern) {
+				zend_throw_exception(zend_ce_compile_error, "Must not bind to variables inside | pattern", 0);
+			}
 			zend_compile_binding_pattern(ast_ptr);
 			break;
 		case ZEND_AST_ARRAY_PATTERN:
@@ -6624,6 +6638,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 			zend_compile_class_const_pattern(ast_ptr);
 			break;
 		case ZEND_AST_OR_PATTERN:
+			pattern_context->inside_or_pattern = true;
 			zend_compile_or_pattern(ast_ptr);
 			break;
 		case ZEND_AST_AND_PATTERN:
@@ -6631,7 +6646,8 @@ static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 			break;
 	}
 
-	zend_ast_apply(ast, zend_compile_pattern, context);
+	zend_ast_apply(ast, zend_compile_pattern, pattern_context);
+	pattern_context->inside_or_pattern = prev_inside_or_pattern;
 }
 
 static void zend_compile_is(znode *result, zend_ast *ast)
