@@ -136,7 +136,6 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ident> T_DEFAULT       "'default'"
 %token <ident> T_MATCH         "'match'"
 %token <ident> T_IS            "'is'"
-%token <ident> T_UNDERSCORE    "'_'"
 %token <ident> T_BREAK         "'break'"
 %token <ident> T_CONTINUE      "'continue'"
 %token <ident> T_GOTO          "'goto'"
@@ -312,7 +311,7 @@ reserved_non_modifiers:
 	| T_FUNCTION | T_CONST | T_RETURN | T_PRINT | T_YIELD | T_LIST | T_SWITCH | T_ENDSWITCH | T_CASE | T_DEFAULT | T_BREAK
 	| T_ARRAY | T_CALLABLE | T_EXTENDS | T_IMPLEMENTS | T_NAMESPACE | T_TRAIT | T_INTERFACE | T_CLASS
 	| T_CLASS_C | T_TRAIT_C | T_FUNC_C | T_METHOD_C | T_LINE | T_FILE | T_DIR | T_NS_C | T_FN | T_MATCH | T_ENUM
-	| T_UNDERSCORE | T_IS
+	| T_IS
 ;
 
 semi_reserved:
@@ -1298,7 +1297,7 @@ atomic_pattern:
 	|	array_pattern { $$ = $1; }
 	|	binding_pattern { $$ = $1; }
 	|	class_const_pattern { $$ = $1; }
-	|	T_UNDERSCORE { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
+	|	'*' { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
 	|	'(' pattern ')' {
 			$$ = $2;
 			if ($$->kind == ZEND_AST_OR_PATTERN || $$->kind == ZEND_AST_AND_PATTERN) {

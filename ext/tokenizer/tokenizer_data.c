@@ -73,7 +73,6 @@ char *get_token_type_name(int token_type)
 		case T_DEFAULT: return "T_DEFAULT";
 		case T_MATCH: return "T_MATCH";
 		case T_IS: return "T_IS";
-		case T_UNDERSCORE: return "T_UNDERSCORE";
 		case T_BREAK: return "T_BREAK";
 		case T_CONTINUE: return "T_CONTINUE";
 		case T_GOTO: return "T_GOTO";

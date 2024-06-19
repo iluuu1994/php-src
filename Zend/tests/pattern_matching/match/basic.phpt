@@ -55,7 +55,7 @@ var_dump(match ('Foo') {
     is 1 => wrong(),
     is 2 => wrong(),
     is 3 => wrong(),
-    is _ => 'Wildcard pattern',
+    is * => 'Wildcard pattern',
 });
 
 var_dump(match (15) {

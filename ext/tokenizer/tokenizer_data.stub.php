@@ -244,11 +244,6 @@ const T_MATCH = UNKNOWN;
 const T_IS = UNKNOWN;
 /**
  * @var int
- * @cvalue T_UNDERSCORE
- */
-const T_UNDERSCORE = UNKNOWN;
-/**
- * @var int
  * @cvalue T_BREAK
  */
 const T_BREAK = UNKNOWN;
