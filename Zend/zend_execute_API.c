@@ -39,6 +39,7 @@
 #include "zend_observer.h"
 #include "zend_call_stack.h"
 #include "zend_frameless_function.h"
+#include "zend_pattern_matching.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -203,6 +204,8 @@ void init_executor(void) /* {{{ */
 	zend_max_execution_timer_init();
 	zend_fiber_init();
 	zend_weakrefs_init();
+
+	zend_pm_contexts_free();
 
 	EG(active) = 1;
 }
