@@ -25,4 +25,4 @@ var_dump($bar);
 --EXPECT--
 Here
 int(42)
-string(3) "bar"
+int(42)

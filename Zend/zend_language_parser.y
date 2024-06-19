@@ -1355,6 +1355,7 @@ or_pattern:
 
 and_pattern:
 		pattern T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_create(ZEND_AST_AND_PATTERN, $1, $3); }
+	|	pattern T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_create(ZEND_AST_AND_PATTERN, $1, $3); }
 ;
 
 range_pattern:
