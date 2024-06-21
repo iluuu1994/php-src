@@ -1,5 +1,5 @@
 --TEST--
-Overwritten private asymmetric property with public property
+private(set) property is implicitly final
 --FILE--
 <?php
 
@@ -10,10 +10,6 @@ class A {
 class B extends A {
 	public string $foo;
 }
-
-$b = new B();
-$b->foo = 'foo';
-echo $b->foo, "\n";
 
 ?>
 --EXPECT--
