@@ -1,5 +1,5 @@
 --TEST--
-Overwritten private asymmetric property with public property
+private(set) property is implicitly final
 --FILE--
 <?php
 
@@ -11,10 +11,6 @@ class B extends A {
 	public string $foo;
 }
 
-$b = new B();
-$b->foo = 'foo';
-echo $b->foo, "\n";
-
 ?>
---EXPECT--
-foo
+--EXPECTF--
+Fatal error: Cannot override final property A::$foo in %s on line %d

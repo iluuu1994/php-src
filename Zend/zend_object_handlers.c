@@ -556,24 +556,6 @@ ZEND_API bool zend_asymmetric_property_has_set_access(const zend_property_info *
 		&& zend_is_protected_compatible_scope(prop_info->ce, scope))) {
 		return true;
 	}
-
-	/* We may have redeclared a parent property. In that case the parent should still be
-	 * allowed to set it. */
-	if (scope && is_derived_class(ce, scope)) {
-		zend_property_info *parent_prop_info = zend_hash_find_ptr(&scope->properties_info, prop_info->name);
-		if (parent_prop_info) {
-			/* This should be ensured by inheritance. */
-			ZEND_ASSERT(parent_prop_info->flags & ZEND_ACC_PPP_MASK);
-			if (parent_prop_info->ce == scope) {
-				return true;
-			}
-			if (EXPECTED((parent_prop_info->flags & ZEND_ACC_PROTECTED_SET)
-				&& zend_is_protected_compatible_scope(parent_prop_info->ce, scope))) {
-				return true;
-			}
-		}
-	}
-
 	return false;
 }
 

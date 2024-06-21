@@ -4510,6 +4510,9 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 	if (!(access_type & ZEND_ACC_PPP_MASK)) {
 		access_type |= ZEND_ACC_PUBLIC;
 	}
+	if (access_type & ZEND_ACC_PRIVATE_SET) {
+		access_type |= ZEND_ACC_FINAL;
+	}
 
 	/* Virtual properties have no backing storage, the offset should never be used. However, the
 	 * virtual flag cannot be definitively determined at compile time. Allow using default values
