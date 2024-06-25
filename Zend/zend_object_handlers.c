@@ -721,8 +721,8 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 	/* make zend_get_property_info silent if we have getter - we may want to use it */
 	property_offset = zend_get_property_offset(zobj->ce, name, (type == BP_VAR_IS) || (zobj->ce->__get != NULL), cache_slot, &prop_info);
 
-try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
+try_again:
 		retval = OBJ_PROP(zobj, property_offset);
 		if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
 			if (prop_info && UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)
@@ -975,8 +975,8 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 
 	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__set != NULL), cache_slot, &prop_info);
 
-try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
+try_again:
 		variable_ptr = OBJ_PROP(zobj, property_offset);
 		if (Z_TYPE_P(variable_ptr) != IS_UNDEF) {
 			Z_TRY_ADDREF_P(value);
@@ -2113,8 +2113,8 @@ ZEND_API int zend_std_has_property(zend_object *zobj, zend_string *name, int has
 
 	property_offset = zend_get_property_offset(zobj->ce, name, 1, cache_slot, &prop_info);
 
-try_again:
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
+try_again:
 		value = OBJ_PROP(zobj, property_offset);
 		if (Z_TYPE_P(value) != IS_UNDEF) {
 			goto found;
