@@ -612,7 +612,6 @@ again:
 					ZEND_HASH_FOREACH_KEY_VAL_IND(myht, index, key, val) {
 						/* data is IS_PTR for properties with hooks. */
 						zval tmp;
-						ZVAL_UNDEF(&tmp);
 						if (UNEXPECTED(Z_TYPE_P(val) == IS_PTR)) {
 							zend_property_info *prop_info = Z_PTR_P(val);
 							if ((prop_info->flags & ZEND_ACC_VIRTUAL) && !prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
