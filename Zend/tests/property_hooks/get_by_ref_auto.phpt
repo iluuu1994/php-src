@@ -24,7 +24,7 @@ try {
 
 ?>
 --EXPECT--
-Error: Cannot acquire reference to hooked property Test::$byVal
+Error: Indirect modification of Test::$byVal is not allowed
 array(0) {
 }
 Error: Cannot assign by reference to overloaded object

@@ -806,7 +806,7 @@ try_again:
 
 			if (UNEXPECTED(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
 				if (UNEXPECTED(Z_TYPE_P(retval) != IS_OBJECT)) {
-					zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
+					zend_throw_error(NULL, "Indirect modification of %s::$%s is not allowed",
 						ZSTR_VAL(zobj->ce->name), ZSTR_VAL(name));
 					goto exit;
 				}
@@ -834,7 +834,7 @@ try_again:
 			if (!Z_ISREF_P(rv)
 			 && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)
 			 && UNEXPECTED(Z_TYPE_P(rv) != IS_OBJECT)) {
-				zend_throw_error(NULL, "Cannot acquire reference to hooked property %s::$%s",
+				zend_throw_error(NULL, "Indirect modification of %s::$%s is not allowed",
 					ZSTR_VAL(ce->name), ZSTR_VAL(name));
 			}
 		} else {

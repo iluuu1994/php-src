@@ -46,7 +46,7 @@ Test::$prop::get
 Test::$prop::set
 Test::$prop::set
 Test::$prop::get
-Cannot acquire reference to hooked property Test::$prop
+Indirect modification of Test::$prop is not allowed
 Test::$prop::get
 Test::$prop::get
 Cannot unset hooked property Test::$prop
@@ -58,7 +58,7 @@ Test::$prop::get
 Test::$prop::set
 Test::$prop::set
 Test::$prop::get
-Cannot acquire reference to hooked property Test::$prop
+Indirect modification of Test::$prop is not allowed
 Test::$prop::get
 Test::$prop::get
 Cannot unset hooked property Test::$prop
