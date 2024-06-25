@@ -2249,6 +2249,7 @@ ZEND_VM_COLD_CONST_HANDLER(91, ZEND_FETCH_OBJ_IS, CONST|TMPVAR|UNUSED|THIS|CV, C
 				uintptr_t prop_offset = (uintptr_t)CACHED_PTR_EX(cache_slot + 1);
 
 				if (EXPECTED(IS_VALID_PROPERTY_OFFSET(prop_offset))) {
+ZEND_VM_C_LABEL(fetch_obj_is_simple):
 					retval = OBJ_PROP(zobj, prop_offset);
 					if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
 						if (!ZEND_VM_SPEC || (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) != 0) {
@@ -2260,6 +2261,11 @@ ZEND_VM_C_LABEL(fetch_obj_is_fast_copy):
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
+						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
+						prop_offset = prop_info->offset;
+						ZEND_VM_C_GOTO(fetch_obj_is_simple);
+					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
 					ZEND_ASSERT(IS_DYNAMIC_PROPERTY_OFFSET(prop_offset));
