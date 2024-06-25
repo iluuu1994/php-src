@@ -20,6 +20,7 @@
 
 #include <zend_language_parser.h>
 #include "zend.h"
+#include "zend_ast.h"
 #include "zend_attributes.h"
 #include "zend_compile.h"
 #include "zend_constants.h"
@@ -5036,11 +5037,25 @@ static zend_string *zend_copy_unmangled_prop_name(zend_string *prop_name)
 	}
 }
 
-static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
+static bool zend_compile_parent_property_hook_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
 {
-	if (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET) {
-		zend_error_noreturn(E_COMPILE_ERROR,
-			"Cannot use temporary expression in write context");
+	ZEND_ASSERT(ast->kind == ZEND_AST_STATIC_CALL);
+
+	zend_ast *class_ast = ast->child[0];
+	zend_ast *method_ast = ast->child[1];
+
+	/* Recognize parent::$prop::get() pattern. */
+	if (class_ast->kind != ZEND_AST_STATIC_PROP
+	 || (class_ast->attr & ZEND_PARENTHESIZED_STATIC_PROP)
+	 || class_ast->child[0]->kind != ZEND_AST_ZVAL
+	 || Z_TYPE_P(zend_ast_get_zval(class_ast->child[0])) != IS_STRING
+	 || zend_get_class_fetch_type(zend_ast_get_str(class_ast->child[0])) != ZEND_FETCH_CLASS_PARENT
+	 || class_ast->child[1]->kind != ZEND_AST_ZVAL
+	 || method_ast->kind != ZEND_AST_ZVAL
+	 || Z_TYPE_P(zend_ast_get_zval(method_ast)) != IS_STRING
+	 || (!zend_string_equals_literal_ci(zend_ast_get_str(method_ast), "get")
+	  && !zend_string_equals_literal_ci(zend_ast_get_str(method_ast), "set"))) {
+		return false;
 	}
 
 	zend_class_entry *ce = CG(active_class_entry);
@@ -5048,17 +5063,13 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use \"parent\" when no class scope is active");
 	}
 
-	zend_ast *name_ast = ast->child[0];
-	zend_ast *args_ast = ast->child[1];
+	zend_ast *args_ast = ast->child[2];
 	if (args_ast->kind == ZEND_AST_CALLABLE_CONVERT) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot create Closure for parent property hook call");
 	}
 
-	zend_string *name = zend_ast_get_str(name_ast);
-	char *property_name_start = ZSTR_VAL(name) + strlen("parent::$");
-	char *hook_name_start = strchr(property_name_start, ':') + 2;
-	zend_string *property_name = zend_string_init(property_name_start, hook_name_start - property_name_start - 2, /* persistent */ false);
-	zend_string *hook_name = zend_string_init(hook_name_start, (ZSTR_VAL(name) + ZSTR_LEN(name)) - hook_name_start, /* persistent */ false);
+	zend_string *property_name = zend_ast_get_str(class_ast->child[1]);
+	zend_string *hook_name = zend_ast_get_str(method_ast);
 	zend_property_hook_kind hook_kind = zend_get_property_hook_kind_from_name(hook_name);
 	ZEND_ASSERT(hook_kind != (uint32_t)-1);
 
@@ -5077,16 +5088,18 @@ static void zend_compile_parent_property_hook_call(znode *result, zend_ast *ast,
 		zend_error_noreturn(E_COMPILE_ERROR, "Must not use parent::$%s::%s() in a different property hook (%s)",
 			ZSTR_VAL(property_name), ZSTR_VAL(hook_name), zend_get_cstring_from_property_hook_kind(CG(context).active_property_hook_kind));
 	}
-	zend_string_release_ex(hook_name, /* persistent */ false);
 
 	zend_op *opline = get_next_op();
 	opline->opcode = ZEND_INIT_PARENT_PROPERTY_HOOK_CALL;
 	opline->op1_type = IS_CONST;
+	zend_string_copy(property_name);
 	opline->op1.constant = zend_add_literal_string(&property_name);
 	opline->op2.num = hook_kind;
 
 	zend_function *fbc = NULL;
-	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(name_ast));
+	zend_compile_call_common(result, args_ast, fbc, zend_ast_get_lineno(method_ast));
+
+	return true;
 }
 
 static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
@@ -5269,6 +5282,10 @@ static void zend_compile_static_call(znode *result, zend_ast *ast, uint32_t type
 	znode class_node, method_node;
 	zend_op *opline;
 	zend_function *fbc = NULL;
+
+	if (zend_compile_parent_property_hook_call(result, ast, type)) {
+		return;
+	}
 
 	zend_short_circuiting_mark_inner(class_ast);
 	zend_compile_class_ref(&class_node, class_ast, ZEND_FETCH_CLASS_EXCEPTION);
