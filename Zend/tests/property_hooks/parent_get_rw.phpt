@@ -24,4 +24,4 @@ var_dump($b->prop);
 
 ?>
 --EXPECTF--
-Fatal error: Cannot use temporary expression in write context in %s on line %d
+Fatal error: Can't use method return value in write context in %s on line %d

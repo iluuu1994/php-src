@@ -98,7 +98,6 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token <ast> T_CONSTANT_ENCAPSED_STRING "quoted string"
 %token <ast> T_STRING_VARNAME "variable name"
 %token <ast> T_NUM_STRING "number"
-%token <ast> T_PARENT_PROPERTY_HOOK_NAME "parent property hook name"
 
 %token <ident> T_INCLUDE       "'include'"
 %token <ident> T_INCLUDE_ONCE  "'include_once'"
@@ -1108,7 +1107,7 @@ optional_property_hook_list:
 property_hook_modifiers:
 		%empty { $$ = 0; }
 	|	non_empty_member_modifiers {
-			$$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_PROPERTY_HOOK, $1); 
+			$$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_PROPERTY_HOOK, $1);
 			if (!$$) { YYERROR; }
 		}
 ;
@@ -1392,8 +1391,6 @@ function_call:
 			$$ = zend_ast_create(ZEND_AST_CALL, $1, $3);
 			$$->lineno = $<num>2;
 		}
-	|	T_PARENT_PROPERTY_HOOK_NAME argument_list
-			{ $$ = zend_ast_create(ZEND_AST_PARENT_PROPERTY_HOOK_CALL, $1, $2); }
 ;
 
 class_name:
@@ -1482,7 +1479,10 @@ variable_class_name:
 
 fully_dereferenceable:
 		variable				{ $$ = $1; }
-	|	'(' expr ')'			{ $$ = $2; }
+	|	'(' expr ')' {
+			$$ = $2;
+			if ($$->kind == ZEND_AST_STATIC_PROP) $$->attr = ZEND_PARENTHESIZED_STATIC_PROP;
+		}
 	|	dereferenceable_scalar	{ $$ = $1; }
 	|	class_constant			{ $$ = $1; }
 	|	new_dereferenceable		{ $$ = $1; }
