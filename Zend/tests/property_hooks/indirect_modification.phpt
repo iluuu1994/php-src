@@ -36,16 +36,16 @@ $ref = 42;
 var_dump($test->byVal);
 
 ?>
---EXPECTF--
+--EXPECT--
 Test::$byVal::set
 Test::$byVal::set
 Test::$byVal::set
 Test::$byVal::set
 int(3)
 Test::$byVal::set
-Cannot acquire reference to hooked property Test::$byVal
+Indirect modification of Test::$byVal is not allowed
 array(0) {
 }
-Cannot acquire reference to hooked property Test::$byVal
+Indirect modification of Test::$byVal is not allowed
 array(0) {
 }
