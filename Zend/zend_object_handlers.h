@@ -281,7 +281,11 @@ ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purp
  * consumers of the get_properties_for API. */
 ZEND_API HashTable *zend_get_properties_for(zval *obj, zend_prop_purpose purpose);
 
-ZEND_API zend_function *zend_get_property_hook_trampoline(zend_property_hook_kind kind, zend_string *prop_name);
+typedef struct _zend_property_info zend_property_info;
+
+ZEND_API zend_function *zend_get_property_hook_trampoline(
+	const zend_property_info *prop_info,
+	zend_property_hook_kind kind, zend_string *prop_name);
 
 #define zend_release_properties(ht) do { \
 	if ((ht) && !(GC_FLAGS(ht) & GC_IMMUTABLE) && !GC_DELREF(ht)) { \

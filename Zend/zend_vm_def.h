@@ -9815,7 +9815,7 @@ ZEND_VM_HANDLER(209, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 			call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 		}
 	} else {
-		zend_function *fbc = zend_get_property_hook_trampoline(hook_kind, property_name);
+		zend_function *fbc = zend_get_property_hook_trampoline(prop_info, hook_kind, property_name);
 		call = zend_vm_stack_push_call_frame(
 			ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 			fbc, opline->extended_value, Z_OBJ_P(ZEND_THIS));

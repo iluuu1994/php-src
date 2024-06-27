@@ -152,6 +152,7 @@ ZEND_API const zend_internal_function zend_pass_function = {
 	NULL,                   /* run_time_cache    */
 	NULL,                   /* doc_comment       */
 	0,                      /* T                 */
+	NULL,                   /* prop_info */
 	ZEND_FN(pass),          /* handler           */
 	NULL,                   /* module            */
 	NULL,                   /* frameless_function_infos */

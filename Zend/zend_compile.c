@@ -8499,6 +8499,8 @@ static void zend_compile_property_hooks(
 		zend_function *func = (zend_function *) zend_compile_func_decl_ex(
 			NULL, (zend_ast *) hook, /* toplevel */ false, prop_info, hook_kind);
 
+		func->common.prop_info = prop_info;
+
 		if (!prop_info->hooks) {
 			prop_info->hooks = zend_arena_alloc(&CG(arena), ZEND_PROPERTY_HOOK_STRUCT_SIZE);
 			memset(prop_info->hooks, 0, ZEND_PROPERTY_HOOK_STRUCT_SIZE);

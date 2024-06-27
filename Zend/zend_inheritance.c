@@ -1365,6 +1365,10 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 				ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key));
 		}
 		if (!(parent_info->flags & ZEND_ACC_PRIVATE)) {
+			if (!(parent_info->ce->ce_flags & ZEND_ACC_INTERFACE)) {
+				child_info->prototype = parent_info;
+			}
+
 			if (UNEXPECTED((parent_info->flags & ZEND_ACC_STATIC) != (child_info->flags & ZEND_ACC_STATIC))) {
 				zend_error_noreturn(E_COMPILE_ERROR, "Cannot redeclare %s%s::$%s as %s%s::$%s",
 					(parent_info->flags & ZEND_ACC_STATIC) ? "static " : "non static ", ZSTR_VAL(parent_info->ce->name), ZSTR_VAL(key),
@@ -3279,6 +3283,7 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 
 			prop_info = Z_PTR(p->val);
 			ZEND_ASSERT(prop_info->ce == pce);
+			ZEND_ASSERT(prop_info->prototype == NULL);
 			new_prop_info= zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
 			Z_PTR(p->val) = new_prop_info;
 			memcpy(new_prop_info, prop_info, sizeof(zend_property_info));
@@ -3290,8 +3295,11 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 				memcpy(new_prop_info->hooks, prop_info->hooks, ZEND_PROPERTY_HOOK_STRUCT_SIZE);
 				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 					if (new_prop_info->hooks[i]) {
-						new_prop_info->hooks[i] = (zend_function *) zend_lazy_method_load(
-							(zend_op_array *) new_prop_info->hooks[i], ce, pce);
+						zend_op_array *hook = zend_lazy_method_load((zend_op_array *) new_prop_info->hooks[i], ce, pce);
+						ZEND_ASSERT(hook->prop_info == prop_info);
+						hook->prop_info = new_prop_info;
+						new_prop_info->ce = ce;
+						new_prop_info->hooks[i] = (zend_function *) hook;
 					}
 				}
 			}

@@ -800,12 +800,22 @@ static zend_property_info *zend_persist_property_info(zend_property_info *prop)
 	if (prop->attributes) {
 		prop->attributes = zend_persist_attributes(prop->attributes);
 	}
+	if (prop->prototype) {
+		zend_property_info *new_prototype = (zend_property_info *) zend_shared_alloc_get_xlat_entry(prop->prototype);
+		if (new_prototype) {
+			prop->prototype = new_prototype;
+		}
+	}
 	if (prop->hooks) {
 		prop->hooks = zend_shared_memdup_put(prop->hooks, ZEND_PROPERTY_HOOK_STRUCT_SIZE);
 		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 			if (prop->hooks[i]) {
-				prop->hooks[i] = (zend_function *) zend_persist_class_method(
-					&prop->hooks[i]->op_array, ce);
+				zend_op_array *hook = zend_persist_class_method(&prop->hooks[i]->op_array, ce);
+				zend_property_info *new_prop_info = (zend_property_info *) zend_shared_alloc_get_xlat_entry(hook->prop_info);
+				if (new_prop_info) {
+					hook->prop_info = new_prop_info;
+				}
+				prop->hooks[i] = (zend_function *) hook;
 			}
 		}
 	}

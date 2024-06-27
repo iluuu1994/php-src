@@ -426,6 +426,7 @@ typedef struct _zend_property_info {
 	HashTable *attributes;
 	zend_class_entry *ce;
 	zend_type type;
+	const zend_property_info *prototype;
 	zend_function **hooks;
 } zend_property_info;
 
@@ -488,6 +489,7 @@ struct _zend_op_array {
 	ZEND_MAP_PTR_DEF(void **, run_time_cache);
 	zend_string *doc_comment;
 	uint32_t T;         /* number of temporary variables */
+	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
 	/* END of common elements */
 
 	int cache_size;     /* number of run_time_cache_slots * sizeof(void*) */
@@ -546,6 +548,7 @@ typedef struct _zend_internal_function {
 	ZEND_MAP_PTR_DEF(void **, run_time_cache);
 	zend_string *doc_comment;
 	uint32_t T;         /* number of temporary variables */
+	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
 	/* END of common elements */
 
 	zif_handler handler;
@@ -574,6 +577,7 @@ union _zend_function {
 		ZEND_MAP_PTR_DEF(void **, run_time_cache);
 		zend_string *doc_comment;
 		uint32_t T;         /* number of temporary variables */
+		const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
 	} common;
 
 	zend_op_array op_array;
