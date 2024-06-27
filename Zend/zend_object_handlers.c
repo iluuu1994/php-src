@@ -630,44 +630,14 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline);
 static bool is_in_hook(const zend_property_info *prop_info)
 {
 	zend_execute_data *execute_data = EG(current_execute_data);
-	if (!execute_data || !EX(func)) {
+	if (!execute_data || !EX(func) || !EX(func)->common.prop_info) {
 		return false;
 	}
 
-	zend_function *func = EX(func);
-	zend_function **hooks = prop_info->hooks;
-	ZEND_ASSERT(hooks);
-
-	/* Fast path: Check if we're directly in the properties hook. */
-	if (func == hooks[ZEND_PROPERTY_HOOK_GET]
-	 || func == hooks[ZEND_PROPERTY_HOOK_SET]) {
-		return true;
-	}
-
-	/* Check if we're in a parent hook. */
-	zend_function *prototype = func->common.prototype ? func->common.prototype : func;
-	if ((hooks[ZEND_PROPERTY_HOOK_GET] && prototype == hooks[ZEND_PROPERTY_HOOK_GET]->common.prototype)
-	 || (hooks[ZEND_PROPERTY_HOOK_SET] && prototype == hooks[ZEND_PROPERTY_HOOK_SET]->common.prototype)) {
-		return true;
-	}
-
-	/* Check if we're in the trampoline helper. */
-	if (EX(func) == &EG(trampoline)
-	 && !ZEND_USER_CODE(EX(func)->type)
-	 && (EX(func)->internal_function.handler == ZEND_FN(zend_parent_hook_get_trampoline)
-	  || EX(func)->internal_function.handler == ZEND_FN(zend_parent_hook_set_trampoline))) {
-		return true;
-	}
-
-	/* Check if we're in ReflectionProperty::{get,set}RawValue(). */
-	if (EX(func)
-	 && EX(func)->common.scope == reflection_property_ptr
-	 && (zend_string_equals_literal(EX(func)->common.function_name, "getRawValue")
-	  || zend_string_equals_literal(EX(func)->common.function_name, "setRawValue"))) {
-		return true;
-	}
-
-	return false;
+	const zend_property_info *parent_info = EX(func)->common.prop_info;
+	const zend_property_info *prototype = prop_info->prototype ? prop_info->prototype : prop_info;
+	const zend_property_info *parent_prototype = parent_info->prototype ? parent_info->prototype : parent_info;
+	return prototype == parent_prototype;
 }
 
 
@@ -1572,6 +1542,7 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 	}
 
 	func->prototype = NULL;
+	func->prop_info = NULL;
 	func->num_args = 0;
 	func->required_num_args = 0;
 	func->arg_info = (zend_arg_info *) arg_info;
@@ -1634,7 +1605,9 @@ clean:
 	EX(func) = NULL;
 }
 
-ZEND_API zend_function *zend_get_property_hook_trampoline(zend_property_hook_kind kind, zend_string *prop_name)
+ZEND_API zend_function *zend_get_property_hook_trampoline(
+	const zend_property_info *prop_info,
+	zend_property_hook_kind kind, zend_string *prop_name)
 {
 	zend_function *func;
 	if (EXPECTED(EG(trampoline).common.function_name == NULL)) {
@@ -1654,6 +1627,7 @@ ZEND_API zend_function *zend_get_property_hook_trampoline(zend_property_hook_kin
 	func->common.required_num_args = args;
 	func->common.scope = NULL;
 	func->common.prototype = NULL;
+	func->common.prop_info = prop_info;
 	func->common.arg_info = NULL;
 	func->internal_function.handler = kind == ZEND_PROPERTY_HOOK_GET
 		? ZEND_FN(zend_parent_hook_get_trampoline)

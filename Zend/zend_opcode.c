@@ -73,6 +73,7 @@ void init_op_array(zend_op_array *op_array, uint8_t type, int initial_ops_size)
 
 	op_array->scope = NULL;
 	op_array->prototype = NULL;
+	op_array->prop_info = NULL;
 
 	op_array->live_range = NULL;
 	op_array->try_catch_array = NULL;
