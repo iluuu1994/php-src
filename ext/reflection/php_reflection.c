@@ -5853,10 +5853,17 @@ ZEND_METHOD(ReflectionProperty, getRawValue)
 
 	uint32_t *guard = NULL;
 	uint32_t guard_backup;
+	zend_internal_function func_copy;
+	zend_function *func_backup = NULL;
 	if (Z_OBJCE_P(object)->ce_flags & ZEND_ACC_USE_GUARDS) {
 		guard = zend_get_property_guard(Z_OBJ_P(object), ref->unmangled_name);
 		guard_backup = *guard;
 		*guard |= ZEND_GUARD_PROPERTY_HOOK;
+
+		func_backup = EX(func);
+		func_copy = EX(func)->internal_function;
+		func_copy.prop_info = ref->prop;
+		EX(func) = (zend_function *) &func_copy;
 	}
 
 	zval rv;
@@ -5864,6 +5871,9 @@ ZEND_METHOD(ReflectionProperty, getRawValue)
 
 	if (guard) {
 		*guard = guard_backup;
+	}
+	if (func_backup) {
+		EX(func) = func_backup;
 	}
 
 	if (member_p != &rv) {
@@ -5896,16 +5906,26 @@ ZEND_METHOD(ReflectionProperty, setRawValue)
 
 	uint32_t *guard = NULL;
 	uint32_t guard_backup;
+	zend_internal_function func_copy;
+	zend_function *func_backup = NULL;
 	if (Z_OBJCE_P(object)->ce_flags & ZEND_ACC_USE_GUARDS) {
 		guard = zend_get_property_guard(Z_OBJ_P(object), ref->unmangled_name);
 		guard_backup = *guard;
 		*guard |= ZEND_GUARD_PROPERTY_HOOK;
+
+		func_backup = EX(func);
+		func_copy = EX(func)->internal_function;
+		func_copy.prop_info = ref->prop;
+		EX(func) = (zend_function *) &func_copy;
 	}
 
 	zend_update_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, value);
 
 	if (guard) {
 		*guard = guard_backup;
+	}
+	if (func_backup) {
+		EX(func) = func_backup;
 	}
 }
 
