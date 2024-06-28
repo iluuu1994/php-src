@@ -635,9 +635,8 @@ static bool is_in_hook(const zend_property_info *prop_info)
 	}
 
 	const zend_property_info *parent_info = EX(func)->common.prop_info;
-	const zend_property_info *prototype = prop_info->prototype ? prop_info->prototype : prop_info;
-	const zend_property_info *parent_prototype = parent_info->prototype ? parent_info->prototype : parent_info;
-	return prototype == parent_prototype;
+	ZEND_ASSERT(prop_info->prototype && parent_info->prototype);
+	return prop_info->prototype == parent_info->prototype;
 }
 
 

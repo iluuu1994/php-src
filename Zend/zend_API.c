@@ -4594,7 +4594,7 @@ skip_property_storage:
 	property_info->flags = access_type;
 	property_info->doc_comment = doc_comment;
 	property_info->attributes = NULL;
-	property_info->prototype = NULL;
+	property_info->prototype = property_info;
 	property_info->hooks = NULL;
 	property_info->ce = ce;
 	property_info->type = type;
