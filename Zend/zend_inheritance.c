@@ -3283,11 +3283,12 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 
 			prop_info = Z_PTR(p->val);
 			ZEND_ASSERT(prop_info->ce == pce);
-			ZEND_ASSERT(prop_info->prototype == NULL);
+			ZEND_ASSERT(prop_info->prototype == prop_info);
 			new_prop_info= zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
 			Z_PTR(p->val) = new_prop_info;
 			memcpy(new_prop_info, prop_info, sizeof(zend_property_info));
 			new_prop_info->ce = ce;
+			new_prop_info->prototype = new_prop_info;
 			/* Deep copy the type information */
 			zend_type_copy_ctor(&new_prop_info->type, /* use_arena */ true, /* persistent */ false);
 			if (new_prop_info->hooks) {
