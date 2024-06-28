@@ -792,6 +792,13 @@ try_again:
 			if (EG(exception)) {
 				return &EG(uninitialized_zval);
 			}
+
+			/* Reads from backing store can only occur in hooks, and hence will always remain simple. */
+			zend_execute_data *execute_data = EG(current_execute_data);
+			if (cache_slot && EX(opline) && EX(opline)->opcode == ZEND_FETCH_OBJ_R && EX(opline)->op1_type == IS_UNUSED) {
+				ZEND_SET_PROPERTY_HOOK_SIMPLE_READ(cache_slot);
+			}
+
 			property_offset = prop_info->offset;
 			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
 				prop_info = NULL;
@@ -1050,6 +1057,13 @@ found:;
 				variable_ptr = &EG(error_zval);
 				goto exit;
 			}
+
+			/* Writes to backing store can only occur in hooks, and hence will always remain simple. */
+			zend_execute_data *execute_data = EG(current_execute_data);
+			if (cache_slot && EX(opline) && EX(opline)->opcode == ZEND_ASSIGN_OBJ && EX(opline)->op1_type == IS_UNUSED) {
+				ZEND_SET_PROPERTY_HOOK_SIMPLE_WRITE(cache_slot);
+			}
+
 			property_offset = prop_info->offset;
 			if (!ZEND_TYPE_IS_SET(prop_info->type)) {
 				prop_info = NULL;
