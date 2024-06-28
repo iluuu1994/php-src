@@ -51,7 +51,7 @@ $child->prop2 = 43;
 var_dump($child->prop2);
 
 ?>
---EXPECT--
-Must not access backing value of property Test::$prop outside its corresponding hooks
-Must not access backing value of property Test::$prop outside its corresponding hooks
+--EXPECTF--
+Maximum call stack size of %d bytes (zend.max_allowed_stack_size - zend.reserved_stack_size) reached. Infinite recursion?
+Maximum call stack size of %d bytes (zend.max_allowed_stack_size - zend.reserved_stack_size) reached. Infinite recursion?
 int(43)

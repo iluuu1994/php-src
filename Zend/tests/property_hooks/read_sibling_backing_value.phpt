@@ -21,5 +21,5 @@ try {
 }
 
 ?>
---EXPECT--
-Must not access backing value of property Test::$a outside its corresponding hooks
+--EXPECTF--
+Maximum call stack size of %d bytes (zend.max_allowed_stack_size - zend.reserved_stack_size) reached. Infinite recursion?

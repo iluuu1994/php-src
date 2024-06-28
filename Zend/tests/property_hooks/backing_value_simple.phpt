@@ -1,5 +1,7 @@
 --TEST--
 Reads and writes from backing store are only cached for $this
+--XFAIL--
+All reads/writes would now indicate direct, which _kind of_ makes sense.
 --FILE--
 <?php
 

@@ -35,6 +35,6 @@ try {
 }
 
 ?>
---EXPECT--
-Must not write to virtual property Test::$prop
-Must not read from virtual property Test::$prop
+--EXPECTF--
+Maximum call stack size of %d bytes (zend.max_allowed_stack_size - zend.reserved_stack_size) reached. Infinite recursion?
+Maximum call stack size of %d bytes (zend.max_allowed_stack_size - zend.reserved_stack_size) reached. Infinite recursion?

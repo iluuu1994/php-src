@@ -647,31 +647,18 @@ static ZEND_COLD void zend_throw_no_prop_backing_value_access(zend_string *class
 		ZSTR_VAL(class_name), ZSTR_VAL(prop_name));
 }
 
-static ZEND_COLD void zend_throw_forbidden_prop_backing_value_access(zend_string *class_name, zend_string *prop_name)
-{
-	zend_throw_error(NULL, "Must not access backing value of property %s::$%s outside its corresponding hooks",
-		ZSTR_VAL(class_name), ZSTR_VAL(prop_name));
-}
-
 static bool zend_call_get_hook(
 	const zend_property_info *prop_info, zend_string *prop_name,
 	zend_function *get, zend_object *zobj, zval *rv)
 {
-	uint32_t *guard = zend_get_property_guard(zobj, prop_name);
-	if (UNEXPECTED((*guard) & IN_HOOK)) {
-		if (prop_info->flags & ZEND_ACC_VIRTUAL) {
+	if (is_in_hook(prop_info)) {
+		if (UNEXPECTED(prop_info->flags & ZEND_ACC_VIRTUAL)) {
 			zend_throw_no_prop_backing_value_access(zobj->ce->name, prop_name, /* is_read */ true);
-		} else if (UNEXPECTED(!is_in_hook(prop_info))) {
-			zend_throw_forbidden_prop_backing_value_access(zobj->ce->name, prop_name);
 		}
 		return false;
 	}
 
-	GC_ADDREF(zobj);
-	*guard |= IN_HOOK;
 	zend_call_known_instance_method_with_0_params(get, zobj, rv);
-	*guard &= ~IN_HOOK;
-	OBJ_RELEASE(zobj);
 
 	return true;
 }
@@ -1045,14 +1032,9 @@ found:;
 			goto try_again;
 		}
 
-		uint32_t *guard = zend_get_property_guard(zobj, name);
-		if (UNEXPECTED((*guard) & IN_HOOK)) {
+		if (is_in_hook(prop_info)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_no_prop_backing_value_access(zobj->ce->name, name, /* is_read */ false);
-				variable_ptr = &EG(error_zval);
-				goto exit;
-			} else if (UNEXPECTED(!is_in_hook(prop_info))) {
-				zend_throw_forbidden_prop_backing_value_access(zobj->ce->name, name);
 				variable_ptr = &EG(error_zval);
 				goto exit;
 			}
@@ -1070,9 +1052,7 @@ found:;
 			goto try_again;
 		}
 		GC_ADDREF(zobj);
-		(*guard) |= IN_HOOK;
 		zend_call_known_instance_method_with_1_params(set, zobj, NULL, value);
-		(*guard) &= ~IN_HOOK;
 		OBJ_RELEASE(zobj);
 
 		variable_ptr = value;
@@ -1574,10 +1554,6 @@ static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 		goto clean;
 	}
 
-	uint32_t *guard = zend_get_property_guard(obj, prop_name);
-	uint32_t guard_backup = *guard;
-	*guard |= IN_HOOK;
-
 	zval rv;
 	zval *retval = obj->handlers->read_property(obj, prop_name, BP_VAR_R, NULL, &rv);
 	if (retval == &rv) {
@@ -1585,8 +1561,6 @@ static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 	} else {
 		RETVAL_COPY(retval);
 	}
-
-	*guard = guard_backup;
 
 clean:
 	zend_free_trampoline(EX(func));
@@ -1604,14 +1578,7 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 		Z_PARAM_ZVAL(value)
 	ZEND_PARSE_PARAMETERS_END_EX(goto clean);
 
-	uint32_t *guard = zend_get_property_guard(obj, prop_name);
-	uint32_t guard_backup = *guard;
-	*guard |= IN_HOOK;
-
-	zval *retval = obj->handlers->write_property(obj, prop_name, value, NULL);
-	RETVAL_COPY(retval);
-
-	*guard = guard_backup;
+	RETVAL_COPY(obj->handlers->write_property(obj, prop_name, value, NULL));
 
 clean:
 	zend_free_trampoline(EX(func));
