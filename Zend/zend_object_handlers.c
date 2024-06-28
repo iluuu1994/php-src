@@ -627,7 +627,7 @@ ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_proper
 static ZEND_FUNCTION(zend_parent_hook_get_trampoline);
 static ZEND_FUNCTION(zend_parent_hook_set_trampoline);
 
-static bool is_in_hook(const zend_property_info *prop_info)
+bool zend_is_in_hook(const zend_property_info *prop_info)
 {
 	zend_execute_data *execute_data = EG(current_execute_data);
 	if (!execute_data || !EX(func) || !EX(func)->common.prop_info) {
@@ -651,7 +651,7 @@ static bool zend_call_get_hook(
 	const zend_property_info *prop_info, zend_string *prop_name,
 	zend_function *get, zend_object *zobj, zval *rv)
 {
-	if (is_in_hook(prop_info)) {
+	if (zend_is_in_hook(prop_info)) {
 		if (UNEXPECTED(prop_info->flags & ZEND_ACC_VIRTUAL)) {
 			zend_throw_no_prop_backing_value_access(zobj->ce->name, prop_name, /* is_read */ true);
 		}
@@ -1032,7 +1032,7 @@ found:;
 			goto try_again;
 		}
 
-		if (is_in_hook(prop_info)) {
+		if (zend_is_in_hook(prop_info)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_no_prop_backing_value_access(zobj->ce->name, name, /* is_read */ false);
 				variable_ptr = &EG(error_zval);

@@ -6687,10 +6687,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -9225,10 +9253,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -11685,10 +11741,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -16085,10 +16169,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -17548,10 +17660,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -18925,10 +19065,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -33533,10 +33701,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -35662,10 +35858,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -38268,10 +38492,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -42608,10 +42860,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -46522,10 +46802,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
@@ -51982,10 +52290,38 @@ fetch_obj_r_fast_copy:
 						}
 					}
 				} else if (UNEXPECTED(IS_HOOKED_PROPERTY_OFFSET(prop_offset))) {
+					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
-						zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 						prop_offset = prop_info->offset;
 						goto fetch_obj_r_simple;
+					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info)
+					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
+						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						zend_execute_data *call = zend_vm_stack_push_call_frame(
+							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
+							hook, 0, zobj);
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
+							init_func_run_time_cache(&hook->op_array);
+						}
+						call->prev_execute_data = execute_data;
+						execute_data = call;
+
+						EX(call) = NULL;
+						EX(return_value) = EX_VAR(opline->result.var);
+						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						EG(current_execute_data) = execute_data;
+#if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
+						opline = hook->op_array.opcodes;
+#else
+						EX(opline) = hook->op_array.opcodes;
+#endif
+
+						LOAD_OPLINE_EX();
+
+
+						ZEND_VM_ENTER_EX();
 					}
 					/* Fall through to read_property for hooks. */
 				} else if (EXPECTED(zobj->properties != NULL)) {
