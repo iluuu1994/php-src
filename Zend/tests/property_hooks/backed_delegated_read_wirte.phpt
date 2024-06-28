@@ -1,5 +1,9 @@
 --TEST--
 Attempted read/write of backing value in a delegated method throws
+--SKIPIF--
+<?php
+if (getenv('SKIP_ASAN')) die('skip FIXME Tweak stack size');
+?>
 --FILE--
 <?php
 
