@@ -6695,26 +6695,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -9261,26 +9259,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -11749,26 +11745,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -16177,26 +16171,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -17668,26 +17660,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -19073,26 +19063,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -33709,26 +33697,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -35866,26 +35852,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -38500,26 +38484,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -42868,26 +42850,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -46810,26 +46790,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
@@ -52298,26 +52276,24 @@ fetch_obj_r_fast_copy:
 					 && !zend_is_in_hook(prop_info)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
+						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
+						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
+
 						zend_execute_data *call = zend_vm_stack_push_call_frame(
 							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
 							hook, 0, zobj);
-						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
-						if (UNEXPECTED(!RUN_TIME_CACHE(&hook->op_array))) {
-							init_func_run_time_cache(&hook->op_array);
-						}
 						call->prev_execute_data = execute_data;
-						execute_data = call;
+						call->call = NULL;
+						call->return_value = EX_VAR(opline->result.var);
+						call->run_time_cache = RUN_TIME_CACHE(&hook->op_array);
 
-						EX(call) = NULL;
-						EX(return_value) = EX_VAR(opline->result.var);
-						EX(run_time_cache) = RUN_TIME_CACHE(&hook->op_array);
+						execute_data = call;
 						EG(current_execute_data) = execute_data;
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
 						EX(opline) = hook->op_array.opcodes;
 #endif
-
 						LOAD_OPLINE_EX();
 
 
