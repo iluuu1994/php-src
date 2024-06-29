@@ -2091,8 +2091,9 @@ ZEND_VM_C_LABEL(fetch_obj_r_fast_copy):
 					if (ZEND_IS_PROPERTY_HOOK_SIMPLE_READ(prop_offset)) {
 						prop_offset = prop_info->offset;
 						ZEND_VM_C_GOTO(fetch_obj_r_simple);
-					} else if (EXPECTED(zobj->handlers->read_property == zend_std_read_property)
-					 && !zend_is_in_hook(prop_info)
+					} else if (EXPECTED(zend_execute_ex == execute_ex)
+					 && EXPECTED(zobj->handlers->read_property == zend_std_read_property)
+					 && !zend_is_in_hook(prop_info, zobj)
 					 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
 						zend_function *hook = prop_info->hooks[ZEND_PROPERTY_HOOK_GET];
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
