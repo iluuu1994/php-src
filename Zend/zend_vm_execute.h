@@ -6698,9 +6698,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CONST & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CONST & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -6708,6 +6713,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -9262,9 +9269,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CONST & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CONST & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -9272,6 +9284,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -11748,9 +11762,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CONST & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CONST & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -11758,6 +11777,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -16174,9 +16195,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if ((IS_TMP_VAR|IS_VAR) & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if ((IS_TMP_VAR|IS_VAR) & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -16184,6 +16210,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -17663,9 +17691,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if ((IS_TMP_VAR|IS_VAR) & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if ((IS_TMP_VAR|IS_VAR) & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -17673,6 +17706,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -19066,9 +19101,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if ((IS_TMP_VAR|IS_VAR) & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if ((IS_TMP_VAR|IS_VAR) & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -19076,6 +19116,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -33700,9 +33742,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_UNUSED & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_UNUSED & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -33710,6 +33757,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -35855,9 +35904,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_UNUSED & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_UNUSED & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -35865,6 +35919,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -38487,9 +38543,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_UNUSED & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_UNUSED & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -38497,6 +38558,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -42853,9 +42916,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CV & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CV & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -42863,6 +42931,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -46793,9 +46863,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CV & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CV & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -46803,6 +46878,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
@@ -52279,9 +52356,14 @@ fetch_obj_r_fast_copy:
 						ZEND_ASSERT(hook->type == ZEND_USER_FUNCTION);
 						ZEND_ASSERT(RUN_TIME_CACHE(&hook->op_array));
 
-						zend_execute_data *call = zend_vm_stack_push_call_frame(
-							ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS,
-							hook, 0, zobj);
+						uint32_t call_info = ZEND_CALL_NESTED_FUNCTION | ZEND_CALL_HAS_THIS;
+						if (IS_CV & IS_CV) {
+							GC_ADDREF(zobj);
+						}
+						if (IS_CV & (IS_CV|IS_VAR|IS_TMP_VAR)) {
+							call_info |= ZEND_CALL_RELEASE_THIS;
+						}
+						zend_execute_data *call = zend_vm_stack_push_call_frame(call_info, hook, 0, zobj);
 						call->prev_execute_data = execute_data;
 						call->call = NULL;
 						call->return_value = EX_VAR(opline->result.var);
@@ -52289,6 +52371,8 @@ fetch_obj_r_fast_copy:
 
 						execute_data = call;
 						EG(current_execute_data) = execute_data;
+						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
+
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 						opline = hook->op_array.opcodes;
 #else
