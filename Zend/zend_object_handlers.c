@@ -640,6 +640,17 @@ bool zend_is_in_hook(const zend_property_info *prop_info, const zend_object *obj
 		&& Z_OBJ(EX(This)) == obj;
 }
 
+static bool zend_is_guaranteed_hook_call(const zend_property_info *prop_info)
+{
+	zend_execute_data *execute_data = EG(current_execute_data);
+	if (!execute_data || !EX(func) || !EX(func)->common.prop_info) {
+		return true;
+	}
+
+	const zend_property_info *parent_info = EX(func)->common.prop_info;
+	ZEND_ASSERT(prop_info->prototype && parent_info->prototype);
+	return prop_info->prototype != parent_info->prototype;
+}
 
 static ZEND_COLD void zend_throw_no_prop_backing_value_access(zend_string *class_name, zend_string *prop_name, bool is_read)
 {
@@ -791,6 +802,14 @@ try_again:
 				prop_info = NULL;
 			}
 			goto try_again;
+		}
+
+		if (EXPECTED(zend_execute_ex == execute_ex
+		 && zobj->ce->default_object_handlers->read_property == zend_std_read_property
+		 && !zobj->ce->create_object
+		 && zend_is_guaranteed_hook_call(prop_info)
+		 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE))) {
+			ZEND_SET_PROPERTY_HOOK_SIMPLE_GET(cache_slot);
 		}
 
 		if (Z_TYPE_P(rv) != IS_UNDEF) {
