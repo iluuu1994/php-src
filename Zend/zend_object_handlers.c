@@ -1583,6 +1583,7 @@ static ZEND_FUNCTION(zend_parent_hook_get_trampoline)
 	}
 
 clean:
+	zend_string_release(EX(func)->common.function_name);
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
 }
@@ -1601,6 +1602,7 @@ static ZEND_FUNCTION(zend_parent_hook_set_trampoline)
 	RETVAL_COPY(obj->handlers->write_property(obj, prop_name, value, NULL));
 
 clean:
+	zend_string_release(EX(func)->common.function_name);
 	zend_free_trampoline(EX(func));
 	EX(func) = NULL;
 }
@@ -1609,6 +1611,7 @@ ZEND_API zend_function *zend_get_property_hook_trampoline(
 	const zend_property_info *prop_info,
 	zend_property_hook_kind kind, zend_string *prop_name)
 {
+	static const zend_arg_info arg_info[1] = {{0}};
 	zend_function *func;
 	if (EXPECTED(EG(trampoline).common.function_name == NULL)) {
 		func = &EG(trampoline);
@@ -1620,15 +1623,17 @@ ZEND_API zend_function *zend_get_property_hook_trampoline(
 	func->common.arg_flags[1] = 0;
 	func->common.arg_flags[2] = 0;
 	func->common.fn_flags = ZEND_ACC_CALL_VIA_TRAMPOLINE;
-	func->common.function_name = kind == ZEND_PROPERTY_HOOK_GET ? ZSTR_KNOWN(ZEND_STR_GET) : ZSTR_KNOWN(ZEND_STR_SET);
+	func->common.function_name = zend_string_concat3(
+		"$", 1, ZSTR_VAL(prop_name), ZSTR_LEN(prop_name),
+		kind == ZEND_PROPERTY_HOOK_GET ? "::get" : "::set", 5);
 	/* set to 0 to avoid arg_info[] allocation, because all values are passed by value anyway */
 	uint32_t args = kind == ZEND_PROPERTY_HOOK_GET ? 0 : 1;
 	func->common.num_args = args;
 	func->common.required_num_args = args;
-	func->common.scope = NULL;
+	func->common.scope = prop_info->ce;
 	func->common.prototype = NULL;
 	func->common.prop_info = prop_info;
-	func->common.arg_info = NULL;
+	func->common.arg_info = (zend_arg_info *) arg_info;
 	func->internal_function.handler = kind == ZEND_PROPERTY_HOOK_GET
 		? ZEND_FN(zend_parent_hook_get_trampoline)
 		: ZEND_FN(zend_parent_hook_set_trampoline);
