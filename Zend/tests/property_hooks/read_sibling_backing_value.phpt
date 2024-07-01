@@ -2,7 +2,7 @@
 Attempted read/write of backing value in sibling property hook fails
 --SKIPIF--
 <?php
-if (getenv('SKIP_ASAN')) die('skip FIXME Tweak stack size');
+if (getenv('SKIP_ASAN')) die('skip ASAN reports stack-overflow');
 ?>
 --INI--
 ; The test may use a large amount of memory on systems with a large stack limit
