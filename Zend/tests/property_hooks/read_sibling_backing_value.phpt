@@ -4,6 +4,9 @@ Attempted read/write of backing value in sibling property hook fails
 <?php
 if (getenv('SKIP_ASAN')) die('skip FIXME Tweak stack size');
 ?>
+--INI--
+; The test may use a large amount of memory on systems with a large stack limit
+memory_limit=2G
 --FILE--
 <?php
 
