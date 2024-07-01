@@ -798,7 +798,8 @@ try_again:
 			goto try_again;
 		}
 
-		if (EXPECTED(zend_execute_ex == execute_ex
+		if (EXPECTED(cache_slot
+		 && zend_execute_ex == execute_ex
 		 && zobj->ce->default_object_handlers->read_property == zend_std_read_property
 		 && !zobj->ce->create_object
 		 && !zend_is_in_hook(prop_info)
