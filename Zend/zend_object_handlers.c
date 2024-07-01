@@ -627,7 +627,7 @@ ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_proper
 static ZEND_FUNCTION(zend_parent_hook_get_trampoline);
 static ZEND_FUNCTION(zend_parent_hook_set_trampoline);
 
-bool zend_is_in_hook(const zend_property_info *prop_info, const zend_object *obj)
+static bool zend_is_in_hook(const zend_property_info *prop_info)
 {
 	zend_execute_data *execute_data = EG(current_execute_data);
 	if (!execute_data || !EX(func) || !EX(func)->common.prop_info) {
@@ -636,20 +636,14 @@ bool zend_is_in_hook(const zend_property_info *prop_info, const zend_object *obj
 
 	const zend_property_info *parent_info = EX(func)->common.prop_info;
 	ZEND_ASSERT(prop_info->prototype && parent_info->prototype);
-	return prop_info->prototype == parent_info->prototype
-		&& Z_OBJ(EX(This)) == obj;
+	return prop_info->prototype == parent_info->prototype;
 }
 
-static bool zend_is_guaranteed_hook_call(const zend_property_info *prop_info)
+static bool zend_should_call_hook(const zend_property_info *prop_info, const zend_object *obj)
 {
-	zend_execute_data *execute_data = EG(current_execute_data);
-	if (!execute_data || !EX(func) || !EX(func)->common.prop_info) {
-		return true;
-	}
-
-	const zend_property_info *parent_info = EX(func)->common.prop_info;
-	ZEND_ASSERT(prop_info->prototype && parent_info->prototype);
-	return prop_info->prototype != parent_info->prototype;
+	return !zend_is_in_hook(prop_info)
+		/* execute_data and This are guaranteed to be set if zend_is_in_hook() returns true. */
+		|| Z_OBJ(EG(current_execute_data)->This) != obj;
 }
 
 static ZEND_COLD void zend_throw_no_prop_backing_value_access(zend_string *class_name, zend_string *prop_name, bool is_read)
@@ -663,7 +657,7 @@ static bool zend_call_get_hook(
 	const zend_property_info *prop_info, zend_string *prop_name,
 	zend_function *get, zend_object *zobj, zval *rv)
 {
-	if (zend_is_in_hook(prop_info, zobj)) {
+	if (!zend_should_call_hook(prop_info, zobj)) {
 		if (UNEXPECTED(prop_info->flags & ZEND_ACC_VIRTUAL)) {
 			zend_throw_no_prop_backing_value_access(zobj->ce->name, prop_name, /* is_read */ true);
 		}
@@ -807,7 +801,7 @@ try_again:
 		if (EXPECTED(zend_execute_ex == execute_ex
 		 && zobj->ce->default_object_handlers->read_property == zend_std_read_property
 		 && !zobj->ce->create_object
-		 && zend_is_guaranteed_hook_call(prop_info)
+		 && !zend_is_in_hook(prop_info)
 		 && !(prop_info->hooks[ZEND_PROPERTY_HOOK_GET]->common.fn_flags & ZEND_ACC_RETURN_REFERENCE))) {
 			ZEND_SET_PROPERTY_HOOK_SIMPLE_GET(cache_slot);
 		}
@@ -1052,7 +1046,7 @@ found:;
 			goto try_again;
 		}
 
-		if (zend_is_in_hook(prop_info, zobj)) {
+		if (!zend_should_call_hook(prop_info, zobj)) {
 			if (prop_info->flags & ZEND_ACC_VIRTUAL) {
 				zend_throw_no_prop_backing_value_access(zobj->ce->name, name, /* is_read */ false);
 				variable_ptr = &EG(error_zval);
