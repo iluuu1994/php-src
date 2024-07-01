@@ -5851,8 +5851,22 @@ ZEND_METHOD(ReflectionProperty, getRawValue)
 		RETURN_THROWS();
 	}
 
-	zend_function *func = zend_get_property_hook_trampoline(ref->prop, ZEND_PROPERTY_HOOK_GET, ref->unmangled_name);
-	zend_call_known_instance_method_with_0_params(func, Z_OBJ_P(object), return_value);
+	if (!ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_GET]) {
+		zval rv;
+		zval *member_p = zend_read_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, 0, &rv);
+
+		if (member_p != &rv) {
+			RETURN_COPY_DEREF(member_p);
+		} else {
+			if (Z_ISREF_P(member_p)) {
+				zend_unwrap_reference(member_p);
+			}
+			RETURN_COPY_VALUE(member_p);
+		}
+	} else {
+		zend_function *func = zend_get_property_hook_trampoline(ref->prop, ZEND_PROPERTY_HOOK_GET, ref->unmangled_name);
+		zend_call_known_instance_method_with_0_params(func, Z_OBJ_P(object), return_value);
+	}
 }
 
 ZEND_METHOD(ReflectionProperty, setRawValue)
@@ -5873,8 +5887,12 @@ ZEND_METHOD(ReflectionProperty, setRawValue)
 		RETURN_THROWS();
 	}
 
-	zend_function *func = zend_get_property_hook_trampoline(ref->prop, ZEND_PROPERTY_HOOK_SET, ref->unmangled_name);
-	zend_call_known_instance_method_with_1_params(func, Z_OBJ_P(object), NULL, value);
+	if (!ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+		zend_update_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, value);
+	} else {
+		zend_function *func = zend_get_property_hook_trampoline(ref->prop, ZEND_PROPERTY_HOOK_SET, ref->unmangled_name);
+		zend_call_known_instance_method_with_1_params(func, Z_OBJ_P(object), NULL, value);
+	}
 }
 
 /* {{{ Returns true if property was initialized */
