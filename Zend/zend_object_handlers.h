@@ -32,7 +32,11 @@ struct _zend_property_info;
 
 #define ZEND_DYNAMIC_PROPERTY_OFFSET               ((uintptr_t)(intptr_t)(-1))
 
-#define IS_VALID_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) >= 16)
+/* The first 4 bits in the property offset are used within the cache slot for
+ * storing information about the property. This value may be bumped to
+ * offsetof(zend_object, properties_table) in the future. */
+#define ZEND_FIRST_PROPERTY_OFFSET (1 << 4)
+#define IS_VALID_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) >= ZEND_FIRST_PROPERTY_OFFSET)
 #define IS_WRONG_PROPERTY_OFFSET(offset)           ((intptr_t)(offset) == 0)
 #define IS_HOOKED_PROPERTY_OFFSET(offset) \
 	((intptr_t)(offset) > 0 && (intptr_t)(offset) < 16)
@@ -70,8 +74,8 @@ struct _zend_property_info;
 	} while (0)
 
 #define IS_UNKNOWN_DYNAMIC_PROPERTY_OFFSET(offset) (offset == ZEND_DYNAMIC_PROPERTY_OFFSET)
-#define ZEND_DECODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-(intptr_t)(offset) - 16))
-#define ZEND_ENCODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-((intptr_t)(offset) + 16)))
+#define ZEND_DECODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-(intptr_t)(offset) - 2))
+#define ZEND_ENCODE_DYN_PROP_OFFSET(offset)        ((uintptr_t)(-((intptr_t)(offset) + 2)))
 
 
 /* Used to fetch property from the object, read-only */
