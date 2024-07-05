@@ -66,7 +66,7 @@ dump(new Child);
 
 ?>
 --EXPECTF--
-object(Test)#1 (4) {
+object(Test)#%d (4) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
@@ -76,7 +76,7 @@ object(Test)#1 (4) {
   ["changed":"Test":private]=>
   string(12) "changed Test"
 }
-array(5) {
+array(3) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["virtual"]=>
@@ -102,7 +102,7 @@ array(4) {
   ["%0Test%0changed"]=>
   string(12) "changed Test"
 }
-object(Child)#1 (5) {
+object(Child)#%d (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
@@ -114,7 +114,7 @@ object(Child)#1 (5) {
   ["changed":"Child":private]=>
   string(13) "changed Child"
 }
-array(5) {
+array(3) {
   ["addedHooks"]=>
   string(10) "ADDEDHOOKS"
   ["virtual"]=>
@@ -143,7 +143,7 @@ array(5) {
   ["%0Child%0changed"]=>
   string(13) "changed Child"
 }
-object(Child)#1 (5) {
+object(Child)#%d (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
@@ -155,7 +155,7 @@ object(Child)#1 (5) {
   ["changed":"Child":private]=>
   string(13) "changed Child"
 }
-array(5) {
+array(4) {
   ["addedHooks"]=>
   string(10) "ADDEDHOOKS"
   ["virtual"]=>
@@ -196,7 +196,7 @@ array(5) {
   ["%0Child%0changed"]=>
   string(13) "changed Child"
 }
-object(Child)#1 (5) {
+object(Child)#%d (5) {
   ["addedHooks"]=>
   string(10) "addedHooks"
   ["backed"]=>
@@ -208,7 +208,7 @@ object(Child)#1 (5) {
   ["changed":"Child":private]=>
   string(13) "changed Child"
 }
-array(6) {
+array(5) {
   ["addedHooks"]=>
   string(10) "ADDEDHOOKS"
   ["virtual"]=>

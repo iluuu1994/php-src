@@ -793,6 +793,8 @@ ZEND_FUNCTION(get_object_vars)
 				}
 
 				is_dynamic = 0;
+			} else if (Z_TYPE_P(value) == IS_PTR) {
+				is_dynamic = 0;
 			}
 
 			if (key && zend_check_property_access(zobj, key, is_dynamic) == FAILURE) {
