@@ -24,6 +24,7 @@ typedef struct {
 	zend_object_iterator it;
 	bool by_ref;
 	zval properties;
+	zval current_key;
 	zval current_data;
 } zend_hooked_object_iterator;
 
@@ -89,6 +90,10 @@ static zend_result zend_hooked_object_it_fetch_current_data(zend_object_iterator
 	ZVAL_UNDEF(&hooked_iter->current_data);
 	zend_object *zobj = Z_OBJ_P(&iter->data);
 	zend_array *properties = Z_ARR(hooked_iter->properties);
+
+	zval_ptr_dtor_nogc(&hooked_iter->current_key);
+	zend_hash_get_current_key_zval(properties, &hooked_iter->current_key);
+
 	zval *property = zend_hash_get_current_data(properties);
 	if (Z_TYPE_P(property) == IS_PTR) {
 		zend_property_info *prop_info = Z_PTR_P(property);
@@ -117,6 +122,7 @@ static void zend_hooked_object_it_dtor(zend_object_iterator *iter)
 	zend_hooked_object_iterator *hooked_iter = (zend_hooked_object_iterator*)iter;
 	zval_ptr_dtor(&iter->data);
 	zval_ptr_dtor(&hooked_iter->properties);
+	zval_ptr_dtor_nogc(&hooked_iter->current_key);
 	zval_ptr_dtor(&hooked_iter->current_data);
 }
 
@@ -136,8 +142,7 @@ static zval *zend_hooked_object_it_get_current_data(zend_object_iterator *iter)
 static void zend_hooked_object_it_get_current_key(zend_object_iterator *iter, zval *key)
 {
 	zend_hooked_object_iterator *hooked_iter = (zend_hooked_object_iterator*)iter;
-	zend_array *properties = Z_ARR(hooked_iter->properties);
-	zend_hash_get_current_key_zval(properties, key);
+	ZVAL_COPY(key, &hooked_iter->current_key);
 }
 
 static void zend_hooked_object_it_move_forward(zend_object_iterator *iter)
@@ -189,6 +194,7 @@ ZEND_API zend_object_iterator *zend_hooked_object_get_iterator(zend_class_entry 
 	iterator->by_ref = by_ref;
 	zend_array *properties = zend_hooked_object_build_properties_ex(Z_OBJ_P(object), true);
 	ZVAL_ARR(&iterator->properties, properties);
+	ZVAL_UNDEF(&iterator->current_key);
 	ZVAL_UNDEF(&iterator->current_data);
 
 	return &iterator->it;
