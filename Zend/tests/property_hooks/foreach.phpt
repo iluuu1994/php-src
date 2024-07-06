@@ -3,6 +3,7 @@ foreach over hooked properties
 --FILE--
 <?php
 
+#[AllowDynamicProperties]
 class ByRef {
     public $plain = 'plain';
     private $_virtualByRef = 'virtualByRef';
@@ -16,8 +17,12 @@ class ByRef {
           $this->_virtualByRef = $value;
         }
     }
+    public function __construct() {
+        $this->dynamic = 'dynamic';
+    }
 }
 
+#[AllowDynamicProperties]
 class ByVal extends ByRef {
     private $_virtualByVal = 'virtualByVal';
     public $virtualByVal {
@@ -58,6 +63,7 @@ function testByRef($object) {
         echo "$prop => $value\n";
         $value = strtoupper($value);
     }
+    unset($value);
     var_dump($object);
 }
 
@@ -74,7 +80,7 @@ testByVal(new ByRef);
 testByRef(new ByRef);
 
 ?>
---EXPECT--
+--EXPECTF--
 ByVal::$virtualByVal::get
 virtualByVal => virtualByVal
 ByVal::$virtualByVal::set
@@ -88,7 +94,8 @@ plain => plain
 ByRef::$virtualByRef::get
 virtualByRef => virtualByRef
 ByRef::$virtualByRef::set
-object(ByVal)#1 (5) {
+dynamic => dynamic
+object(ByVal)#%d (6) {
   ["plain"]=>
   string(5) "PLAIN"
   ["_virtualByRef":"ByRef":private]=>
@@ -99,23 +106,31 @@ object(ByVal)#1 (5) {
   string(6) "BACKED"
   ["backedUninitialized"]=>
   string(19) "BACKEDUNINITIALIZED"
+  ["dynamic"]=>
+  string(7) "DYNAMIC"
 }
 plain => plain
 ByRef::$virtualByRef::get
 virtualByRef => virtualByRef
 ByRef::$virtualByRef::set
-object(ByRef)#1 (2) {
+dynamic => dynamic
+object(ByRef)#%d (3) {
   ["plain"]=>
   string(5) "PLAIN"
   ["_virtualByRef":"ByRef":private]=>
   string(12) "VIRTUALBYREF"
+  ["dynamic"]=>
+  string(7) "DYNAMIC"
 }
 plain => plain
 ByRef::$virtualByRef::get
 virtualByRef => virtualByRef
-object(ByRef)#1 (2) {
+dynamic => dynamic
+object(ByRef)#%d (3) {
   ["plain"]=>
   string(5) "PLAIN"
   ["_virtualByRef":"ByRef":private]=>
-  &string(12) "VIRTUALBYREF"
+  string(12) "VIRTUALBYREF"
+  ["dynamic"]=>
+  string(7) "DYNAMIC"
 }
