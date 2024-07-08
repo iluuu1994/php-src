@@ -5835,7 +5835,7 @@ ZEND_METHOD(ReflectionProperty, getRawValue)
 	property_reference *ref;
 	zval *object;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|o", &object) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &object) == FAILURE) {
 		RETURN_THROWS();
 	}
 
