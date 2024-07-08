@@ -977,7 +977,7 @@ zend_function *zend_optimizer_get_called_func(
 		case ZEND_INIT_PARENT_PROPERTY_HOOK_CALL: {
 			zend_class_entry *scope = op_array->scope;
 			ZEND_ASSERT(scope != NULL);
-			if (scope && (scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
+			if ((scope->ce_flags & ZEND_ACC_LINKED) && scope->parent) {
 				zend_class_entry *parent_scope = scope->parent;
 				zend_string *prop_name = Z_STR_P(CRT_CONSTANT(opline->op1));
 				zend_property_hook_kind hook_kind = opline->op2.num;
