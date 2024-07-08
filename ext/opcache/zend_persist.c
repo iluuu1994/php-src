@@ -811,6 +811,13 @@ static zend_property_info *zend_persist_property_info(zend_property_info *prop)
 		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 			if (prop->hooks[i]) {
 				zend_op_array *hook = zend_persist_class_method(&prop->hooks[i]->op_array, ce);
+#ifdef HAVE_JIT
+				if (JIT_G(on) && JIT_G(opt_level) <= ZEND_JIT_LEVEL_OPT_FUNCS) {
+					if (hook->scope == ce && !(hook->fn_flags & ZEND_ACC_TRAIT_CLONE)) {
+						zend_jit_op_array(hook, ZCG(current_persistent_script) ? &ZCG(current_persistent_script)->script : NULL);
+					}
+				}
+#endif
 				zend_property_info *new_prop_info = (zend_property_info *) zend_shared_alloc_get_xlat_entry(hook->prop_info);
 				if (new_prop_info) {
 					hook->prop_info = new_prop_info;
