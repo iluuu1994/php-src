@@ -661,9 +661,9 @@ again:
 PHPAPI void php_var_export(zval *struc, int level) /* {{{ */
 {
 	smart_str buf = {0};
-	php_var_export_ex(struc, level, &buf);
+	zend_result result = php_var_export_ex(struc, level, &buf);
 	smart_str_0(&buf);
-	if (EG(exception)) {
+	if (result == SUCCESS) {
 		PHPWRITE(ZSTR_VAL(buf.s), ZSTR_LEN(buf.s));
 	}
 	smart_str_free(&buf);
@@ -683,10 +683,10 @@ PHP_FUNCTION(var_export)
 		Z_PARAM_BOOL(return_output)
 	ZEND_PARSE_PARAMETERS_END();
 
-	php_var_export_ex(var, 1, &buf);
+	zend_result result = php_var_export_ex(var, 1, &buf);
 	smart_str_0 (&buf);
 
-	if (EG(exception)) {
+	if (result == FAILURE) {
 		smart_str_free(&buf);
 	} else if (return_output) {
 		RETURN_STR(smart_str_extract(&buf));
