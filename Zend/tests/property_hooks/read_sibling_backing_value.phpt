@@ -2,8 +2,10 @@
 Attempted read/write of backing value in sibling property hook fails
 --SKIPIF--
 <?php
-if (getenv('SKIP_ASAN')) die('skip ASAN reports stack-overflow');
+if (!function_exists('zend_test_zend_call_stack_get')) die("skip zend_test_zend_call_stack_get() is not available");
 ?>
+--EXTENSIONS--
+zend_test
 --INI--
 ; The test may use a large amount of memory on systems with a large stack limit
 memory_limit=2G
