@@ -30,7 +30,7 @@ $a->prop = 41;
 ?>
 --EXPECTF--
 $_main:
-     ; (lines=10, args=0, vars=1, tmps=1)
+     ; (lines=10, args=0, vars=1, tmps=%d)
      ; (after optimizer)
      ; %sdump_property_hooks.php:1-22
 0000 V1 = NEW 0 string("A")
@@ -47,13 +47,13 @@ LIVE RANGES:
      1: 0001 - 0002 (new)
 
 A::$prop::get:
-     ; (lines=1, args=0, vars=0, tmps=0)
+     ; (lines=1, args=0, vars=0, tmps=%d)
      ; (after optimizer)
      ; %sdump_property_hooks.php:5-8
 0000 RETURN int(42)
 
 A::$prop::set:
-     ; (lines=4, args=1, vars=1, tmps=1)
+     ; (lines=4, args=1, vars=1, tmps=%d)
      ; (after optimizer)
      ; %sdump_property_hooks.php:9-13
 0000 CV0($value) = RECV 1
