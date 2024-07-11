@@ -186,6 +186,8 @@ static int zend_file_cache_flock(int fd, int type)
 	} \
 } while (0)
 
+#define HOOKED_ITERATOR_PLACEHOLDER ((void*)1)
+
 static const uint32_t uninitialized_bucket[-HT_MIN_MASK] =
 	{HT_INVALID_IDX, HT_INVALID_IDX};
 
@@ -903,6 +905,11 @@ static void zend_file_cache_serialize_class(zval                     *zv,
 	ZEND_MAP_PTR_INIT(ce->mutable_data, NULL);
 
 	ce->inheritance_cache = NULL;
+
+	if (ce->get_iterator) {
+		ZEND_ASSERT(ce->get_iterator == zend_hooked_object_get_iterator);
+		ce->get_iterator = HOOKED_ITERATOR_PLACEHOLDER;
+	}
 }
 
 static void zend_file_cache_serialize_warnings(
@@ -1749,6 +1756,11 @@ static void zend_file_cache_unserialize_class(zval                    *zv,
 		ce->ce_flags |= ZEND_ACC_FILE_CACHED;
 		ZEND_MAP_PTR_INIT(ce->mutable_data, NULL);
 		ZEND_MAP_PTR_INIT(ce->static_members_table, NULL);
+	}
+
+	if (ce->get_iterator) {
+		ZEND_ASSERT(ce->get_iterator == HOOKED_ITERATOR_PLACEHOLDER);
+		ce->get_iterator = zend_hooked_object_get_iterator;
 	}
 
 	// Memory addresses of object handlers are not stable. They can change due to ASLR or order of linking dynamic. To
