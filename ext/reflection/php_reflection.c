@@ -5851,7 +5851,7 @@ ZEND_METHOD(ReflectionProperty, getRawValue)
 		RETURN_THROWS();
 	}
 
-	if (!ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_GET]) {
+	if (!ref->prop || !ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_GET]) {
 		zval rv;
 		zval *member_p = zend_read_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, 0, &rv);
 
@@ -5887,7 +5887,7 @@ ZEND_METHOD(ReflectionProperty, setRawValue)
 		RETURN_THROWS();
 	}
 
-	if (!ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
+	if (!ref->prop || !ref->prop->hooks || !ref->prop->hooks[ZEND_PROPERTY_HOOK_SET]) {
 		zend_update_property_ex(intern->ce, Z_OBJ_P(object), ref->unmangled_name, value);
 	} else {
 		zend_function *func = zend_get_property_hook_trampoline(ref->prop, ZEND_PROPERTY_HOOK_SET, ref->unmangled_name);
