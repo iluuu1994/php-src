@@ -617,7 +617,10 @@ again:
 							if ((prop_info->flags & ZEND_ACC_VIRTUAL) && !prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
 								continue;
 							}
-							val = zend_read_property_ex(prop_info->ce, zobj, prop_info->name, /* silent */ true, &tmp);
+							const char *unmangled_name_cstr = zend_get_unmangled_property_name(prop_info->name);
+							zend_string *unmangled_name = zend_string_init(unmangled_name_cstr, strlen(unmangled_name_cstr), false);
+							val = zend_read_property_ex(prop_info->ce, zobj, unmangled_name, /* silent */ true, &tmp);
+							zend_string_release_ex(unmangled_name, false);
 							if (EG(exception)) {
 								ZEND_GUARD_OR_GC_UNPROTECT_RECURSION(guard, EXPORT, zobj);
 								zend_release_properties(myht);

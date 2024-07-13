@@ -88,8 +88,8 @@ array(3) {
    'addedHooks' => 'addedHooks',
    'virtual' => 'VIRTUAL',
    'backed' => 'BACKED',
-   'private' => NULL,
-   'changed' => NULL,
+   'private' => 'PRIVATE',
+   'changed' => 'CHANGED TEST',
 ))
 {"addedHooks":"addedHooks","virtual":"VIRTUAL","backed":"BACKED"}
 array(4) {
@@ -124,10 +124,10 @@ array(3) {
 }
 \Child::__set_state(array(
    'addedHooks' => 'ADDEDHOOKS',
-   'changed' => NULL,
+   'changed' => 'CHANGED CHILD',
    'virtual' => 'VIRTUAL',
    'backed' => 'BACKED',
-   'private' => NULL,
+   'private' => 'PRIVATE',
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
@@ -162,6 +162,8 @@ array(4) {
   string(7) "VIRTUAL"
   ["backed"]=>
   string(6) "BACKED"
+  ["private"]=>
+  string(7) "PRIVATE"
 }
 array(5) {
   ["addedHooks"]=>
@@ -177,10 +179,10 @@ array(5) {
 }
 \Child::__set_state(array(
    'addedHooks' => 'ADDEDHOOKS',
-   'changed' => NULL,
+   'changed' => 'CHANGED CHILD',
    'virtual' => 'VIRTUAL',
    'backed' => 'BACKED',
-   'private' => NULL,
+   'private' => 'PRIVATE',
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
@@ -211,6 +213,8 @@ object(Child)#%d (5) {
 array(5) {
   ["addedHooks"]=>
   string(10) "ADDEDHOOKS"
+  ["changed"]=>
+  string(13) "CHANGED CHILD"
   ["virtual"]=>
   string(7) "VIRTUAL"
   ["backed"]=>
@@ -220,10 +224,10 @@ array(5) {
 }
 \Child::__set_state(array(
    'addedHooks' => 'ADDEDHOOKS',
-   'changed' => NULL,
+   'changed' => 'CHANGED CHILD',
    'virtual' => 'VIRTUAL',
    'backed' => 'BACKED',
-   'private' => NULL,
+   'private' => 'PRIVATE',
    'changed' => 'changed Child',
 ))
 {"addedHooks":"ADDEDHOOKS","virtual":"VIRTUAL","backed":"BACKED"}
