@@ -699,60 +699,37 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 try_again:
 		retval = OBJ_PROP(zobj, property_offset);
 
-		if (prop_info) {
-			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-				if (!zend_asymmetric_property_has_set_access(prop_info)) {
-					if (type == BP_VAR_RW && Z_TYPE_P(retval) == IS_UNDEF) {
-						/* RW should emit a uninitialized property error message instead. */
-						goto uninit_error;
-					} else if (type == BP_VAR_UNSET && Z_TYPE_P(retval) == IS_UNDEF) {
-						/* Allow unset on undefined properties, as they can't actually modify the value. */
-						retval = &EG(uninitialized_zval);
-						goto exit;
-					} else if (Z_TYPE_P(retval) == IS_OBJECT) {
-						/* For objects, W/RW/UNSET fetch modes might not actually modify object.
-						* Similar as with magic __get() allow them, but return the value as a copy
-						* to make sure no actual modification is possible. */
-						ZVAL_COPY(rv, retval);
-						retval = rv;
-						goto exit;
-					} else {
-						zend_asymmetric_visibility_property_modification_error(prop_info, "indirectly modify");
-						retval = &EG(uninitialized_zval);
-						goto exit;
-					}
-				}
-			}
-		}
-
-		if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
-			if (prop_info && UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)
-					&& (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
+		if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))
+		 && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)
+		 && ((prop_info->flags & ZEND_ACC_READONLY) || !zend_asymmetric_property_has_set_access(prop_info))) {
+			if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
 				if (Z_TYPE_P(retval) == IS_OBJECT) {
 					/* For objects, W/RW/UNSET fetch modes might not actually modify object.
 					 * Similar as with magic __get() allow them, but return the value as a copy
 					 * to make sure no actual modification is possible. */
 					ZVAL_COPY(rv, retval);
 					retval = rv;
-				} else if (Z_PROP_FLAG_P(retval) & IS_PROP_REINITABLE) {
+					goto exit;
+				} else if (!(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (Z_PROP_FLAG_P(retval) & IS_PROP_REINITABLE)) {
 					Z_PROP_FLAG_P(retval) &= ~IS_PROP_REINITABLE;
-				} else {
-					zend_readonly_property_indirect_modification_error(prop_info);
+					goto exit;
+				}
+			} else {
+				if (type == BP_VAR_UNSET) {
 					retval = &EG(uninitialized_zval);
+					goto exit;
 				}
 			}
+			if (prop_info->flags & ZEND_ACC_READONLY) {
+				zend_readonly_property_indirect_modification_error(prop_info);
+			} else {
+				zend_asymmetric_visibility_property_modification_error(prop_info, "indirectly modify");
+			}
+			retval = &EG(uninitialized_zval);
 			goto exit;
-		} else {
-			if (prop_info && UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)) {
-				if (type == BP_VAR_W || type == BP_VAR_RW) {
-					zend_readonly_property_indirect_modification_error(prop_info);
-					retval = &EG(uninitialized_zval);
-					goto exit;
-				} else if (type == BP_VAR_UNSET) {
-					retval = &EG(uninitialized_zval);
-					goto exit;
-				}
-			}
+		}
+		if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
+			goto exit;
 		}
 		if (UNEXPECTED(Z_PROP_FLAG_P(retval) & IS_PROP_UNINIT)) {
 			/* Skip __get() for uninitialized typed properties */
