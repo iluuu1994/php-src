@@ -1059,13 +1059,8 @@ static zend_never_inline zval* zend_assign_to_typed_prop(zend_property_info *inf
 			zend_readonly_property_modification_error(info);
 			return &EG(uninitialized_zval);
 		}
-		if ((info->flags & ZEND_ACC_PPP_SET_MASK)) {
-			if (!EG(current_execute_data) || !EG(current_execute_data)->func) {
-				goto avis_error;
-			}
-			zend_class_entry *scope = EG(current_execute_data)->func->common.scope;
-			if (!scope || !zend_asymmetric_property_has_set_access(info, scope)) {
-avis_error:
+		if (info->flags & ZEND_ACC_PPP_SET_MASK) {
+			if (!zend_asymmetric_property_has_set_access(info)) {
 				zend_asymmetric_visibility_property_modification_error(info, Z_TYPE_P(property_val) == IS_UNDEF ? "initialize" : "modify");
 				return &EG(uninitialized_zval);
 			}
@@ -3414,7 +3409,7 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 
 					if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
 						ZEND_ASSERT(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET);
-						if (!zend_asymmetric_property_has_set_access(prop_info, zobj->ce)) {
+						if (!zend_asymmetric_property_has_set_access(prop_info)) {
 							if (Z_TYPE_P(ptr) == IS_OBJECT) {
 								ZVAL_COPY(result, ptr);
 							} else {
