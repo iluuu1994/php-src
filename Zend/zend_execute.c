@@ -1054,9 +1054,22 @@ static zend_never_inline zval* zend_assign_to_typed_prop(zend_property_info *inf
 {
 	zval tmp;
 
-	if (UNEXPECTED((info->flags & ZEND_ACC_READONLY) && !(Z_PROP_FLAG_P(property_val) & IS_PROP_REINITABLE))) {
-		zend_readonly_property_modification_error(info);
-		return &EG(uninitialized_zval);
+	if (UNEXPECTED(info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
+		if ((info->flags & ZEND_ACC_READONLY) && !(Z_PROP_FLAG_P(property_val) & IS_PROP_REINITABLE)) {
+			zend_readonly_property_modification_error(info);
+			return &EG(uninitialized_zval);
+		}
+		if ((info->flags & ZEND_ACC_PPP_SET_MASK)) {
+			if (!EG(current_execute_data) || !EG(current_execute_data)->func) {
+				goto avis_error;
+			}
+			zend_class_entry *scope = EG(current_execute_data)->func->common.scope;
+			if (!scope || !zend_asymmetric_property_has_set_access(info, scope)) {
+avis_error:
+				zend_asymmetric_visibility_property_modification_error(info, Z_TYPE_P(property_val) == IS_UNDEF ? "initialize" : "modify");
+				return &EG(uninitialized_zval);
+			}
+		}
 	}
 
 	ZVAL_DEREF(value);
