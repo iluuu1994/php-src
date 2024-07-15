@@ -699,7 +699,7 @@ ZEND_API zval *zend_std_read_property(zend_object *zobj, zend_string *name, int 
 try_again:
 		retval = OBJ_PROP(zobj, property_offset);
 
-		if (UNEXPECTED(prop_info)) {
+		if (prop_info) {
 			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
 				if (!zend_asymmetric_property_has_set_access(prop_info, zobj->ce)) {
 					if (type == BP_VAR_RW && Z_TYPE_P(retval) == IS_UNDEF) {
@@ -991,7 +991,7 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 try_again:
 		variable_ptr = OBJ_PROP(zobj, property_offset);
 
-		if (UNEXPECTED(prop_info)) {
+		if (prop_info) {
 			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
 				if (!zend_asymmetric_property_has_set_access(prop_info, zobj->ce)) {
 					if (!zobj->ce->__set) {
@@ -1314,7 +1314,7 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__get != NULL), cache_slot, &prop_info);
 
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
-		if (UNEXPECTED(prop_info)) {
+		if (prop_info) {
 			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
 				if (!zend_asymmetric_property_has_set_access(prop_info, zobj->ce)) {
 					return NULL;
@@ -1401,7 +1401,7 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
 		zval *slot = OBJ_PROP(zobj, property_offset);
 
-		if (UNEXPECTED(prop_info)) {
+		if (prop_info) {
 			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
 				if (!zend_asymmetric_property_has_set_access(prop_info, zobj->ce)) {
 					if (!zobj->ce->__unset) {
