@@ -301,8 +301,6 @@ ZEND_API zend_function *zend_get_property_hook_trampoline(
 	const zend_property_info *prop_info,
 	zend_property_hook_kind kind, zend_string *prop_name);
 
-ZEND_API int zend_is_protected_compatible_scope(zend_class_entry *ce, const zend_class_entry *scope);
-
 #define zend_release_properties(ht) do { \
 	if ((ht) && !(GC_FLAGS(ht) & GC_IMMUTABLE) && !GC_DELREF(ht)) { \
 		zend_array_destroy(ht); \
