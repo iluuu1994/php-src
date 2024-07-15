@@ -1314,14 +1314,6 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 	property_offset = zend_get_property_offset(zobj->ce, name, (zobj->ce->__get != NULL), cache_slot, &prop_info);
 
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
-		if (prop_info) {
-			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET)) {
-				if (!zend_asymmetric_property_has_set_access(prop_info)) {
-					return NULL;
-				}
-			}
-		}
-
 		retval = OBJ_PROP(zobj, property_offset);
 		if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
 			if (EXPECTED(!zobj->ce->__get) ||
@@ -1338,9 +1330,10 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 							ZVAL_NULL(retval);
 						 }
 					}
-				} else if (prop_info && UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)) {
-					/* Readonly property, delegate to read_property + write_property. */
-					retval = NULL;
+				} else if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
+					if ((prop_info->flags & ZEND_ACC_READONLY) || !zend_asymmetric_property_has_set_access(prop_info)) {
+						retval = NULL;
+					}
 				} else if (!prop_info || !ZEND_TYPE_IS_SET(prop_info->type)) {
 					ZVAL_NULL(retval);
 				}
@@ -1348,9 +1341,10 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 				/* we do have getter - fail and let it try again with usual get/set */
 				retval = NULL;
 			}
-		} else if (prop_info && UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)) {
-			/* Readonly property, delegate to read_property + write_property. */
-			retval = NULL;
+		} else if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
+			if ((prop_info->flags & ZEND_ACC_READONLY) || !zend_asymmetric_property_has_set_access(prop_info)) {
+				retval = NULL;
+			}
 		}
 	} else if (EXPECTED(IS_DYNAMIC_PROPERTY_OFFSET(property_offset))) {
 		if (EXPECTED(zobj->properties)) {

@@ -61,7 +61,7 @@ function rw($test) {
 }
 
 function im($test) {
-    $test->prop[] = 1;
+    $test->array[] = 1;
     echo 'done';
 }
 
@@ -114,7 +114,7 @@ Init: 1, scope: 1, op: us_dim: done
 Init: 1, scope: 0, op: r: 1
 Init: 1, scope: 0, op: w: Cannot modify private(set) property Test::$prop from global scope
 Init: 1, scope: 0, op: rw: Cannot modify private(set) property Test::$prop from global scope
-Init: 1, scope: 0, op: im: Cannot indirectly modify private(set) property Test::$prop from global scope
+Init: 1, scope: 0, op: im: Cannot indirectly modify private(set) property Test::$array from global scope
 Init: 1, scope: 0, op: is: 1
 Init: 1, scope: 0, op: us: Cannot unset private(set) property Test::$prop from global scope
 Init: 1, scope: 0, op: us_dim: Cannot indirectly modify private(set) property Test::$array from global scope
@@ -128,7 +128,7 @@ Init: 0, scope: 1, op: us_dim: done
 Init: 0, scope: 0, op: r: Typed property Test::$prop must not be accessed before initialization
 Init: 0, scope: 0, op: w: Cannot initialize private(set) property Test::$prop from global scope
 Init: 0, scope: 0, op: rw: Typed property Test::$prop must not be accessed before initialization
-Init: 0, scope: 0, op: im: Cannot indirectly modify private(set) property Test::$prop from global scope
+Init: 0, scope: 0, op: im: Cannot indirectly modify private(set) property Test::$array from global scope
 Init: 0, scope: 0, op: is: 0
 Init: 0, scope: 0, op: us: Cannot unset private(set) property Test::$prop from global scope
 Init: 0, scope: 0, op: us_dim: done
