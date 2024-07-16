@@ -968,16 +968,29 @@ ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zva
 try_again:
 		variable_ptr = OBJ_PROP(zobj, property_offset);
 
-		if (prop_info) {
-			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
-				if (!zend_asymmetric_property_has_set_access(prop_info)) {
-					if (!zobj->ce->__set) {
-						zend_asymmetric_visibility_property_modification_error(prop_info, Z_TYPE_P(variable_ptr) == IS_UNDEF ? "initialize" : "modify");
-						variable_ptr = &EG(error_zval);
-						goto exit;
-					} else {
-						goto magic_set;
-					}
+		if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
+			if (Z_TYPE_P(variable_ptr) == IS_UNDEF
+			 && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_UNINIT)
+			 && zobj->ce->__set) {
+				goto magic_set;
+			}
+			if (prop_info->flags & ZEND_ACC_READONLY) {
+				if (Z_TYPE_P(variable_ptr) != IS_UNDEF && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_REINITABLE)) {
+					zend_readonly_property_modification_error(prop_info);
+					variable_ptr = &EG(error_zval);
+					goto exit;
+				} else if (!verify_readonly_initialization_access(prop_info, zobj->ce, name, "initialize")) {
+					variable_ptr = &EG(error_zval);
+					goto exit;
+				}
+			}
+			if ((prop_info->flags & ZEND_ACC_PPP_SET_MASK) && !zend_asymmetric_property_has_set_access(prop_info)) {
+				if (!zobj->ce->__set) {
+					zend_asymmetric_visibility_property_modification_error(prop_info, Z_TYPE_P(variable_ptr) == IS_UNDEF ? "initialize" : "modify");
+					variable_ptr = &EG(error_zval);
+					goto exit;
+				} else {
+					goto magic_set;
 				}
 			}
 		}
@@ -986,13 +999,6 @@ try_again:
 			Z_TRY_ADDREF_P(value);
 
 			if (prop_info) {
-				if (UNEXPECTED((prop_info->flags & ZEND_ACC_READONLY) && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_REINITABLE))) {
-					Z_TRY_DELREF_P(value);
-					zend_readonly_property_modification_error(prop_info);
-					variable_ptr = &EG(error_zval);
-					goto exit;
-				}
-
 typed_property:
 				ZVAL_COPY_VALUE(&tmp, value);
 				// Increase refcount to prevent object from being released in __toString()
@@ -1133,12 +1139,6 @@ write_std_property:
 
 			Z_TRY_ADDREF_P(value);
 			if (prop_info) {
-				if (UNEXPECTED((prop_info->flags & ZEND_ACC_READONLY)
-						&& !verify_readonly_initialization_access(prop_info, zobj->ce, name, "initialize"))) {
-					Z_TRY_DELREF_P(value);
-					variable_ptr = &EG(error_zval);
-					goto exit;
-				}
 				goto typed_property;
 			}
 
