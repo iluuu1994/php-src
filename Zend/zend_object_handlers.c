@@ -1372,28 +1372,35 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 	if (EXPECTED(IS_VALID_PROPERTY_OFFSET(property_offset))) {
 		zval *slot = OBJ_PROP(zobj, property_offset);
 
-		if (prop_info) {
-			if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
-				if (!zend_asymmetric_property_has_set_access(prop_info)) {
-					if (!zobj->ce->__unset) {
-						zend_asymmetric_visibility_property_modification_error(prop_info, "unset");
-						return;
+		if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
+			if (Z_TYPE_P(slot) == IS_UNDEF
+			 && !(Z_PROP_FLAG_P(slot) & IS_PROP_UNINIT)
+			 && zobj->ce->__unset) {
+				goto magic_unset;
+			}
+			if (prop_info->flags & ZEND_ACC_READONLY) {
+				if (Z_TYPE_P(slot) != IS_UNDEF) {
+					if (Z_PROP_FLAG_P(slot) & IS_PROP_REINITABLE) {
+						Z_PROP_FLAG_P(slot) &= ~IS_PROP_REINITABLE;
 					} else {
-						goto magic_unset;
+						zend_readonly_property_unset_error(prop_info->ce, name);
+						return;
 					}
+				} else if (!verify_readonly_initialization_access(prop_info, zobj->ce, name, "unset")) {
+					return;
+				}
+			}
+			if ((prop_info->flags & ZEND_ACC_PPP_SET_MASK) && !zend_asymmetric_property_has_set_access(prop_info)) {
+				if (!zobj->ce->__unset) {
+					zend_asymmetric_visibility_property_modification_error(prop_info, "unset");
+					return;
+				} else {
+					goto magic_unset;
 				}
 			}
 		}
 
 		if (Z_TYPE_P(slot) != IS_UNDEF) {
-			if (UNEXPECTED(prop_info && (prop_info->flags & ZEND_ACC_READONLY))) {
-				if (Z_PROP_FLAG_P(slot) & IS_PROP_REINITABLE) {
-					Z_PROP_FLAG_P(slot) &= ~IS_PROP_REINITABLE;
-				} else {
-					zend_readonly_property_unset_error(prop_info->ce, name);
-					return;
-				}
-			}
 			if (UNEXPECTED(Z_ISREF_P(slot)) &&
 					(ZEND_DEBUG || ZEND_REF_HAS_TYPE_SOURCES(Z_REF_P(slot)))) {
 				if (prop_info) {
@@ -1410,11 +1417,6 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			return;
 		}
 		if (UNEXPECTED(Z_PROP_FLAG_P(slot) & IS_PROP_UNINIT)) {
-			if (UNEXPECTED(prop_info && (prop_info->flags & ZEND_ACC_READONLY)
-					&& !verify_readonly_initialization_access(prop_info, zobj->ce, name, "unset"))) {
-				return;
-			}
-
 			/* Reset the IS_PROP_UNINIT flag, if it exists and bypass __unset(). */
 			Z_PROP_FLAG_P(slot) = 0;
 			return;
