@@ -3391,32 +3391,25 @@ static zend_always_inline void zend_fetch_property_address(zval *result, zval *c
 				ZVAL_INDIRECT(result, ptr);
 				zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 				if (prop_info) {
-					if (UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)) {
+					if (UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))
+					 && ((prop_info->flags & ZEND_ACC_READONLY) || !zend_asymmetric_property_has_set_access(prop_info))) {
+						ZEND_ASSERT(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET);
 						/* For objects, W/RW/UNSET fetch modes might not actually modify object.
 						 * Similar as with magic __get() allow them, but return the value as a copy
 						 * to make sure no actual modification is possible. */
-						ZEND_ASSERT(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET);
 						if (Z_TYPE_P(ptr) == IS_OBJECT) {
 							ZVAL_COPY(result, ptr);
-						} else if (Z_PROP_FLAG_P(ptr) & IS_PROP_REINITABLE) {
+						} else if (!(prop_info->flags & ZEND_ACC_PPP_SET_MASK) && (Z_PROP_FLAG_P(ptr) & IS_PROP_REINITABLE)) {
 							Z_PROP_FLAG_P(ptr) &= ~IS_PROP_REINITABLE;
 						} else {
-							zend_readonly_property_indirect_modification_error(prop_info);
-							ZVAL_ERROR(result);
-						}
-						return;
-					}
-
-					if (UNEXPECTED(prop_info->flags & ZEND_ACC_PPP_SET_MASK)) {
-						ZEND_ASSERT(type == BP_VAR_W || type == BP_VAR_RW || type == BP_VAR_UNSET);
-						if (!zend_asymmetric_property_has_set_access(prop_info)) {
-							if (Z_TYPE_P(ptr) == IS_OBJECT) {
-								ZVAL_COPY(result, ptr);
+							if (prop_info->flags & ZEND_ACC_READONLY) {
+								zend_readonly_property_indirect_modification_error(prop_info);
 							} else {
 								zend_asymmetric_visibility_property_modification_error(prop_info, "modify");
 							}
-							return;
+							ZVAL_ERROR(result);
 						}
+						return;
 					}
 					flags &= ZEND_FETCH_OBJ_FLAGS;
 					if (flags) {
