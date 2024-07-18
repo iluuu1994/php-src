@@ -64,8 +64,8 @@ try {
 --EXPECT--
 bool(false)
 Typed property Test::$prop must not be accessed before initialization
-Cannot initialize readonly property Test::$prop from global scope
-Cannot unset readonly property Test::$prop from global scope
+Test::__set(prop, 1)
+Test::__unset(prop)
 Test::__isset(prop)
 bool(true)
 Test::__get(prop)

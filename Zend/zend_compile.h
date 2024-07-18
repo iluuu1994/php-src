@@ -253,7 +253,7 @@ typedef struct _zend_oparray_context {
 /* or IS_CONSTANT_VISITED_MARK                            |     |     |     */
 #define ZEND_CLASS_CONST_IS_CASE         (1 << 6)  /*     |     |     |  X  */
 /*                                                        |     |     |     */
-/* Property Flags (unused: 12...)                         |     |     |     */
+/* Property Flags (unused: 13...)                         |     |     |     */
 /* ===========                                            |     |     |     */
 /*                                                        |     |     |     */
 /* Promoted property / parameter                          |     |     |     */
@@ -263,8 +263,10 @@ typedef struct _zend_oparray_context {
 #define ZEND_ACC_VIRTUAL                 (1 <<  9) /*     |     |  X  |     */
 /*                                                        |     |     |     */
 /* Asymmetric visibility                                  |     |     |     */
-#define ZEND_ACC_PROTECTED_SET           (1 <<  10) /*    |     |  X  |     */
-#define ZEND_ACC_PRIVATE_SET             (1 <<  11) /*    |     |  X  |     */
+/* PUBLIC_SET is only used for readonly during compilation|     |     |     */
+#define ZEND_ACC_PUBLIC_SET              (1 <<  10) /*    |     |  X  |     */
+#define ZEND_ACC_PROTECTED_SET           (1 <<  11) /*    |     |  X  |     */
+#define ZEND_ACC_PRIVATE_SET             (1 <<  12) /*    |     |  X  |     */
 /*                                                        |     |     |     */
 /* Class Flags (unused: 30,31)                            |     |     |     */
 /* ===========                                            |     |     |     */
@@ -1007,8 +1009,8 @@ ZEND_API zend_string *zend_type_to_string(zend_type type);
 #define ZEND_FETCH_CLASS_ALLOW_NEARLY_LINKED 0x0800
 
 /* These should not clash with ZEND_ACC_PPP_MASK and ZEND_ACC_PPP_SET_MASK */
-#define ZEND_PARAM_REF      (1<<12)
-#define ZEND_PARAM_VARIADIC (1<<13)
+#define ZEND_PARAM_REF      (1<<13)
+#define ZEND_PARAM_VARIADIC (1<<14)
 
 #define ZEND_NAME_FQ       0
 #define ZEND_NAME_NOT_FQ   1

@@ -303,13 +303,6 @@ static ZEND_COLD zend_never_inline bool zend_deprecated_dynamic_property(
 	return 1;
 }
 
-static ZEND_COLD zend_never_inline void zend_readonly_property_modification_scope_error(
-		const zend_class_entry *ce, const zend_string *member, const zend_class_entry *scope, const char *operation) {
-	zend_throw_error(NULL, "Cannot %s readonly property %s::$%s from %s%s",
-		operation, ZSTR_VAL(ce->name), ZSTR_VAL(member),
-		scope ? "scope " : "global scope", scope ? ZSTR_VAL(scope->name) : "");
-}
-
 static ZEND_COLD zend_never_inline void zend_readonly_property_unset_error(
 		zend_class_entry *ce, zend_string *member) {
 	zend_throw_error(NULL, "Cannot unset readonly property %s::$%s",
@@ -930,31 +923,6 @@ static zend_always_inline bool property_uses_strict_types(void) {
 		&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
 }
 
-static bool verify_readonly_initialization_access(
-		const zend_property_info *prop_info, const zend_class_entry *ce,
-		zend_string *name, const char *operation) {
-	zend_class_entry *scope = get_fake_or_executed_scope();
-	if (prop_info->ce == scope) {
-		return true;
-	}
-
-	/* We may have redeclared a parent property. In that case the parent should still be
-	 * allowed to initialize it. */
-	if (scope && is_derived_class(ce, scope)) {
-		const zend_property_info *prop_info = zend_hash_find_ptr(&scope->properties_info, name);
-		if (prop_info) {
-			/* This should be ensured by inheritance. */
-			ZEND_ASSERT(prop_info->flags & ZEND_ACC_READONLY);
-			if (prop_info->ce == scope) {
-				return true;
-			}
-		}
-	}
-
-	zend_readonly_property_modification_scope_error(prop_info->ce, name, scope, operation);
-	return false;
-}
-
 ZEND_API zval *zend_std_write_property(zend_object *zobj, zend_string *name, zval *value, void **cache_slot) /* {{{ */
 {
 	zval *variable_ptr, tmp;
@@ -977,9 +945,6 @@ try_again:
 			if (prop_info->flags & ZEND_ACC_READONLY) {
 				if (Z_TYPE_P(variable_ptr) != IS_UNDEF && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_REINITABLE)) {
 					zend_readonly_property_modification_error(prop_info);
-					variable_ptr = &EG(error_zval);
-					goto exit;
-				} else if (!verify_readonly_initialization_access(prop_info, zobj->ce, name, "initialize")) {
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
@@ -1386,8 +1351,6 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 						zend_readonly_property_unset_error(prop_info->ce, name);
 						return;
 					}
-				} else if (!verify_readonly_initialization_access(prop_info, zobj->ce, name, "unset")) {
-					return;
 				}
 			}
 			if ((prop_info->flags & ZEND_ACC_PPP_SET_MASK) && !zend_asymmetric_property_has_set_access(prop_info)) {

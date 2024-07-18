@@ -349,6 +349,11 @@ const T_PROTECTED_SET = UNKNOWN;
 const T_PUBLIC = UNKNOWN;
 /**
  * @var int
+ * @cvalue T_PUBLIC_SET
+ */
+const T_PUBLIC_SET = UNKNOWN;
+/**
+ * @var int
  * @cvalue T_READONLY
  */
 const T_READONLY = UNKNOWN;
