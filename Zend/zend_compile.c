@@ -8684,9 +8684,6 @@ static void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t f
 		}
 
 		if (flags & ZEND_ACC_READONLY) {
-			if (!(flags & (ZEND_ACC_PPP_SET_MASK|ZEND_ACC_PUBLIC_SET)) && (flags & ZEND_ACC_PUBLIC)) {
-				flags |= ZEND_ACC_PROTECTED_SET;
-			}
 			if (hooks_ast) {
 				zend_error_noreturn(E_COMPILE_ERROR,
 					"Hooked properties cannot be readonly");
