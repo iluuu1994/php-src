@@ -64,8 +64,8 @@ try {
 --EXPECT--
 bool(false)
 Typed property Test::$prop must not be accessed before initialization
-Test::__set(prop, 1)
-Test::__unset(prop)
+Cannot initialize protected(set) property Test::$prop from global scope
+Cannot unset protected(set) property Test::$prop from global scope
 Test::__isset(prop)
 bool(true)
 Test::__get(prop)

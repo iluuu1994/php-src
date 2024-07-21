@@ -950,13 +950,9 @@ try_again:
 				}
 			}
 			if ((prop_info->flags & ZEND_ACC_PPP_SET_MASK) && !zend_asymmetric_property_has_set_access(prop_info)) {
-				if (!zobj->ce->__set) {
-					zend_asymmetric_visibility_property_modification_error(prop_info, Z_TYPE_P(variable_ptr) == IS_UNDEF ? "initialize" : "modify");
-					variable_ptr = &EG(error_zval);
-					goto exit;
-				} else {
-					goto magic_set;
-				}
+				zend_asymmetric_visibility_property_modification_error(prop_info, Z_TYPE_P(variable_ptr) == IS_UNDEF ? "initialize" : "modify");
+				variable_ptr = &EG(error_zval);
+				goto exit;
 			}
 		}
 
@@ -1354,12 +1350,8 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 				}
 			}
 			if ((prop_info->flags & ZEND_ACC_PPP_SET_MASK) && !zend_asymmetric_property_has_set_access(prop_info)) {
-				if (!zobj->ce->__unset) {
-					zend_asymmetric_visibility_property_modification_error(prop_info, "unset");
-					return;
-				} else {
-					goto magic_unset;
-				}
+				zend_asymmetric_visibility_property_modification_error(prop_info, "unset");
+				return;
 			}
 		}
 

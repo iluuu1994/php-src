@@ -7,24 +7,24 @@ class Foo {
     public private(set) string $bar;
 
     public function setBar($bar) {
-        echo "Setting bar\n";
         $this->bar = $bar;
     }
 
     public function unsetBar() {
-        echo "Unsetting bar\n";
         unset($this->bar);
     }
 
     public function __unset($name) {
-        echo "__unset($name), ";
+        echo __METHOD__, "\n";
     }
 }
 
 function test($foo) {
-    echo "unset(bar): ";
-    unset($foo->bar);
-    echo $foo->bar ?? 'Unset', "\n";
+    try {
+        unset($foo->bar);
+    } catch (Error $e) {
+        echo $e->getMessage(), "\n";
+    }
 }
 
 $foo = new Foo();
@@ -41,10 +41,7 @@ test($foo);
 
 ?>
 --EXPECT--
-unset(bar): __unset(bar), Unset
-Unsetting bar
-unset(bar): __unset(bar), Unset
-Setting bar
-unset(bar): __unset(bar), bar
-Unsetting bar
-unset(bar): __unset(bar), Unset
+Cannot unset private(set) property Foo::$bar from global scope
+Foo::__unset
+Cannot unset private(set) property Foo::$bar from global scope
+Foo::__unset

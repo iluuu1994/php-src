@@ -4,10 +4,14 @@ Asymmetric visibility __set
 <?php
 
 class Foo {
-    public private(set) string $bar = 'bar';
+    public private(set) string $bar;
 
     public function setBar($bar) {
         $this->bar = $bar;
+    }
+
+    public function unsetBar() {
+        unset($this->bar);
     }
 
     public function __set(string $name, mixed $value) {
@@ -16,17 +20,24 @@ class Foo {
 }
 
 $foo = new Foo();
-var_dump($foo->bar);
-
-$foo->bar = 'baz';
-var_dump($foo->bar);
+try {
+    $foo->bar = 'baz';
+} catch (Error $e) {
+    echo $e->getMessage(), "\n";
+}
 
 $foo->setBar('baz');
-var_dump($foo->bar);
+try {
+    $foo->bar = 'baz';
+} catch (Error $e) {
+    echo $e->getMessage(), "\n";
+}
+
+$foo->unsetBar();
+$foo->bar = 'baz';
 
 ?>
 --EXPECT--
-string(3) "bar"
+Cannot initialize private(set) property Foo::$bar from global scope
+Cannot modify private(set) property Foo::$bar from global scope
 Foo::Foo::__set
-string(3) "bar"
-string(3) "baz"
