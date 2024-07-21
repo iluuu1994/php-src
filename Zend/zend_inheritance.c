@@ -1408,6 +1408,11 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 			}
 			if (UNEXPECTED((child_info->flags & ZEND_ACC_PPP_SET_MASK))) {
 				uint32_t parent_set_mask = parent_info->flags & ZEND_ACC_PPP_SET_MASK;
+				/* Adding set protection is fine if it's the same or weaker than
+				 * the parents full property visibility. */
+				if (!parent_set_mask && (parent_info->flags & ZEND_ACC_PROTECTED)) {
+					parent_set_mask = ZEND_ACC_PROTECTED_SET;
+				}
 				uint32_t child_set_mask = child_info->flags & ZEND_ACC_PPP_SET_MASK;
 				if (child_set_mask > parent_set_mask) {
 					zend_error_noreturn(
