@@ -1406,7 +1406,11 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 						ZSTR_VAL(ce->name), ZSTR_VAL(key));
 				}
 			}
-			if (UNEXPECTED((child_info->flags & ZEND_ACC_PPP_SET_MASK))) {
+			if (UNEXPECTED((child_info->flags & ZEND_ACC_PPP_SET_MASK))
+			 /* Get-only virtual properties have no set visibility, so any child visibility is fine. */
+			 && (!parent_info->hooks
+			  || !(parent_info->flags & ZEND_ACC_VIRTUAL)
+			  || parent_info->hooks[ZEND_PROPERTY_HOOK_SET])) {
 				uint32_t parent_set_mask = parent_info->flags & ZEND_ACC_PPP_SET_MASK;
 				/* Adding set protection is fine if it's the same or weaker than
 				 * the parents full property visibility. */
