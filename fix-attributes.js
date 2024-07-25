@@ -69,7 +69,7 @@ for (let i = 0; i < lines.length; i++) {
         if (modifiedLine.includes('inline')) continue;
         if (modifiedLine.startsWith("ZEND_API")) {
             modifiedLine = modifiedLine.replace("ZEND_API", "ZEND_API ZEND_" + type.toUpperCase());
-        } else if (modifiedLine.startsWith("ZEND_API")) {
+        } else if (modifiedLine.startsWith("PHPAPI")) {
             modifiedLine = modifiedLine.replace("PHPAPI", "PHPAPI ZEND_" + type.toUpperCase());
         } else {
             modifiedLine = "ZEND_" + type.toUpperCase() + " " + modifiedLine;
