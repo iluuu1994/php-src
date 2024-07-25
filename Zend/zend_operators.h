@@ -469,8 +469,8 @@ static zend_always_inline zend_string* zend_string_toupper(zend_string *str) {
 	return zend_string_toupper_ex(str, false);
 }
 
-ZEND_API int ZEND_FASTCALL zend_binary_zval_strcmp(zval *s1, zval *s2);
-ZEND_API int ZEND_FASTCALL zend_binary_zval_strncmp(zval *s1, zval *s2, zval *s3);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_zval_strcmp(zval *s1, zval *s2);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_zval_strncmp(zval *s1, zval *s2, zval *s3);
 ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strcmp(const char *s1, size_t len1, const char *s2, size_t len2);
 ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strncmp(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
 ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strcasecmp(const char *s1, size_t len1, const char *s2, size_t len2);

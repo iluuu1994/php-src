@@ -372,7 +372,7 @@ static zend_always_inline bool zend_string_equals_cstr(const zend_string *s1, co
 
 #if defined(__GNUC__) && (defined(__i386__) || (defined(__x86_64__) && !defined(__ILP32__)))
 BEGIN_EXTERN_C()
-ZEND_API bool ZEND_FASTCALL zend_string_equal_val(const zend_string *s1, const zend_string *s2);
+ZEND_API ZEND_PURE bool ZEND_FASTCALL zend_string_equal_val(const zend_string *s1, const zend_string *s2);
 END_EXTERN_C()
 #else
 static zend_always_inline bool zend_string_equal_val(const zend_string *s1, const zend_string *s2)

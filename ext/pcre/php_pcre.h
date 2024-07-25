@@ -61,12 +61,12 @@ PHPAPI void  php_pcre_split_impl(  pcre_cache_entry *pce, zend_string *subject_s
 PHPAPI void  php_pcre_grep_impl(   pcre_cache_entry *pce, zval *input, zval *return_value,
 	zend_long flags);
 
-PHPAPI pcre2_match_context *php_pcre_mctx(void);
-PHPAPI pcre2_general_context *php_pcre_gctx(void);
-PHPAPI pcre2_compile_context *php_pcre_cctx(void);
+PHPAPI ZEND_PURE pcre2_match_context *php_pcre_mctx(void);
+PHPAPI ZEND_PURE pcre2_general_context *php_pcre_gctx(void);
+PHPAPI ZEND_PURE pcre2_compile_context *php_pcre_cctx(void);
 PHPAPI void php_pcre_pce_incref(pcre_cache_entry *);
 PHPAPI void php_pcre_pce_decref(pcre_cache_entry *);
-PHPAPI pcre2_code *php_pcre_pce_re(pcre_cache_entry *);
+PHPAPI ZEND_PURE pcre2_code *php_pcre_pce_re(pcre_cache_entry *);
 /* capture_count can be ignored, re is required. */
 PHPAPI pcre2_match_data *php_pcre_create_match_data(uint32_t, pcre2_code *);
 PHPAPI void php_pcre_free_match_data(pcre2_match_data *);

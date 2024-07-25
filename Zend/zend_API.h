@@ -364,8 +364,8 @@ ZEND_API zend_result zend_parse_parameters_ex(int flags, uint32_t num_args, cons
 /* NOTE: This must have at least one value in __VA_ARGS__ for the expression to be valid */
 #define zend_parse_parameters_throw(num_args, ...) \
 	zend_parse_parameters(num_args, __VA_ARGS__)
-ZEND_API const char *zend_zval_type_name(const zval *arg);
-ZEND_API const char *zend_zval_value_name(const zval *arg);
+ZEND_API ZEND_PURE const char *zend_zval_type_name(const zval *arg);
+ZEND_API ZEND_PURE const char *zend_zval_value_name(const zval *arg);
 ZEND_API zend_string *zend_zval_get_legacy_type(const zval *arg);
 
 ZEND_API zend_result zend_parse_method_parameters(uint32_t num_args, zval *this_ptr, const char *type_spec, ...);
@@ -420,7 +420,7 @@ ZEND_API bool zend_is_callable_ex(zval *callable, zend_object *object, uint32_t 
 ZEND_API bool zend_is_callable(zval *callable, uint32_t check_flags, zend_string **callable_name);
 ZEND_API bool zend_make_callable(zval *callable, zend_string **callable_name);
 ZEND_API const char *zend_get_module_version(const char *module_name);
-ZEND_API zend_result zend_get_module_started(const char *module_name);
+ZEND_API ZEND_PURE zend_result zend_get_module_started(const char *module_name);
 
 ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, zend_string *name, zval *property, int access_type, zend_string *doc_comment, zend_type type);
 
@@ -919,9 +919,9 @@ static zend_always_inline const char *zend_get_object_type_uc(const zend_class_e
 	return zend_get_object_type_case(ce, true);
 }
 
-ZEND_API bool zend_is_iterable(const zval *iterable);
+ZEND_API ZEND_PURE bool zend_is_iterable(const zval *iterable);
 
-ZEND_API bool zend_is_countable(const zval *countable);
+ZEND_API ZEND_PURE bool zend_is_countable(const zval *countable);
 
 ZEND_API zend_result zend_get_default_from_internal_arg_info(
 		zval *default_value_zval, zend_internal_arg_info *arg_info);

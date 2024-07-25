@@ -26,9 +26,9 @@
 #include "zend_stream.h"
 
 BEGIN_EXTERN_C()
-PHPAPI int php_file_le_stream(void);
-PHPAPI int php_file_le_pstream(void);
-PHPAPI int php_file_le_stream_filter(void);
+PHPAPI ZEND_PURE int php_file_le_stream(void);
+PHPAPI ZEND_PURE int php_file_le_pstream(void);
+PHPAPI ZEND_PURE int php_file_le_stream_filter(void);
 END_EXTERN_C()
 
 /* {{{ Streams memory debugging stuff */
@@ -315,7 +315,7 @@ PHPAPI int _php_stream_seek(php_stream *stream, zend_off_t offset, int whence);
 #define php_stream_rewind(stream)	_php_stream_seek((stream), 0L, SEEK_SET)
 #define php_stream_seek(stream, offset, whence)	_php_stream_seek((stream), (offset), (whence))
 
-PHPAPI zend_off_t _php_stream_tell(php_stream *stream);
+PHPAPI ZEND_PURE zend_off_t _php_stream_tell(php_stream *stream);
 #define php_stream_tell(stream)	_php_stream_tell((stream))
 
 PHPAPI ssize_t _php_stream_read(php_stream *stream, char *buf, size_t count);
@@ -380,8 +380,8 @@ PHPAPI php_stream_dirent *_php_stream_readdir(php_stream *dirstream, php_stream_
 #define php_stream_closedir(dirstream)	php_stream_close((dirstream))
 #define php_stream_rewinddir(dirstream)	php_stream_rewind((dirstream))
 
-PHPAPI int php_stream_dirent_alphasort(const zend_string **a, const zend_string **b);
-PHPAPI int php_stream_dirent_alphasortr(const zend_string **a, const zend_string **b);
+PHPAPI ZEND_PURE int php_stream_dirent_alphasort(const zend_string **a, const zend_string **b);
+PHPAPI ZEND_PURE int php_stream_dirent_alphasortr(const zend_string **a, const zend_string **b);
 
 PHPAPI int _php_stream_scandir(const char *dirname, zend_string **namelist[], int flags, php_stream_context *context,
 			int (*compare) (const zend_string **a, const zend_string **b));
@@ -612,12 +612,12 @@ PHPAPI int _php_stream_make_seekable(php_stream *origstream, php_stream **newstr
 #define php_stream_make_seekable(origstream, newstream, flags)	_php_stream_make_seekable((origstream), (newstream), (flags) STREAMS_CC)
 
 /* Give other modules access to the url_stream_wrappers_hash and stream_filters_hash */
-PHPAPI HashTable *_php_stream_get_url_stream_wrappers_hash(void);
+PHPAPI ZEND_PURE HashTable *_php_stream_get_url_stream_wrappers_hash(void);
 #define php_stream_get_url_stream_wrappers_hash()	_php_stream_get_url_stream_wrappers_hash()
-PHPAPI HashTable *php_stream_get_url_stream_wrappers_hash_global(void);
-PHPAPI HashTable *_php_get_stream_filters_hash(void);
+PHPAPI ZEND_CONST HashTable *php_stream_get_url_stream_wrappers_hash_global(void);
+PHPAPI ZEND_PURE HashTable *_php_get_stream_filters_hash(void);
 #define php_get_stream_filters_hash()	_php_get_stream_filters_hash()
-PHPAPI HashTable *php_get_stream_filters_hash_global(void);
+PHPAPI ZEND_CONST HashTable *php_get_stream_filters_hash_global(void);
 extern const php_stream_wrapper_ops *php_stream_user_wrapper_ops;
 
 static inline bool php_is_stream_path(const char *filename)

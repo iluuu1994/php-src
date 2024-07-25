@@ -41,14 +41,14 @@ BEGIN_EXTERN_C()
 
 PHPAPI php_stream *_php_stream_memory_create(int mode STREAMS_DC);
 PHPAPI php_stream *_php_stream_memory_open(int mode, zend_string *buf STREAMS_DC);
-PHPAPI zend_string *_php_stream_memory_get_buffer(php_stream *stream STREAMS_DC);
+PHPAPI ZEND_PURE zend_string *_php_stream_memory_get_buffer(php_stream *stream STREAMS_DC);
 
 PHPAPI php_stream *_php_stream_temp_create(int mode, size_t max_memory_usage STREAMS_DC);
 PHPAPI php_stream *_php_stream_temp_create_ex(int mode, size_t max_memory_usage, const char *tmpdir STREAMS_DC);
 PHPAPI php_stream *_php_stream_temp_open(int mode, size_t max_memory_usage, const char *buf, size_t length STREAMS_DC);
 
-PHPAPI int php_stream_mode_from_str(const char *mode);
-PHPAPI const char *_php_stream_mode_to_str(int mode);
+PHPAPI ZEND_PURE int php_stream_mode_from_str(const char *mode);
+PHPAPI ZEND_CONST const char *_php_stream_mode_to_str(int mode);
 
 END_EXTERN_C()
 

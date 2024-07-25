@@ -123,8 +123,8 @@ PHPAPI extern php_basic_globals basic_globals;
 
 PHPAPI zend_string *php_getenv(const char *str, size_t str_len);
 
-PHPAPI double php_get_nan(void);
-PHPAPI double php_get_inf(void);
+PHPAPI ZEND_CONST double php_get_nan(void);
+PHPAPI ZEND_CONST double php_get_inf(void);
 
 typedef struct _php_shutdown_function_entry {
 	zend_fcall_info fci;

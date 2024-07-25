@@ -221,7 +221,7 @@ ZEND_API ZEND_PURE bool zend_alloc_in_memory_limit_error_reporting(void);
 ZEND_API void start_memory_manager(void);
 ZEND_API void shutdown_memory_manager(bool silent, bool full_shutdown);
 ZEND_API ZEND_PURE bool is_zend_mm(void);
-ZEND_API bool is_zend_ptr(const void *ptr);
+ZEND_API ZEND_PURE bool is_zend_ptr(const void *ptr);
 
 ZEND_API ZEND_PURE size_t zend_memory_usage(bool real_usage);
 ZEND_API ZEND_PURE size_t zend_memory_peak_usage(bool real_usage);
@@ -249,7 +249,7 @@ ZEND_API ZEND_ATTRIBUTE_MALLOC void*  ZEND_FASTCALL _zend_mm_alloc(zend_mm_heap 
 ZEND_API void   ZEND_FASTCALL _zend_mm_free(zend_mm_heap *heap, void *p ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
 ZEND_API void*  ZEND_FASTCALL _zend_mm_realloc(zend_mm_heap *heap, void *p, size_t size ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
 ZEND_API void*  ZEND_FASTCALL _zend_mm_realloc2(zend_mm_heap *heap, void *p, size_t size, size_t copy_size ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
-ZEND_API size_t ZEND_FASTCALL _zend_mm_block_size(zend_mm_heap *heap, void *p ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
+ZEND_API ZEND_PURE size_t ZEND_FASTCALL _zend_mm_block_size(zend_mm_heap *heap, void *p ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
 
 #define zend_mm_alloc(heap, size)			_zend_mm_alloc((heap), (size) ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
 #define zend_mm_free(heap, p)				_zend_mm_free((heap), (p) ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
