@@ -64,15 +64,15 @@ ZEND_API zend_result ZEND_FASTCALL is_not_equal_function(zval *result, zval *op1
 ZEND_API zend_result ZEND_FASTCALL is_smaller_function(zval *result, zval *op1, zval *op2);
 ZEND_API zend_result ZEND_FASTCALL is_smaller_or_equal_function(zval *result, zval *op1, zval *op2);
 
-ZEND_API bool ZEND_FASTCALL zend_class_implements_interface(const zend_class_entry *class_ce, const zend_class_entry *interface_ce);
-ZEND_API bool ZEND_FASTCALL instanceof_function_slow(const zend_class_entry *instance_ce, const zend_class_entry *ce);
+ZEND_API ZEND_PURE bool ZEND_FASTCALL zend_class_implements_interface(const zend_class_entry *class_ce, const zend_class_entry *interface_ce);
+ZEND_API ZEND_PURE bool ZEND_FASTCALL instanceof_function_slow(const zend_class_entry *instance_ce, const zend_class_entry *ce);
 
 static zend_always_inline bool instanceof_function(
 		const zend_class_entry *instance_ce, const zend_class_entry *ce) {
 	return instance_ce == ce || instanceof_function_slow(instance_ce, ce);
 }
 
-ZEND_API bool zend_string_only_has_ascii_alphanumeric(const zend_string *str);
+ZEND_API ZEND_PURE bool zend_string_only_has_ascii_alphanumeric(const zend_string *str);
 
 /**
  * Checks whether the string "str" with length "length" is numeric. The value
@@ -92,8 +92,8 @@ ZEND_API bool zend_string_only_has_ascii_alphanumeric(const zend_string *str);
 ZEND_API uint8_t ZEND_FASTCALL _is_numeric_string_ex(const char *str, size_t length, zend_long *lval,
 	double *dval, bool allow_errors, int *oflow_info, bool *trailing_data);
 
-ZEND_API const char* ZEND_FASTCALL zend_memnstr_ex(const char *haystack, const char *needle, size_t needle_len, const char *end);
-ZEND_API const char* ZEND_FASTCALL zend_memnrstr_ex(const char *haystack, const char *needle, size_t needle_len, const char *end);
+ZEND_API ZEND_PURE const char* ZEND_FASTCALL zend_memnstr_ex(const char *haystack, const char *needle, size_t needle_len, const char *end);
+ZEND_API ZEND_PURE const char* ZEND_FASTCALL zend_memnrstr_ex(const char *haystack, const char *needle, size_t needle_len, const char *end);
 
 #if SIZEOF_ZEND_LONG == 4
 #	define ZEND_DOUBLE_FITS_LONG(d) (!((d) > (double)ZEND_LONG_MAX || (d) < (double)ZEND_LONG_MIN))
@@ -471,12 +471,12 @@ static zend_always_inline zend_string* zend_string_toupper(zend_string *str) {
 
 ZEND_API int ZEND_FASTCALL zend_binary_zval_strcmp(zval *s1, zval *s2);
 ZEND_API int ZEND_FASTCALL zend_binary_zval_strncmp(zval *s1, zval *s2, zval *s3);
-ZEND_API int ZEND_FASTCALL zend_binary_strcmp(const char *s1, size_t len1, const char *s2, size_t len2);
-ZEND_API int ZEND_FASTCALL zend_binary_strncmp(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
-ZEND_API int ZEND_FASTCALL zend_binary_strcasecmp(const char *s1, size_t len1, const char *s2, size_t len2);
-ZEND_API int ZEND_FASTCALL zend_binary_strncasecmp(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
-ZEND_API int ZEND_FASTCALL zend_binary_strcasecmp_l(const char *s1, size_t len1, const char *s2, size_t len2);
-ZEND_API int ZEND_FASTCALL zend_binary_strncasecmp_l(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strcmp(const char *s1, size_t len1, const char *s2, size_t len2);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strncmp(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strcasecmp(const char *s1, size_t len1, const char *s2, size_t len2);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strncasecmp(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strcasecmp_l(const char *s1, size_t len1, const char *s2, size_t len2);
+ZEND_API ZEND_PURE int ZEND_FASTCALL zend_binary_strncasecmp_l(const char *s1, size_t len1, const char *s2, size_t len2, size_t length);
 
 ZEND_API bool ZEND_FASTCALL zendi_smart_streq(zend_string *s1, zend_string *s2);
 ZEND_API int ZEND_FASTCALL zendi_smart_strcmp(zend_string *s1, zend_string *s2);

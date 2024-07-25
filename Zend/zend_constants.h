@@ -89,7 +89,7 @@ ZEND_API zend_result zend_register_constant(zend_constant *c);
 void zend_copy_constants(HashTable *target, HashTable *source);
 #endif
 
-ZEND_API zend_constant *_zend_get_special_const(const char *name, size_t name_len);
+ZEND_API ZEND_PURE zend_constant *_zend_get_special_const(const char *name, size_t name_len);
 
 static zend_always_inline zend_constant *zend_get_special_const(
 		const char *name, size_t name_len) {

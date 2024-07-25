@@ -282,9 +282,9 @@ ZEND_API HashTable *zend_std_build_object_properties_array(zend_object *zobj);
 
 /* Handler for objects that cannot be meaningfully compared.
  * Only objects with the same identity will be considered equal. */
-ZEND_API int zend_objects_not_comparable(zval *o1, zval *o2);
+ZEND_API ZEND_CONST int zend_objects_not_comparable(zval *o1, zval *o2);
 
-ZEND_API bool zend_check_protected(const zend_class_entry *ce, const zend_class_entry *scope);
+ZEND_API ZEND_PURE bool zend_check_protected(const zend_class_entry *ce, const zend_class_entry *scope);
 
 ZEND_API zend_result zend_check_property_access(const zend_object *zobj, zend_string *prop_info_name, bool is_dynamic);
 
@@ -294,7 +294,7 @@ ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *membe
 
 ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *member);
 
-ZEND_API uint32_t *zend_get_recursion_guard(zend_object *zobj);
+ZEND_API ZEND_PURE uint32_t *zend_get_recursion_guard(zend_object *zobj);
 
 /* Default behavior for get_properties_for. For use as a fallback in custom
  * get_properties_for implementations. */

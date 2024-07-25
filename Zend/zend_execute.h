@@ -47,11 +47,11 @@ ZEND_API void zend_init_code_execute_data(zend_execute_data *execute_data, zend_
 ZEND_API void zend_execute(zend_op_array *op_array, zval *return_value);
 ZEND_API void execute_ex(zend_execute_data *execute_data);
 ZEND_API void execute_internal(zend_execute_data *execute_data, zval *return_value);
-ZEND_API bool zend_is_valid_class_name(zend_string *name);
+ZEND_API ZEND_PURE bool zend_is_valid_class_name(zend_string *name);
 ZEND_API zend_class_entry *zend_lookup_class(zend_string *name);
 ZEND_API zend_class_entry *zend_lookup_class_ex(zend_string *name, zend_string *lcname, uint32_t flags);
-ZEND_API zend_class_entry *zend_get_called_scope(zend_execute_data *ex);
-ZEND_API zend_object *zend_get_this_object(zend_execute_data *ex);
+ZEND_API ZEND_PURE zend_class_entry *zend_get_called_scope(zend_execute_data *ex);
+ZEND_API ZEND_PURE zend_object *zend_get_this_object(zend_execute_data *ex);
 ZEND_API zend_result zend_eval_string(const char *str, zval *retval_ptr, const char *string_name);
 ZEND_API zend_result zend_eval_stringl(const char *str, size_t str_len, zval *retval_ptr, const char *string_name);
 ZEND_API zend_result zend_eval_string_ex(const char *str, zval *retval_ptr, const char *string_name, bool handle_exceptions);
@@ -373,8 +373,8 @@ ZEND_API void ZEND_FASTCALL zend_free_extra_named_params(zend_array *extra_named
 ZEND_API const char *get_active_class_name(const char **space);
 ZEND_API const char *get_active_function_name(void);
 ZEND_API const char *get_active_function_arg_name(uint32_t arg_num);
-ZEND_API const char *get_function_arg_name(const zend_function *func, uint32_t arg_num);
-ZEND_API zend_function *zend_active_function_ex(zend_execute_data *execute_data);
+ZEND_API ZEND_PURE const char *get_function_arg_name(const zend_function *func, uint32_t arg_num);
+ZEND_API ZEND_PURE zend_function *zend_active_function_ex(zend_execute_data *execute_data);
 
 static zend_always_inline zend_function *zend_active_function(void)
 {
@@ -389,10 +389,10 @@ static zend_always_inline zend_function *zend_active_function(void)
 ZEND_API zend_string *get_active_function_or_method_name(void);
 ZEND_API zend_string *get_function_or_method_name(const zend_function *func);
 ZEND_API const char *zend_get_executed_filename(void);
-ZEND_API zend_string *zend_get_executed_filename_ex(void);
-ZEND_API uint32_t zend_get_executed_lineno(void);
-ZEND_API zend_class_entry *zend_get_executed_scope(void);
-ZEND_API bool zend_is_executing(void);
+ZEND_API ZEND_PURE zend_string *zend_get_executed_filename_ex(void);
+ZEND_API ZEND_PURE uint32_t zend_get_executed_lineno(void);
+ZEND_API ZEND_PURE zend_class_entry *zend_get_executed_scope(void);
+ZEND_API ZEND_PURE bool zend_is_executing(void);
 ZEND_API ZEND_COLD void ZEND_FASTCALL zend_cannot_pass_by_reference(uint32_t arg_num);
 
 ZEND_API void zend_set_timeout(zend_long seconds, bool reset_signals);
@@ -408,9 +408,9 @@ ZEND_API void ZEND_FASTCALL zend_init_func_run_time_cache(zend_op_array *op_arra
 
 ZEND_API void zend_fetch_dimension_const(zval *result, zval *container, zval *dim, int type);
 
-ZEND_API zval* zend_get_compiled_variable_value(const zend_execute_data *execute_data_ptr, uint32_t var);
+ZEND_API ZEND_CONST zval* zend_get_compiled_variable_value(const zend_execute_data *execute_data_ptr, uint32_t var);
 
-ZEND_API bool zend_gcc_global_regs(void);
+ZEND_API ZEND_CONST bool zend_gcc_global_regs(void);
 
 #define ZEND_USER_OPCODE_CONTINUE   0 /* execute next opcode */
 #define ZEND_USER_OPCODE_RETURN     1 /* exit from executor (return from function) */
@@ -421,9 +421,9 @@ ZEND_API bool zend_gcc_global_regs(void);
 #define ZEND_USER_OPCODE_DISPATCH_TO 0x100 /* call original handler of returned opcode */
 
 ZEND_API zend_result zend_set_user_opcode_handler(uint8_t opcode, user_opcode_handler_t handler);
-ZEND_API user_opcode_handler_t zend_get_user_opcode_handler(uint8_t opcode);
+ZEND_API ZEND_PURE user_opcode_handler_t zend_get_user_opcode_handler(uint8_t opcode);
 
-ZEND_API zval *zend_get_zval_ptr(const zend_op *opline, int op_type, const znode_op *node, const zend_execute_data *execute_data);
+ZEND_API ZEND_PURE zval *zend_get_zval_ptr(const zend_op *opline, int op_type, const znode_op *node, const zend_execute_data *execute_data);
 
 ZEND_API void zend_clean_and_cache_symbol_table(zend_array *symbol_table);
 ZEND_API void ZEND_FASTCALL zend_free_compiled_variables(zend_execute_data *execute_data);

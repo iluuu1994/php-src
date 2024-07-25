@@ -50,11 +50,11 @@ ZEND_API void ZEND_FASTCALL gc_remove_from_buffer(zend_refcounted *ref);
 
 /* enable/disable automatic start of GC collection */
 ZEND_API bool gc_enable(bool enable);
-ZEND_API bool gc_enabled(void);
+ZEND_API ZEND_PURE bool gc_enabled(void);
 
 /* enable/disable possible root additions */
 ZEND_API bool gc_protect(bool protect);
-ZEND_API bool gc_protected(void);
+ZEND_API ZEND_PURE bool gc_protected(void);
 
 #if GC_BENCH
 void gc_bench_print(void);

@@ -177,9 +177,9 @@ ZEND_API void ZEND_FASTCALL zend_hash_packed_del_val(HashTable *ht, zval *zv);
 
 /* Data retrieval */
 ZEND_API zval* ZEND_FASTCALL zend_hash_find(const HashTable *ht, zend_string *key);
-ZEND_API zval* ZEND_FASTCALL zend_hash_str_find(const HashTable *ht, const char *key, size_t len);
-ZEND_API zval* ZEND_FASTCALL zend_hash_index_find(const HashTable *ht, zend_ulong h);
-ZEND_API zval* ZEND_FASTCALL _zend_hash_index_find(const HashTable *ht, zend_ulong h);
+ZEND_API ZEND_PURE zval* ZEND_FASTCALL zend_hash_str_find(const HashTable *ht, const char *key, size_t len);
+ZEND_API ZEND_PURE zval* ZEND_FASTCALL zend_hash_index_find(const HashTable *ht, zend_ulong h);
+ZEND_API ZEND_PURE zval* ZEND_FASTCALL _zend_hash_index_find(const HashTable *ht, zend_ulong h);
 
 /* The same as zend_hash_find(), but hash value of the key must be already calculated. */
 ZEND_API zval* ZEND_FASTCALL zend_hash_find_known_hash(const HashTable *ht, const zend_string *key);
@@ -245,15 +245,15 @@ static zend_always_inline bool zend_hash_index_exists(const HashTable *ht, zend_
 }
 
 /* traversing */
-ZEND_API HashPosition ZEND_FASTCALL zend_hash_get_current_pos_ex(const HashTable *ht, HashPosition pos);
-ZEND_API HashPosition ZEND_FASTCALL zend_hash_get_current_pos(const HashTable *ht);
+ZEND_API ZEND_PURE HashPosition ZEND_FASTCALL zend_hash_get_current_pos_ex(const HashTable *ht, HashPosition pos);
+ZEND_API ZEND_PURE HashPosition ZEND_FASTCALL zend_hash_get_current_pos(const HashTable *ht);
 
 ZEND_API zend_result   ZEND_FASTCALL zend_hash_move_forward_ex(HashTable *ht, HashPosition *pos);
 ZEND_API zend_result   ZEND_FASTCALL zend_hash_move_backwards_ex(HashTable *ht, HashPosition *pos);
 ZEND_API int   ZEND_FASTCALL zend_hash_get_current_key_ex(const HashTable *ht, zend_string **str_index, zend_ulong *num_index, const HashPosition *pos);
 ZEND_API void  ZEND_FASTCALL zend_hash_get_current_key_zval_ex(const HashTable *ht, zval *key, const HashPosition *pos);
-ZEND_API int   ZEND_FASTCALL zend_hash_get_current_key_type_ex(HashTable *ht, HashPosition *pos);
-ZEND_API zval* ZEND_FASTCALL zend_hash_get_current_data_ex(HashTable *ht, HashPosition *pos);
+ZEND_API ZEND_PURE int   ZEND_FASTCALL zend_hash_get_current_key_type_ex(HashTable *ht, HashPosition *pos);
+ZEND_API ZEND_PURE zval* ZEND_FASTCALL zend_hash_get_current_data_ex(HashTable *ht, HashPosition *pos);
 ZEND_API void  ZEND_FASTCALL zend_hash_internal_pointer_reset_ex(HashTable *ht, HashPosition *pos);
 ZEND_API void  ZEND_FASTCALL zend_hash_internal_pointer_end_ex(HashTable *ht, HashPosition *pos);
 
@@ -348,7 +348,7 @@ ZEND_API uint32_t     ZEND_FASTCALL zend_hash_iterator_add(HashTable *ht, HashPo
 ZEND_API HashPosition ZEND_FASTCALL zend_hash_iterator_pos(uint32_t idx, HashTable *ht);
 ZEND_API HashPosition ZEND_FASTCALL zend_hash_iterator_pos_ex(uint32_t idx, zval *array);
 ZEND_API void         ZEND_FASTCALL zend_hash_iterator_del(uint32_t idx);
-ZEND_API HashPosition ZEND_FASTCALL zend_hash_iterators_lower_pos(HashTable *ht, HashPosition start);
+ZEND_API ZEND_PURE HashPosition ZEND_FASTCALL zend_hash_iterators_lower_pos(HashTable *ht, HashPosition start);
 ZEND_API void         ZEND_FASTCALL _zend_hash_iterators_update(HashTable *ht, HashPosition from, HashPosition to);
 ZEND_API void         ZEND_FASTCALL zend_hash_iterators_advance(HashTable *ht, HashPosition step);
 

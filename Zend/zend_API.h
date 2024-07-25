@@ -340,7 +340,7 @@ typedef struct _zend_fcall_info_cache {
 #define ZEND_FCI_INITIALIZED(fci) ((fci).size != 0)
 #define ZEND_FCC_INITIALIZED(fcc) ((fcc).function_handler != NULL)
 
-ZEND_API int zend_next_free_module(void);
+ZEND_API ZEND_PURE int zend_next_free_module(void);
 
 BEGIN_EXTERN_C()
 ZEND_API zend_result zend_get_parameters_array_ex(uint32_t param_count, zval *argument_array);
@@ -517,7 +517,7 @@ ZEND_API zval *zend_read_property(zend_class_entry *scope, zend_object *object, 
 ZEND_API zval *zend_read_static_property_ex(zend_class_entry *scope, zend_string *name, bool silent);
 ZEND_API zval *zend_read_static_property(zend_class_entry *scope, const char *name, size_t name_length, bool silent);
 
-ZEND_API const char *zend_get_type_by_const(int type);
+ZEND_API ZEND_CONST const char *zend_get_type_by_const(int type);
 
 #define ZEND_THIS                           (&EX(This))
 
@@ -907,7 +907,7 @@ static zend_always_inline zend_result zend_forbid_dynamic_call(void)
 	return SUCCESS;
 }
 
-ZEND_API ZEND_COLD const char *zend_get_object_type_case(const zend_class_entry *ce, bool upper_case);
+ZEND_API ZEND_PURE ZEND_COLD const char *zend_get_object_type_case(const zend_class_entry *ce, bool upper_case);
 
 static zend_always_inline const char *zend_get_object_type(const zend_class_entry *ce)
 {

@@ -842,11 +842,11 @@ void shutdown_scanner(void);
 
 ZEND_API zend_string *zend_set_compiled_filename(zend_string *new_compiled_filename);
 ZEND_API void zend_restore_compiled_filename(zend_string *original_compiled_filename);
-ZEND_API zend_string *zend_get_compiled_filename(void);
-ZEND_API int zend_get_compiled_lineno(void);
+ZEND_API ZEND_PURE zend_string *zend_get_compiled_filename(void);
+ZEND_API ZEND_PURE int zend_get_compiled_lineno(void);
 ZEND_API size_t zend_get_scanned_file_offset(void);
 
-ZEND_API zend_string *zend_get_compiled_variable_name(const zend_op_array *op_array, uint32_t var);
+ZEND_API ZEND_PURE zend_string *zend_get_compiled_variable_name(const zend_op_array *op_array, uint32_t var);
 
 #ifdef ZTS
 const char *zend_get_zendtext(void);
@@ -856,8 +856,8 @@ int zend_get_zendleng(void);
 typedef zend_result (ZEND_FASTCALL *unary_op_type)(zval *, zval *);
 typedef zend_result (ZEND_FASTCALL *binary_op_type)(zval *, zval *, zval *);
 
-ZEND_API unary_op_type get_unary_op(int opcode);
-ZEND_API binary_op_type get_binary_op(int opcode);
+ZEND_API ZEND_CONST unary_op_type get_unary_op(int opcode);
+ZEND_API ZEND_CONST binary_op_type get_binary_op(int opcode);
 
 void zend_stop_lexing(void);
 void zend_emit_final_return(bool return_one);
@@ -951,12 +951,12 @@ ZEND_API void zend_recalc_live_ranges(
 	zend_op_array *op_array, zend_needs_live_range_cb needs_live_range);
 
 ZEND_API void pass_two(zend_op_array *op_array);
-ZEND_API bool zend_is_compiling(void);
+ZEND_API ZEND_PURE bool zend_is_compiling(void);
 ZEND_API char *zend_make_compiled_string_description(const char *name);
 ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_handlers);
 uint32_t zend_get_class_fetch_type(const zend_string *name);
-ZEND_API uint8_t zend_get_call_op(const zend_op *init_op, zend_function *fbc);
-ZEND_API bool zend_is_smart_branch(const zend_op *opline);
+ZEND_API ZEND_PURE uint8_t zend_get_call_op(const zend_op *init_op, zend_function *fbc);
+ZEND_API ZEND_PURE bool zend_is_smart_branch(const zend_op *opline);
 
 typedef bool (*zend_auto_global_callback)(zend_string *name);
 typedef struct _zend_auto_global {

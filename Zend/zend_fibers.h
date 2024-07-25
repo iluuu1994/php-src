@@ -141,13 +141,13 @@ ZEND_API zend_result zend_fiber_init_context(zend_fiber_context *context, void *
 ZEND_API void zend_fiber_destroy_context(zend_fiber_context *context);
 ZEND_API void zend_fiber_switch_context(zend_fiber_transfer *transfer);
 #ifdef ZEND_CHECK_STACK_LIMIT
-ZEND_API void* zend_fiber_stack_limit(zend_fiber_stack *stack);
-ZEND_API void* zend_fiber_stack_base(zend_fiber_stack *stack);
+ZEND_API ZEND_PURE void* zend_fiber_stack_limit(zend_fiber_stack *stack);
+ZEND_API ZEND_PURE void* zend_fiber_stack_base(zend_fiber_stack *stack);
 #endif /* ZEND_CHECK_STACK_LIMIT */
 
 ZEND_API void zend_fiber_switch_block(void);
 ZEND_API void zend_fiber_switch_unblock(void);
-ZEND_API bool zend_fiber_switch_blocked(void);
+ZEND_API ZEND_PURE bool zend_fiber_switch_blocked(void);
 
 END_EXTERN_C()
 

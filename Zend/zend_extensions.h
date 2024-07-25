@@ -147,14 +147,14 @@ void zend_startup_extensions_mechanism(void);
 void zend_startup_extensions(void);
 void zend_shutdown_extensions(void);
 
-ZEND_API size_t zend_internal_run_time_cache_reserved_size(void);
+ZEND_API ZEND_PURE size_t zend_internal_run_time_cache_reserved_size(void);
 ZEND_API void zend_init_internal_run_time_cache(void);
 
 BEGIN_EXTERN_C()
 ZEND_API zend_result zend_load_extension(const char *path);
 ZEND_API zend_result zend_load_extension_handle(DL_HANDLE handle, const char *path);
 ZEND_API void zend_register_extension(zend_extension *new_extension, DL_HANDLE handle);
-ZEND_API zend_extension *zend_get_extension(const char *extension_name);
+ZEND_API ZEND_PURE zend_extension *zend_get_extension(const char *extension_name);
 ZEND_API size_t zend_extensions_op_array_persist_calc(zend_op_array *op_array);
 ZEND_API size_t zend_extensions_op_array_persist(zend_op_array *op_array, void *mem);
 END_EXTERN_C()

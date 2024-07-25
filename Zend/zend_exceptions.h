@@ -51,10 +51,10 @@ void zend_register_default_exception(void);
 ZEND_API zend_class_entry *zend_get_exception_base(zend_object *object);
 
 /* Deprecated - Use zend_ce_exception directly instead */
-ZEND_API zend_class_entry *zend_exception_get_default(void);
+ZEND_API ZEND_PURE zend_class_entry *zend_exception_get_default(void);
 
 /* Deprecated - Use zend_ce_error_exception directly instead */
-ZEND_API zend_class_entry *zend_get_error_exception(void);
+ZEND_API ZEND_PURE zend_class_entry *zend_get_error_exception(void);
 
 ZEND_API void zend_register_default_classes(void);
 
@@ -78,8 +78,8 @@ ZEND_API ZEND_COLD zend_object *zend_create_unwind_exit(void);
 ZEND_API ZEND_COLD zend_object *zend_create_graceful_exit(void);
 ZEND_API ZEND_COLD void zend_throw_unwind_exit(void);
 ZEND_API ZEND_COLD void zend_throw_graceful_exit(void);
-ZEND_API bool zend_is_unwind_exit(const zend_object *ex);
-ZEND_API bool zend_is_graceful_exit(const zend_object *ex);
+ZEND_API ZEND_PURE bool zend_is_unwind_exit(const zend_object *ex);
+ZEND_API ZEND_PURE bool zend_is_graceful_exit(const zend_object *ex);
 
 #include "zend_globals.h"
 

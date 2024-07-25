@@ -86,7 +86,7 @@ typedef struct _zend_class_arrayaccess_funcs {
 
 BEGIN_EXTERN_C()
 /* given a zval, returns stuff that can be used to iterate it. */
-ZEND_API zend_object_iterator* zend_iterator_unwrap(zval *array_ptr);
+ZEND_API ZEND_PURE zend_object_iterator* zend_iterator_unwrap(zval *array_ptr);
 
 /* given an iterator, wrap it up as a zval for use by the engine opcodes */
 ZEND_API void zend_iterator_init(zend_object_iterator *iter);
