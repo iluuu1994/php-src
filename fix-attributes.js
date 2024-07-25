@@ -2,6 +2,7 @@ import { LspClient, JSONRPCEndpoint } from "ts-lsp-client";
 import {spawn} from "child_process";
 import {pathToFileURL} from "url";
 import fs from 'node:fs';
+import process from 'process';
 
 async function getDeclaration(file, line, character) {
     const root = "/home/ilutov/Developer/php-src";
@@ -35,8 +36,10 @@ async function getDeclaration(file, line, character) {
     return result;
 }
 
-const lines = fs.readFileSync("suggestions_zend.txt").toString().split("\n");
+const lines = fs.readFileSync("suggestions.txt").toString().split("\n");
 for (let i = 0; i < lines.length; i++) {
+    process.stdout.write('.');
+
     const line = lines[i];
     // /home/ilutov/Developer/php-src/Zend/zend_vm_opcodes.c: In function ‘zend_get_opcode_name’:
     if (line.match(/(\/home.*\.c): In function/)) {
@@ -48,6 +51,8 @@ for (let i = 0; i < lines.length; i++) {
         const column = matches[3];
         const type = matches[4];
         const declaration = (await getDeclaration(file, line, column))[0];
+        if (!declaration) continue;
+
         const uri = declaration.uri.substring("file://".length);
         if (!uri.endsWith('.h')) continue;
 
@@ -57,5 +62,7 @@ for (let i = 0; i < lines.length; i++) {
         modifiedLine = modifiedLine.replace("PHPAPI", "PHPAPI ZEND_" + type.toUpperCase());
         modifiedLines[declaration.range.start.line] = modifiedLine;
         fs.writeFileSync(uri, modifiedLines.join("\n"));
+
+        process.stdout.write('W');
     }
 }
