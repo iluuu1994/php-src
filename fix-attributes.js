@@ -38,9 +38,10 @@ async function getDeclaration(file, line, character) {
 
 const lines = fs.readFileSync("suggestions.txt").toString().split("\n");
 for (let i = 0; i < lines.length; i++) {
-    process.stdout.write('.');
+    // process.stdout.write('.');
 
     const line = lines[i];
+
     // /home/ilutov/Developer/php-src/Zend/zend_vm_opcodes.c: In function ‘zend_get_opcode_name’:
     if (line.match(/(\/home.*\.c): In function/)) {
         const matches = lines[i+1].match(/(\/home\/.*\.c):(\d+):(\d+): .* \[-Wsuggest-attribute=(pure|const)\]/);
@@ -54,15 +55,29 @@ for (let i = 0; i < lines.length; i++) {
         if (!declaration) continue;
 
         const uri = declaration.uri.substring("file://".length);
-        if (!uri.endsWith('.h')) continue;
+        // if (!uri.endsWith('.h')) continue;
+
+        if (uri.includes("/ext/date/lib/")) continue;
+        if (uri.includes("/ext/dom/lexbor/")) continue;
+        if (uri.includes("/ext/fileinfo/libmagic/")) continue;
+        if (uri.includes("/ext/hash/murmur/")) continue;
+        if (uri.includes("/ext/pcre/pcre2lib/")) continue;
+        if (uri.includes("/opcache/jit/ir/")) continue;
 
         const modifiedLines = fs.readFileSync(uri).toString().split("\n");
         let modifiedLine = modifiedLines[declaration.range.start.line];
-        modifiedLine = modifiedLine.replace("ZEND_API", "ZEND_API ZEND_" + type.toUpperCase());
-        modifiedLine = modifiedLine.replace("PHPAPI", "PHPAPI ZEND_" + type.toUpperCase());
+        if (modifiedLine.includes('inline')) continue;
+        if (modifiedLine.startsWith("ZEND_API")) {
+            modifiedLine = modifiedLine.replace("ZEND_API", "ZEND_API ZEND_" + type.toUpperCase());
+        } else if (modifiedLine.startsWith("ZEND_API")) {
+            modifiedLine = modifiedLine.replace("PHPAPI", "PHPAPI ZEND_" + type.toUpperCase());
+        } else {
+            modifiedLine = "ZEND_" + type.toUpperCase() + " " + modifiedLine;
+        }
         modifiedLines[declaration.range.start.line] = modifiedLine;
         fs.writeFileSync(uri, modifiedLines.join("\n"));
+        console.log(uri, declaration.range.start.line + 1);
 
-        process.stdout.write('W');
+        // process.stdout.write('W');
     }
 }
