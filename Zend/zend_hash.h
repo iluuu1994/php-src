@@ -182,7 +182,7 @@ ZEND_API ZEND_PURE zval* ZEND_FASTCALL zend_hash_index_find(const HashTable *ht,
 ZEND_API ZEND_PURE zval* ZEND_FASTCALL _zend_hash_index_find(const HashTable *ht, zend_ulong h);
 
 /* The same as zend_hash_find(), but hash value of the key must be already calculated. */
-ZEND_API zval* ZEND_FASTCALL zend_hash_find_known_hash(const HashTable *ht, const zend_string *key);
+ZEND_API ZEND_PURE zval* ZEND_FASTCALL zend_hash_find_known_hash(const HashTable *ht, const zend_string *key);
 
 static zend_always_inline zval *zend_hash_find_ex(const HashTable *ht, zend_string *key, bool known_hash)
 {

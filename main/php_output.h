@@ -227,7 +227,7 @@ PHPAPI php_output_handler *php_output_handler_create_internal(const char *name, 
 
 PHPAPI void php_output_handler_set_context(php_output_handler *handler, void *opaq, void (*dtor)(void*));
 PHPAPI zend_result php_output_handler_start(php_output_handler *handler);
-PHPAPI bool php_output_handler_started(const char *name, size_t name_len);
+PHPAPI ZEND_PURE bool php_output_handler_started(const char *name, size_t name_len);
 PHPAPI zend_result php_output_handler_hook(php_output_handler_hook_t type, void *arg);
 PHPAPI void php_output_handler_dtor(php_output_handler *handler);
 PHPAPI void php_output_handler_free(php_output_handler **handler);
