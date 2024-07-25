@@ -319,7 +319,7 @@ void pdo_sqlstate_init_error_table(void)
 	}
 }
 
-const char *pdo_sqlstate_state_to_description(char *state)
+ZEND_PURE const char *pdo_sqlstate_state_to_description(char *state)
 {
 	const struct pdo_sqlstate_info *info;
 	if ((info = zend_hash_str_find_ptr(&err_hash, state, sizeof(err_initializer[0].state))) != NULL) {

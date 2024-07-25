@@ -80,7 +80,7 @@ typedef struct {
 	int order;
 } special_forms_t;
 
-static int
+ZEND_PURE static int
 compare_special_version_forms(char *form1, char *form2)
 {
 	int found1 = -1, found2 = -1;

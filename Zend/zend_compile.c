@@ -217,7 +217,7 @@ static const struct reserved_class_name reserved_class_names[] = {
 	{NULL, 0}
 };
 
-static bool zend_is_reserved_class_name(const zend_string *name) /* {{{ */
+ZEND_PURE static bool zend_is_reserved_class_name(const zend_string *name) /* {{{ */
 {
 	const struct reserved_class_name *reserved = reserved_class_names;
 
@@ -1613,13 +1613,13 @@ static bool array_is_const_ex(zend_array *array, uint32_t *max_checks)
 	return true;
 }
 
-static bool array_is_const(zend_array *array)
+ZEND_PURE static bool array_is_const(zend_array *array)
 {
 	uint32_t max_checks = 50;
 	return array_is_const_ex(array, &max_checks);
 }
 
-static bool can_ct_eval_const(zend_constant *c) {
+ZEND_PURE static bool can_ct_eval_const(zend_constant *c) {
 	if (ZEND_CONSTANT_FLAGS(c) & CONST_DEPRECATED) {
 		return 0;
 	}
@@ -2952,7 +2952,7 @@ static bool is_global_var_fetch(zend_ast *ast)
 	return ast->kind == ZEND_AST_DIM && is_globals_fetch(ast->child[0]);
 }
 
-static bool this_guaranteed_exists(void) /* {{{ */
+ZEND_PURE static bool this_guaranteed_exists(void) /* {{{ */
 {
 	zend_oparray_context *ctx = &CG(context);
 	while (ctx) {
@@ -3260,7 +3260,7 @@ static bool zend_propagate_list_refs(zend_ast *ast) { /* {{{ */
 }
 /* }}} */
 
-static bool list_is_keyed(zend_ast_list *list)
+ZEND_PURE static bool list_is_keyed(zend_ast_list *list)
 {
 	for (uint32_t i = 0; i < list->children; i++) {
 		zend_ast *child = list->child[i];
@@ -3666,7 +3666,7 @@ static void zend_compile_compound_assign(znode *result, zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
-static uint32_t zend_get_arg_num(zend_function *fn, zend_string *arg_name) {
+ZEND_PURE static uint32_t zend_get_arg_num(zend_function *fn, zend_string *arg_name) {
 	// TODO: Caching?
 	if (fn->type == ZEND_USER_FUNCTION) {
 		for (uint32_t i = 0; i < fn->common.num_args; i++) {
@@ -4589,7 +4589,7 @@ static zend_result zend_compile_func_array_slice(znode *result, zend_ast_list *a
 }
 /* }}} */
 
-static uint32_t find_frameless_function_offset(uint32_t arity, void *handler)
+ZEND_PURE static uint32_t find_frameless_function_offset(uint32_t arity, void *handler)
 {
 	void **handlers = zend_flf_handlers;
 	void **current = handlers;
@@ -4603,7 +4603,7 @@ static uint32_t find_frameless_function_offset(uint32_t arity, void *handler)
 	return (uint32_t)-1;
 }
 
-static const zend_frameless_function_info *find_frameless_function_info(zend_ast_list *args, zend_function *fbc, uint32_t type)
+ZEND_PURE static const zend_frameless_function_info *find_frameless_function_info(zend_ast_list *args, zend_function *fbc, uint32_t type)
 {
 	if (zend_execute_internal) {
 		return NULL;
@@ -6340,7 +6340,7 @@ static void zend_compile_switch(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
-static uint32_t count_match_conds(zend_ast_list *arms)
+ZEND_PURE static uint32_t count_match_conds(zend_ast_list *arms)
 {
 	uint32_t num_conds = 0;
 
@@ -6797,7 +6797,7 @@ bool zend_handle_encoding_declaration(zend_ast *ast) /* {{{ */
 /* }}} */
 
 /* Check whether this is the first statement, not counting declares. */
-static zend_result zend_is_first_statement(zend_ast *ast, bool allow_nop) /* {{{ */
+ZEND_PURE static zend_result zend_is_first_statement(zend_ast *ast, bool allow_nop) /* {{{ */
 {
 	uint32_t i = 0;
 	zend_ast_list *file_ast = zend_ast_get_list(CG(ast));

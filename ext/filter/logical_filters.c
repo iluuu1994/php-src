@@ -564,7 +564,7 @@ void php_filter_validate_domain(PHP_INPUT_FILTER_PARAM_DECL) /* {{{ */
 }
 /* }}} */
 
-static int is_userinfo_valid(zend_string *str)
+ZEND_PURE static int is_userinfo_valid(zend_string *str)
 {
 	const char *valid = "-._~!$&'()*+,;=:";
 	const char *p = ZSTR_VAL(str);
@@ -580,7 +580,7 @@ static int is_userinfo_valid(zend_string *str)
 	return 1;
 }
 
-static bool php_filter_is_valid_ipv6_hostname(const char *s, size_t l)
+ZEND_PURE static bool php_filter_is_valid_ipv6_hostname(const char *s, size_t l)
 {
 	const char *e = s + l;
 	const char *t = e - 1;

@@ -2026,7 +2026,7 @@ PHP_METHOD(DOMNode, lookupNamespaceURI)
 }
 /* }}} end dom_node_lookup_namespace_uri */
 
-static int dom_canonicalize_node_parent_lookup_cb(void *user_data, xmlNodePtr node, xmlNodePtr parent)
+ZEND_PURE static int dom_canonicalize_node_parent_lookup_cb(void *user_data, xmlNodePtr node, xmlNodePtr parent)
 {
 	xmlNodePtr root = user_data;
 	/* We have to unroll the first iteration because node->parent
@@ -2282,7 +2282,7 @@ PHP_METHOD(DOMNode, getLineNo)
 /* {{{ URL: https://dom.spec.whatwg.org/#dom-node-contains
 Since:
 */
-static bool dom_node_contains(xmlNodePtr thisp, xmlNodePtr otherp)
+ZEND_PURE static bool dom_node_contains(xmlNodePtr thisp, xmlNodePtr otherp)
 {
 	do {
 		if (otherp == thisp) {

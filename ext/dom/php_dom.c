@@ -496,7 +496,7 @@ static HashTable* dom_get_debug_info(zend_object *object, int *is_temp) /* {{{ *
 }
 /* }}} */
 
-void *php_dom_export_node(zval *object) /* {{{ */
+ZEND_PURE void *php_dom_export_node(zval *object) /* {{{ */
 {
 	php_libxml_node_object *intern;
 	xmlNodePtr nodep = NULL;

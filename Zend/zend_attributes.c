@@ -184,7 +184,7 @@ ZEND_METHOD(Deprecated, __construct)
 	}
 }
 
-static zend_attribute *get_attribute(HashTable *attributes, zend_string *lcname, uint32_t offset)
+ZEND_PURE static zend_attribute *get_attribute(HashTable *attributes, zend_string *lcname, uint32_t offset)
 {
 	if (attributes) {
 		zend_attribute *attr;
@@ -199,7 +199,7 @@ static zend_attribute *get_attribute(HashTable *attributes, zend_string *lcname,
 	return NULL;
 }
 
-static zend_attribute *get_attribute_str(HashTable *attributes, const char *str, size_t len, uint32_t offset)
+ZEND_PURE static zend_attribute *get_attribute_str(HashTable *attributes, const char *str, size_t len, uint32_t offset)
 {
 	if (attributes) {
 		zend_attribute *attr;

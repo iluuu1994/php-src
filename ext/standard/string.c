@@ -3637,7 +3637,7 @@ static void php_similar_str(const char *txt1, size_t len1, const char *txt2, siz
 /* }}} */
 
 /* {{{ php_similar_char */
-static size_t php_similar_char(const char *txt1, size_t len1, const char *txt2, size_t len2)
+ZEND_PURE static size_t php_similar_char(const char *txt1, size_t len1, const char *txt2, size_t len2)
 {
 	size_t sum;
 	size_t pos1 = 0, pos2 = 0, max, count;

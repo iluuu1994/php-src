@@ -531,7 +531,7 @@ ZEND_API zend_generator *zend_generator_update_root(zend_generator *generator)
 	return root;
 }
 
-static zend_generator *get_new_root(zend_generator *generator, zend_generator *root)
+ZEND_PURE static zend_generator *get_new_root(zend_generator *generator, zend_generator *root)
 {
 	while (!root->execute_data && root->node.children == 1) {
 		root = root->node.child.single;

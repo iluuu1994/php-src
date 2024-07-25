@@ -1064,7 +1064,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_ast_evaluate(zval *result, zend_ast *ast
 	return zend_ast_evaluate_ex(result, ast, scope, &short_circuited, &ctx);
 }
 
-static size_t ZEND_FASTCALL zend_ast_tree_size(zend_ast *ast)
+ZEND_PURE static size_t ZEND_FASTCALL zend_ast_tree_size(zend_ast *ast)
 {
 	size_t size;
 

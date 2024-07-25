@@ -88,7 +88,7 @@ static inline bool is_placeholder(char c) {
 }
 
 /* Length of prefix not containing any wildcards */
-static uint8_t browscap_compute_prefix_len(zend_string *pattern) {
+ZEND_PURE static uint8_t browscap_compute_prefix_len(zend_string *pattern) {
 	size_t i;
 	for (i = 0; i < ZSTR_LEN(pattern); i++) {
 		if (is_placeholder(ZSTR_VAL(pattern)[i])) {
@@ -547,7 +547,7 @@ static inline size_t browscap_get_minimum_length(browscap_entry *entry) {
 	return len;
 }
 
-static bool browscap_match_string_wildcard(const char *s, const char *s_end, const char *pattern, const char *pattern_end)
+ZEND_PURE static bool browscap_match_string_wildcard(const char *s, const char *s_end, const char *pattern, const char *pattern_end)
 {
 	const char *pattern_current = pattern;
 	const char *s_current = s;

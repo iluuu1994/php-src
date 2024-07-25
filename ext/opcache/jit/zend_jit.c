@@ -108,14 +108,14 @@ static zend_string *zend_jit_func_name(const zend_op_array *op_array);
 static bool zend_jit_needs_arg_dtor(const zend_function *func, uint32_t arg_num, zend_call_info *call_info);
 static bool zend_jit_supported_binary_op(uint8_t op, uint32_t op1_info, uint32_t op2_info);
 
-static bool dominates(const zend_basic_block *blocks, int a, int b) {
+ZEND_PURE static bool dominates(const zend_basic_block *blocks, int a, int b) {
 	while (blocks[b].level > blocks[a].level) {
 		b = blocks[b].idom;
 	}
 	return a == b;
 }
 
-static bool zend_ssa_is_last_use(const zend_op_array *op_array, const zend_ssa *ssa, int var, int use)
+ZEND_PURE static bool zend_ssa_is_last_use(const zend_op_array *op_array, const zend_ssa *ssa, int var, int use)
 {
 	int next_use;
 
@@ -436,7 +436,7 @@ static int zend_jit_needs_call_chain(zend_call_info *call_info, uint32_t b, cons
 	}
 }
 
-static uint32_t skip_valid_arguments(const zend_op_array *op_array, zend_ssa *ssa, const zend_call_info *call_info)
+ZEND_PURE static uint32_t skip_valid_arguments(const zend_op_array *op_array, zend_ssa *ssa, const zend_call_info *call_info)
 {
 	uint32_t num_args = 0;
 	zend_function *func = call_info->callee_func;
@@ -463,7 +463,7 @@ static uint32_t skip_valid_arguments(const zend_op_array *op_array, zend_ssa *ss
 	return num_args;
 }
 
-static uint32_t zend_ssa_cv_info(const zend_op_array *op_array, zend_ssa *ssa, uint32_t var)
+ZEND_PURE static uint32_t zend_ssa_cv_info(const zend_op_array *op_array, zend_ssa *ssa, uint32_t var)
 {
 	uint32_t j, info;
 

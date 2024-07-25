@@ -4116,7 +4116,7 @@ ZEND_API zend_result zend_update_type_info(
 	return _zend_update_type_info(op_array, ssa, script, NULL, opline, ssa_op, ssa_opcodes, optimization_level, 0);
 }
 
-static uint32_t get_class_entry_rank(zend_class_entry *ce) {
+ZEND_PURE static uint32_t get_class_entry_rank(zend_class_entry *ce) {
 	uint32_t rank = 0;
 	if (ce->ce_flags & ZEND_ACC_LINKED) {
 		while (ce->parent) {

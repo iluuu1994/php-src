@@ -205,7 +205,7 @@ static bool is_live_loop_var_free(
 	return zend_bitset_in(scdf->executable_blocks, def_block);
 }
 
-static bool kept_alive_by_loop_var_free(scdf_ctx *scdf, const zend_basic_block *block) {
+ZEND_PURE static bool kept_alive_by_loop_var_free(scdf_ctx *scdf, const zend_basic_block *block) {
 	const zend_op_array *op_array = scdf->op_array;
 	const zend_cfg *cfg = &scdf->ssa->cfg;
 	if (!(cfg->flags & ZEND_FUNC_FREE_LOOP_VAR)) {

@@ -56,7 +56,7 @@
 
 extern zend_long php_getuid(void);
 
-static php_mail_header_value_error_type php_mail_build_headers_check_field_value(zval *val)
+ZEND_PURE static php_mail_header_value_error_type php_mail_build_headers_check_field_value(zval *val)
 {
 	size_t len = 0;
 	zend_string *value = Z_STR_P(val);
@@ -101,7 +101,7 @@ static php_mail_header_value_error_type php_mail_build_headers_check_field_value
 }
 
 
-static bool php_mail_build_headers_check_field_name(zend_string *key)
+ZEND_PURE static bool php_mail_build_headers_check_field_name(zend_string *key)
 {
 	size_t len = 0;
 
@@ -370,7 +370,7 @@ static void php_mail_log_to_file(char *filename, char *message, size_t message_s
 }
 
 
-static int php_mail_detect_multiple_crlf(const char *hdr) {
+ZEND_PURE static int php_mail_detect_multiple_crlf(const char *hdr) {
 	/* This function detects multiple/malformed multiple newlines. */
 
 	if (!hdr || !strlen(hdr)) {

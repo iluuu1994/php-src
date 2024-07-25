@@ -36,7 +36,7 @@
  *
  * These rules are what .NET also follows.
  */
-PHPAPI bool php_odbc_connstr_is_quoted(const char *str)
+ZEND_PURE PHPAPI bool php_odbc_connstr_is_quoted(const char *str)
 {
 	/* ODBC quotes are curly braces */
 	if (str[0] != '{') {
@@ -67,7 +67,7 @@ PHPAPI bool php_odbc_connstr_is_quoted(const char *str)
  * Note that it assumes that the string is *not* already quoted. You should
  * check beforehand.
  */
-PHPAPI bool php_odbc_connstr_should_quote(const char *str)
+ZEND_PURE PHPAPI bool php_odbc_connstr_should_quote(const char *str)
 {
 	return strpbrk(str, "[]{}(),;?*=!@") != NULL;
 }
@@ -75,7 +75,7 @@ PHPAPI bool php_odbc_connstr_should_quote(const char *str)
 /**
  * Estimates the worst-case scenario for a quoted version of a string's size.
  */
-PHPAPI size_t php_odbc_connstr_estimate_quote_length(const char *in_str)
+ZEND_PURE PHPAPI size_t php_odbc_connstr_estimate_quote_length(const char *in_str)
 {
 	/* Assume all '}'. Include '{,' '}', and the null terminator too */
 	return (strlen(in_str) * 2) + 3;

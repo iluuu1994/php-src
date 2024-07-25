@@ -553,7 +553,7 @@ static char *php_ap_basename(const zend_encoding *encoding, char *path)
  * If partial is true, partial matches are allowed at the end of the buffer.
  * Returns NULL if not found, or a pointer to the start of the first match.
  */
-static void *php_ap_memstr(char *haystack, int haystacklen, char *needle, int needlen, int partial)
+ZEND_PURE static void *php_ap_memstr(char *haystack, int haystacklen, char *needle, int needlen, int partial)
 {
 	int len = haystacklen;
 	char *ptr = haystack;
