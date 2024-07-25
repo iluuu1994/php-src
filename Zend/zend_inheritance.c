@@ -2359,7 +2359,7 @@ static void zend_traits_copy_functions(zend_string *fnname, zend_function *fn, z
 }
 /* }}} */
 
-ZEND_PURE static uint32_t zend_check_trait_usage(zend_class_entry *ce, zend_class_entry *trait, zend_class_entry **traits) /* {{{ */
+static uint32_t zend_check_trait_usage(zend_class_entry *ce, zend_class_entry *trait, zend_class_entry **traits) /* {{{ */
 {
 	uint32_t i;
 
