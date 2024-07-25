@@ -297,3 +297,6 @@ tmp-php.ini
 !/ext/dom/lexbor/patches/*.patch
 !/ext/pcre/pcre2lib/config.h
 !/win32/build/Makefile
+
+/package-lock.json
+/node_modules
