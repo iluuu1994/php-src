@@ -237,11 +237,19 @@ char *alloca();
 # define ZEND_ATTRIBUTE_ALLOC_SIZE2(X,Y)
 #endif
 
-#if ZEND_GCC_VERSION >= 3000
-# define ZEND_ATTRIBUTE_CONST __attribute__((const))
+#if __has_attribute(pure)
+# define ZEND_PURE __attribute__((pure))
 #else
-# define ZEND_ATTRIBUTE_CONST
+# define ZEND_PURE
 #endif
+
+#if __has_attribute(const)
+# define ZEND_CONST __attribute__((const))
+#else
+# define ZEND_CONST ZEND_PURE
+#endif
+
+#define ZEND_ATTRIBUTE_CONST ZEND_CONST
 
 #if ZEND_GCC_VERSION >= 2007 || __has_attribute(format)
 # define ZEND_ATTRIBUTE_FORMAT(type, idx, first) __attribute__ ((format(type, idx, first)))

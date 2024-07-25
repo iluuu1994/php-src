@@ -51,7 +51,7 @@ typedef enum
 
 PHPAPI int php_getimagetype(php_stream *stream, const char *input, char *filetype);
 
-PHPAPI char * php_image_type_to_mime_type(int image_type);
+PHPAPI ZEND_CONST char * php_image_type_to_mime_type(int image_type);
 
 PHPAPI bool php_is_image_avif(php_stream *stream);
 

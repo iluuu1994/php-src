@@ -877,7 +877,7 @@ cleanup:
 }
 
 /* Only format output if there are no text/entityrefs/cdata nodes as children. */
-static bool dom_xml_should_format_element(xmlNodePtr element)
+ZEND_PURE static bool dom_xml_should_format_element(xmlNodePtr element)
 {
 	xmlNodePtr child = element->children;
 	ZEND_ASSERT(child != NULL);

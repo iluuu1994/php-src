@@ -31,7 +31,7 @@
 
 static const char digits[] = "0123456789abcdef";
 
-static int php_json_determine_array_type(zval *val) /* {{{ */
+ZEND_PURE static int php_json_determine_array_type(zval *val) /* {{{ */
 {
 	zend_array *myht = Z_ARRVAL_P(val);
 

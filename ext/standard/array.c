@@ -214,7 +214,7 @@ static zend_always_inline int php_array_key_compare_string_unstable_i(Bucket *f,
 }
 /* }}} */
 
-static int php_array_key_compare_string_natural_general(Bucket *f, Bucket *s, int fold_case) /* {{{ */
+ZEND_PURE static int php_array_key_compare_string_natural_general(Bucket *f, Bucket *s, int fold_case) /* {{{ */
 {
 	const char *s1, *s2;
 	size_t l1, l2;
@@ -239,25 +239,25 @@ static int php_array_key_compare_string_natural_general(Bucket *f, Bucket *s, in
 }
 /* }}} */
 
-static int php_array_key_compare_string_natural_case(Bucket *a, Bucket *b) /* {{{ */
+ZEND_PURE static int php_array_key_compare_string_natural_case(Bucket *a, Bucket *b) /* {{{ */
 {
 	RETURN_STABLE_SORT(a, b, php_array_key_compare_string_natural_general(a, b, 1));
 }
 /* }}} */
 
-static int php_array_reverse_key_compare_string_natural_case(Bucket *a, Bucket *b) /* {{{ */
+ZEND_PURE static int php_array_reverse_key_compare_string_natural_case(Bucket *a, Bucket *b) /* {{{ */
 {
 	RETURN_STABLE_SORT(a, b, php_array_key_compare_string_natural_general(b, a, 1));
 }
 /* }}} */
 
-static int php_array_key_compare_string_natural(Bucket *a, Bucket *b) /* {{{ */
+ZEND_PURE static int php_array_key_compare_string_natural(Bucket *a, Bucket *b) /* {{{ */
 {
 	RETURN_STABLE_SORT(a, b, php_array_key_compare_string_natural_general(a, b, 0));
 }
 /* }}} */
 
-static int php_array_reverse_key_compare_string_natural(Bucket *a, Bucket *b) /* {{{ */
+ZEND_PURE static int php_array_reverse_key_compare_string_natural(Bucket *a, Bucket *b) /* {{{ */
 {
 	RETURN_STABLE_SORT(a, b, php_array_key_compare_string_natural_general(b, a, 0));
 }

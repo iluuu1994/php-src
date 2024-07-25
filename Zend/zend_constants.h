@@ -72,7 +72,7 @@ void clean_module_constants(int module_number);
 void free_zend_constant(zval *zv);
 void zend_startup_constants(void);
 void zend_register_standard_constants(void);
-ZEND_API bool zend_verify_const_access(zend_class_constant *c, zend_class_entry *ce);
+ZEND_API ZEND_PURE bool zend_verify_const_access(zend_class_constant *c, zend_class_entry *ce);
 ZEND_API zval *zend_get_constant(zend_string *name);
 ZEND_API zend_constant *zend_get_constant_ptr(zend_string *name);
 ZEND_API zval *zend_get_constant_str(const char *name, size_t name_len);
@@ -89,7 +89,7 @@ ZEND_API zend_result zend_register_constant(zend_constant *c);
 void zend_copy_constants(HashTable *target, HashTable *source);
 #endif
 
-ZEND_API zend_constant *_zend_get_special_const(const char *name, size_t name_len);
+ZEND_API ZEND_PURE zend_constant *_zend_get_special_const(const char *name, size_t name_len);
 
 static zend_always_inline zend_constant *zend_get_special_const(
 		const char *name, size_t name_len) {

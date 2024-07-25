@@ -52,9 +52,9 @@ static inline dom_object *php_dom_obj_from_obj(zend_object *obj) {
 #endif
 
 PHP_DOM_EXPORT extern zend_class_entry *dom_node_class_entry;
-PHP_DOM_EXPORT dom_object *php_dom_object_get_data(xmlNodePtr obj);
+ZEND_PURE PHP_DOM_EXPORT dom_object *php_dom_object_get_data(xmlNodePtr obj);
 PHP_DOM_EXPORT bool php_dom_create_object(xmlNodePtr obj, zval* return_value, dom_object *domobj);
-PHP_DOM_EXPORT xmlNodePtr dom_object_get_node(dom_object *obj);
+ZEND_PURE PHP_DOM_EXPORT xmlNodePtr dom_object_get_node(dom_object *obj);
 
 #define NODE_GET_OBJ(__ptr, __id, __prtype, __intern) { \
 	__intern = Z_LIBXML_NODE_P(__id); \

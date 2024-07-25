@@ -306,7 +306,7 @@ PHPAPI int php_network_get_peer_name(php_socket_t sock,
 		);
 
 PHPAPI void php_any_addr(int family, php_sockaddr_storage *addr, unsigned short port);
-PHPAPI int php_sockaddr_size(php_sockaddr_storage *addr);
+PHPAPI ZEND_PURE int php_sockaddr_size(php_sockaddr_storage *addr);
 END_EXTERN_C()
 
 struct _php_netstream_data_t	{

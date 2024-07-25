@@ -628,7 +628,7 @@ out_fail:
 }
 #endif
 
-static int is_port_number(const char *bindpath)
+ZEND_PURE static int is_port_number(const char *bindpath)
 {
 	while (*bindpath) {
 		if (*bindpath < '0' || *bindpath > '9') {

@@ -246,8 +246,8 @@ typedef struct ps_serializer_struct {
 /* default create id function */
 PHPAPI zend_string *php_session_create_id(PS_CREATE_SID_ARGS);
 /* Dummy PS module functions */
-PHPAPI zend_result php_session_validate_sid(PS_VALIDATE_SID_ARGS);
-PHPAPI zend_result php_session_update_timestamp(PS_UPDATE_TIMESTAMP_ARGS);
+PHPAPI ZEND_CONST zend_result php_session_validate_sid(PS_VALIDATE_SID_ARGS);
+PHPAPI ZEND_CONST zend_result php_session_update_timestamp(PS_UPDATE_TIMESTAMP_ARGS);
 
 PHPAPI void session_adapt_url(const char *url, size_t url_len, char **new_url, size_t *new_len);
 
@@ -255,7 +255,7 @@ PHPAPI zend_result php_session_destroy(void);
 PHPAPI void php_add_session_var(zend_string *name);
 PHPAPI zval *php_set_session_var(zend_string *name, zval *state_val, php_unserialize_data_t *var_hash);
 PHPAPI zval *php_get_session_var(zend_string *name);
-PHPAPI zval* php_get_session_var_str(const char *name, size_t name_len);
+PHPAPI ZEND_PURE zval* php_get_session_var_str(const char *name, size_t name_len);
 
 PHPAPI zend_result php_session_register_module(const ps_module *);
 
@@ -265,12 +265,12 @@ PHPAPI zend_result php_session_register_serializer(const char *name,
 
 PHPAPI zend_result php_session_start(void);
 PHPAPI zend_result php_session_flush(int write);
-PHPAPI php_session_status php_get_session_status(void);
+PHPAPI ZEND_PURE php_session_status php_get_session_status(void);
 
-PHPAPI const ps_module *_php_find_ps_module(const char *name);
-PHPAPI const ps_serializer *_php_find_ps_serializer(const char *name);
+PHPAPI ZEND_PURE const ps_module *_php_find_ps_module(const char *name);
+PHPAPI ZEND_PURE const ps_serializer *_php_find_ps_serializer(const char *name);
 
-PHPAPI zend_result php_session_valid_key(const char *key);
+PHPAPI ZEND_PURE zend_result php_session_valid_key(const char *key);
 PHPAPI zend_result php_session_reset_id(void);
 
 #define PS_ADD_VARL(name) do {										\

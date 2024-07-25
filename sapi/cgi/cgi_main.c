@@ -1053,7 +1053,7 @@ static void php_cgi_usage(char *argv0)
  * some server configurations allow '..' to slip through in the
  * translated path.   We'll just refuse to handle such a path.
  */
-static int is_valid_path(const char *path)
+ZEND_PURE static int is_valid_path(const char *path)
 {
 	const char *p = path;
 

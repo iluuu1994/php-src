@@ -162,7 +162,7 @@ PHPAPI zend_object *php_random_engine_common_clone_object(zend_object *object);
 PHPAPI uint32_t php_random_range32(php_random_algo_with_state engine, uint32_t umax);
 PHPAPI uint64_t php_random_range64(php_random_algo_with_state engine, uint64_t umax);
 PHPAPI zend_long php_random_range(php_random_algo_with_state engine, zend_long min, zend_long max);
-PHPAPI const php_random_algo *php_random_default_algo(void);
+PHPAPI ZEND_CONST const php_random_algo *php_random_default_algo(void);
 PHPAPI void *php_random_default_status(void);
 
 static inline php_random_algo_with_state php_random_default_engine(void)

@@ -42,15 +42,15 @@ typedef struct php_dom_private_data php_dom_private_data;
 struct php_dom_libxml_ns_mapper;
 typedef struct php_dom_libxml_ns_mapper php_dom_libxml_ns_mapper;
 
-php_libxml_private_data_header *php_dom_libxml_private_data_header(php_dom_private_data *private_data);
-php_dom_libxml_ns_mapper *php_dom_ns_mapper_from_private(php_dom_private_data *private_data);
+ZEND_CONST php_libxml_private_data_header *php_dom_libxml_private_data_header(php_dom_private_data *private_data);
+ZEND_CONST php_dom_libxml_ns_mapper *php_dom_ns_mapper_from_private(php_dom_private_data *private_data);
 php_dom_private_data *php_dom_private_data_create(void);
 void php_dom_private_data_destroy(php_dom_private_data *data);
 void php_dom_add_templated_content(php_dom_private_data *private_data, const xmlNode *template_node, xmlNodePtr fragment);
-xmlNodePtr php_dom_retrieve_templated_content(php_dom_private_data *private_data, const xmlNode *template_node);
+ZEND_PURE xmlNodePtr php_dom_retrieve_templated_content(php_dom_private_data *private_data, const xmlNode *template_node);
 xmlNodePtr php_dom_ensure_templated_content(php_dom_private_data *private_data, xmlNodePtr template_node);
 void php_dom_remove_templated_content(php_dom_private_data *private_data, const xmlNode *template_node);
-uint32_t php_dom_get_template_count(const php_dom_private_data *private_data);
+ZEND_PURE uint32_t php_dom_get_template_count(const php_dom_private_data *private_data);
 void dom_add_element_ns_hook(php_dom_private_data *private_data, xmlNodePtr element);
 
 #endif

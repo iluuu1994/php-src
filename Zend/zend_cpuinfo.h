@@ -103,7 +103,7 @@ typedef enum _zend_cpu_feature {
 } zend_cpu_feature;
 
 void zend_cpu_startup(void);
-ZEND_API int zend_cpu_supports(zend_cpu_feature feature);
+ZEND_API ZEND_PURE int zend_cpu_supports(zend_cpu_feature feature);
 
 #ifndef __has_attribute
 # define __has_attribute(x) 0

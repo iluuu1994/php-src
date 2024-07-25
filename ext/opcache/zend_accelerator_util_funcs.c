@@ -561,7 +561,7 @@ unsigned int zend_accel_script_checksum(zend_persistent_script *persistent_scrip
 		mem  += (unsigned char*)persistent_script - mem;
 	}
 
-	zend_adler32(checksum, mem, persistent_script_check_block_size);
+	checksum = zend_adler32(checksum, mem, persistent_script_check_block_size);
 	mem  += sizeof(*persistent_script);
 	size -= sizeof(*persistent_script);
 

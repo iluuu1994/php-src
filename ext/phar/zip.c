@@ -192,7 +192,7 @@ static void phar_zip_u2d_time(time_t time, char *dtime, char *ddate) /* {{{ */
 }
 /* }}} */
 
-static char *phar_find_eocd(const char *s, size_t n)
+ZEND_PURE static char *phar_find_eocd(const char *s, size_t n)
 {
 	const char *end = s + n + sizeof("PK\5\6") - 1 - sizeof(phar_zip_dir_end);
 

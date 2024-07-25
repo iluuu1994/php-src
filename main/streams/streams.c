@@ -1035,7 +1035,7 @@ PHPAPI char *_php_stream_get_line(php_stream *stream, char *buf, size_t maxlen,
 #define STREAM_BUFFERED_AMOUNT(stream) \
 	((size_t)(((stream)->writepos) - (stream)->readpos))
 
-static const char *_php_stream_search_delim(php_stream *stream,
+ZEND_PURE static const char *_php_stream_search_delim(php_stream *stream,
 											size_t maxlen,
 											size_t skiplen,
 											const char *delim, /* non-empty! */

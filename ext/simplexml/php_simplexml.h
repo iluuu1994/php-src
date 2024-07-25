@@ -80,6 +80,6 @@ typedef struct {
 extern PHP_SXE_API zend_class_entry *ce_SimpleXMLIterator;
 extern PHP_SXE_API zend_class_entry *ce_SimpleXMLElement;
 
-PHP_SXE_API zend_class_entry *sxe_get_element_class_entry(void);
+ZEND_PURE PHP_SXE_API zend_class_entry *sxe_get_element_class_entry(void);
 
 #endif

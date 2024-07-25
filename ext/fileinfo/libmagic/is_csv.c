@@ -61,7 +61,7 @@ FILE_RCSID("@(#)$File: is_csv.c,v 1.13 2023/07/17 16:08:17 christos Exp $")
 #define CSV_LINES 10
 #endif
 
-static int csv_parse(const unsigned char *, const unsigned char *);
+ZEND_PURE static int csv_parse(const unsigned char *, const unsigned char *);
 
 static const unsigned char *
 eatquote(const unsigned char *uc, const unsigned char *ue)

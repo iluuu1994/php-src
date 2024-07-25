@@ -21,7 +21,7 @@
 
 #include <zend_language_parser.h>
 
-char *get_token_type_name(int token_type)
+ZEND_CONST char *get_token_type_name(int token_type)
 {
 	switch (token_type) {
 

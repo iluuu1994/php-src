@@ -282,7 +282,7 @@ typedef struct {
 
 struct timespec;
 int cdf_timestamp_to_timespec(struct timespec *, cdf_timestamp_t);
-int cdf_timespec_to_timestamp(cdf_timestamp_t *, const struct timespec *);
+ZEND_CONST int cdf_timespec_to_timestamp(cdf_timestamp_t *, const struct timespec *);
 int cdf_read_header(const cdf_info_t *, cdf_header_t *);
 void cdf_swap_header(cdf_header_t *);
 void cdf_unpack_header(cdf_header_t *, char *);
@@ -329,9 +329,9 @@ int cdf_unpack_catalog(const cdf_header_t *, const cdf_stream_t *,
 int cdf_print_classid(char *, size_t, const cdf_classid_t *);
 int cdf_print_property_name(char *, size_t, uint32_t);
 int cdf_print_elapsed_time(char *, size_t, cdf_timestamp_t);
-uint16_t cdf_tole2(uint16_t);
-uint32_t cdf_tole4(uint32_t);
-uint64_t cdf_tole8(uint64_t);
+ZEND_PURE uint16_t cdf_tole2(uint16_t);
+ZEND_PURE uint32_t cdf_tole4(uint32_t);
+ZEND_PURE uint64_t cdf_tole8(uint64_t);
 char *cdf_ctime(const time_t *, char *);
 char *cdf_u16tos8(char *, size_t, const uint16_t *);
 

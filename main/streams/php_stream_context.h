@@ -55,7 +55,7 @@ struct _php_stream_context {
 BEGIN_EXTERN_C()
 PHPAPI void php_stream_context_free(php_stream_context *context);
 PHPAPI php_stream_context *php_stream_context_alloc(void);
-PHPAPI zval *php_stream_context_get_option(php_stream_context *context,
+PHPAPI ZEND_PURE zval *php_stream_context_get_option(php_stream_context *context,
 		const char *wrappername, const char *optionname);
 PHPAPI void php_stream_context_set_option(php_stream_context *context,
 		const char *wrappername, const char *optionname, zval *optionvalue);

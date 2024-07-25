@@ -81,7 +81,7 @@ PHPAPI php_url *php_url_parse(char const *str)
 	return php_url_parse_ex(str, strlen(str));
 }
 
-static const char *binary_strcspn(const char *s, const char *e, const char *chars) {
+ZEND_PURE static const char *binary_strcspn(const char *s, const char *e, const char *chars) {
 	while (*chars) {
 		const char *p = memchr(s, *chars, e - s);
 		if (p) {

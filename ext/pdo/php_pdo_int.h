@@ -24,7 +24,7 @@
 extern HashTable pdo_driver_hash;
 extern HashTable pdo_driver_specific_ce_hash;
 extern zend_class_entry *pdo_exception_ce;
-int php_pdo_list_entry(void);
+ZEND_PURE int php_pdo_list_entry(void);
 
 void pdo_dbh_init(int module_number);
 void pdo_stmt_init(void);
@@ -50,7 +50,7 @@ extern zend_object_handlers pdo_row_object_handlers;
 
 zend_object_iterator *php_pdo_dbstmt_iter_get(zend_class_entry *ce, zval *object);
 
-extern pdo_driver_t *pdo_find_driver(const char *name, int namelen);
+ZEND_PURE extern pdo_driver_t *pdo_find_driver(const char *name, int namelen);
 
 void pdo_sqlstate_init_error_table(void);
 void pdo_sqlstate_fini_error_table(void);

@@ -24,14 +24,14 @@
 #include "zend_inference.h"
 #include "Optimizer/zend_optimizer_internal.h"
 
-static bool dominates(const zend_basic_block *blocks, int a, int b) {
+ZEND_PURE static bool dominates(const zend_basic_block *blocks, int a, int b) {
 	while (blocks[b].level > blocks[a].level) {
 		b = blocks[b].idom;
 	}
 	return a == b;
 }
 
-static bool will_rejoin(
+ZEND_PURE static bool will_rejoin(
 		const zend_cfg *cfg, const zend_dfg *dfg, const zend_basic_block *block,
 		int other_successor, int exclude, int var) {
 	int i;
@@ -57,7 +57,7 @@ static bool will_rejoin(
 	return 0;
 }
 
-static bool needs_pi(const zend_op_array *op_array, const zend_dfg *dfg, const zend_ssa *ssa, int from, int to, int var) /* {{{ */
+ZEND_PURE static bool needs_pi(const zend_op_array *op_array, const zend_dfg *dfg, const zend_ssa *ssa, int from, int to, int var) /* {{{ */
 {
 	const zend_basic_block *from_block, *to_block;
 	int other_successor;

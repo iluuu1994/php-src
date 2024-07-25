@@ -482,7 +482,7 @@ PHP_FUNCTION(spl_autoload_call)
 		zend_hash_rehash(ht);						        	\
 	} while (0)
 
-static Bucket *spl_find_registered_function(autoload_func_info *find_alfi) {
+ZEND_PURE static Bucket *spl_find_registered_function(autoload_func_info *find_alfi) {
 	if (!spl_autoload_functions) {
 		return NULL;
 	}

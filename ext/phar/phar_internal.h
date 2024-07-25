@@ -535,8 +535,8 @@ int phar_create_signature(phar_archive_data *phar, php_stream *fp, char **signat
 
 /* utility functions */
 zend_string *phar_create_default_stub(const char *index_php, const char *web_index, char **error);
-char *phar_decompress_filter(phar_entry_info * entry, int return_unknown);
-char *phar_compress_filter(phar_entry_info * entry, int return_unknown);
+ZEND_PURE char *phar_decompress_filter(phar_entry_info * entry, int return_unknown);
+ZEND_PURE char *phar_compress_filter(phar_entry_info * entry, int return_unknown);
 
 /* void phar_remove_virtual_dirs(phar_archive_data *phar, char *filename, size_t filename_len); */
 void phar_add_virtual_dirs(phar_archive_data *phar, char *filename, size_t filename_len);
@@ -545,7 +545,7 @@ zend_string *phar_find_in_include_path(zend_string *file, phar_archive_data **pp
 char *phar_fix_filepath(char *path, size_t *new_len, int use_cwd);
 phar_entry_info * phar_open_jit(phar_archive_data *phar, phar_entry_info *entry, char **error);
 void phar_parse_metadata_lazy(const char *buffer, phar_metadata_tracker *tracker, uint32_t zip_metadata_len, int persistent);
-bool phar_metadata_tracker_has_data(const phar_metadata_tracker* tracker, int persistent);
+ZEND_PURE bool phar_metadata_tracker_has_data(const phar_metadata_tracker* tracker, int persistent);
 /* If this has data, free it and set all values to undefined. */
 void phar_metadata_tracker_free(phar_metadata_tracker* val, int persistent);
 void phar_metadata_tracker_copy(phar_metadata_tracker* dest, const phar_metadata_tracker *source, int persistent);

@@ -110,7 +110,7 @@ static zend_result php_dom_iterator_valid(zend_object_iterator *iter) /* {{{ */
 }
 /* }}} */
 
-zval *php_dom_iterator_current_data(zend_object_iterator *iter) /* {{{ */
+ZEND_PURE zval *php_dom_iterator_current_data(zend_object_iterator *iter) /* {{{ */
 {
 	php_dom_iterator *iterator = (php_dom_iterator *)iter;
 	return Z_ISUNDEF(iterator->curobj) ? NULL : &iterator->curobj;

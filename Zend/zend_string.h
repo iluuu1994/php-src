@@ -36,7 +36,7 @@ ZEND_API extern zend_string_init_interned_func_t zend_string_init_interned;
 ZEND_API extern zend_string_init_existing_interned_func_t zend_string_init_existing_interned;
 
 ZEND_API zend_ulong ZEND_FASTCALL zend_string_hash_func(zend_string *str);
-ZEND_API zend_ulong ZEND_FASTCALL zend_hash_func(const char *str, size_t len);
+ZEND_API ZEND_PURE zend_ulong ZEND_FASTCALL zend_hash_func(const char *str, size_t len);
 ZEND_API zend_string* ZEND_FASTCALL zend_interned_string_find_permanent(zend_string *str);
 
 ZEND_API zend_string *zend_string_concat2(
@@ -372,7 +372,7 @@ static zend_always_inline bool zend_string_equals_cstr(const zend_string *s1, co
 
 #if defined(__GNUC__) && (defined(__i386__) || (defined(__x86_64__) && !defined(__ILP32__)))
 BEGIN_EXTERN_C()
-ZEND_API bool ZEND_FASTCALL zend_string_equal_val(const zend_string *s1, const zend_string *s2);
+ZEND_API ZEND_PURE bool ZEND_FASTCALL zend_string_equal_val(const zend_string *s1, const zend_string *s2);
 END_EXTERN_C()
 #else
 static zend_always_inline bool zend_string_equal_val(const zend_string *s1, const zend_string *s2)

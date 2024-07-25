@@ -680,8 +680,8 @@ PDO_API int php_pdo_parse_data_source(const char *data_source,
 		zend_ulong data_source_len, struct pdo_data_src_parser *parsed,
 		int nparams);
 
-PDO_API zend_class_entry *php_pdo_get_dbh_ce(void);
-PDO_API zend_class_entry *php_pdo_get_exception(void);
+ZEND_PURE PDO_API zend_class_entry *php_pdo_get_dbh_ce(void);
+ZEND_PURE PDO_API zend_class_entry *php_pdo_get_exception(void);
 
 PDO_API int pdo_parse_params(pdo_stmt_t *stmt, zend_string *inquery, zend_string **outquery);
 

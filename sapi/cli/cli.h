@@ -34,7 +34,7 @@ typedef struct  {
 	int (*cli_shell_run)(void);
 } cli_shell_callbacks_t;
 
-extern PHP_CLI_API cli_shell_callbacks_t *php_cli_get_shell_callbacks(void);
+ZEND_CONST extern PHP_CLI_API cli_shell_callbacks_t *php_cli_get_shell_callbacks(void);
 
 typedef enum php_cli_mode {
 	PHP_CLI_MODE_STANDARD = 1,

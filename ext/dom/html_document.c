@@ -338,7 +338,7 @@ static void dom_lexbor_libxml2_bridge_tree_error_reporter(
 	}
 }
 
-static xmlNodePtr dom_search_child(xmlNodePtr parent, const char *searching_for)
+ZEND_PURE static xmlNodePtr dom_search_child(xmlNodePtr parent, const char *searching_for)
 {
 	xmlNodePtr node = parent->children;
 	while (node != NULL) {

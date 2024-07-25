@@ -142,7 +142,7 @@ DEFINE_SSA_OP_RANGE_OVERFLOW(op2)
 #define OP2_RANGE_OVERFLOW()  (_ssa_op2_range_overflow (op_array, ssa, opline, ssa_op))
 
 BEGIN_EXTERN_C()
-ZEND_API uint32_t ZEND_FASTCALL zend_array_type_info(const zval *zv);
+ZEND_API ZEND_PURE uint32_t ZEND_FASTCALL zend_array_type_info(const zval *zv);
 END_EXTERN_C()
 
 static zend_always_inline uint32_t _const_op_type(const zval *zv) {
@@ -221,7 +221,7 @@ ZEND_API void zend_ssa_find_false_dependencies(const zend_op_array *op_array, ze
 ZEND_API void zend_ssa_find_sccs(const zend_op_array *op_array, zend_ssa *ssa);
 ZEND_API zend_result zend_ssa_inference(zend_arena **raena, const zend_op_array *op_array, const zend_script *script, zend_ssa *ssa, zend_long optimization_level);
 
-ZEND_API uint32_t zend_array_element_type(uint32_t t1, uint8_t op_type, int write, int insert);
+ZEND_API ZEND_CONST uint32_t zend_array_element_type(uint32_t t1, uint8_t op_type, int write, int insert);
 
 ZEND_API bool zend_inference_propagate_range(const zend_op_array *op_array, const zend_ssa *ssa, const zend_op *opline, const zend_ssa_op* ssa_op, int var, zend_ssa_range *tmp);
 

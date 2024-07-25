@@ -459,20 +459,20 @@ typedef timelib_tzinfo* (*timelib_tz_get_wrapper)(const char *tzname, const time
 
 /* From dow.c */
 /* Calculates the day of the week from y, m, and d. 0=Sunday..6=Saturday */
-timelib_sll timelib_day_of_week(timelib_sll y, timelib_sll m, timelib_sll d);
+ZEND_PURE timelib_sll timelib_day_of_week(timelib_sll y, timelib_sll m, timelib_sll d);
 
 /* Calculates the day of the ISO week from y, m, and d. 1=Monday, 7=Sunday */
-timelib_sll timelib_iso_day_of_week(timelib_sll y, timelib_sll m, timelib_sll d);
+ZEND_PURE timelib_sll timelib_iso_day_of_week(timelib_sll y, timelib_sll m, timelib_sll d);
 
 /* Calculates the day of the year according to y-m-d. 0=Jan 1st..364/365=Dec
  * 31st */
-timelib_sll timelib_day_of_year(timelib_sll y, timelib_sll m, timelib_sll d);
+ZEND_PURE timelib_sll timelib_day_of_year(timelib_sll y, timelib_sll m, timelib_sll d);
 
 /* Calculates the day of the year according to y-w-dow. 0..364/365 */
-timelib_sll timelib_daynr_from_weeknr(timelib_sll iy, timelib_sll iw, timelib_sll id);
+ZEND_PURE timelib_sll timelib_daynr_from_weeknr(timelib_sll iy, timelib_sll iw, timelib_sll id);
 
 /* Calculates the number of days in month m for year y. 28..31 */
-timelib_sll timelib_days_in_month(timelib_sll y, timelib_sll m);
+ZEND_PURE timelib_sll timelib_days_in_month(timelib_sll y, timelib_sll m);
 
 /* Calculates the ISO year and week from y, m, and d, into iw and iy */
 void timelib_isoweek_from_date(timelib_sll y, timelib_sll m, timelib_sll d, timelib_sll *iw, timelib_sll *iy);
@@ -486,11 +486,11 @@ void timelib_date_from_isodate(timelib_sll iy, timelib_sll iw, timelib_sll id, t
 
 /* Returns true if h, i and s fit in the range 00:00:00..23:59:59, false
  * otherwise */
-int timelib_valid_time(timelib_sll h, timelib_sll i, timelib_sll s);
+ZEND_CONST int timelib_valid_time(timelib_sll h, timelib_sll i, timelib_sll s);
 
 /* Returns true if m fits in the range 1..12, and d fits in the range
  * 1..<days-in-month> for year y */
-int timelib_valid_date(timelib_sll y, timelib_sll m, timelib_sll d);
+ZEND_PURE int timelib_valid_date(timelib_sll y, timelib_sll m, timelib_sll d);
 
 /* From parse_date.re */
 
@@ -646,7 +646,7 @@ void timelib_update_ts(timelib_time* time, timelib_tzinfo* tzi);
  * Returns the number of days from the y/m/d fields of 'time' since the Unix
  * Epoch.
  */
-timelib_sll timelib_epoch_days_from_time(timelib_time *time);
+ZEND_PURE timelib_sll timelib_epoch_days_from_time(timelib_time *time);
 
 /**
  * Takes the information from the y/m/d/h/i/s fields and makes sure their
@@ -822,7 +822,7 @@ timelib_sll timelib_get_current_offset(timelib_time *t);
  * - for TYPE_ABBR and TYPE_OFFSET, ->z + (->dst * 3600), is the same
  * - for TYPE_ID, the zone's names are the same
  */
-int timelib_same_timezone(timelib_time *one, timelib_time *two);
+ZEND_PURE int timelib_same_timezone(timelib_time *one, timelib_time *two);
 
 /**
  * Displays debugging information about the time zone information in 'tz'.
@@ -834,7 +834,7 @@ void timelib_dump_tzinfo(timelib_tzinfo *tz);
  *
  * You must *not* free the returned pointer as it is part of the text segment.
  */
-const timelib_tzdb *timelib_builtin_db(void);
+ZEND_CONST const timelib_tzdb *timelib_builtin_db(void);
 
 /**
  * Returns a pointer to the start of an array containing a list of timezone identifiers.
@@ -873,7 +873,7 @@ void timelib_zoneinfo_dtor(timelib_tzdb *tzdb);
  * Returns a static string containing an error message belonging to a specific
  * error code.
  */
-const char *timelib_get_error_message(int error_code);
+ZEND_PURE const char *timelib_get_error_message(int error_code);
 
 /**
  * Allocates resources for the relative time structure.
@@ -924,7 +924,7 @@ timelib_time* timelib_time_clone(timelib_time* orig);
  *
  * Returns -1 if t1 < t2, 0 if t1 == t2, and -1 if t1 > t2.
  */
-int timelib_time_compare(timelib_time *t1, timelib_time *t2);
+ZEND_PURE int timelib_time_compare(timelib_time *t1, timelib_time *t2);
 
 /**
  * Allocates resources for the time offset structure.
@@ -994,7 +994,7 @@ void timelib_hmsf_to_decimal_hour(int hour, int min, int sec, int us, double *h)
 /**
  * Converts hour/min/sec values into seconds
  */
-timelib_sll timelib_hms_to_seconds(timelib_sll h, timelib_sll m, timelib_sll s);
+ZEND_CONST timelib_sll timelib_hms_to_seconds(timelib_sll h, timelib_sll m, timelib_sll s);
 
 
 /* from astro.c */
@@ -1006,7 +1006,7 @@ timelib_sll timelib_hms_to_seconds(timelib_sll h, timelib_sll m, timelib_sll s);
  * (in the proleptic Gregorian calendar):
  * https://en.wikipedia.org/wiki/Julian_day
  */
-double timelib_ts_to_julianday(timelib_sll ts);
+ZEND_CONST double timelib_ts_to_julianday(timelib_sll ts);
 
 /**
  * Converts the Unix Epoch time stamp 'ts' to the J2000 epoch
@@ -1014,7 +1014,7 @@ double timelib_ts_to_julianday(timelib_sll ts);
  * The value returned is the number of whole days since 2000-01-01T12:00:00
  * UTC: https://en.wikipedia.org/wiki/Epoch_(astronomy)#Julian_years_and_J2000
  */
-double timelib_ts_to_j2000(timelib_sll ts);
+ZEND_CONST double timelib_ts_to_j2000(timelib_sll ts);
 
 /**
  * Calculates when the Sun is above a certain latitude.

@@ -52,4 +52,4 @@
 
 extern PHPAPI zend_class_entry *rounding_mode_ce;
 
-int php_math_round_mode_from_enum(zend_object *mode);
+ZEND_PURE int php_math_round_mode_from_enum(zend_object *mode);

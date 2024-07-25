@@ -478,7 +478,7 @@ inline static char xml_decode_us_ascii(unsigned short c)
 /* }}} */
 
 /* {{{ xml_get_encoding() */
-static const xml_encoding *xml_get_encoding(const XML_Char *name)
+ZEND_PURE static const xml_encoding *xml_get_encoding(const XML_Char *name)
 {
 	const xml_encoding *enc = &xml_encodings[0];
 

@@ -100,7 +100,7 @@ bool zend_optimizer_replace_by_const(zend_op_array *op_array,
                                      uint8_t     type,
                                      uint32_t       var,
                                      zval          *val);
-zend_op *zend_optimizer_get_loop_var_def(const zend_op_array *op_array, zend_op *free_opline);
+ZEND_PURE zend_op *zend_optimizer_get_loop_var_def(const zend_op_array *op_array, zend_op *free_opline);
 zend_class_entry *zend_optimizer_get_class_entry(
 		const zend_script *script, const zend_op_array *op_array, zend_string *lcname);
 zend_class_entry *zend_optimizer_get_class_entry_from_op1(
@@ -121,7 +121,7 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 void zend_optimizer_compact_vars(zend_op_array *op_array);
 zend_function *zend_optimizer_get_called_func(
 		zend_script *script, zend_op_array *op_array, zend_op *opline, bool *is_prototype);
-uint32_t zend_optimizer_classify_function(zend_string *name, uint32_t num_args);
+ZEND_PURE uint32_t zend_optimizer_classify_function(zend_string *name, uint32_t num_args);
 void zend_optimizer_migrate_jump(zend_op_array *op_array, zend_op *new_opline, zend_op *opline);
 void zend_optimizer_shift_jump(zend_op_array *op_array, zend_op *opline, uint32_t *shiftlist);
 int sccp_optimize_op_array(zend_optimizer_ctx *ctx, zend_op_array *op_array, zend_ssa *ssa, zend_call_info **call_map);

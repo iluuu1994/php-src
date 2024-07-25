@@ -1589,7 +1589,7 @@ static zend_result date_period_it_has_more(zend_object_iterator *iter)
 }
 /* }}} */
 
-static zend_class_entry *get_base_date_class(zend_class_entry *start_ce)
+ZEND_PURE static zend_class_entry *get_base_date_class(zend_class_entry *start_ce)
 {
 	zend_class_entry *tmp = start_ce;
 
@@ -1722,7 +1722,7 @@ static zend_object_iterator *date_object_period_get_iterator(zend_class_entry *c
 	return (zend_object_iterator*)iterator;
 } /* }}} */
 
-static int implement_date_interface_handler(zend_class_entry *interface, zend_class_entry *implementor) /* {{{ */
+ZEND_PURE static int implement_date_interface_handler(zend_class_entry *interface, zend_class_entry *implementor) /* {{{ */
 {
 	if (implementor->type == ZEND_USER_CLASS &&
 		!instanceof_function(implementor, date_ce_date) &&

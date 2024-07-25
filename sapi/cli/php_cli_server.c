@@ -302,7 +302,7 @@ static int status_comp(const void *a, const void *b) /* {{{ */
 	return 0;
 } /* }}} */
 
-static const char *get_status_string(int code) /* {{{ */
+ZEND_PURE static const char *get_status_string(int code) /* {{{ */
 {
 	http_response_status_code_pair needle = {code, NULL},
 		*result = NULL;
@@ -320,7 +320,7 @@ static const char *get_status_string(int code) /* {{{ */
 	return "Unknown Status Code";
 } /* }}} */
 
-static const char *get_template_string(int code) /* {{{ */
+ZEND_CONST static const char *get_template_string(int code) /* {{{ */
 {
 	size_t e = (sizeof(template_map) / sizeof(php_cli_server_http_response_status_code_pair));
 	size_t s = 0;
@@ -1006,7 +1006,7 @@ static void php_cli_server_buffer_prepend(php_cli_server_buffer *buffer, php_cli
 	buffer->first = chunk;
 } /* }}} */
 
-static size_t php_cli_server_buffer_size(const php_cli_server_buffer *buffer) /* {{{ */
+ZEND_PURE static size_t php_cli_server_buffer_size(const php_cli_server_buffer *buffer) /* {{{ */
 {
 	php_cli_server_chunk *chunk;
 	size_t retval = 0;

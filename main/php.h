@@ -299,9 +299,9 @@ void phperror(char *error);
 PHPAPI size_t php_write(void *buf, size_t size);
 PHPAPI size_t php_printf(const char *format, ...) PHP_ATTRIBUTE_FORMAT(printf, 1, 2);
 PHPAPI size_t php_printf_unchecked(const char *format, ...);
-PHPAPI bool php_during_module_startup(void);
-PHPAPI bool php_during_module_shutdown(void);
-PHPAPI bool php_get_module_initialized(void);
+PHPAPI ZEND_PURE bool php_during_module_startup(void);
+PHPAPI ZEND_PURE bool php_during_module_shutdown(void);
+PHPAPI ZEND_PURE bool php_get_module_initialized(void);
 #ifdef HAVE_SYSLOG_H
 #include "php_syslog.h"
 #define php_log_err(msg) php_log_err_with_severity(msg, LOG_NOTICE)
@@ -357,9 +357,9 @@ PHPAPI void php_register_pre_request_shutdown(void (*func)(void *), void *userda
 PHPAPI void php_com_initialize(void);
 PHPAPI char *php_get_current_user(void);
 
-PHPAPI const char *php_get_internal_encoding(void);
-PHPAPI const char *php_get_input_encoding(void);
-PHPAPI const char *php_get_output_encoding(void);
+PHPAPI ZEND_PURE const char *php_get_internal_encoding(void);
+PHPAPI ZEND_PURE const char *php_get_input_encoding(void);
+PHPAPI ZEND_PURE const char *php_get_output_encoding(void);
 PHPAPI extern void (*php_internal_encoding_changed)(void);
 END_EXTERN_C()
 
