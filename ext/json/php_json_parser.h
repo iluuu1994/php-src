@@ -75,12 +75,12 @@ PHP_JSON_API void php_json_parser_init(
 		int options,
 		int max_depth);
 
-PHP_JSON_API php_json_error_code php_json_parser_error_code(const php_json_parser *parser);
+ZEND_PURE PHP_JSON_API php_json_error_code php_json_parser_error_code(const php_json_parser *parser);
 
 PHP_JSON_API int php_json_parse(php_json_parser *parser);
 
 int php_json_yyparse(php_json_parser *parser);
 
-const php_json_parser_methods* php_json_get_validate_methods(void);
+ZEND_CONST const php_json_parser_methods* php_json_get_validate_methods(void);
 
 #endif	/* PHP_JSON_PARSER_H */

@@ -131,7 +131,7 @@ PHP_XML_API XML_Parser XML_ParserCreate(const XML_Char *);
 PHP_XML_API XML_Parser XML_ParserCreateNS(const XML_Char *, XML_Char);
 PHP_XML_API XML_Parser XML_ParserCreate_MM(const XML_Char *, const XML_Memory_Handling_Suite *, const XML_Char *);
 PHP_XML_API void XML_SetUserData(XML_Parser, void *);
-PHP_XML_API void *XML_GetUserData(XML_Parser);
+ZEND_PURE PHP_XML_API void *XML_GetUserData(XML_Parser);
 PHP_XML_API void XML_SetElementHandler(XML_Parser, XML_StartElementHandler, XML_EndElementHandler);
 PHP_XML_API void XML_SetCharacterDataHandler(XML_Parser, XML_CharacterDataHandler);
 PHP_XML_API void XML_SetProcessingInstructionHandler(XML_Parser, XML_ProcessingInstructionHandler);

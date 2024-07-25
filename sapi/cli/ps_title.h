@@ -29,9 +29,9 @@ extern int set_ps_title(const char* new_str);
 
 extern int get_ps_title(size_t* displen, const char** string);
 
-extern const char* ps_title_errno(int rc);
+ZEND_CONST extern const char* ps_title_errno(int rc);
 
-extern int is_ps_title_available(void);
+ZEND_PURE extern int is_ps_title_available(void);
 
 extern void cleanup_ps_args(char **argv);
 

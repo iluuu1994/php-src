@@ -40,9 +40,9 @@ zend_op_array* zend_accel_load_script(zend_persistent_script *persistent_script,
 
 #define ADLER32_INIT 1     /* initial Adler-32 value */
 
-unsigned int zend_adler32(unsigned int checksum, unsigned char *buf, uint32_t len);
+ZEND_PURE unsigned int zend_adler32(unsigned int checksum, unsigned char *buf, uint32_t len);
 
-unsigned int zend_accel_script_checksum(zend_persistent_script *persistent_script);
+ZEND_PURE unsigned int zend_accel_script_checksum(zend_persistent_script *persistent_script);
 
 END_EXTERN_C()
 

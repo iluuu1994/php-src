@@ -527,7 +527,7 @@ file_protected int file_vprintf(struct magic_set *, const char *, va_list)
 file_protected int file_separator(struct magic_set *);
 file_protected char *file_copystr(char *, size_t, size_t, const char *);
 file_protected int file_checkfmt(char *, size_t, const char *);
-file_protected size_t file_printedlen(const struct magic_set *);
+ZEND_PURE file_protected size_t file_printedlen(const struct magic_set *);
 file_protected int file_print_guid(char *, size_t, const uint64_t *);
 file_protected int file_parse_guid(const char *, uint64_t *);
 file_protected int file_replace(struct magic_set *, const char *, const char *);

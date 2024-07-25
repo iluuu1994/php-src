@@ -159,7 +159,7 @@ extern "C" {
 int timelib_apply_localtime(timelib_time *t, unsigned int localtime);
 
 /* From parse_posix.c */
-timelib_sll timelib_ts_at_start_of_year(timelib_sll year);
+ZEND_CONST timelib_sll timelib_ts_at_start_of_year(timelib_sll year);
 ttinfo* timelib_fetch_posix_timezone_offset(timelib_tzinfo *tz, timelib_sll ts, timelib_sll *transition_time);
 
 /* From parse_tz.c */
@@ -167,8 +167,8 @@ void timelib_time_tz_abbr_update(timelib_time* tm, const char* tz_abbr);
 ttinfo* timelib_fetch_timezone_offset(timelib_tzinfo *tz, timelib_sll ts, timelib_sll *transition_time);
 
 /* From timelib.c */
-int timelib_strcasecmp(const char *s1, const char *s2);
-int timelib_strncasecmp(const char *s1, const char *s2, size_t n);
+ZEND_PURE int timelib_strcasecmp(const char *s1, const char *s2);
+ZEND_PURE int timelib_strncasecmp(const char *s1, const char *s2, size_t n);
 
 #ifdef __cplusplus
 } /* extern "C" */

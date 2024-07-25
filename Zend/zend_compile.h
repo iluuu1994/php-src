@@ -407,7 +407,7 @@ typedef struct _zend_oparray_context {
 // Must not clash with ZEND_SHORT_CIRCUITING_CHAIN_MASK
 #define ZEND_JMP_NULL_BP_VAR_IS 4
 
-char *zend_visibility_string(uint32_t fn_flags);
+ZEND_CONST char *zend_visibility_string(uint32_t fn_flags);
 
 #define ZEND_PROPERTY_HOOK_COUNT 2
 #define ZEND_PROPERTY_HOOK_STRUCT_SIZE (sizeof(zend_function*) * ZEND_PROPERTY_HOOK_COUNT)
@@ -415,7 +415,7 @@ char *zend_visibility_string(uint32_t fn_flags);
 /* Stored in zend_property_info.offset, not returned by zend_get_property_offset(). */
 #define ZEND_VIRTUAL_PROPERTY_OFFSET ((uint32_t)-1)
 
-zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name);
+ZEND_PURE zend_property_hook_kind zend_get_property_hook_kind_from_name(zend_string *name);
 
 typedef struct _zend_property_info {
 	uint32_t offset; /* property offset for object properties or
@@ -954,7 +954,7 @@ ZEND_API void pass_two(zend_op_array *op_array);
 ZEND_API ZEND_PURE bool zend_is_compiling(void);
 ZEND_API char *zend_make_compiled_string_description(const char *name);
 ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_handlers);
-uint32_t zend_get_class_fetch_type(const zend_string *name);
+ZEND_PURE uint32_t zend_get_class_fetch_type(const zend_string *name);
 ZEND_API ZEND_PURE uint8_t zend_get_call_op(const zend_op *init_op, zend_function *fbc);
 ZEND_API ZEND_PURE bool zend_is_smart_branch(const zend_op *opline);
 

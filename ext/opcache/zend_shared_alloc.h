@@ -157,7 +157,7 @@ void *zend_shared_memdup(void *source, size_t size);
 
 int  zend_shared_memdup_size(void *p, size_t size);
 
-bool zend_accel_in_shm(void *ptr);
+ZEND_PURE bool zend_accel_in_shm(void *ptr);
 
 typedef union _align_test {
 	void   *ptr;
@@ -183,15 +183,15 @@ void zend_shared_alloc_safe_unlock(void);
 void zend_shared_alloc_init_xlat_table(void);
 void zend_shared_alloc_destroy_xlat_table(void);
 void zend_shared_alloc_clear_xlat_table(void);
-uint32_t zend_shared_alloc_checkpoint_xlat_table(void);
+ZEND_PURE uint32_t zend_shared_alloc_checkpoint_xlat_table(void);
 void zend_shared_alloc_restore_xlat_table(uint32_t checkpoint);
 void zend_shared_alloc_register_xlat_entry(const void *key, const void *value);
-void *zend_shared_alloc_get_xlat_entry(const void *key);
+ZEND_PURE void *zend_shared_alloc_get_xlat_entry(const void *key);
 
-size_t zend_shared_alloc_get_free_memory(void);
+ZEND_PURE size_t zend_shared_alloc_get_free_memory(void);
 void zend_shared_alloc_save_state(void);
 void zend_shared_alloc_restore_state(void);
-const char *zend_accel_get_shared_model(void);
+ZEND_PURE const char *zend_accel_get_shared_model(void);
 
 /**
  * Memory write protection

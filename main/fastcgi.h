@@ -86,9 +86,9 @@ typedef struct _fcgi_request fcgi_request;
 int fcgi_init(void);
 void fcgi_shutdown(void);
 int fcgi_is_fastcgi(void);
-int fcgi_is_closed(fcgi_request *req);
+ZEND_PURE int fcgi_is_closed(fcgi_request *req);
 void fcgi_close(fcgi_request *req, int force, int destroy);
-int fcgi_in_shutdown(void);
+ZEND_PURE int fcgi_in_shutdown(void);
 void fcgi_terminate(void);
 int fcgi_listen(const char *path, int backlog);
 fcgi_request* fcgi_init_request(int listen_socket, void(*on_accept)(void), void(*on_read)(void), void(*on_close)(void));
@@ -105,10 +105,10 @@ typedef void (*fcgi_logger)(int type, const char *fmt, ...) ZEND_ATTRIBUTE_FORMA
 void fcgi_set_logger(fcgi_logger lg);
 #endif
 
-int   fcgi_has_env(fcgi_request *req);
-char* fcgi_getenv(fcgi_request *req, const char* var, int var_len);
+ZEND_PURE int   fcgi_has_env(fcgi_request *req);
+ZEND_PURE char* fcgi_getenv(fcgi_request *req, const char* var, int var_len);
 char* fcgi_putenv(fcgi_request *req, char* var, int var_len, char* val);
-char* fcgi_quick_getenv(fcgi_request *req, const char* var, int var_len, unsigned int hash_value);
+ZEND_PURE char* fcgi_quick_getenv(fcgi_request *req, const char* var, int var_len, unsigned int hash_value);
 char* fcgi_quick_putenv(fcgi_request *req, char* var, int var_len, unsigned int hash_value, char* val);
 void  fcgi_loadenv(fcgi_request *req, fcgi_apply_func load_func, zval *array);
 

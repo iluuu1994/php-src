@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "zend_portability.h"
 
 /* Compile with -DPHP_HTTP_PARSER_STRICT=0 to make less checks, but run
  * faster
@@ -236,10 +237,10 @@ size_t php_http_parser_execute(php_http_parser *parser,
  * If you are the server, respond with the "Connection: close" header.
  * If you are the client, close the connection.
  */
-int php_http_should_keep_alive(php_http_parser *parser);
+ZEND_PURE int php_http_should_keep_alive(php_http_parser *parser);
 
 /* Returns a string version of the HTTP method. */
-const char *php_http_method_str(enum php_http_method);
+ZEND_PURE const char *php_http_method_str(enum php_http_method);
 
 #ifdef __cplusplus
 }

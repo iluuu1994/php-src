@@ -132,18 +132,18 @@ const char *magic_stream(magic_t, php_stream *);
 const char *magic_descriptor(magic_t, int);
 const char *magic_buffer(magic_t, const void *, size_t);
 
-const char *magic_error(magic_t);
-int magic_getflags(magic_t);
+ZEND_PURE const char *magic_error(magic_t);
+ZEND_PURE int magic_getflags(magic_t);
 int magic_setflags(magic_t, int);
 
-int magic_version(void);
+ZEND_CONST int magic_version(void);
 int magic_load(magic_t, const char *);
 int magic_load_buffers(magic_t, void **, size_t *, size_t);
 
 int magic_compile(magic_t, const char *);
 int magic_check(magic_t, const char *);
 int magic_list(magic_t, const char *);
-int magic_errno(magic_t);
+ZEND_PURE int magic_errno(magic_t);
 
 #define MAGIC_PARAM_INDIR_MAX		0
 #define MAGIC_PARAM_NAME_MAX		1
