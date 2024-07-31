@@ -742,7 +742,7 @@ static zend_always_inline uint8_t zval_gc_type(uint32_t gc_type_info) {
 	return (gc_type_info & GC_TYPE_MASK);
 }
 
-static zend_always_inline uint32_t zval_gc_flags(uint32_t gc_type_info) {
+ZEND_API inline uint32_t zval_gc_flags(uint32_t gc_type_info) {
 	return (gc_type_info >> GC_FLAGS_SHIFT) & (GC_FLAGS_MASK >> GC_FLAGS_SHIFT);
 }
 
@@ -1339,7 +1339,7 @@ static zend_always_inline void zend_gc_try_delref(zend_refcounted_h *p) {
 	}
 }
 
-static zend_always_inline uint32_t zend_gc_delref(zend_refcounted_h *p) {
+ZEND_API inline uint32_t zend_gc_delref(zend_refcounted_h *p) {
 	ZEND_ASSERT(p->refcount > 0);
 	ZEND_RC_MOD_CHECK(p);
 	return --(p->refcount);
