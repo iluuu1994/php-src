@@ -341,7 +341,7 @@ static zend_always_inline void zend_string_efree(zend_string *s)
 	efree(s);
 }
 
-static zend_always_inline void zend_string_release(zend_string *s)
+ZEND_API inline void zend_string_release(zend_string *s)
 {
 	if (!ZSTR_IS_INTERNED(s)) {
 		if (GC_DELREF(s) == 0) {
@@ -350,7 +350,7 @@ static zend_always_inline void zend_string_release(zend_string *s)
 	}
 }
 
-static zend_always_inline void zend_string_release_ex(zend_string *s, bool persistent)
+ZEND_API inline void zend_string_release_ex(zend_string *s, bool persistent)
 {
 	if (!ZSTR_IS_INTERNED(s)) {
 		if (GC_DELREF(s) == 0) {
