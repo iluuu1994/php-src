@@ -4,7 +4,7 @@ runs:
   steps:
     - shell: bash
       run: |
-        set -ex
+        set -x
         [[ "$OSTYPE" == "darwin"* ]] && export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
         scripts/dev/credits
         scripts/dev/genfiles
@@ -13,3 +13,5 @@ runs:
         ext/tokenizer/tokenizer_data_gen.php
         build/gen_stub.php -f --generate-optimizer-info --verify
         git add . -N && git diff --exit-code
+        echo $?
+        false

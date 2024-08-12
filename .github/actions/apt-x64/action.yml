@@ -61,7 +61,6 @@ runs:
           dovecot-core \
           dovecot-pop3d \
           dovecot-imapd \
-          sendmail \
           firebird-dev \
           liblmdb-dev \
           libtokyocabinet-dev \
