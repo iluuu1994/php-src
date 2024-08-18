@@ -102,6 +102,9 @@ static void zend_compile_expr(znode *result, zend_ast *ast);
 static void zend_compile_stmt(zend_ast *ast);
 static void zend_compile_assign(znode *result, zend_ast *ast);
 
+static HashTable *zend_get_import_ht(uint32_t type);
+static void zend_check_already_in_use(uint32_t type, zend_string *old_name, zend_string *new_name, zend_string *check_name);
+
 #ifdef ZEND_CHECK_STACK_LIMIT
 zend_never_inline static void zend_stack_limit_error(void)
 {
@@ -8987,6 +8990,16 @@ static zend_string *zend_generate_anon_class_name(zend_ast_decl *decl)
 	return zend_new_interned_string(result);
 }
 
+static zend_string *zend_generate_priv_class_name(zend_string *current_ns, zend_ast_decl *decl, zend_string *local_name)
+{
+	zend_string *filename = CG(active_op_array)->filename;
+	zend_string *result = zend_strpprintf(0, "%s%s%s@%s:%" PRIu32 "$%" PRIx32,
+		current_ns ? ZSTR_VAL(current_ns) : "",
+		current_ns ? "\\" : "",
+		ZSTR_VAL(local_name), ZSTR_VAL(filename), decl->start_lineno, CG(rtd_key_counter)++);
+	return zend_new_interned_string(result);
+}
+
 static void zend_compile_enum_backing_type(zend_class_entry *ce, zend_ast *enum_backing_type_ast)
 {
 	ZEND_ASSERT(ce->ce_flags & ZEND_ACC_ENUM);
@@ -9007,6 +9020,25 @@ static void zend_compile_enum_backing_type(zend_class_entry *ce, zend_ast *enum_
 	zend_type_release(type, 0);
 }
 
+static void zend_validate_ce_flags(zend_class_entry *ce, uint32_t forbidden_flags)
+{
+	uint32_t supported_flags = (ZEND_ACC_EXPLICIT_ABSTRACT_CLASS|ZEND_ACC_FINAL|ZEND_ACC_READONLY_CLASS);
+	ZEND_ASSERT((forbidden_flags & ~supported_flags) == 0);
+
+	if (UNEXPECTED(ce->ce_flags & forbidden_flags)) {
+		const char *flag_name;
+		if (ce->ce_flags & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) {
+			flag_name = "abstract";
+		} else if (ce->ce_flags & ZEND_ACC_FINAL) {
+			flag_name = "final";
+		} else if (ce->ce_flags & ZEND_ACC_READONLY_CLASS) {
+			flag_name = "readonly";
+		}
+		zend_error_noreturn(E_COMPILE_ERROR, "%s %s must not be %s",
+			zend_get_object_type_case(ce, true), ZSTR_VAL(ce->name), flag_name);
+	}
+}
+
 static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{ */
 {
 	zend_ast_decl *decl = (zend_ast_decl *) ast;
@@ -9020,7 +9052,7 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 
 	zend_class_entry *original_ce = CG(active_class_entry);
 
-	if (EXPECTED((decl->flags & ZEND_ACC_ANON_CLASS) == 0)) {
+	if (EXPECTED((decl->flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_PRIVATE_CLASS)) == 0)) {
 		zend_string *unqualified_name = decl->name;
 
 		if (CG(active_class_entry)) {
@@ -9050,7 +9082,7 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 		}
 
 		zend_register_seen_symbol(lcname, ZEND_SYMBOL_CLASS);
-	} else {
+	} else if (decl->flags & ZEND_ACC_ANON_CLASS) {
 		/* Find an anon class name that is not in use yet. */
 		name = NULL;
 		lcname = NULL;
@@ -9060,13 +9092,61 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 			name = zend_generate_anon_class_name(decl);
 			lcname = zend_string_tolower(name);
 		} while (zend_hash_exists(CG(class_table), lcname));
+	} else {
+		ZEND_ASSERT(decl->flags & ZEND_ACC_PRIVATE_CLASS);
+
+		zend_string *current_ns = FC(current_namespace);
+		zend_string *new_name = decl->name;
+
+		/* Find an private class name that is not in use yet. */
+		name = NULL;
+		lcname = NULL;
+		do {
+			zend_tmp_string_release(name);
+			zend_tmp_string_release(lcname);
+			name = zend_generate_priv_class_name(current_ns, decl, new_name);
+			lcname = zend_string_tolower(name);
+		} while (zend_hash_exists(CG(class_table), lcname));
+
+		HashTable *current_import = zend_get_import_ht(ZEND_SYMBOL_CLASS);
+		zend_string *old_name = name;
+		zend_string *lookup_name = zend_string_tolower(new_name);
+
+		if (zend_is_reserved_class_name(new_name)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Cannot use %s as %s because '%s' "
+				"is a special class name", ZSTR_VAL(old_name), ZSTR_VAL(new_name), ZSTR_VAL(new_name));
+		}
+
+		if (current_ns) {
+			zend_string *ns_name = zend_string_alloc(ZSTR_LEN(current_ns) + 1 + ZSTR_LEN(new_name), 0);
+			zend_str_tolower_copy(ZSTR_VAL(ns_name), ZSTR_VAL(current_ns), ZSTR_LEN(current_ns));
+			ZSTR_VAL(ns_name)[ZSTR_LEN(current_ns)] = '\\';
+			memcpy(ZSTR_VAL(ns_name) + ZSTR_LEN(current_ns) + 1, ZSTR_VAL(lookup_name), ZSTR_LEN(lookup_name) + 1);
+
+			if (zend_have_seen_symbol(ns_name, ZEND_SYMBOL_CLASS)) {
+				zend_check_already_in_use(ZEND_SYMBOL_CLASS, old_name, new_name, ns_name);
+			}
+
+			zend_string_efree(ns_name);
+		} else if (zend_have_seen_symbol(lookup_name, ZEND_SYMBOL_CLASS)) {
+			zend_check_already_in_use(ZEND_SYMBOL_CLASS, old_name, new_name, lookup_name);
+		}
+
+		zend_string_addref(old_name);
+		old_name = zend_new_interned_string(old_name);
+		if (!zend_hash_add_ptr(current_import, lookup_name, old_name)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Cannot use class %s as %s because the name "
+				"is already in use", ZSTR_VAL(old_name), ZSTR_VAL(new_name));
+		}
+
+		zend_string_release_ex(lookup_name, 0);
 	}
 	lcname = zend_new_interned_string(lcname);
 
 	ce->type = ZEND_USER_CLASS;
 	ce->name = name;
 	zend_initialize_class_data(ce, 1);
-	if (!(decl->flags & ZEND_ACC_ANON_CLASS)) {
+	if (!(decl->flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_PRIVATE_CLASS))) {
 		zend_alloc_ce_cache(ce->name);
 	}
 
@@ -9085,7 +9165,16 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 		ce->doc_comment = zend_string_copy(decl->doc_comment);
 	}
 
-	if (UNEXPECTED((decl->flags & ZEND_ACC_ANON_CLASS))) {
+	if (ce->ce_flags & (ZEND_ACC_ENUM|ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT)) {
+		zend_validate_ce_flags(ce, ZEND_ACC_EXPLICIT_ABSTRACT_CLASS|ZEND_ACC_FINAL|ZEND_ACC_READONLY_CLASS);
+	}
+
+	if ((ce->ce_flags & ZEND_ACC_PRIVATE_CLASS) && !toplevel) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Private %s %s must not be declared conditionally",
+			zend_get_object_type_case(ce, false), ZSTR_VAL(ce->name));
+	}
+
+	if (UNEXPECTED((decl->flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_PRIVATE_CLASS)))) {
 		/* Serialization is not supported for anonymous classes */
 		ce->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
 	}
@@ -9106,6 +9195,8 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 	}
 
 	if (ce->ce_flags & ZEND_ACC_ENUM) {
+		ce->ce_flags |= ZEND_ACC_FINAL;
+
 		if (enum_backing_type_ast != NULL) {
 			zend_compile_enum_backing_type(ce, enum_backing_type_ast);
 		}
