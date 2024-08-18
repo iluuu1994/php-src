@@ -289,6 +289,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
 %type <num> class_modifiers class_modifier anonymous_class_modifiers anonymous_class_modifiers_optional use_type backup_fn_flags
+%type <num> optional_class_modifiers
 
 %type <ptr> backup_lex_pos
 %type <str> backup_doc_comment
@@ -594,18 +595,20 @@ is_variadic:
 ;
 
 class_declaration_statement:
-		class_modifiers T_CLASS { $<num>$ = CG(zend_lineno); }
+		optional_class_modifiers T_CLASS { $<num>$ = CG(zend_lineno); }
 		T_STRING extends_from implements_list backup_doc_comment '{' class_statement_list '}'
 			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, $1, $<num>3, $7, zend_ast_get_str($4), $5, $6, $9, NULL, NULL); }
-	|	T_CLASS { $<num>$ = CG(zend_lineno); }
-		T_STRING extends_from implements_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, 0, $<num>2, $6, zend_ast_get_str($3), $4, $5, $8, NULL, NULL); }
 ;
 
 class_modifiers:
 		class_modifier 					{ $$ = $1; }
 	|	class_modifiers class_modifier
 			{ $$ = zend_add_class_modifier($1, $2); if (!$$) { YYERROR; } }
+;
+
+optional_class_modifiers:
+		%empty { $$ = 0; }
+	|	class_modifiers { $$ = $1; }
 ;
 
 anonymous_class_modifiers:
@@ -624,24 +627,25 @@ class_modifier:
 		T_ABSTRACT 		{ $$ = ZEND_ACC_EXPLICIT_ABSTRACT_CLASS; }
 	|	T_FINAL 		{ $$ = ZEND_ACC_FINAL; }
 	|	T_READONLY 		{ $$ = ZEND_ACC_READONLY_CLASS|ZEND_ACC_NO_DYNAMIC_PROPERTIES; }
+	|	T_PRIVATE 		{ $$ = ZEND_ACC_PRIVATE_CLASS; }
 ;
 
 trait_declaration_statement:
-		T_TRAIT { $<num>$ = CG(zend_lineno); }
+		optional_class_modifiers T_TRAIT { $<num>$ = CG(zend_lineno); }
 		T_STRING backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_TRAIT, $<num>2, $4, zend_ast_get_str($3), NULL, NULL, $6, NULL, NULL); }
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_TRAIT|$1, $<num>3, $5, zend_ast_get_str($4), NULL, NULL, $7, NULL, NULL); }
 ;
 
 interface_declaration_statement:
-		T_INTERFACE { $<num>$ = CG(zend_lineno); }
+		optional_class_modifiers T_INTERFACE { $<num>$ = CG(zend_lineno); }
 		T_STRING interface_extends_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_INTERFACE, $<num>2, $5, zend_ast_get_str($3), NULL, $4, $7, NULL, NULL); }
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_INTERFACE|$1, $<num>3, $6, zend_ast_get_str($4), NULL, $5, $8, NULL, NULL); }
 ;
 
 enum_declaration_statement:
-		T_ENUM { $<num>$ = CG(zend_lineno); }
+		optional_class_modifiers T_ENUM { $<num>$ = CG(zend_lineno); }
 		T_STRING enum_backing_type implements_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM|ZEND_ACC_FINAL, $<num>2, $6, zend_ast_get_str($3), NULL, $5, $8, NULL, $4); }
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM|$1, $<num>3, $7, zend_ast_get_str($4), NULL, $6, $9, NULL, $5); }
 ;
 
 enum_backing_type:
