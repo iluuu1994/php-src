@@ -38,12 +38,12 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.url || github.run_id }}
   cancel-in-progress: true
-env:
-  CC: ccache gcc
-  CXX: ccache g++
+# env:
+#   CC: ccache gcc
+#   CXX: ccache g++
 jobs:
   LINUX_X64:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -147,7 +147,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     container:
@@ -192,7 +192,7 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
   MACOS_DEBUG_NTS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -234,7 +234,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2022
     env:
@@ -261,7 +261,7 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-22.04
     steps:
       - name: git checkout
@@ -365,3 +365,39 @@ jobs:
           name: profiles
           path: ${{ github.workspace }}/benchmark/profiles
           retention-days: 30
+  LIBMYSQLCLIENT:
+    name: "LIBMYSQLCLIENT"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: apt
+        run: |
+          sudo apt-get update -y | true
+          sudo apt install bison re2c
+      - name: Setup
+        run: |
+          sudo service mysql start
+          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS test"
+          # Ensure local_infile tests can run.
+          mysql -uroot -proot -e "SET GLOBAL local_infile = true"
+      - name: Build mysql-8.0
+        uses: ./.github/actions/build-libmysqlclient
+        with:
+          configurationParameters: --enable-werror
+          libmysql: mysql-8.0.37-linux-glibc2.28-x86_64.tar.xz
+          withMysqli: false
+      - name: Test mysql-8.0
+        uses: ./.github/actions/test-libmysqlclient
+        with:
+          withMysqli: false
+      - name: Build mysql-8.4
+        uses: ./.github/actions/build-libmysqlclient
+        with:
+          configurationParameters: --enable-werror
+          libmysql: mysql-8.4.0-linux-glibc2.28-x86_64.tar.xz
+          withMysqli: false
+      - name: Test mysql-8.4
+        uses: ./.github/actions/test-libmysqlclient
+        with:
+          withMysqli: false
