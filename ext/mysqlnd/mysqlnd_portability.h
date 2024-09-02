@@ -120,7 +120,7 @@ This file is public domain and comes with NO WARRANTY of any kind */
                     ((uint32_t) (zend_uchar) (A)[0])))
 #define sint4korr(A)  (*((zend_long *) (A)))
 
-#define uint2korr(A)  (*((uint16_t *) (A)))
+#define uint2korr(A)  (((uint16_t)(A)[0]) + (((uint16_t)(A)[1]) << 8))
 #define uint3korr(A)  (uint32_t) (((uint32_t) ((zend_uchar) (A)[0])) +\
                                (((uint32_t) ((zend_uchar) (A)[1])) << 8) +\
                                (((uint32_t) ((zend_uchar) (A)[2])) << 16))
