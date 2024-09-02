@@ -124,7 +124,10 @@ This file is public domain and comes with NO WARRANTY of any kind */
 #define uint3korr(A)  (uint32_t) (((uint32_t) ((zend_uchar) (A)[0])) +\
                                (((uint32_t) ((zend_uchar) (A)[1])) << 8) +\
                                (((uint32_t) ((zend_uchar) (A)[2])) << 16))
-#define uint4korr(A)  (*((zend_ulong *) (A)))
+#define uint4korr(A)  (uint32_t) (((uint32_t) ((zend_uchar) (A)[0])) +\
+                               (((uint32_t) ((zend_uchar) (A)[1])) << 8) +\
+                               (((uint32_t) ((zend_uchar) (A)[2])) << 16) +\
+                               (((uint32_t) ((zend_uchar) (A)[3])) << 24))
 
 
 
