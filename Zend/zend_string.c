@@ -528,3 +528,8 @@ size_t strlcat (char *__restrict dest, const char *restrict src, size_t n)
 	return result;
 }
 #endif
+
+extern inline void zend_string_release(zend_string *s);
+extern inline void zend_string_release_ex(zend_string *s, bool persistent);
+extern inline uint32_t zval_gc_flags(uint32_t gc_type_info);
+extern inline uint32_t zend_gc_delref(zend_refcounted_h *p);
