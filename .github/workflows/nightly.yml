@@ -314,6 +314,7 @@ jobs:
           jitType: tracing
           runTestsParameters: >-
             --asan
+            ext/phar/tests
       - name: Test Tracing JIT
         if: matrix.test_jit
         uses: ./.github/actions/test-macos
@@ -323,6 +324,7 @@ jobs:
             --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
+            ext/phar/tests
       - name: Test OpCache
         uses: ./.github/actions/test-macos
         with:
@@ -330,6 +332,7 @@ jobs:
             --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
+            ext/phar/tests
       - name: Test Function JIT
         if: matrix.test_jit
         uses: ./.github/actions/test-macos
@@ -339,6 +342,7 @@ jobs:
             --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
+            ext/phar/tests
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
       - name: Notify Slack
