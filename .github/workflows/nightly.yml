@@ -42,7 +42,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   ALPINE:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -101,7 +101,7 @@ jobs:
 
   LINUX_X64:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     services:
       postgres:
         image: postgres
@@ -202,7 +202,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LINUX_X32:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -301,6 +301,7 @@ jobs:
           configurationParameters: >-
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
+            --enable-address-sanitizer --enable-undefined-sanitizer CFLAGS="-Wno-deprecated-declarations"
       - name: make
         run: |-
           export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
@@ -309,18 +310,24 @@ jobs:
         run: sudo make install
       - name: Test
         uses: ./.github/actions/test-macos
+        with:
+          jitType: tracing
+          runTestsParameters: >-
+            --asan
       - name: Test Tracing JIT
         if: matrix.test_jit
         uses: ./.github/actions/test-macos
         with:
           jitType: tracing
           runTestsParameters: >-
+            --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
       - name: Test OpCache
         uses: ./.github/actions/test-macos
         with:
           runTestsParameters: >-
+            --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
       - name: Test Function JIT
@@ -329,6 +336,7 @@ jobs:
         with:
           jitType: function
           runTestsParameters: >-
+            --asan
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
       - name: Verify generated files are up to date
@@ -339,7 +347,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   COVERAGE_DEBUG_NTS:
-    if: github.repository == 'php/php-src' || github.event_name == 'workflow_dispatch'
+    if: false
     services:
       postgres:
         image: postgres
@@ -397,7 +405,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   COMMUNITY:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -585,7 +593,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   OPCACHE_VARIATION:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     services:
       postgres:
         image: postgres
@@ -675,7 +683,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   MSAN:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -773,7 +781,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LIBMYSQLCLIENT:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -823,7 +831,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   PECL:
-    if: github.repository == 'php/php-src' || github.event_name == 'workflow_dispatch'
+    if: false
     runs-on: ubuntu-22.04
     env:
       CC: ccache gcc
@@ -937,7 +945,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   WINDOWS:
     needs: GENERATE_MATRIX
-    if: ${{ needs.GENERATE_MATRIX.outputs.branches != '[]' }}
+    if: false
     strategy:
       fail-fast: false
       matrix:
