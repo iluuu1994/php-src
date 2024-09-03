@@ -108,7 +108,7 @@ This file is public domain and comes with NO WARRANTY of any kind */
 */
 
 /* Optimized store functions for Intel x86, non-valid for WIN64. __i386__ is GCC */
-#if defined(__i386__) && !defined(_WIN64)
+#if 0
 #define sint2korr(A)    (*((int16_t *) (A)))
 #define sint3korr(A)    ((int32_t) ((((zend_uchar) (A)[2]) & 128) ? \
                    (((uint32_t) 255L << 24) | \
@@ -120,14 +120,11 @@ This file is public domain and comes with NO WARRANTY of any kind */
                     ((uint32_t) (zend_uchar) (A)[0])))
 #define sint4korr(A)  (*((zend_long *) (A)))
 
-#define uint2korr(A)  (((uint16_t)(A)[0]) + (((uint16_t)(A)[1]) << 8))
+#define uint2korr(A)  (*((uint16_t *) (A)))
 #define uint3korr(A)  (uint32_t) (((uint32_t) ((zend_uchar) (A)[0])) +\
                                (((uint32_t) ((zend_uchar) (A)[1])) << 8) +\
                                (((uint32_t) ((zend_uchar) (A)[2])) << 16))
-#define uint4korr(A)  (uint32_t) (((uint32_t) ((zend_uchar) (A)[0])) +\
-                               (((uint32_t) ((zend_uchar) (A)[1])) << 8) +\
-                               (((uint32_t) ((zend_uchar) (A)[2])) << 16) +\
-                               (((uint32_t) ((zend_uchar) (A)[3])) << 24))
+#define uint4korr(A)  (*((zend_ulong *) (A)))
 
 
 
