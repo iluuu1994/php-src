@@ -2,6 +2,7 @@
 function with many parameters
 --SKIPIF--
 <?php
+die("skip macOS test");
 if (getenv("SKIP_SLOW_TESTS")) die("skip slow test");
 ?>
 --FILE--

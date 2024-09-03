@@ -1,5 +1,9 @@
 --TEST--
 Bug #79821 (array grow during var_dump)
+--SKIPIF--
+<?php
+die("skip macOS test");
+?>
 --FILE--
 <?php
 

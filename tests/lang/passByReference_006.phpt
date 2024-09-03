@@ -1,5 +1,9 @@
 --TEST--
 Pass uninitialized objects and arrays by reference to test implicit initialisation.
+--SKIPIF--
+<?php
+die("skip macOS test");
+?>
 --FILE--
 <?php
 

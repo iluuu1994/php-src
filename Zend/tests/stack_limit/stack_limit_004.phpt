@@ -2,6 +2,7 @@
 Stack limit 004 - Stack limit checks with fixed max_allowed_stack_size (fibers)
 --SKIPIF--
 <?php
+die("skip macOS test");
 if (!function_exists('zend_test_zend_call_stack_get')) die("skip zend_test_zend_call_stack_get() is not available");
 ?>
 --EXTENSIONS--

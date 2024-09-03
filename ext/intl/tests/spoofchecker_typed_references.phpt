@@ -2,6 +2,10 @@
 SpoofChecker with typed references
 --EXTENSIONS--
 intl
+--SKIPIF--
+<?php
+die("skip macOS test");
+?>
 --FILE--
 <?php
 

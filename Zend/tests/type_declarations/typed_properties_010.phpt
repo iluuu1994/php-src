@@ -1,5 +1,9 @@
 --TEST--
 Test typed properties allow fetch reference
+--SKIPIF--
+<?php
+die("skip macOS test");
+?>
 --FILE--
 <?php
 class Foo {

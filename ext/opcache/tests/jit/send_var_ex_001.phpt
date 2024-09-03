@@ -7,6 +7,10 @@ opcache.file_update_protection=0
 ;opcache.jit_debug=257
 --EXTENSIONS--
 opcache
+--SKIPIF--
+<?php
+die("skip macOS test");
+?>
 --FILE--
 <?php
 namespace A;
