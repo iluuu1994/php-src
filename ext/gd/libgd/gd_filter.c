@@ -21,9 +21,9 @@
 #define GET_PIXEL_FUNCTION(src)(src->trueColor?gdImageGetTrueColorPixel:gdImageGetPixel)
 
 #ifdef _WIN32
-# define GD_SCATTER_SEED() (unsigned int)(time(0) * GetCurrentProcessId())
+# define GD_SCATTER_SEED() ((unsigned int)time(0) * (unsigned int)GetCurrentProcessId())
 #else
-# define GD_SCATTER_SEED() (unsigned int)(time(0) * getpid())
+# define GD_SCATTER_SEED() ((unsigned int)time(0) * (unsigned int)getpid())
 #endif
 
 int gdImageScatter(gdImagePtr im, int sub, int plus)
