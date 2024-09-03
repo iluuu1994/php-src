@@ -374,7 +374,7 @@ ZEND_COLD void zend_debug_alloc_output(char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(output_buf, format, args);
+	vsnprintf(output_buf, 256, format, args);
 	va_end(args);
 
 #ifdef ZEND_WIN32
