@@ -26,6 +26,8 @@
 
 BEGIN_EXTERN_C()
 
+#define ZEND_ENUM_FLAGS_ADT (1 << 0)
+
 extern ZEND_API zend_class_entry *zend_ce_unit_enum;
 extern ZEND_API zend_class_entry *zend_ce_backed_enum;
 extern ZEND_API zend_object_handlers zend_enum_object_handlers;

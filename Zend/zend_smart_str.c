@@ -229,8 +229,10 @@ ZEND_API zend_result ZEND_FASTCALL smart_str_append_zval(smart_str *dest, const 
 		smart_str_append_scalar(dest, value, truncate);
 	} else if (Z_TYPE_P(value) == IS_OBJECT && (Z_OBJCE_P(value)->ce_flags & ZEND_ACC_ENUM)) {
 		smart_str_append(dest, Z_OBJCE_P(value)->name);
-		smart_str_appends(dest, "::");
-		smart_str_append(dest, Z_STR_P(zend_enum_fetch_case_name(Z_OBJ_P(value))));
+		if (!Z_OBJCE_P(value)->parent) {
+			smart_str_appends(dest, "::");
+			smart_str_append(dest, Z_STR_P(zend_enum_fetch_case_name(Z_OBJ_P(value))));
+		}
 	} else {
 		return FAILURE;
 	}

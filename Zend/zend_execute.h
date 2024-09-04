@@ -513,6 +513,8 @@ ZEND_API bool zend_verify_property_type(const zend_property_info *info, zval *pr
 ZEND_COLD void zend_verify_property_type_error(const zend_property_info *info, const zval *property);
 ZEND_COLD void zend_magic_get_property_type_inconsistency_error(const zend_property_info *info, const zval *property);
 
+ZEND_API bool zend_verify_recv_arg_type(zend_function *zf, uint32_t arg_num, zval *arg, void **cache_slot);
+
 #define ZEND_REF_ADD_TYPE_SOURCE(ref, source) \
 	zend_ref_add_type_source(&ZEND_REF_TYPE_SOURCES(ref), source)
 

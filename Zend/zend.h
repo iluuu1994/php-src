@@ -219,6 +219,7 @@ struct _zend_class_entry {
 	HashTable *attributes;
 
 	uint32_t enum_backing_type;
+	uint32_t enum_flags;
 	HashTable *backed_enum_table;
 
 	zend_string *doc_comment;

@@ -162,12 +162,25 @@ again:
 			break;
 		case IS_OBJECT: {
 			zend_class_entry *ce = Z_OBJCE_P(struc);
+			zend_object *zobj = Z_OBJ_P(struc);
 			if (ce->ce_flags & ZEND_ACC_ENUM) {
 				zval *case_name_zval = zend_enum_fetch_case_name(Z_OBJ_P(struc));
-				php_printf("%senum(%s::%s)\n", COMMON, ZSTR_VAL(ce->name), Z_STRVAL_P(case_name_zval));
+				if (!ce->parent) {
+					php_printf("%senum(%s::%s)\n", COMMON, ZSTR_VAL(ce->name), Z_STRVAL_P(case_name_zval));
+				} else {
+					uint32_t num_assoc_values = zend_hash_num_elements(&ce->properties_info) - 1;
+					php_printf("%senum(%s) (%d) {\n", COMMON, ZSTR_VAL(ce->name), num_assoc_values);
+					zval *val = OBJ_PROP_NUM(zobj, 1);
+					zval *end = val + num_assoc_values;
+					while (val != end) {
+						zend_property_info *prop_info = zend_get_property_info_for_slot(Z_OBJ_P(struc), val);
+						php_object_property_dump(prop_info, val, 0, prop_info->name, level);
+						val++;
+					}
+					PUTS("}\n");
+				}
 				return;
 			}
-			zend_object *zobj = Z_OBJ_P(struc);
 			uint32_t *guard = zend_get_recursion_guard(zobj);
 			if (ZEND_GUARD_OR_GC_IS_RECURSIVE(guard, DEBUG, zobj)) {
 				PUTS("*RECURSION*\n");
@@ -599,15 +612,35 @@ again:
 				zend_error(E_WARNING, "var_export does not handle circular references");
 				return SUCCESS;
 			}
-			ZEND_GUARD_OR_GC_PROTECT_RECURSION(guard, EXPORT, zobj);
-			myht = zend_get_properties_for(struc, ZEND_PROP_PURPOSE_VAR_EXPORT);
 			if (level > 1) {
 				smart_str_appendc(buf, '\n');
 				buffer_append_spaces(buf, level - 1);
 			}
-
 			zend_class_entry *ce = Z_OBJCE_P(struc);
-			bool is_enum = ce->ce_flags & ZEND_ACC_ENUM;
+			if (ce->ce_flags & ZEND_ACC_ENUM) {
+				smart_str_appendc(buf, '\\');
+				smart_str_append(buf, ce->name);
+				if (!ce->parent) {
+					zval *case_name_zval = zend_enum_fetch_case_name(zobj);
+					smart_str_appendl(buf, "::", 2);
+					smart_str_append(buf, Z_STR_P(case_name_zval));
+				} else {
+					smart_str_appendc(buf, '(');
+					uint32_t num_assoc_values = zend_hash_num_elements(&ce->properties_info) - 1;
+					zval *val = OBJ_PROP_NUM(zobj, 1);
+					zval *end = val + num_assoc_values;
+					while (true) {
+						php_var_export_ex(val, level + 2, buf);
+						val++;
+						if (val == end) {
+							break;
+						}
+						smart_str_appendl(buf, ZEND_STRL(", "));
+					}
+					smart_str_appendc(buf, ')');
+				}
+				break;
+			}
 
 			/* stdClass has no __set_state method, but can be casted to */
 			if (ce == zend_standard_class_def) {
@@ -615,51 +648,45 @@ again:
 			} else {
 				smart_str_appendc(buf, '\\');
 				smart_str_append(buf, ce->name);
-				if (is_enum) {
-					zend_object *zobj = Z_OBJ_P(struc);
-					zval *case_name_zval = zend_enum_fetch_case_name(zobj);
-					smart_str_appendl(buf, "::", 2);
-					smart_str_append(buf, Z_STR_P(case_name_zval));
-				} else {
-					smart_str_appendl(buf, "::__set_state(array(\n", 21);
-				}
+				smart_str_appendl(buf, "::__set_state(array(\n", 21);
 			}
 
+			ZEND_GUARD_OR_GC_PROTECT_RECURSION(guard, EXPORT, zobj);
+			myht = zend_get_properties_for(struc, ZEND_PROP_PURPOSE_VAR_EXPORT);
+
 			if (myht) {
-				if (!is_enum) {
-					ZEND_HASH_FOREACH_KEY_VAL_IND(myht, index, key, val) {
-						/* data is IS_PTR for properties with hooks. */
-						zval tmp;
-						if (UNEXPECTED(Z_TYPE_P(val) == IS_PTR)) {
-							zend_property_info *prop_info = Z_PTR_P(val);
-							if ((prop_info->flags & ZEND_ACC_VIRTUAL) && !prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
-								continue;
-							}
-							const char *unmangled_name_cstr = zend_get_unmangled_property_name(prop_info->name);
-							zend_string *unmangled_name = zend_string_init(unmangled_name_cstr, strlen(unmangled_name_cstr), false);
-							val = zend_read_property_ex(prop_info->ce, zobj, unmangled_name, /* silent */ true, &tmp);
-							zend_string_release_ex(unmangled_name, false);
-							if (EG(exception)) {
-								ZEND_GUARD_OR_GC_UNPROTECT_RECURSION(guard, EXPORT, zobj);
-								zend_release_properties(myht);
-								return FAILURE;
-							}
+				ZEND_HASH_FOREACH_KEY_VAL_IND(myht, index, key, val) {
+					/* data is IS_PTR for properties with hooks. */
+					zval tmp;
+					if (UNEXPECTED(Z_TYPE_P(val) == IS_PTR)) {
+						zend_property_info *prop_info = Z_PTR_P(val);
+						if ((prop_info->flags & ZEND_ACC_VIRTUAL) && !prop_info->hooks[ZEND_PROPERTY_HOOK_GET]) {
+							continue;
 						}
-						php_object_element_export(val, index, key, level, buf);
-						if (val == &tmp) {
-							zval_ptr_dtor(val);
+						const char *unmangled_name_cstr = zend_get_unmangled_property_name(prop_info->name);
+						zend_string *unmangled_name = zend_string_init(unmangled_name_cstr, strlen(unmangled_name_cstr), false);
+						val = zend_read_property_ex(prop_info->ce, zobj, unmangled_name, /* silent */ true, &tmp);
+						zend_string_release_ex(unmangled_name, false);
+						if (EG(exception)) {
+							ZEND_GUARD_OR_GC_UNPROTECT_RECURSION(guard, EXPORT, zobj);
+							zend_release_properties(myht);
+							return FAILURE;
 						}
-					} ZEND_HASH_FOREACH_END();
-				}
+					}
+					php_object_element_export(val, index, key, level, buf);
+					if (val == &tmp) {
+						zval_ptr_dtor(val);
+					}
+				} ZEND_HASH_FOREACH_END();
 				zend_release_properties(myht);
 			}
 			ZEND_GUARD_OR_GC_UNPROTECT_RECURSION(guard, EXPORT, zobj);
-			if (level > 1 && !is_enum) {
+			if (level > 1) {
 				buffer_append_spaces(buf, level - 1);
 			}
 			if (ce == zend_standard_class_def) {
 				smart_str_appendc(buf, ')');
-			} else if (!is_enum) {
+			} else {
 				smart_str_appendl(buf, "))", 2);
 			}
 
@@ -1106,6 +1133,7 @@ again:
 				}
 
 				if (ce->ce_flags & ZEND_ACC_ENUM) {
+					// FIXME
 					PHP_CLASS_ATTRIBUTES;
 
 					zval *case_name_zval = zend_enum_fetch_case_name(Z_OBJ_P(struc));

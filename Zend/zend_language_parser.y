@@ -641,7 +641,7 @@ interface_declaration_statement:
 enum_declaration_statement:
 		T_ENUM { $<num>$ = CG(zend_lineno); }
 		T_STRING enum_backing_type implements_list backup_doc_comment '{' class_statement_list '}'
-			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM|ZEND_ACC_FINAL, $<num>2, $6, zend_ast_get_str($3), NULL, $5, $8, NULL, $4); }
+			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, ZEND_ACC_ENUM, $<num>2, $6, zend_ast_get_str($3), NULL, $5, $8, NULL, $4); }
 ;
 
 enum_backing_type:
@@ -650,8 +650,8 @@ enum_backing_type:
 ;
 
 enum_case:
-		T_CASE backup_doc_comment identifier enum_case_expr ';'
-			{ $$ = zend_ast_create(ZEND_AST_ENUM_CASE, $3, $4, ($2 ? zend_ast_create_zval_from_str($2) : NULL), NULL); }
+		T_CASE backup_doc_comment identifier optional_parameter_list enum_case_expr ';'
+			{ $$ = zend_ast_create(ZEND_AST_ENUM_CASE, $3, $5, ($2 ? zend_ast_create_zval_from_str($2) : NULL), NULL, $4); }
 ;
 
 enum_case_expr:

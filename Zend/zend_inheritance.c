@@ -1757,17 +1757,17 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 		if (UNEXPECTED(!(parent_ce->ce_flags & ZEND_ACC_INTERFACE))) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Interface %s cannot extend class %s", ZSTR_VAL(ce->name), ZSTR_VAL(parent_ce->name));
 		}
-	} else if (UNEXPECTED(parent_ce->ce_flags & (ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_FINAL))) {
+	} else if (UNEXPECTED(parent_ce->ce_flags & (ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT|ZEND_ACC_FINAL|ZEND_ACC_ENUM))) {
+		/* Class declaration must not extend traits or interfaces */
+		if (parent_ce->ce_flags & (ZEND_ACC_INTERFACE|ZEND_ACC_TRAIT)
+		 || ((parent_ce->ce_flags & ZEND_ACC_ENUM) && !(ce->ce_flags & ZEND_ACC_ENUM))) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Class %s cannot extend %s %s",
+				ZSTR_VAL(ce->name), zend_get_object_type_case(parent_ce, false), ZSTR_VAL(parent_ce->name)
+			);
+		}
 		/* Class must not extend a final class */
 		if (parent_ce->ce_flags & ZEND_ACC_FINAL) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Class %s cannot extend final class %s", ZSTR_VAL(ce->name), ZSTR_VAL(parent_ce->name));
-		}
-
-		/* Class declaration must not extend traits or interfaces */
-		if ((parent_ce->ce_flags & ZEND_ACC_INTERFACE) || (parent_ce->ce_flags & ZEND_ACC_TRAIT)) {
-			zend_error_noreturn(E_COMPILE_ERROR, "Class %s cannot extend %s %s",
-				ZSTR_VAL(ce->name), parent_ce->ce_flags & ZEND_ACC_INTERFACE ? "interface" : "trait", ZSTR_VAL(parent_ce->name)
-			);
 		}
 	}
 
@@ -2805,6 +2805,11 @@ static void zend_do_traits_property_binding(zend_class_entry *ce, zend_class_ent
 	for (i = 0; i < ce->num_traits; i++) {
 		if (!traits[i]) {
 			continue;
+		}
+		if (UNEXPECTED((ce->ce_flags & ZEND_ACC_ENUM)
+		 && zend_hash_num_elements(&traits[i]->properties_info))) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Enum %s cannot include properties",
+				ZSTR_VAL(ce->name));
 		}
 		ZEND_HASH_MAP_FOREACH_STR_KEY_PTR(&traits[i]->properties_info, prop_name, property_info) {
 			uint32_t flags = property_info->flags;

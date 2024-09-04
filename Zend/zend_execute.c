@@ -706,8 +706,6 @@ ZEND_API ZEND_COLD void zend_verify_arg_error(
 	zend_verify_type_error_common(
 		zf, arg_info, value, &fname, &fsep, &fclass, &need_msg, &given_msg);
 
-	ZEND_ASSERT(zf->common.type == ZEND_USER_FUNCTION
-		&& "Arginfo verification is not performed for internal functions");
 	if (ptr && ptr->func && ZEND_USER_CODE(ptr->func->common.type)) {
 		zend_argument_type_error(arg_num, "must be of type %s, %s given, called in %s on line %d",
 			ZSTR_VAL(need_msg), given_msg,
@@ -1252,7 +1250,7 @@ ZEND_API bool zend_check_user_type_slow(
 		type, arg, ref, cache_slot, is_return_type, /* is_internal */ false);
 }
 
-static zend_always_inline bool zend_verify_recv_arg_type(zend_function *zf, uint32_t arg_num, zval *arg, void **cache_slot)
+ZEND_API zend_always_inline bool zend_verify_recv_arg_type(zend_function *zf, uint32_t arg_num, zval *arg, void **cache_slot)
 {
 	zend_arg_info *cur_arg_info;
 
