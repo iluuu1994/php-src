@@ -9265,6 +9265,33 @@ static void zend_compile_enum_case(zend_ast *ast)
 	}
 }
 
+static void find_references_and_loops(const zval *zv, bool *contains_refs, bool *recursive)
+{
+	switch (Z_TYPE_P(zv)) {
+		case IS_ARRAY: {
+			HashTable *ht = Z_ARRVAL_P(zv);
+
+			if (UNEXPECTED(GC_IS_RECURSIVE(ht))) {
+				*recursive = true;
+				break;
+			}
+
+			GC_TRY_PROTECT_RECURSION(ht);
+			zval *value;
+			ZEND_HASH_FOREACH_VAL(ht, value) {
+				find_references_and_loops(value, contains_refs, recursive);
+			} ZEND_HASH_FOREACH_END();
+			GC_TRY_UNPROTECT_RECURSION(ht);
+			break;
+		}
+		case IS_REFERENCE:
+			*contains_refs = true;
+			zv = Z_REFVAL_P(zv);
+			find_references_and_loops(zv, contains_refs, recursive);
+			break;
+	}
+}
+
 static ZEND_NAMED_FUNCTION(zend_enum_adt_constructor)
 {
 	zend_internal_function *func = &EX(func)->internal_function;
@@ -9283,18 +9310,21 @@ static ZEND_NAMED_FUNCTION(zend_enum_adt_constructor)
 	prop++;
 
 	zval *arg = ZEND_CALL_ARG(execute_data, 1);
-	for (uint32_t i = 1; i <= EX_NUM_ARGS(); i++) {
+	uint32_t i = 1;
+	for (; i <= EX_NUM_ARGS(); i++) {
 		if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), i, arg, NULL))) {
-			for (; i <= EX_NUM_ARGS(); i++) {
-				ZVAL_UNDEF(prop);
-				Z_PROP_FLAG_P(prop) = 0;
-				prop++;
-			}
-			GC_DELREF(zobj);
-			ZEND_ASSERT(GC_REFCOUNT(zobj) == 0);
-			zend_objects_store_del(zobj);
-			RETVAL_NULL();
-			RETURN_THROWS();
+			goto failure;
+		}
+
+		bool contains_refs = false;
+		bool recursive = false;
+		find_references_and_loops(arg, &contains_refs, &recursive);
+		if (recursive) {
+			zend_throw_error(NULL, "Nesting level too deep - recursive dependency?");
+			goto failure;
+		} else if (contains_refs) {
+			zend_throw_error(NULL, "Contains refs, todo");
+			goto failure;
 		}
 
 		ZVAL_COPY(prop, arg);
@@ -9304,6 +9334,18 @@ static ZEND_NAMED_FUNCTION(zend_enum_adt_constructor)
 	}
 
 	RETURN_OBJ(zobj);
+
+failure:
+	for (; i <= EX_NUM_ARGS(); i++) {
+		ZVAL_UNDEF(prop);
+		Z_PROP_FLAG_P(prop) = 0;
+		prop++;
+	}
+	GC_DELREF(zobj);
+	ZEND_ASSERT(GC_REFCOUNT(zobj) == 0);
+	zend_objects_store_del(zobj);
+	RETVAL_NULL();
+	RETURN_THROWS();
 }
 
 static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_decl *enum_decl, bool toplevel)
