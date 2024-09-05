@@ -4,9 +4,9 @@ ADT assoc value must not be pass-by-reference
 <?php
 
 enum E {
-    case A(public &$x);
+    case A(&$x);
 }
 
 ?>
 --EXPECTF--
-Fatal error: Associated value $x of enum case E::A must not be promoted in %s on line %d
+Fatal error: Associated value $x of enum case E::A must not be pass-by-reference in %s on line %d
