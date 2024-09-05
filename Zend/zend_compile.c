@@ -9183,6 +9183,9 @@ link_unbound:
 			zend_compile_enum_assoc_cases(ce, decl, toplevel);
 		} else {
 			ce->ce_flags |= ZEND_ACC_FINAL;
+			if (ce->parent_name) {
+				ce->enum_flags |= ZEND_ENUM_FLAGS_ADT;
+			}
 		}
 	}
 

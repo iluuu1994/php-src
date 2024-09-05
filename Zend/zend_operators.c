@@ -29,6 +29,7 @@
 #include "zend_strtod.h"
 #include "zend_exceptions.h"
 #include "zend_closures.h"
+#include "zend_enum.h"
 
 #include <locale.h>
 #ifdef HAVE_LANGINFO_H
@@ -2384,6 +2385,23 @@ static int hash_zval_identical_function(zval *z1, zval *z2) /* {{{ */
 }
 /* }}} */
 
+static zend_always_inline bool zend_is_adt_identical(const zend_object *obj1, const zend_object *obj2)
+{
+	for (int i = 1; i < obj1->ce->default_properties_count; i++) {
+		zend_property_info *info = obj1->ce->properties_info_table[i];
+		if (!info) {
+			continue;
+		}
+
+		zval *p1 = OBJ_PROP(obj1, info->offset);
+		zval *p2 = OBJ_PROP(obj2, info->offset);
+		if (!zend_is_identical(p1, p2)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 ZEND_API bool ZEND_FASTCALL zend_is_identical(const zval *op1, const zval *op2) /* {{{ */
 {
 	if (Z_TYPE_P(op1) != Z_TYPE_P(op2)) {
@@ -2406,7 +2424,14 @@ ZEND_API bool ZEND_FASTCALL zend_is_identical(const zval *op1, const zval *op2) 
 			return (Z_ARRVAL_P(op1) == Z_ARRVAL_P(op2) ||
 				zend_hash_compare(Z_ARRVAL_P(op1), Z_ARRVAL_P(op2), (compare_func_t) hash_zval_identical_function, 1) == 0);
 		case IS_OBJECT:
-			return (Z_OBJ_P(op1) == Z_OBJ_P(op2));
+			if (Z_OBJ_P(op1) == Z_OBJ_P(op2)) {
+				return true;
+			}
+			if (UNEXPECTED(Z_OBJCE_P(op1)->enum_flags & ZEND_ENUM_FLAGS_ADT)
+			 && Z_OBJCE_P(op1) == Z_OBJCE_P(op2)) {
+				return zend_is_adt_identical(Z_OBJ_P(op1), Z_OBJ_P(op2));
+			}
+			return false;
 		default:
 			return 0;
 	}
