@@ -3263,24 +3263,28 @@ static void check_unrecoverable_load_failure(zend_class_entry *ce) {
 }
 
 #define zend_update_inherited_handler(handler) do { \
-		if (ce->handler == (zend_function*)op_array) { \
-			ce->handler = (zend_function*)new_op_array; \
+		if (ce->handler == func) { \
+			ce->handler = new_func; \
 		} \
 	} while (0)
 
-static zend_op_array *zend_lazy_method_load(
-		zend_op_array *op_array, zend_class_entry *ce, zend_class_entry *pce) {
-	ZEND_ASSERT(op_array->type == ZEND_USER_FUNCTION);
-	ZEND_ASSERT(op_array->scope == pce);
-	ZEND_ASSERT(op_array->prototype == NULL);
-	zend_op_array *new_op_array = zend_arena_alloc(&CG(arena), sizeof(zend_op_array));
-	memcpy(new_op_array, op_array, sizeof(zend_op_array));
-	new_op_array->fn_flags &= ~ZEND_ACC_IMMUTABLE;
-	new_op_array->scope = ce;
-	ZEND_MAP_PTR_INIT(new_op_array->run_time_cache, NULL);
-	ZEND_MAP_PTR_INIT(new_op_array->static_variables_ptr, NULL);
-
-	return new_op_array;
+static zend_function *zend_lazy_method_load(
+		zend_function *func, zend_class_entry *ce, zend_class_entry *pce) {
+	ZEND_ASSERT(func->common.scope == pce);
+	ZEND_ASSERT(func->common.prototype == NULL);
+	zend_function *new_func;
+	if (func->type == ZEND_USER_FUNCTION) {
+		new_func = zend_arena_alloc(&CG(arena), sizeof(zend_op_array));
+		memcpy(new_func, func, sizeof(zend_op_array));
+		ZEND_MAP_PTR_INIT(new_func->op_array.static_variables_ptr, NULL);
+	} else {
+		new_func = zend_arena_alloc(&CG(arena), sizeof(zend_internal_function));
+		memcpy(new_func, func, sizeof(zend_internal_function));
+	}
+	new_func->common.fn_flags &= ~ZEND_ACC_IMMUTABLE;
+	new_func->common.scope = ce;
+	ZEND_MAP_PTR_INIT(new_func->common.run_time_cache, NULL);
+	return new_func;
 }
 
 static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
@@ -3320,8 +3324,8 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 		p = ce->function_table.arData;
 		end = p + ce->function_table.nNumUsed;
 		for (; p != end; p++) {
-			zend_op_array *op_array = Z_PTR(p->val);
-			zend_op_array *new_op_array = Z_PTR(p->val) = zend_lazy_method_load(op_array, ce, pce);
+			zend_function *func = Z_PTR(p->val);
+			zend_function *new_func = Z_PTR(p->val) = zend_lazy_method_load(func, ce, pce);
 
 			zend_update_inherited_handler(constructor);
 			zend_update_inherited_handler(destructor);
@@ -3377,9 +3381,9 @@ static zend_class_entry *zend_lazy_class_load(zend_class_entry *pce)
 				memcpy(new_prop_info->hooks, prop_info->hooks, ZEND_PROPERTY_HOOK_STRUCT_SIZE);
 				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
 					if (new_prop_info->hooks[i]) {
-						zend_op_array *hook = zend_lazy_method_load((zend_op_array *) new_prop_info->hooks[i], ce, pce);
-						ZEND_ASSERT(hook->prop_info == prop_info);
-						hook->prop_info = new_prop_info;
+						zend_function *hook = zend_lazy_method_load(new_prop_info->hooks[i], ce, pce);
+						ZEND_ASSERT(hook->common.prop_info == prop_info);
+						hook->common.prop_info = new_prop_info;
 						new_prop_info->ce = ce;
 						new_prop_info->hooks[i] = (zend_function *) hook;
 					}

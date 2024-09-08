@@ -340,6 +340,25 @@ static void zend_persist_class_method_calc(zend_op_array *op_array)
 			if (!old_op_array) {
 				ADD_SIZE(sizeof(zend_internal_function));
 				zend_shared_alloc_register_xlat_entry(op_array, op_array);
+
+				if (op_array->fn_flags & ZEND_ACC_ARENA_ARG_INFO) {
+					ZEND_ASSERT(op_array->arg_info);
+					zend_internal_arg_info *arg_info = (zend_internal_arg_info *)op_array->arg_info;
+					uint32_t num_args = op_array->num_args;
+					ZEND_ASSERT(!(op_array->fn_flags & ZEND_ACC_VARIADIC));
+					if (op_array->fn_flags & ZEND_ACC_HAS_RETURN_TYPE) {
+						arg_info--;
+						num_args++;
+					}
+					ADD_SIZE(sizeof(zend_internal_arg_info) * num_args);
+					for (uint32_t i = 0; i < num_args; i++) {
+						if (arg_info[i].name) {
+							zend_string *arg_name = zend_string_init(arg_info[i].name, strlen(arg_info[i].name), false);
+							ADD_INTERNED_STRING(arg_name);
+						}
+						zend_persist_type_calc(&arg_info[i].type);
+					}
+				}
 			}
 		}
 		return;

@@ -9274,7 +9274,16 @@ static ZEND_NAMED_FUNCTION(zend_enum_adt_constructor)
 		RETURN_THROWS();
 	}
 
-	zend_class_entry *case_ce = EX(func)->internal_function.reserved[0];
+	zend_string *case_name = zend_string_concat3(
+		ZSTR_VAL(func->scope->name), ZSTR_LEN(func->scope->name),
+		ZEND_STRL("::"),
+		ZSTR_VAL(func->function_name), ZSTR_LEN(func->function_name)
+	);
+	zend_class_entry *case_ce = zend_lookup_class(case_name);
+	ZEND_ASSERT(case_ce);
+	zend_string_release(case_name);
+	// FIXME: Cache
+
 	zend_object *zobj = zend_objects_new(case_ce);
 	zval *prop = OBJ_PROP_NUM(zobj, 0);
 
@@ -9318,13 +9327,16 @@ static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_de
 		}
 
 		zend_string *case_name = zval_make_interned_string(zend_ast_get_zval(ast->child[0]));
+		if (!IS_INTERNED(case_name)) {
+			case_name = zend_string_dup(case_name, true);
+		}
 
 		zend_string *case_ce_name = zend_new_interned_string(zend_string_concat3(
 			ZSTR_VAL(enum_ce->name), ZSTR_LEN(enum_ce->name),
 			ZEND_STRL("::"),
 			ZSTR_VAL(case_name), ZSTR_LEN(case_name)));
 
-		zend_ast *parent_name_ast = zend_ast_create_zval_from_str(enum_ce->name);
+		zend_ast *parent_name_ast = zend_ast_create_zval_from_str(zend_string_copy(enum_ce->name));
 		parent_name_ast->attr = ZEND_NAME_FQ;
 
 		zend_ast *stmt_list = zend_ast_create_list(0, ZEND_AST_STMT_LIST);
@@ -9333,6 +9345,7 @@ static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_de
 			case_ce_name, parent_name_ast, NULL, stmt_list, NULL, NULL);
 
 		zend_class_entry *case_ce = zend_compile_class_decl(NULL, case_ast_decl, toplevel);
+		zend_ast_destroy(case_ast_decl);
 
 		zval default_value;
 		ZVAL_UNDEF(&default_value);
@@ -9377,18 +9390,16 @@ static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_de
 				ZEND_ACC_PUBLIC|ZEND_ACC_READONLY,
 				/* doc_comment: FIXME */ NULL, param_type);
 
-			// FIXME: This pointer is volatile with opcache...
 			arg_info->name = (const char *) ZSTR_VAL(param_name);
 			arg_info->type = param_type;
 			arg_info->default_value = NULL;
-
 			arg_info++;
 		}
 
-		const uint32_t fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_HAS_RETURN_TYPE|ZEND_ACC_ARENA_ALLOCATED;
+		const uint32_t fn_flags = ZEND_ACC_PUBLIC|ZEND_ACC_STATIC|ZEND_ACC_HAS_RETURN_TYPE|ZEND_ACC_ARENA_ALLOCATED|ZEND_ACC_ARENA_ARG_INFO;
 		zend_internal_function *func = zend_arena_calloc(&CG(arena), sizeof(zend_internal_function), 1);
 		func->handler = zend_enum_adt_constructor;
-		func->function_name = zend_string_copy(case_name);
+		func->function_name = case_name;
 		func->fn_flags = fn_flags;
 		func->doc_comment = NULL;
 
@@ -9400,9 +9411,6 @@ static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_de
 		func->module = EG(current_module);
 		func->scope = enum_ce;
 		func->T = ZEND_OBSERVER_ENABLED;
-
-		/* FIXME: Volatile pointer. */
-		func->reserved[0] = case_ce;
 
 		ZEND_MAP_PTR_NEW(func->run_time_cache);
 		//if (EG(active)) { // at run-time
@@ -9416,6 +9424,7 @@ static void zend_compile_enum_assoc_cases(zend_class_entry *enum_ce, zend_ast_de
 		if (!zend_hash_add_ptr(&enum_ce->function_table, case_name_lc, func)) {
 			zend_error_noreturn(E_COMPILE_ERROR, "Cannot redeclare %s()", ZSTR_VAL(case_ce_name));
 		}
+		zend_string_release(case_name_lc);
 	}
 }
 
