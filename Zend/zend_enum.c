@@ -57,26 +57,6 @@ zend_object *zend_enum_new(zval *result, zend_class_entry *ce, zend_string *case
 	return zobj;
 }
 
-static void zend_verify_enum_properties(zend_class_entry *ce)
-{
-	zend_property_info *property_info;
-
-	ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property_info) {
-		if (zend_string_equals(property_info->name, ZSTR_KNOWN(ZEND_STR_NAME))) {
-			continue;
-		}
-		if (
-			ce->enum_backing_type != IS_UNDEF
-			&& zend_string_equals(property_info->name, ZSTR_KNOWN(ZEND_STR_VALUE))
-		) {
-			continue;
-		}
-		// FIXME: File/line number for traits?
-		zend_error_noreturn(E_COMPILE_ERROR, "Enum %s cannot include properties",
-			ZSTR_VAL(ce->name));
-	} ZEND_HASH_FOREACH_END();
-}
-
 static void zend_verify_enum_magic_methods(zend_class_entry *ce)
 {
 	// Only __get, __call and __invoke are allowed
@@ -119,7 +99,6 @@ static void zend_verify_enum_interfaces(zend_class_entry *ce)
 
 void zend_verify_enum(zend_class_entry *ce)
 {
-	zend_verify_enum_properties(ce);
 	zend_verify_enum_magic_methods(ce);
 	zend_verify_enum_interfaces(ce);
 }
@@ -171,6 +150,12 @@ void zend_register_enum_ce(void)
 
 void zend_enum_add_interfaces(zend_class_entry *ce)
 {
+	ce->default_object_handlers = &zend_enum_object_handlers;
+
+	if ((ce->enum_flags & ZEND_ENUM_FLAGS_ADT) || ce->parent_name) {
+		return;
+	}
+
 	uint32_t num_interfaces_before = ce->num_interfaces;
 
 	ce->num_interfaces++;
@@ -189,8 +174,6 @@ void zend_enum_add_interfaces(zend_class_entry *ce)
 		ce->interface_names[num_interfaces_before + 1].name = zend_string_copy(zend_ce_backed_enum->name);
 		ce->interface_names[num_interfaces_before + 1].lc_name = ZSTR_INIT_LITERAL("backedenum", 0);
 	}
-
-	ce->default_object_handlers = &zend_enum_object_handlers;
 }
 
 zend_result zend_enum_build_backed_enum_table(zend_class_entry *ce)
@@ -467,6 +450,11 @@ void zend_enum_register_funcs(zend_class_entry *ce)
 void zend_enum_register_props(zend_class_entry *ce)
 {
 	ce->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+
+	if (ce->parent_name) {
+		/* This is an ADT case, the name property is inherited from the parent. */
+		return;
+	}
 
 	zval name_default_value;
 	ZVAL_UNDEF(&name_default_value);

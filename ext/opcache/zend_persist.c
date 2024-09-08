@@ -732,6 +732,31 @@ static zend_op_array *zend_persist_class_method(zend_op_array *op_array, zend_cl
 						}
 					}
 				}
+
+				if (op_array->fn_flags & ZEND_ACC_ARENA_ARG_INFO) {
+					ZEND_ASSERT(op_array->arg_info);
+					zend_internal_arg_info *arg_info = (zend_internal_arg_info *)op_array->arg_info;
+					uint32_t num_args = op_array->num_args;
+					ZEND_ASSERT(!(op_array->fn_flags & ZEND_ACC_VARIADIC));
+					if (op_array->fn_flags & ZEND_ACC_HAS_RETURN_TYPE) {
+						arg_info--;
+						num_args++;
+					}
+					arg_info = zend_shared_memdup_put(arg_info, sizeof(zend_internal_arg_info) * num_args);
+					for (uint32_t i = 0; i < num_args; i++) {
+						if (arg_info[i].name) {
+							zend_string *arg_name = zend_string_init(arg_info[i].name, strlen(arg_info[i].name), false);
+							arg_name = accel_new_interned_string(arg_name);
+							zend_accel_store_interned_string(arg_name);
+							arg_info[i].name = ZSTR_VAL(arg_name);
+						}
+						zend_persist_type(&arg_info[i].type);
+					}
+					if (op_array->fn_flags & ZEND_ACC_HAS_RETURN_TYPE) {
+						arg_info++;
+					}
+					op_array->arg_info = (zend_arg_info *)arg_info;
+				}
 				// Real dynamically created internal functions like enum methods must have their own run_time_cache pointer. They're always on the same scope as their defining class.
 				// However, copies - as caused by inheritance of internal methods - must retain the original run_time_cache pointer, shared with the source function.
 				if (!op_array->scope || (op_array->scope == ce && !(op_array->fn_flags & ZEND_ACC_TRAIT_CLONE))) {

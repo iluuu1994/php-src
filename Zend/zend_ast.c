@@ -2577,6 +2577,11 @@ simple_list:
 			}
 			smart_str_appends(str, "case ");
 			zend_ast_export_name(str, ast->child[0], 0, indent);
+			if (ast->child[4]) {
+				smart_str_appendc(str, '(');
+				zend_ast_export_ex(str, ast->child[4], 0, indent);
+				smart_str_appendc(str, ')');
+			}
 			if (ast->child[1]) {
 				smart_str_appends(str, " = ");
 				zend_ast_export_ex(str, ast->child[1], 0, indent);

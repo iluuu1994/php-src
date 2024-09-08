@@ -9,4 +9,4 @@ class Bar extends Foo {}
 
 ?>
 --EXPECTF--
-Fatal error: Class Bar cannot extend final class Foo in %s on line %d
+Fatal error: Class Bar cannot extend enum Foo in %s on line %d

@@ -171,10 +171,10 @@ enum _zend_ast_kind {
 	/* 4 child nodes */
 	ZEND_AST_FOR = 4 << ZEND_AST_NUM_CHILDREN_SHIFT,
 	ZEND_AST_FOREACH,
-	ZEND_AST_ENUM_CASE,
 	ZEND_AST_PROP_ELEM,
 
 	/* 5 child nodes */
+	ZEND_AST_ENUM_CASE = 5 << ZEND_AST_NUM_CHILDREN_SHIFT,
 
 	/* 6 child nodes */
 	ZEND_AST_PARAM = 6 << ZEND_AST_NUM_CHILDREN_SHIFT,
