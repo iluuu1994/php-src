@@ -291,6 +291,68 @@ static inline bool can_elide_list_type(
 	return is_intersection;
 }
 
+static inline bool can_elide_arg_type_check(
+		const zend_script *script, zend_op_array *op_array, zend_ssa *ssa, zend_call_info *call_info, uint32_t arg_num) {
+	zend_function *callee = call_info->callee_func;
+
+	// FIXME: Support varags
+	if (!callee
+	 || !callee->common.arg_info
+	 || arg_num >= callee->common.num_args
+	 || (zend_string_equals_literal_ci(callee->common.function_name, "__construct")
+	  && call_info->is_prototype)) {
+		return false;
+	}
+
+	uint32_t arg_var = -1;
+	if (!call_info->is_frameless) {
+		zend_op *opline = call_info->arg_info[arg_num].opline;
+
+		// FIXME: Support named args
+		if (opline->op2_type != IS_UNUSED) {
+			return false;
+		}
+
+		arg_var = ssa->ops[opline - op_array->opcodes].op1_use;
+	} else {
+		zend_ssa_op *ssa_op = &ssa->ops[call_info->caller_init_opline - op_array->opcodes];
+		switch (arg_num) {
+			case 0: arg_var = ssa_op->op1_use; break;
+			case 1: arg_var = ssa_op->op2_use; break;
+			case 2: arg_var = (ssa_op+1)->op1_use; break;
+		}
+	}
+
+	if (arg_var == -1) {
+		return false;
+	}
+
+	zend_arg_info *arg_info = &callee->common.arg_info[arg_num];
+
+	zend_ssa_var_info *arg_var_info = &ssa->var_info[arg_var];
+	uint32_t arg_type = arg_var_info->type & (MAY_BE_ANY|MAY_BE_UNDEF);
+	if (arg_type & MAY_BE_REF) {
+		return 0;
+	}
+
+	if (arg_type & MAY_BE_UNDEF) {
+		arg_type &= ~MAY_BE_UNDEF;
+		arg_type |= MAY_BE_NULL;
+	}
+
+	uint32_t disallowed_types = arg_type & ~ZEND_TYPE_PURE_MASK(arg_info->type);
+	if (!disallowed_types) {
+		/* Only contains allowed types. */
+		return true;
+	}
+
+	if (disallowed_types == MAY_BE_OBJECT && arg_var_info->ce && ZEND_TYPE_IS_COMPLEX(arg_info->type)) {
+		return can_elide_list_type(script, op_array, arg_var_info, arg_info->type);
+	}
+
+	return false;
+}
+
 static inline bool can_elide_return_type_check(
 		const zend_script *script, zend_op_array *op_array, zend_ssa *ssa, zend_ssa_op *ssa_op) {
 	zend_arg_info *arg_info = &op_array->arg_info[-1];
@@ -398,10 +460,42 @@ static bool variable_defined_or_used_in_range(zend_ssa *ssa, int var, int start,
 	return 0;
 }
 
-int zend_dfa_optimize_calls(zend_op_array *op_array, zend_ssa *ssa)
+static int zend_dfa_optimize_calls(zend_op_array *op_array, zend_optimizer_ctx *ctx, zend_ssa *ssa)
 {
 	zend_func_info *func_info = ZEND_FUNC_INFO(op_array);
 	int removed_ops = 0;
+
+	/* Elide send type check. */
+	if (func_info->callee_info) {
+		for (zend_call_info *call_info = func_info->callee_info; call_info; call_info = call_info->next_callee) {
+			bool frameless_can_elide = true;
+
+			for (uint32_t i = 0; i < call_info->num_args; i++) {
+				if (can_elide_arg_type_check(ctx->script, op_array, ssa, call_info, i)) {
+					if (!call_info->is_frameless) {
+						fprintf(stderr, "Elideable: 1\n");
+					}
+				} else {
+					if (!call_info->is_frameless) {
+						fprintf(stderr, "Elideable: 0\n");
+					} else {
+						frameless_can_elide = false;
+					}
+				}
+				fflush(stderr);
+			}
+
+			if (call_info->is_frameless) {
+				for (uint32_t i = 0; i < call_info->num_args; i++) {
+					if (frameless_can_elide) {
+						fprintf(stderr, "Elideable: 1\n");
+					} else {
+						fprintf(stderr, "Elideable: 0\n");
+					}
+				}
+			}
+		}
+	}
 
 	if (func_info->callee_info) {
 		zend_call_info *call_info = func_info->callee_info;
@@ -1121,7 +1215,7 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 			ssa_verify_integrity(op_array, ssa, "after sccp");
 #endif
 			if (ZEND_FUNC_INFO(op_array)) {
-				if (zend_dfa_optimize_calls(op_array, ssa)) {
+				if (zend_dfa_optimize_calls(op_array, ctx, ssa)) {
 					remove_nops = 1;
 				}
 			}
