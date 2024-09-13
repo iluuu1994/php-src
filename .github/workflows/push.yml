@@ -361,3 +361,47 @@ jobs:
           name: profiles
           path: ${{ github.workspace }}/benchmark/profiles
           retention-days: 30
+  ALPINE:
+    name: "ALPINE"
+    runs-on: ubuntu-22.04
+    container:
+      image: 'alpine:3.20.1'
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: apk
+        uses: ./.github/actions/apk
+      - name: LLVM 17 (ASAN-only)
+        run: |
+          apk add clang17 compiler-rt
+      - name: System info
+        run: |
+          echo "::group::Show host CPU info"
+          lscpu
+          echo "::endgroup::"
+          echo "::group::Show installed package versions"
+          apk list
+          echo "::endgroup::"
+      - name: ./configure
+        uses: ./.github/actions/configure-alpine
+        with:
+          configurationParameters: >-
+            CFLAGS='-fsanitize=undefined,address -fno-sanitize=function -DZEND_TRACK_ARENA_ALLOC'
+            LDFLAGS='-fsanitize=undefined,address -fno-sanitize=function'
+            CC=clang-17
+            CXX=clang++-17
+            --enable-debug
+            --enable-zts
+          skipSlow: true
+      - name: make
+        run: make -j$(/usr/bin/nproc) >/dev/null
+      - name: make install
+        uses: ./.github/actions/install-alpine
+      - name: Test Tracing JIT
+        uses: ./.github/actions/test-alpine
+        with:
+          jitType: tracing
+          runTestsParameters: >-
+            --asan -x
+            -d zend_extension=opcache.so
+            -d opcache.enable_cli=1
