@@ -81,6 +81,11 @@ typedef enum {
 	ZEND_MEMOIZE_FETCH,
 } zend_memoize_mode;
 
+typedef enum {
+	ZEND_TYPES_MODE_CHECKED = 0,
+	ZEND_TYPES_MODE_ERASED,
+} zend_types_mode;
+
 struct _zend_compiler_globals {
 	zend_stack loop_var_stack;
 
@@ -161,6 +166,7 @@ struct _zend_compiler_globals {
 #ifdef ZTS
 	uint32_t copied_functions_count;
 #endif
+	zend_types_mode types_mode;
 };
 
 

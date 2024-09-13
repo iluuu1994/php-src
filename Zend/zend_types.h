@@ -142,8 +142,9 @@ typedef struct {
 	zend_type types[1];
 } zend_type_list;
 
-#define _ZEND_TYPE_EXTRA_FLAGS_SHIFT 25
-#define _ZEND_TYPE_MASK ((1u << 25) - 1)
+#define _ZEND_TYPE_EXTRA_FLAGS_SHIFT 26
+#define _ZEND_TYPE_MASK ((1u << 26) - 1)
+#define _ZEND_TYPE_ERASED_BIT (1u << 25)
 /* Only one of these bits may be set. */
 #define _ZEND_TYPE_NAME_BIT (1u << 24)
 // Used to signify that type.ptr is not a `zend_string*` but a `const char*`,
@@ -165,6 +166,9 @@ typedef struct {
 
 #define ZEND_TYPE_IS_SET(t) \
 	(((t).type_mask & _ZEND_TYPE_MASK) != 0)
+
+#define ZEND_TYPE_IS_ERASED(t) \
+	((((t).type_mask) & _ZEND_TYPE_ERASED_BIT) != 0)
 
 /* If a type is complex it means it's either a list with a union or intersection,
  * or the void pointer is a class name */

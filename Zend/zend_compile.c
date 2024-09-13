@@ -2697,6 +2697,10 @@ static void zend_emit_return_type_check(
 			return;
 		}
 
+		if (CG(types_mode) == ZEND_TYPES_MODE_ERASED) {
+			return;
+		}
+
 		if (expr && expr->op_type == IS_CONST && ZEND_TYPE_CONTAINS_CODE(type, Z_TYPE(expr->u.constant))) {
 			/* we don't need run-time check */
 			return;
@@ -6900,7 +6904,34 @@ static void zend_compile_declare(zend_ast *ast) /* {{{ */
 			if (Z_LVAL(value_zv) == 1) {
 				CG(active_op_array)->fn_flags |= ZEND_ACC_STRICT_TYPES;
 			}
+		} else if (zend_string_equals_literal_ci(name, "types")) {
+			if (FAILURE == zend_is_first_statement(ast, /* allow_nop */ 0)) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"types declaration pragma must be the very first statement in the script");
+			}
 
+			zval value_zv;
+			if (ast->child[1] != NULL) {
+				zend_error_noreturn(E_COMPILE_ERROR,
+					"types declaration must not use block mode");
+			}
+
+			zend_const_expr_to_zval(&value_zv, value_ast_ptr, /* allow_dynamic */ false);
+
+			if (Z_TYPE(value_zv) != IS_STRING) {
+types_decl_value_error:
+				zend_error_noreturn(E_COMPILE_ERROR, "types declaration must be a string with the value \"checked\" or \"erased\"");
+			}
+
+			if (zend_string_equals_literal_ci(Z_STR(value_zv), "checked")) {
+				CG(types_mode) = ZEND_TYPES_MODE_CHECKED;
+			} else if (zend_string_equals_literal_ci(Z_STR(value_zv), "erased")) {
+				CG(types_mode) = ZEND_TYPES_MODE_ERASED;
+			} else {
+				goto types_decl_value_error;
+			}
+
+			zval_ptr_dtor(&value_zv);
 		} else {
 			zend_error(E_COMPILE_WARNING, "Unsupported declare '%s'", ZSTR_VAL(name));
 		}
@@ -7323,6 +7354,11 @@ static zend_type zend_compile_typename_ex(
 	}
 
 	ast->attr = orig_ast_attr;
+
+	if (CG(types_mode) == ZEND_TYPES_MODE_ERASED) {
+		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ERASED_BIT;
+	}
+
 	return type;
 }
 /* }}} */
@@ -7718,7 +7754,7 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		SET_NODE(opline->result, &var_node);
 		opline->op1.num = i + 1;
 
-		if (type_ast) {
+		if (type_ast && CG(types_mode) == ZEND_TYPES_MODE_CHECKED) {
 			/* Allocate cache slot to speed-up run-time class resolution */
 			opline->extended_value =
 				zend_alloc_cache_slots(zend_type_get_num_classes(arg_info->type));
@@ -7728,8 +7764,9 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 			| (is_promoted ? _ZEND_IS_PROMOTED_BIT : 0);
 		ZEND_TYPE_FULL_MASK(arg_info->type) |= arg_info_flags;
 		if (opcode == ZEND_RECV) {
-			opline->op2.num = type_ast ?
-				ZEND_TYPE_FULL_MASK(arg_info->type) : MAY_BE_ANY;
+			opline->op2.num = type_ast && CG(types_mode) == ZEND_TYPES_MODE_CHECKED
+				?  ZEND_TYPE_FULL_MASK(arg_info->type)
+				: MAY_BE_ANY;
 		}
 
 		if (is_promoted) {

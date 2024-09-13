@@ -434,7 +434,7 @@ found:
 	}
 
 	offset = property_info->offset;
-	if (EXPECTED(!ZEND_TYPE_IS_SET(property_info->type))) {
+	if (!ZEND_TYPE_IS_SET(property_info->type) || ZEND_TYPE_IS_ERASED(property_info->type)) {
 		property_info = NULL;
 	} else {
 		*info_ptr = property_info;
