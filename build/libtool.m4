@@ -571,7 +571,7 @@ ia64-*-hpux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
   if AC_TRY_EVAL(ac_compile); then
-    case `/usr/bin/file conftest.$ac_objext` in
+    case `/usr/bin/env file conftest.$ac_objext` in
     *ELF-32*)
       HPUX_IA64_MODE="32"
       ;;
@@ -587,7 +587,7 @@ ia64-*-hpux*)
   echo '[#]line __oline__ "configure"' > conftest.$ac_ext
   if AC_TRY_EVAL(ac_compile); then
    if test "$lt_cv_prog_gnu_ld" = yes; then
-    case `/usr/bin/file conftest.$ac_objext` in
+    case `/usr/bin/env file conftest.$ac_objext` in
     *32-bit*)
       LD="${LD-ld} -melf32bsmip"
       ;;
@@ -599,7 +599,7 @@ ia64-*-hpux*)
       ;;
     esac
    else
-    case `/usr/bin/file conftest.$ac_objext` in
+    case `/usr/bin/env file conftest.$ac_objext` in
     *32-bit*)
       LD="${LD-ld} -32"
       ;;
@@ -620,7 +620,7 @@ s390*-*linux*|sparc*-*linux*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
   if AC_TRY_EVAL(ac_compile); then
-    case `/usr/bin/file conftest.o` in
+    case `/usr/bin/env file conftest.o` in
     *32-bit*)
       case $host in
         x86_64-*kfreebsd*-gnu)
@@ -687,7 +687,7 @@ sparc*-*solaris*)
   # Find out which ABI we are using.
   echo 'int i;' > conftest.$ac_ext
   if AC_TRY_EVAL(ac_compile); then
-    case `/usr/bin/file conftest.o` in
+    case `/usr/bin/env file conftest.o` in
     *64-bit*)
       case $lt_cv_prog_gnu_ld in
       yes*) LD="${LD-ld} -m elf64_sparc" ;;
@@ -2406,7 +2406,7 @@ beos* | haiku*)
 
 bsdi[[45]]*)
   lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[ML]]SB (shared object|dynamic lib)'
-  lt_cv_file_magic_cmd='/usr/bin/file -L'
+  lt_cv_file_magic_cmd='/usr/bin/env file -L'
   lt_cv_file_magic_test_file=/shlib/libc.so
   ;;
 
@@ -2440,7 +2440,7 @@ freebsd* | dragonfly*)
       # Not sure whether the presence of OpenBSD here was a mistake.
       # Let's accept both of them until this is cleared up.
       lt_cv_deplibs_check_method='file_magic (FreeBSD|OpenBSD|DragonFly)/i[[3-9]]86 (compact )?demand paged shared library'
-      lt_cv_file_magic_cmd=/usr/bin/file
+      lt_cv_file_magic_cmd=/usr/bin/env file
       lt_cv_file_magic_test_file=`echo /usr/lib/libc.so.*`
       ;;
     esac
@@ -2454,7 +2454,7 @@ gnu*)
   ;;
 
 hpux10.20* | hpux11*)
-  lt_cv_file_magic_cmd=/usr/bin/file
+  lt_cv_file_magic_cmd=/usr/bin/env file
   case $host_cpu in
   ia64*)
     lt_cv_deplibs_check_method='file_magic (s[[0-9]][[0-9]][[0-9]]|ELF-[[0-9]][[0-9]]) shared object file - IA64'
@@ -2501,7 +2501,7 @@ netbsd*)
 
 newos6*)
   lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[ML]]SB (executable|dynamic lib)'
-  lt_cv_file_magic_cmd=/usr/bin/file
+  lt_cv_file_magic_cmd=/usr/bin/env file
   lt_cv_file_magic_test_file=/usr/lib/libnls.so
   ;;
 

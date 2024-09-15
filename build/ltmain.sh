@@ -2733,7 +2733,7 @@ EOF
 		  *-*-darwin* )
 		    # if the lib is a module then we can not link against
 		    # it, someone is ignoring the new warnings I added
-		    if /usr/bin/file -L $add 2> /dev/null |
+		    if /usr/bin/env file -L $add 2> /dev/null |
                       $EGREP ": [^:]* bundle" >/dev/null ; then
 		      $echo "** Warning, lib $linklib is a module, not a shared library"
 		      if test -z "$old_library" ; then
