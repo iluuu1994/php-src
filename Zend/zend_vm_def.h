@@ -1127,7 +1127,7 @@ ZEND_VM_HANDLER(29, ZEND_ASSIGN_STATIC_PROP_OP, ANY, ANY, OP)
 			}
 		}
 
-		if (ZEND_TYPE_IS_SET(prop_info->type)) {
+		if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 			/* special case for typed properties */
 			zend_binary_assign_op_typed_prop(prop_info, prop, value OPLINE_CC EXECUTE_DATA_CC);
 		} else {
@@ -1429,7 +1429,7 @@ ZEND_VM_HANDLER(38, ZEND_PRE_INC_STATIC_PROP, ANY, ANY, CACHE_SLOT)
 	}
 
 	zend_pre_incdec_property_zval(prop,
-		ZEND_TYPE_IS_SET(prop_info->type) ? prop_info : NULL OPLINE_CC EXECUTE_DATA_CC);
+		ZEND_TYPE_IS_CHECKED(prop_info->type) ? prop_info : NULL OPLINE_CC EXECUTE_DATA_CC);
 
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
@@ -1455,7 +1455,7 @@ ZEND_VM_HANDLER(40, ZEND_POST_INC_STATIC_PROP, ANY, ANY, CACHE_SLOT)
 	}
 
 	zend_post_incdec_property_zval(prop,
-		ZEND_TYPE_IS_SET(prop_info->type) ? prop_info : NULL OPLINE_CC EXECUTE_DATA_CC);
+		ZEND_TYPE_IS_CHECKED(prop_info->type) ? prop_info : NULL OPLINE_CC EXECUTE_DATA_CC);
 
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
@@ -2169,7 +2169,7 @@ ZEND_VM_C_LABEL(fetch_obj_r_fast_copy):
 		retval = zobj->handlers->read_property(zobj, name, BP_VAR_R, cache_slot, EX_VAR(opline->result.var));
 #if ZEND_DEBUG
 		if (!EG(exception) && prop_info && prop_info != ZEND_WRONG_PROPERTY_INFO
-				&& ZEND_TYPE_IS_SET(prop_info->type)) {
+				&& ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 			ZVAL_OPT_DEREF(retval);
 			zend_verify_property_type(prop_info, retval, /* strict */ true);
 		}
@@ -2529,7 +2529,7 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 				if (ZEND_IS_PROPERTY_HOOK_SIMPLE_WRITE(prop_offset)) {
 					zend_property_info *prop_info = CACHED_PTR_EX(cache_slot + 2);
 					property_val = OBJ_PROP(zobj, prop_info->offset);
-					if (ZEND_TYPE_IS_SET(prop_info->type)) {
+					if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 						value = zend_assign_to_typed_prop(prop_info, property_val, value, &garbage EXECUTE_DATA_CC);
 						ZEND_VM_C_GOTO(free_and_exit_assign_obj);
 					} else {
@@ -2592,7 +2592,7 @@ ZEND_VM_HANDLER(25, ZEND_ASSIGN_STATIC_PROP, ANY, ANY, CACHE_SLOT, SPEC(OP_DATA=
 
 	value = GET_OP_DATA_ZVAL_PTR(BP_VAR_R);
 
-	if (ZEND_TYPE_IS_SET(prop_info->type)) {
+	if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 		value = zend_assign_to_typed_prop(prop_info, prop, value, &garbage EXECUTE_DATA_CC);
 		FREE_OP_DATA();
 	} else {
@@ -2890,7 +2890,7 @@ ZEND_VM_HANDLER(33, ZEND_ASSIGN_STATIC_PROP_REF, ANY, ANY, CACHE_SLOT|SRC)
 		if (UNEXPECTED(!zend_wrong_assign_to_variable_reference(prop, value_ptr, &garbage OPLINE_CC EXECUTE_DATA_CC))) {
 			prop = &EG(uninitialized_zval);
 		}
-	} else if (ZEND_TYPE_IS_SET(prop_info->type)) {
+	} else if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 		prop = zend_assign_to_typed_property_reference(prop_info, prop, value_ptr, &garbage EXECUTE_DATA_CC);
 	} else {
 		zend_assign_to_variable_reference(prop, value_ptr, &garbage);
@@ -5705,7 +5705,7 @@ ZEND_VM_HANDLER(164, ZEND_RECV_VARIADIC, NUM, UNUSED, CACHE_SLOT)
 		zend_hash_real_init_packed(Z_ARRVAL_P(params));
 		ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(params)) {
 			zval *param = EX_VAR_NUM(EX(func)->op_array.last_var + EX(func)->op_array.T);
-			if (ZEND_TYPE_IS_SET(arg_info->type)) {
+			if (ZEND_TYPE_IS_CHECKED(arg_info->type)) {
 				ZEND_ADD_CALL_FLAG(execute_data, ZEND_CALL_FREE_EXTRA_ARGS);
 				do {
 					if (UNEXPECTED(!zend_verify_variadic_arg_type(EX(func), arg_info, arg_num, param, CACHE_ADDR(opline->extended_value)))) {
@@ -5733,7 +5733,7 @@ ZEND_VM_HANDLER(164, ZEND_RECV_VARIADIC, NUM, UNUSED, CACHE_SLOT)
 		zend_string *name;
 		zval *param;
 		zend_arg_info *arg_info = &EX(func)->common.arg_info[EX(func)->common.num_args];
-		if (ZEND_TYPE_IS_SET(arg_info->type)) {
+		if (ZEND_TYPE_IS_CHECKED(arg_info->type)) {
 			SEPARATE_ARRAY(params);
 			ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(EX(extra_named_params), name, param) {
 				if (UNEXPECTED(!zend_verify_variadic_arg_type(EX(func), arg_info, arg_num, param, CACHE_ADDR(opline->extended_value)))) {
@@ -7252,7 +7252,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 										UNDEF_RESULT();
 										HANDLE_EXCEPTION();
 									}
-									if (ZEND_TYPE_IS_SET(prop_info->type)) {
+									if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 										ZVAL_NEW_REF(value, value);
 										ZEND_REF_ADD_TYPE_SOURCE(Z_REF_P(value), prop_info);
 										value_type = IS_REFERENCE_EX;
