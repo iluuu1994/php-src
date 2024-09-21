@@ -1259,9 +1259,7 @@ static zend_always_inline bool zend_verify_recv_arg_type(zend_function *zf, uint
 	ZEND_ASSERT(arg_num <= zf->common.num_args);
 	cur_arg_info = &zf->common.arg_info[arg_num-1];
 
-	if (ZEND_TYPE_IS_SET(cur_arg_info->type)
-			// FIXME: We could potentially avoid two checks by marking mixed as erased
-			&& !ZEND_TYPE_IS_ERASED(cur_arg_info->type)
+	if (ZEND_TYPE_IS_CHECKED(cur_arg_info->type)
 			&& UNEXPECTED(!zend_check_type(&cur_arg_info->type, arg, cache_slot, zf->common.scope, 0, 0))) {
 		zend_verify_arg_error(zf, cur_arg_info, arg_num, arg);
 		return 0;

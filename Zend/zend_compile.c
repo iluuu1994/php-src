@@ -7355,8 +7355,11 @@ static zend_type zend_compile_typename_ex(
 
 	ast->attr = orig_ast_attr;
 
-	if (CG(types_mode) == ZEND_TYPES_MODE_ERASED) {
-		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_ERASED_BIT;
+	// FIXME: Also add the flag to list element types.
+	if (CG(types_mode) == ZEND_TYPES_MODE_CHECKED && ZEND_TYPE_PURE_MASK(type) != 0) {
+		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_CHECKED_BIT;
+	} else {
+		ZEND_TYPE_FULL_MASK(type) &= ~_ZEND_TYPE_CHECKED_BIT;
 	}
 
 	return type;
@@ -7754,7 +7757,7 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		SET_NODE(opline->result, &var_node);
 		opline->op1.num = i + 1;
 
-		if (type_ast && CG(types_mode) == ZEND_TYPES_MODE_CHECKED) {
+		if (type_ast && ZEND_TYPE_IS_CHECKED(arg_info->type)) {
 			/* Allocate cache slot to speed-up run-time class resolution */
 			opline->extended_value =
 				zend_alloc_cache_slots(zend_type_get_num_classes(arg_info->type));
@@ -7764,8 +7767,8 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 			| (is_promoted ? _ZEND_IS_PROMOTED_BIT : 0);
 		ZEND_TYPE_FULL_MASK(arg_info->type) |= arg_info_flags;
 		if (opcode == ZEND_RECV) {
-			opline->op2.num = type_ast && CG(types_mode) == ZEND_TYPES_MODE_CHECKED
-				?  ZEND_TYPE_FULL_MASK(arg_info->type)
+			opline->op2.num = type_ast && ZEND_TYPE_IS_CHECKED(arg_info->type)
+				? ZEND_TYPE_PURE_MASK(arg_info->type)
 				: MAY_BE_ANY;
 		}
 
