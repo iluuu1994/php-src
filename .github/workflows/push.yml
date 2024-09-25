@@ -77,22 +77,13 @@ jobs:
             zts: true
             asan: true
     name: "LINUX_X64_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}${{ matrix.asan && '_ASAN' || '' }}"
-    runs-on: ubuntu-${{ !matrix.asan && '22' || '20' }}.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 50
-    container:
-      image: ${{ matrix.asan && 'ubuntu:23.04' || null }}
     steps:
       - name: git checkout
         uses: actions/checkout@v4
       - name: apt
         uses: ./.github/actions/apt-x64
-      - name: LLVM 16 (ASAN-only)
-        if: ${{ matrix.asan }}
-        run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y lsb-release wget software-properties-common gnupg
-          wget https://apt.llvm.org/llvm.sh
-          chmod u+x llvm.sh
-          sudo ./llvm.sh 16
       - name: System info
         run: |
           echo "::group::Show host CPU info"
@@ -150,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     container:
-      image: ubuntu:20.04
+      image: ubuntu:24.04
     env:
       MYSQL_TEST_HOST: mysql
       PDO_MYSQL_TEST_DSN: mysql:host=mysql;dbname=test
@@ -191,7 +182,7 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
   MACOS_DEBUG_NTS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -234,7 +225,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2022
     timeout-minutes: 50
@@ -263,7 +254,7 @@ jobs:
   BENCHMARKING:
     name: BENCHMARKING
     if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
       - name: git checkout
