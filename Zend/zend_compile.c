@@ -402,6 +402,7 @@ void zend_file_context_begin(zend_file_context *prev_context) /* {{{ */
 	FC(in_namespace) = 0;
 	FC(has_bracketed_namespaces) = 0;
 	FC(declarables).ticks = 0;
+	FC(types_mode) = ZEND_TYPES_MODE_CHECKED;
 	zend_hash_init(&FC(seen_symbols), 8, NULL, NULL, 0);
 }
 /* }}} */
@@ -2697,7 +2698,7 @@ static void zend_emit_return_type_check(
 			return;
 		}
 
-		if (CG(types_mode) == ZEND_TYPES_MODE_ERASED) {
+		if (FC(types_mode) == ZEND_TYPES_MODE_ERASED) {
 			return;
 		}
 
@@ -6924,9 +6925,9 @@ types_decl_value_error:
 			}
 
 			if (zend_string_equals_literal_ci(Z_STR(value_zv), "checked")) {
-				CG(types_mode) = ZEND_TYPES_MODE_CHECKED;
+				FC(types_mode) = ZEND_TYPES_MODE_CHECKED;
 			} else if (zend_string_equals_literal_ci(Z_STR(value_zv), "erased")) {
-				CG(types_mode) = ZEND_TYPES_MODE_ERASED;
+				FC(types_mode) = ZEND_TYPES_MODE_ERASED;
 			} else {
 				goto types_decl_value_error;
 			}
@@ -7356,7 +7357,7 @@ static zend_type zend_compile_typename_ex(
 	ast->attr = orig_ast_attr;
 
 	// FIXME: Also add the flag to list element types.
-	if (CG(types_mode) == ZEND_TYPES_MODE_CHECKED && ZEND_TYPE_PURE_MASK(type) != 0) {
+	if (FC(types_mode) == ZEND_TYPES_MODE_CHECKED && ZEND_TYPE_PURE_MASK(type) != 0) {
 		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_CHECKED_BIT;
 	} else {
 		ZEND_TYPE_FULL_MASK(type) &= ~_ZEND_TYPE_CHECKED_BIT;
