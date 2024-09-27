@@ -7357,7 +7357,7 @@ static zend_type zend_compile_typename_ex(
 	ast->attr = orig_ast_attr;
 
 	// FIXME: Also add the flag to list element types.
-	if (FC(types_mode) == ZEND_TYPES_MODE_CHECKED && ZEND_TYPE_PURE_MASK(type) != 0) {
+	if (FC(types_mode) == ZEND_TYPES_MODE_CHECKED && (ZEND_TYPE_FULL_MASK(type) & ~_ZEND_TYPE_CHECKED_BIT)) {
 		ZEND_TYPE_FULL_MASK(type) |= _ZEND_TYPE_CHECKED_BIT;
 	} else {
 		ZEND_TYPE_FULL_MASK(type) &= ~_ZEND_TYPE_CHECKED_BIT;

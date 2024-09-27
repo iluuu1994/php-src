@@ -937,6 +937,9 @@ uninit_error:
 	if (type != BP_VAR_IS) {
 		if (!prop_info && retval != &EG(uninitialized_zval)) {
 			prop_info = zend_get_property_info_for_slot(zobj, retval);
+			if (prop_info && !ZEND_TYPE_IS_SET(prop_info->type)) {
+				prop_info = NULL;
+			}
 		}
 		if (prop_info) {
 			zend_typed_property_uninitialized_access(prop_info, name);
@@ -1334,6 +1337,9 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 				if (UNEXPECTED(type == BP_VAR_RW || type == BP_VAR_R)) {
 					if (!prop_info) {
 						prop_info = zend_get_property_info_for_slot(zobj, retval);
+						if (prop_info && !ZEND_TYPE_IS_SET(prop_info->type)) {
+							prop_info = NULL;
+						}
 					}
 					if (prop_info) {
 						zend_typed_property_uninitialized_access(prop_info, name);
