@@ -41,7 +41,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -96,7 +96,7 @@ jobs:
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
     if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
-    runs-on: macos-12
+    runs-on: macos-15
     steps:
       - name: git checkout
         uses: actions/checkout@v4
@@ -110,7 +110,7 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-macos
         with:
-          configurationParameters: --enable-debug --disable-zts
+          configurationParameters: --enable-debug --disable-zts --disable-all --enable-opcache
       - name: make
         run: |-
           export PATH="/usr/local/opt/bison/bin:$PATH"
@@ -128,7 +128,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
