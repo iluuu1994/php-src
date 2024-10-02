@@ -113,7 +113,7 @@ jobs:
           configurationParameters: --enable-debug --disable-zts --disable-all --enable-opcache
       - name: make
         run: |-
-          export PATH="/usr/local/opt/bison/bin:$PATH"
+          export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
           make -j$(sysctl -n hw.logicalcpu) >/dev/null
       - name: make install
         run: sudo make install
