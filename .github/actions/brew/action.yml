@@ -11,10 +11,10 @@ runs:
         code=" keg.link\(verbose: verbose\?"
         sudo sed -Ei '' "s/$code.*/$code, overwrite: true\)/" "$formula_installer"
 
+        brew reinstall bison
         brew install \
           pkg-config \
           autoconf \
-          bison \
           re2c
         brew install \
           openssl@1.1 \
