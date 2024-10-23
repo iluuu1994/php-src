@@ -10,6 +10,7 @@ runs:
       run: |
         set -x
 
+        export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/lib/i386-linux-gnu/pkgconfig"
         ./buildconf --force
         export CFLAGS="-m32 -msse2"
         export CXXFLAGS="-m32 -msse2"
