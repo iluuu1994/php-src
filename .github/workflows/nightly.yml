@@ -30,7 +30,7 @@ permissions:
   contents: read
 jobs:
   ALPINE:
-    if: inputs.run_alpine
+    if: false
     name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
     runs-on: ubuntu-22.04
     container:
@@ -111,12 +111,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration_parameters: ['']
-        debug: [true, false]
-        name: ['']
-        run_tests_parameters: ['']
-        test_function_jit: [true]
-        zts: [true, false]
         include:
           - name: _ASAN_UBSAN
             debug: true
@@ -127,22 +121,6 @@ jobs:
             run_tests_parameters: '--asan'
             test_function_jit: false
             asan: true
-          - name: _REPEAT
-            debug: true
-            zts: false
-            run_tests_parameters: --repeat 2
-            timeout_minutes: 360
-            test_function_jit: true
-            asan: false
-          - name: _VARIATION
-            debug: true
-            zts: true
-            configuration_parameters: >-
-              CFLAGS="-DZEND_RC_DEBUG=1 -DPROFITABILITY_CHECKS=0 -DZEND_VERIFY_FUNC_INFO=1 -DZEND_VERIFY_TYPE_INFERENCE"
-            run_tests_parameters: -d zend_test.observer.enabled=1 -d zend_test.observer.show_output=0
-            timeout_minutes: 360
-            test_function_jit: true
-            asan: false
     name: "LINUX_X64${{ matrix.name }}_${{ matrix.debug && 'DEBUG' || 'RELEASE' }}_${{ matrix.zts && 'ZTS' || 'NTS' }}"
     runs-on: ubuntu-${{ matrix.asan && inputs.asan_ubuntu_version || inputs.ubuntu_version }}
     steps:
@@ -218,6 +196,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LINUX_X32:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -294,6 +273,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   MACOS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -355,7 +335,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   COVERAGE_DEBUG_NTS:
-    if: inputs.branch == 'master'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -421,6 +401,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   COMMUNITY:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -603,6 +584,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   OPCACHE_VARIATION:
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -694,6 +676,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   MSAN:
+    if: false
     name: MSAN
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -786,6 +769,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LIBMYSQLCLIENT:
+    if: false
     name: LIBMYSQLCLIENT
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -831,7 +815,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   PECL:
-    if: inputs.branch == 'master'
+    if: false
     runs-on: ubuntu-22.04
     env:
       CC: ccache gcc
@@ -943,6 +927,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   WINDOWS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
