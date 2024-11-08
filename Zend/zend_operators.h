@@ -199,6 +199,9 @@ zend_memnstr(const char *haystack, const char *needle, size_t needle_len, const 
 
 		while (p <= end) {
 			if ((p = (const char *)memchr(p, *needle, (end-p+1)))) {
+				/* This assert avoids an object size overflow warning (due to
+				 * needle_len underflowing) in i386 release builds on GCC. */
+				ZEND_ASSERT(needle_len > 1);
 				if (ne == p[needle_len-1] && !memcmp(needle+1, p+1, needle_len-2)) {
 					return p;
 				}
