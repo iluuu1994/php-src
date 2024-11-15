@@ -41,7 +41,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -137,7 +137,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -183,7 +183,7 @@ jobs:
             -d zend_extension=opcache.so
             -d opcache.enable_cli=1
   MACOS_DEBUG_NTS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -226,7 +226,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2022
     timeout-minutes: 50
@@ -254,7 +254,7 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
@@ -359,3 +359,105 @@ jobs:
           name: profiles
           path: ${{ github.workspace }}/benchmark/profiles
           retention-days: 30
+  FREEBSD:
+    name: FREEBSD
+    runs-on: ubuntu-latest
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: QEMU
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '13.3'
+          usesh: true
+          prepare: |
+            cd $GITHUB_WORKSPACE
+
+            kldload accf_http
+            pkg install -y \
+              autoconf \
+              bison \
+              gmake \
+              re2c \
+              icu \
+              libiconv \
+              png \
+              freetype2 \
+              enchant2 \
+              bzip2 \
+              t1lib \
+              gmp \
+              tidyp \
+              libsodium \
+              libzip \
+              libxml2 \
+              libxslt \
+              openssl \
+              oniguruma \
+              pkgconf \
+              webp \
+              libavif \
+              sqlite3 \
+              curl
+
+            ./buildconf -f
+            ./configure \
+              --prefix=/usr/local \
+              --enable-debug \
+              --enable-option-checking=fatal \
+              --enable-fpm \
+              --with-pdo-sqlite \
+              --without-pear \
+              --with-bz2 \
+              --with-avif \
+              --with-jpeg \
+              --with-webp \
+              --with-freetype \
+              --enable-gd \
+              --enable-exif \
+              --with-zip \
+              --with-zlib \
+              --enable-soap \
+              --enable-xmlreader \
+              --with-xsl \
+              --with-libxml \
+              --enable-shmop \
+              --enable-pcntl \
+              --enable-mbstring \
+              --with-curl \
+              --enable-sockets \
+              --with-openssl \
+              --with-iconv=/usr/local \
+              --enable-bcmath \
+              --enable-calendar \
+              --enable-ftp \
+              --with-ffi \
+              --enable-zend-test \
+              --enable-dl-test=shared \
+              --enable-intl \
+              --with-mhash \
+              --with-sodium \
+              --enable-werror \
+              --with-config-file-path=/etc \
+              --with-config-file-scan-dir=/etc/php.d
+            gmake -j2
+            mkdir /etc/php.d
+            gmake install
+            echo opcache.enable_cli=1 > /etc/php.d/opcache.ini
+            echo opcache.protect_memory=1 >> /etc/php.d/opcache.ini
+            echo opcache.preload_user=root >> /etc/php.d/opcache.ini
+          run: |
+            cd $GITHUB_WORKSPACE
+
+            export SKIP_IO_CAPTURE_TESTS=1
+            export CI_NO_IPV6=1
+            export STACK_LIMIT_DEFAULTS_CHECK=1
+            sapi/cli/php run-tests.php \
+              -P -q -j2 \
+              -g FAIL,BORK,LEAK,XLEAK \
+              --no-progress \
+              --offline \
+              --show-diff \
+              --show-slow 1000 \
+              --set-timeout 120 \
+              -d zend_extension=opcache.so
