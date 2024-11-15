@@ -9,7 +9,7 @@ $db = new PDO('sqlite::memory:');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 
 $db->exec('CREATE TABLE test_fetch_func_001 (id INTEGER , name VARCHAR)');
-$db->exec('INSERT INTO test_fetch_func_001 VALUES(1, "php"), (2, "")');
+$db->exec('INSERT INTO test_fetch_func_001 VALUES(1, \'php\'), (2, \'\')');
 
 $st = $db->query('SELECT * FROM test_fetch_func_001');
 $st->fetchAll(
