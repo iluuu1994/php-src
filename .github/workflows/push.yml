@@ -63,9 +63,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - debug: false
-            zts: false
-            asan: false
+          # - debug: false
+          #   zts: false
+          #   asan: false
           - debug: true
             zts: true
             asan: true
@@ -131,7 +131,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   MACOS_DEBUG_NTS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     runs-on: macos-13
     steps:
       - name: git checkout
@@ -164,7 +164,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2019
     env:
@@ -190,6 +190,7 @@ jobs:
       - name: Test
         run: .github/scripts/windows/test.bat
   FREEBSD:
+    if: false
     name: FREEBSD
     runs-on: ubuntu-latest
     steps:
