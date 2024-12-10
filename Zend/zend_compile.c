@@ -881,35 +881,55 @@ uint32_t zend_modifier_token_to_flag(zend_modifier_target target, uint32_t token
 {
 	switch (token) {
 		case T_PUBLIC:
-			if (target != ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
+			if (target == ZEND_MODIFIER_TARGET_PROPERTY
+			 || target == ZEND_MODIFIER_TARGET_METHOD
+			 || target == ZEND_MODIFIER_TARGET_CONSTANT
+			 || target == ZEND_MODIFIER_TARGET_CPP) {
 				return ZEND_ACC_PUBLIC;
 			}
 			break;
 		case T_PROTECTED:
-			if (target != ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
+			if (target == ZEND_MODIFIER_TARGET_PROPERTY
+			 || target == ZEND_MODIFIER_TARGET_METHOD
+			 || target == ZEND_MODIFIER_TARGET_CONSTANT
+			 || target == ZEND_MODIFIER_TARGET_CPP) {
 				return ZEND_ACC_PROTECTED;
 			}
 			break;
 		case T_PRIVATE:
-			if (target != ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
+			if (target == ZEND_MODIFIER_TARGET_PROPERTY
+			 || target == ZEND_MODIFIER_TARGET_METHOD
+			 || target == ZEND_MODIFIER_TARGET_CONSTANT
+			 || target == ZEND_MODIFIER_TARGET_CPP
+			 || target == ZEND_MODIFIER_TARGET_FUNCTION) {
 				return ZEND_ACC_PRIVATE;
+			}
+			if (target == ZEND_MODIFIER_TARGET_CLASS) {
+				return ZEND_ACC_PRIVATE_CLASS;
 			}
 			break;
 		case T_READONLY:
 			if (target == ZEND_MODIFIER_TARGET_PROPERTY || target == ZEND_MODIFIER_TARGET_CPP) {
 				return ZEND_ACC_READONLY;
 			}
+			if (target == ZEND_MODIFIER_TARGET_CLASS) {
+				return ZEND_ACC_READONLY_CLASS|ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+			}
 			break;
 		case T_ABSTRACT:
 			if (target == ZEND_MODIFIER_TARGET_METHOD || target == ZEND_MODIFIER_TARGET_PROPERTY) {
 				return ZEND_ACC_ABSTRACT;
 			}
+			if (target == ZEND_MODIFIER_TARGET_CLASS) {
+				return ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
+			}
 			break;
 		case T_FINAL:
 			if (target == ZEND_MODIFIER_TARGET_METHOD
-				|| target == ZEND_MODIFIER_TARGET_CONSTANT
-				|| target == ZEND_MODIFIER_TARGET_PROPERTY
-				|| target == ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
+			 || target == ZEND_MODIFIER_TARGET_CONSTANT
+			 || target == ZEND_MODIFIER_TARGET_PROPERTY
+			 || target == ZEND_MODIFIER_TARGET_PROPERTY_HOOK
+			 || target == ZEND_MODIFIER_TARGET_CLASS) {
 				return ZEND_ACC_FINAL;
 			}
 			break;
@@ -946,6 +966,10 @@ uint32_t zend_modifier_token_to_flag(zend_modifier_target target, uint32_t token
 		member = "parameter";
 	} else if (target == ZEND_MODIFIER_TARGET_PROPERTY_HOOK) {
 		member = "property hook";
+	} else if (target == ZEND_MODIFIER_TARGET_CLASS) {
+		member = "class";
+	} else if (target == ZEND_MODIFIER_TARGET_FUNCTION) {
+		member = "function";
 	} else {
 		ZEND_UNREACHABLE();
 	}
@@ -982,47 +1006,9 @@ uint32_t zend_modifier_list_to_flags(zend_modifier_target target, zend_ast *modi
 	return flags;
 }
 
-uint32_t zend_add_class_modifier(uint32_t flags, uint32_t new_flag) /* {{{ */
-{
-	uint32_t new_flags = flags | new_flag;
-	if ((flags & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) && (new_flag & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS)) {
-		zend_throw_exception(zend_ce_compile_error,
-			"Multiple abstract modifiers are not allowed", 0);
-		return 0;
-	}
-	if ((flags & ZEND_ACC_FINAL) && (new_flag & ZEND_ACC_FINAL)) {
-		zend_throw_exception(zend_ce_compile_error, "Multiple final modifiers are not allowed", 0);
-		return 0;
-	}
-	if ((flags & ZEND_ACC_READONLY_CLASS) && (new_flag & ZEND_ACC_READONLY_CLASS)) {
-		zend_throw_exception(zend_ce_compile_error, "Multiple readonly modifiers are not allowed", 0);
-		return 0;
-	}
-	if ((new_flags & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) && (new_flags & ZEND_ACC_FINAL)) {
-		zend_throw_exception(zend_ce_compile_error,
-			"Cannot use the final modifier on an abstract class", 0);
-		return 0;
-	}
-	return new_flags;
-}
-/* }}} */
-
 uint32_t zend_add_anonymous_class_modifier(uint32_t flags, uint32_t new_flag)
 {
 	uint32_t new_flags = flags | new_flag;
-	if (new_flag & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) {
-		zend_throw_exception(zend_ce_compile_error,
-			"Cannot use the abstract modifier on an anonymous class", 0);
-		return 0;
-	}
-	if (new_flag & ZEND_ACC_FINAL) {
-		zend_throw_exception(zend_ce_compile_error, "Cannot use the final modifier on an anonymous class", 0);
-		return 0;
-	}
-	if ((flags & ZEND_ACC_READONLY_CLASS) && (new_flag & ZEND_ACC_READONLY_CLASS)) {
-		zend_throw_exception(zend_ce_compile_error, "Multiple readonly modifiers are not allowed", 0);
-		return 0;
-	}
 	return new_flags;
 }
 
@@ -1043,6 +1029,13 @@ uint32_t zend_add_member_modifier(uint32_t flags, uint32_t new_flag, zend_modifi
 		if ((flags & ZEND_ACC_PPP_SET_MASK) && (new_flag & ZEND_ACC_PPP_SET_MASK)) {
 			zend_throw_exception(zend_ce_compile_error,
 				"Multiple access type modifiers are not allowed", 0);
+			return 0;
+		}
+	}
+	if (target == ZEND_MODIFIER_TARGET_CLASS) {
+		if ((new_flags & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) && (new_flags & ZEND_ACC_FINAL)) {
+			zend_throw_exception(zend_ce_compile_error,
+				"Cannot use the final modifier on an abstract class", 0);
 			return 0;
 		}
 	}
@@ -9083,6 +9076,15 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 
 		zend_register_seen_symbol(lcname, ZEND_SYMBOL_CLASS);
 	} else if (decl->flags & ZEND_ACC_ANON_CLASS) {
+		// FIXME: Create a new modifier target type for anonymous classes
+		if (decl->flags & ZEND_ACC_EXPLICIT_ABSTRACT_CLASS) {
+			zend_error_noreturn(E_COMPILE_ERROR, 
+				"Cannot use the abstract modifier on an anonymous class");
+		}
+		if (decl->flags & ZEND_ACC_FINAL) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Cannot use the final modifier on an anonymous class");
+		}
+
 		/* Find an anon class name that is not in use yet. */
 		name = NULL;
 		lcname = NULL;

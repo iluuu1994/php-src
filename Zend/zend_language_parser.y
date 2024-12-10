@@ -282,14 +282,14 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> attribute_decl attribute attributes attribute_group namespace_declaration_name
 %type <ast> match match_arm_list non_empty_match_arm_list match_arm match_arm_cond_list
 %type <ast> enum_declaration_statement enum_backing_type enum_case enum_case_expr
-%type <ast> function_name non_empty_member_modifiers
+%type <ast> function_name non_empty_member_modifiers non_empty_member_modifiers_without_static
 %type <ast> property_hook property_hook_list optional_property_hook_list hooked_property property_hook_body
 %type <ast> optional_parameter_list
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
-%type <num> class_modifiers class_modifier anonymous_class_modifiers anonymous_class_modifiers_optional use_type backup_fn_flags
-%type <num> optional_class_modifiers
+%type <num> use_type backup_fn_flags optional_class_modifiers member_modifier_without_static
+%type <num> function_modifiers
 
 %type <ptr> backup_lex_pos
 %type <str> backup_doc_comment
@@ -577,11 +577,22 @@ function_name:
 		}
 ;
 
+function_modifiers:
+		non_empty_member_modifiers_without_static
+			{ $$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_FUNCTION, $1);
+			  if (!$$) { YYERROR; } }
+;
+
 function_declaration_statement:
 	function returns_ref function_name backup_doc_comment '(' parameter_list ')' return_type
 	backup_fn_flags '{' inner_statement_list '}' backup_fn_flags
 		{ $$ = zend_ast_create_decl(ZEND_AST_FUNC_DECL, $2 | $13, $1, $4,
 		      zend_ast_get_str($3), $6, NULL, $11, $8, NULL); CG(extra_fn_flags) = $9; }
+	|	function_modifiers
+		function returns_ref function_name backup_doc_comment '(' parameter_list ')' return_type
+		backup_fn_flags '{' inner_statement_list '}' backup_fn_flags
+			{ $$ = zend_ast_create_decl(ZEND_AST_FUNC_DECL, $1 | $3 | $14, $2, $5,
+			      zend_ast_get_str($4), $7, NULL, $12, $9, NULL); CG(extra_fn_flags) = $10; }
 ;
 
 is_reference:
@@ -600,34 +611,11 @@ class_declaration_statement:
 			{ $$ = zend_ast_create_decl(ZEND_AST_CLASS, $1, $<num>3, $7, zend_ast_get_str($4), $5, $6, $9, NULL, NULL); }
 ;
 
-class_modifiers:
-		class_modifier 					{ $$ = $1; }
-	|	class_modifiers class_modifier
-			{ $$ = zend_add_class_modifier($1, $2); if (!$$) { YYERROR; } }
-;
-
 optional_class_modifiers:
 		%empty { $$ = 0; }
-	|	class_modifiers { $$ = $1; }
-;
-
-anonymous_class_modifiers:
-		class_modifier
-			{ $$ = zend_add_anonymous_class_modifier(0, $1); if (!$$) { YYERROR; } }
-	|	anonymous_class_modifiers class_modifier
-			{ $$ = zend_add_anonymous_class_modifier($1, $2); if (!$$) { YYERROR; } }
-;
-
-anonymous_class_modifiers_optional:
-		%empty				{ $$ = 0; }
-	|	anonymous_class_modifiers	{ $$ = $1; }
-;
-
-class_modifier:
-		T_ABSTRACT 		{ $$ = ZEND_ACC_EXPLICIT_ABSTRACT_CLASS; }
-	|	T_FINAL 		{ $$ = ZEND_ACC_FINAL; }
-	|	T_READONLY 		{ $$ = ZEND_ACC_READONLY_CLASS|ZEND_ACC_NO_DYNAMIC_PROPERTIES; }
-	|	T_PRIVATE 		{ $$ = ZEND_ACC_PRIVATE_CLASS; }
+	|	non_empty_member_modifiers_without_static
+			{ $$ = zend_modifier_list_to_flags(ZEND_MODIFIER_TARGET_CLASS, $1);
+			  if (!$$) { YYERROR; } }
 ;
 
 trait_declaration_statement:
@@ -1082,6 +1070,25 @@ member_modifier:
 	|	T_READONLY				{ $$ = T_READONLY; }
 ;
 
+non_empty_member_modifiers_without_static:
+		member_modifier_without_static
+			{ $$ = zend_ast_create_list(1, ZEND_AST_MODIFIER_LIST, zend_ast_create_zval_from_long($1)); }
+	|	non_empty_member_modifiers_without_static member_modifier_without_static
+			{ $$ = zend_ast_list_add($1, zend_ast_create_zval_from_long($2)); }
+;
+
+member_modifier_without_static:
+		T_PUBLIC		{ $$ = T_PUBLIC; }
+	|	T_PROTECTED		{ $$ = T_PROTECTED; }
+	|	T_PRIVATE		{ $$ = T_PRIVATE; }
+	|	T_PUBLIC_SET	{ $$ = T_PUBLIC_SET; }
+	|	T_PROTECTED_SET	{ $$ = T_PROTECTED_SET; }
+	|	T_PRIVATE_SET	{ $$ = T_PRIVATE_SET; }
+	|	T_ABSTRACT		{ $$ = T_ABSTRACT; }
+	|	T_FINAL			{ $$ = T_FINAL; }
+	|	T_READONLY		{ $$ = T_READONLY; }
+;
+
 property_list:
 		property_list ',' property { $$ = zend_ast_list_add($1, $3); }
 	|	property { $$ = zend_ast_create_list(1, ZEND_AST_PROP_DECL, $1); }
@@ -1182,7 +1189,7 @@ non_empty_for_exprs:
 ;
 
 anonymous_class:
-		anonymous_class_modifiers_optional T_CLASS { $<num>$ = CG(zend_lineno); } ctor_arguments
+		optional_class_modifiers T_CLASS { $<num>$ = CG(zend_lineno); } ctor_arguments
 		extends_from implements_list backup_doc_comment '{' class_statement_list '}' {
 			zend_ast *decl = zend_ast_create_decl(
 				ZEND_AST_CLASS, ZEND_ACC_ANON_CLASS | $1, $<num>3, $7, NULL,
