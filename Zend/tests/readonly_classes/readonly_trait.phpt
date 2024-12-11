@@ -9,4 +9,4 @@ readonly trait Foo
 
 ?>
 --EXPECTF--
-Fatal error: Cannot use the readonly modifier on a function in %s on line %d
+Fatal error: Trait Foo must not be readonly in %s on line %d

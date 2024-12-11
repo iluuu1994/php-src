@@ -8140,6 +8140,17 @@ enum func_decl_level {
 	FUNC_DECL_LEVEL_CONSTEXPR,
 };
 
+static zend_string *zend_generate_priv_func_name(zend_string *current_ns, zend_ast_decl *decl, zend_string *local_name)
+{
+	zend_string *filename = CG(active_op_array)->filename;
+	zend_string *result = zend_strpprintf(0, "%s%s%s@%s:%" PRIu32 "$%" PRIx32,
+		current_ns ? ZSTR_VAL(current_ns) : "",
+		current_ns ? "\\" : "",
+		ZSTR_VAL(local_name), ZSTR_VAL(filename), decl->start_lineno, CG(rtd_key_counter)++);
+	return zend_new_interned_string(result);
+}
+
+
 static zend_string *zend_begin_func_decl(znode *result, zend_op_array *op_array, zend_ast_decl *decl, enum func_decl_level level) /* {{{ */
 {
 	zend_string *unqualified_name, *name, *lcname;
@@ -8182,6 +8193,51 @@ static zend_string *zend_begin_func_decl(znode *result, zend_op_array *op_array,
 		);
 
 		op_array->function_name = name = unqualified_name;
+	} else if (op_array->fn_flags & ZEND_ACC_PRIVATE) {
+		zend_string *current_ns = FC(current_namespace);
+		zend_string *new_name = decl->name;
+
+		/* Find an private class name that is not in use yet. */
+		name = NULL;
+		lcname = NULL;
+		do {
+			zend_tmp_string_release(name);
+			zend_tmp_string_release(lcname);
+			name = zend_generate_priv_func_name(current_ns, decl, new_name);
+			lcname = zend_string_tolower(name);
+		} while (zend_hash_exists(CG(class_table), lcname));
+		// FIXME: Avoid duplicate allocation.
+		zend_string_release(lcname);
+		op_array->function_name = name;
+
+		HashTable *current_import = zend_get_import_ht(ZEND_SYMBOL_FUNCTION);
+		zend_string *old_name = name;
+		zend_string *lookup_name = zend_string_tolower(new_name);
+
+		if (current_ns) {
+			zend_string *ns_name = zend_string_alloc(ZSTR_LEN(current_ns) + 1 + ZSTR_LEN(new_name), 0);
+			zend_str_tolower_copy(ZSTR_VAL(ns_name), ZSTR_VAL(current_ns), ZSTR_LEN(current_ns));
+			ZSTR_VAL(ns_name)[ZSTR_LEN(current_ns)] = '\\';
+			memcpy(ZSTR_VAL(ns_name) + ZSTR_LEN(current_ns) + 1, ZSTR_VAL(lookup_name), ZSTR_LEN(lookup_name) + 1);
+
+			if (zend_have_seen_symbol(ns_name, ZEND_SYMBOL_FUNCTION)) {
+				zend_check_already_in_use(ZEND_SYMBOL_FUNCTION, old_name, new_name, ns_name);
+			}
+
+			zend_string_efree(ns_name);
+		} else if (zend_have_seen_symbol(lookup_name, ZEND_SYMBOL_FUNCTION)) {
+			zend_check_already_in_use(ZEND_SYMBOL_FUNCTION, old_name, new_name, lookup_name);
+		}
+
+		zend_string_addref(old_name);
+		old_name = zend_new_interned_string(old_name);
+		if (!zend_hash_add_ptr(current_import, lookup_name, old_name)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Cannot use function %s as %s because the name "
+				"is already in use", ZSTR_VAL(old_name), ZSTR_VAL(new_name));
+		}
+
+		zend_string_release_ex(lookup_name, 0);
+		unqualified_name = decl->name;
 	} else {
 		unqualified_name = decl->name;
 		op_array->function_name = name = zend_prefix_with_ns(unqualified_name);
@@ -8189,7 +8245,7 @@ static zend_string *zend_begin_func_decl(znode *result, zend_op_array *op_array,
 
 	lcname = zend_string_tolower(name);
 
-	if (FC(imports_function)) {
+	if (FC(imports_function) && !(op_array->fn_flags & ZEND_ACC_PRIVATE)) {
 		zend_string *import_name =
 			zend_hash_find_ptr_lc(FC(imports_function), unqualified_name);
 		if (import_name && !zend_string_equals_ci(lcname, import_name)) {

@@ -9,4 +9,4 @@ readonly interface Foo
 
 ?>
 --EXPECTF--
-Fatal error: Cannot use the readonly modifier on a function in %s on line %d
+Fatal error: Interface Foo must not be readonly in %s on line %d
