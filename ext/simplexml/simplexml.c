@@ -2654,6 +2654,7 @@ PHP_MINIT_FUNCTION(simplexml)
 	ce_SimpleXMLElement = register_class_SimpleXMLElement(zend_ce_stringable, zend_ce_countable, spl_ce_RecursiveIterator);
 	ce_SimpleXMLElement->create_object = sxe_object_new;
 	ce_SimpleXMLElement->default_object_handlers = &sxe_object_handlers;
+	ce_SimpleXMLElement->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	ce_SimpleXMLElement->get_iterator = php_sxe_get_iterator;
 
 	memcpy(&sxe_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));

@@ -2491,6 +2491,7 @@ void pdo_stmt_init(void)
 	pdo_dbstmt_ce->get_iterator = pdo_stmt_iter_get;
 	pdo_dbstmt_ce->create_object = pdo_dbstmt_new;
 	pdo_dbstmt_ce->default_object_handlers = &pdo_dbstmt_object_handlers;
+	pdo_dbstmt_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&pdo_dbstmt_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	pdo_dbstmt_object_handlers.offset = XtOffsetOf(pdo_stmt_t, std);

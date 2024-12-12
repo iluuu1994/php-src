@@ -278,6 +278,7 @@ PHP_MINIT_FUNCTION(xsl)
 	xsl_xsltprocessor_class_entry = register_class_XSLTProcessor();
 	xsl_xsltprocessor_class_entry->create_object = xsl_objects_new;
 	xsl_xsltprocessor_class_entry->default_object_handlers = &xsl_object_handlers;
+	xsl_xsltprocessor_class_entry->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 #ifdef HAVE_XSL_EXSLT
 	exsltRegisterAll();

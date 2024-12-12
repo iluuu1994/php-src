@@ -1292,6 +1292,7 @@ PHP_MINIT_FUNCTION(dom)
 	dom_xpath_class_entry = register_class_DOMXPath();
 	dom_xpath_class_entry->create_object = dom_xpath_objects_new;
 	dom_xpath_class_entry->default_object_handlers = &dom_xpath_object_handlers;
+	dom_xpath_class_entry->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	zend_hash_init(&dom_xpath_prop_handlers, 0, NULL, NULL, true);
 	DOM_REGISTER_PROP_HANDLER(&dom_xpath_prop_handlers, "document", dom_xpath_document_read, NULL);
@@ -1301,6 +1302,7 @@ PHP_MINIT_FUNCTION(dom)
 	dom_modern_xpath_class_entry = register_class_Dom_XPath();
 	dom_modern_xpath_class_entry->create_object = dom_xpath_objects_new;
 	dom_modern_xpath_class_entry->default_object_handlers = &dom_xpath_object_handlers;
+	dom_modern_xpath_class_entry->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	zend_hash_add_new_ptr(&classes, dom_modern_xpath_class_entry->name, &dom_xpath_prop_handlers);
 #endif

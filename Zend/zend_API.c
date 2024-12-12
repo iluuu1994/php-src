@@ -4494,6 +4494,27 @@ static zend_always_inline bool is_persistent_class(zend_class_entry *ce) {
 		&& ce->info.internal.module->type == MODULE_PERSISTENT;
 }
 
+static bool zend_type_may_be_cyclic(zend_type type)
+{
+	if (!ZEND_TYPE_IS_SET(type)) {
+		return true;
+	}
+
+	if (!ZEND_TYPE_IS_COMPLEX(type)) {
+		return ZEND_TYPE_PURE_MASK(type) & (MAY_BE_OBJECT|MAY_BE_ARRAY);
+	} else if (ZEND_TYPE_IS_UNION(type)) {
+		zend_type *list_type;
+		ZEND_TYPE_LIST_FOREACH(ZEND_TYPE_LIST(type), list_type) {
+			if (zend_type_may_be_cyclic(*list_type)) {
+				return true;
+			}
+		} ZEND_TYPE_LIST_FOREACH_END();
+		return false;
+	}
+
+	return true;
+}
+
 ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, zend_string *name, zval *property, int access_type, zend_string *doc_comment, zend_type type) /* {{{ */
 {
 	zend_property_info *property_info, *property_info_ptr;
@@ -4504,6 +4525,12 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		if (access_type & ZEND_ACC_READONLY) {
 			ce->ce_flags |= ZEND_ACC_HAS_READONLY_PROPS;
 		}
+	}
+
+	if (!(access_type & ZEND_ACC_STATIC)
+	 && !(ce->ce_flags & ZEND_ACC_MAY_BE_CYCLIC)
+	 && zend_type_may_be_cyclic(type)) {
+		ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	}
 
 	if (ce->type == ZEND_INTERNAL_CLASS) {

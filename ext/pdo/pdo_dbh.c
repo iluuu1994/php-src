@@ -1449,6 +1449,7 @@ void pdo_dbh_init(int module_number)
 	pdo_dbh_ce = register_class_PDO();
 	pdo_dbh_ce->create_object = pdo_dbh_new;
 	pdo_dbh_ce->default_object_handlers = &pdo_dbh_object_handlers;
+	pdo_dbh_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&pdo_dbh_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	pdo_dbh_object_handlers.offset = XtOffsetOf(pdo_dbh_object_t, std);

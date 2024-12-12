@@ -606,6 +606,7 @@ static zend_object_handlers curl_multi_handlers;
 void curl_multi_register_handlers(void) {
 	curl_multi_ce->create_object = curl_multi_create_object;
 	curl_multi_ce->default_object_handlers = &curl_multi_handlers;
+	curl_multi_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&curl_multi_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	curl_multi_handlers.offset = XtOffsetOf(php_curlm, std);

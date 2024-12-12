@@ -228,6 +228,7 @@ PHP_MINIT_FUNCTION(xml)
 	xml_parser_ce = register_class_XMLParser();
 	xml_parser_ce->create_object = xml_parser_create_object;
 	xml_parser_ce->default_object_handlers = &xml_parser_object_handlers;
+	xml_parser_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&xml_parser_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	xml_parser_object_handlers.offset = XtOffsetOf(xml_parser, std);

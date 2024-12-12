@@ -1141,6 +1141,7 @@ PHP_MINIT_FUNCTION(spl_heap) /* {{{ */
 	spl_ce_SplHeap = register_class_SplHeap(zend_ce_iterator, zend_ce_countable);
 	spl_ce_SplHeap->create_object = spl_heap_object_new;
 	spl_ce_SplHeap->default_object_handlers = &spl_handler_SplHeap;
+	spl_ce_SplHeap->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	spl_ce_SplHeap->get_iterator = spl_heap_get_iterator;
 
 	memcpy(&spl_handler_SplHeap, &std_object_handlers, sizeof(zend_object_handlers));
@@ -1162,6 +1163,7 @@ PHP_MINIT_FUNCTION(spl_heap) /* {{{ */
 	spl_ce_SplPriorityQueue = register_class_SplPriorityQueue(zend_ce_iterator, zend_ce_countable);
 	spl_ce_SplPriorityQueue->create_object = spl_heap_object_new;
 	spl_ce_SplPriorityQueue->default_object_handlers = &spl_handler_SplPriorityQueue;
+	spl_ce_SplPriorityQueue->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	spl_ce_SplPriorityQueue->get_iterator = spl_pqueue_get_iterator;
 
 	memcpy(&spl_handler_SplPriorityQueue, &std_object_handlers, sizeof(zend_object_handlers));

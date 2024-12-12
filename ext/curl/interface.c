@@ -395,6 +395,7 @@ PHP_MINIT_FUNCTION(curl)
 	curl_ce = register_class_CurlHandle();
 	curl_ce->create_object = curl_create_object;
 	curl_ce->default_object_handlers = &curl_object_handlers;
+	curl_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&curl_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	curl_object_handlers.offset = XtOffsetOf(php_curl, std);

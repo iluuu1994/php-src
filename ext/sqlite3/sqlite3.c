@@ -2411,6 +2411,7 @@ PHP_MINIT_FUNCTION(sqlite3)
 	php_sqlite3_sc_entry = register_class_SQLite3();
 	php_sqlite3_sc_entry->create_object = php_sqlite3_object_new;
 	php_sqlite3_sc_entry->default_object_handlers = &sqlite3_object_handlers;
+	php_sqlite3_sc_entry->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	/* Register SQLite 3 Prepared Statement Class */
 	sqlite3_stmt_object_handlers.offset = XtOffsetOf(php_sqlite3_stmt, zo);

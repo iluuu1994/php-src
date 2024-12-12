@@ -70,6 +70,8 @@ ZEND_API HashTable *rebuild_object_properties_internal(zend_object *zobj) /* {{{
 		zend_class_entry *ce = zobj->ce;
 		int i;
 
+		GC_TYPE_INFO(zobj) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
+
 		zobj->properties = zend_new_array(ce->default_properties_count);
 		if (ce->default_properties_count) {
 			zend_hash_real_init_mixed(zobj->properties);

@@ -705,6 +705,9 @@ void zend_register_closure_ce(void) /* {{{ */
 	zend_ce_closure = register_class_Closure();
 	zend_ce_closure->create_object = zend_closure_new;
 	zend_ce_closure->default_object_handlers = &closure_handlers;
+	/* FIXME: Potentially improve during construction of closure? static closures
+	 * not binding by references can't be cyclic. */
+	zend_ce_closure->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&closure_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	closure_handlers.free_obj = zend_closure_free_storage;

@@ -788,6 +788,7 @@ void zend_register_weakref_ce(void) /* {{{ */
 	zend_ce_weakmap->create_object = zend_weakmap_create_object;
 	zend_ce_weakmap->get_iterator = zend_weakmap_get_iterator;
 	zend_ce_weakmap->default_object_handlers = &zend_weakmap_handlers;
+	zend_ce_weakmap->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&zend_weakmap_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 	zend_weakmap_handlers.offset = XtOffsetOf(zend_weakmap, std);

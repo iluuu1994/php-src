@@ -1256,6 +1256,7 @@ PHP_MINIT_FUNCTION(spl_dllist) /* {{{ */
 	);
 	spl_ce_SplDoublyLinkedList->create_object = spl_dllist_object_new;
 	spl_ce_SplDoublyLinkedList->default_object_handlers = &spl_handler_SplDoublyLinkedList;
+	spl_ce_SplDoublyLinkedList->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	spl_ce_SplDoublyLinkedList->get_iterator = spl_dllist_get_iterator;
 
 	memcpy(&spl_handler_SplDoublyLinkedList, &std_object_handlers, sizeof(zend_object_handlers));
