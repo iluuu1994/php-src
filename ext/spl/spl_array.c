@@ -1883,7 +1883,6 @@ PHP_MINIT_FUNCTION(spl_array)
 	spl_ce_ArrayObject = register_class_ArrayObject(zend_ce_aggregate, zend_ce_arrayaccess, zend_ce_serializable, zend_ce_countable);
 	spl_ce_ArrayObject->create_object = spl_array_object_new;
 	spl_ce_ArrayObject->default_object_handlers = &spl_handler_ArrayObject;
-	spl_ce_ArrayObject->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&spl_handler_ArrayObject, &std_object_handlers, sizeof(zend_object_handlers));
 
@@ -1910,7 +1909,6 @@ PHP_MINIT_FUNCTION(spl_array)
 	spl_ce_ArrayIterator = register_class_ArrayIterator(spl_ce_SeekableIterator, zend_ce_arrayaccess, zend_ce_serializable, zend_ce_countable);
 	spl_ce_ArrayIterator->create_object = spl_array_object_new;
 	spl_ce_ArrayIterator->default_object_handlers = &spl_handler_ArrayObject;
-	spl_ce_ArrayIterator->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	spl_ce_ArrayIterator->get_iterator = spl_array_get_iterator;
 
 	spl_ce_RecursiveArrayIterator = register_class_RecursiveArrayIterator(spl_ce_ArrayIterator, spl_ce_RecursiveIterator);

@@ -3108,7 +3108,6 @@ PHP_MINIT_FUNCTION(spl_iterators)
 	spl_ce_RecursiveIteratorIterator = register_class_RecursiveIteratorIterator(spl_ce_OuterIterator);
 	spl_ce_RecursiveIteratorIterator->create_object = spl_RecursiveIteratorIterator_new;
 	spl_ce_RecursiveIteratorIterator->default_object_handlers = &spl_handlers_rec_it_it;
-	spl_ce_RecursiveIteratorIterator->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	spl_ce_RecursiveIteratorIterator->get_iterator = spl_recursive_it_get_iterator;
 
 	memcpy(&spl_handlers_rec_it_it, &std_object_handlers, sizeof(zend_object_handlers));
@@ -3128,7 +3127,6 @@ PHP_MINIT_FUNCTION(spl_iterators)
 	spl_ce_IteratorIterator = register_class_IteratorIterator(spl_ce_OuterIterator);
 	spl_ce_IteratorIterator->create_object = spl_dual_it_new;
 	spl_ce_IteratorIterator->default_object_handlers = &spl_handlers_dual_it;
-	spl_ce_IteratorIterator->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	spl_ce_FilterIterator = register_class_FilterIterator(spl_ce_IteratorIterator);
 	spl_ce_FilterIterator->create_object = spl_dual_it_new;

@@ -1379,7 +1379,6 @@ PHP_MINIT_FUNCTION(spl_observer)
 	spl_ce_SplObjectStorage = register_class_SplObjectStorage(zend_ce_countable, spl_ce_SeekableIterator, zend_ce_serializable, zend_ce_arrayaccess);
 	spl_ce_SplObjectStorage->create_object = spl_SplObjectStorage_new;
 	spl_ce_SplObjectStorage->default_object_handlers = &spl_handler_SplObjectStorage;
-	spl_ce_SplObjectStorage->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&spl_handler_SplObjectStorage, &std_object_handlers, sizeof(zend_object_handlers));
 
@@ -1396,7 +1395,6 @@ PHP_MINIT_FUNCTION(spl_observer)
 	spl_ce_MultipleIterator = register_class_MultipleIterator(zend_ce_iterator);
 	spl_ce_MultipleIterator->create_object = spl_SplObjectStorage_new;
 	spl_ce_MultipleIterator->default_object_handlers = &spl_handler_SplObjectStorage;
-	spl_ce_MultipleIterator->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	return SUCCESS;
 }

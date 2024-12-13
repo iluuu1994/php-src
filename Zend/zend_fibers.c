@@ -1107,7 +1107,6 @@ void zend_register_fiber_ce(void)
 	zend_ce_fiber = register_class_Fiber();
 	zend_ce_fiber->create_object = zend_fiber_object_create;
 	zend_ce_fiber->default_object_handlers = &zend_fiber_handlers;
-	zend_ce_fiber->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	zend_fiber_handlers = std_object_handlers;
 	zend_fiber_handlers.dtor_obj = zend_fiber_object_destroy;

@@ -1215,7 +1215,6 @@ void zend_register_generator_ce(void) /* {{{ */
 	/* get_iterator has to be assigned *after* implementing the interface */
 	zend_ce_generator->get_iterator = zend_generator_get_iterator;
 	zend_ce_generator->default_object_handlers = &zend_generator_handlers;
-	zend_ce_generator->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&zend_generator_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	zend_generator_handlers.free_obj = zend_generator_free_storage;

@@ -455,7 +455,6 @@ static PHP_MINIT_FUNCTION(sockets)
 	socket_ce = register_class_Socket();
 	socket_ce->create_object = socket_create_object;
 	socket_ce->default_object_handlers = &socket_object_handlers;
-	socket_ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	memcpy(&socket_object_handlers, &std_object_handlers, sizeof(zend_object_handlers));
 	socket_object_handlers.offset = XtOffsetOf(php_socket, std);

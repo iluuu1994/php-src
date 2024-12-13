@@ -7692,113 +7692,91 @@ PHP_MINIT_FUNCTION(reflection) /* {{{ */
 
 	reflection_function_abstract_ptr = register_class_ReflectionFunctionAbstract(reflector_ptr);
 	reflection_function_abstract_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_function_abstract_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 	reflection_function_abstract_ptr->create_object = reflection_objects_new;
 
 	reflection_function_ptr = register_class_ReflectionFunction(reflection_function_abstract_ptr);
 	reflection_function_ptr->create_object = reflection_objects_new;
 	reflection_function_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_function_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_generator_ptr = register_class_ReflectionGenerator();
 	reflection_generator_ptr->create_object = reflection_objects_new;
 	reflection_generator_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_generator_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_parameter_ptr = register_class_ReflectionParameter(reflector_ptr);
 	reflection_parameter_ptr->create_object = reflection_objects_new;
 	reflection_parameter_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_parameter_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_type_ptr = register_class_ReflectionType(zend_ce_stringable);
 	reflection_type_ptr->create_object = reflection_objects_new;
 	reflection_type_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_type_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_named_type_ptr = register_class_ReflectionNamedType(reflection_type_ptr);
 	reflection_named_type_ptr->create_object = reflection_objects_new;
 	reflection_named_type_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_named_type_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_union_type_ptr = register_class_ReflectionUnionType(reflection_type_ptr);
 	reflection_union_type_ptr->create_object = reflection_objects_new;
 	reflection_union_type_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_union_type_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_intersection_type_ptr = register_class_ReflectionIntersectionType(reflection_type_ptr);
 	reflection_intersection_type_ptr->create_object = reflection_objects_new;
 	reflection_intersection_type_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_intersection_type_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_method_ptr = register_class_ReflectionMethod(reflection_function_abstract_ptr);
 	reflection_method_ptr->create_object = reflection_objects_new;
 	reflection_method_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_method_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_class_ptr = register_class_ReflectionClass(reflector_ptr);
 	reflection_class_ptr->create_object = reflection_objects_new;
 	reflection_class_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_class_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_object_ptr = register_class_ReflectionObject(reflection_class_ptr);
 	reflection_object_ptr->create_object = reflection_objects_new;
 	reflection_object_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_object_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_property_ptr = register_class_ReflectionProperty(reflector_ptr);
 	reflection_property_ptr->create_object = reflection_objects_new;
 	reflection_property_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_property_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_class_constant_ptr = register_class_ReflectionClassConstant(reflector_ptr);
 	reflection_class_constant_ptr->create_object = reflection_objects_new;
 	reflection_class_constant_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_class_constant_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_extension_ptr = register_class_ReflectionExtension(reflector_ptr);
 	reflection_extension_ptr->create_object = reflection_objects_new;
 	reflection_extension_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_extension_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_zend_extension_ptr = register_class_ReflectionZendExtension(reflector_ptr);
 	reflection_zend_extension_ptr->create_object = reflection_objects_new;
 	reflection_zend_extension_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_zend_extension_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_reference_ptr = register_class_ReflectionReference();
 	reflection_reference_ptr->create_object = reflection_objects_new;
 	reflection_reference_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_reference_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_attribute_ptr = register_class_ReflectionAttribute(reflector_ptr);
 	reflection_attribute_ptr->create_object = reflection_objects_new;
 	reflection_attribute_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_attribute_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_enum_ptr = register_class_ReflectionEnum(reflection_class_ptr);
 	reflection_enum_ptr->create_object = reflection_objects_new;
 	reflection_enum_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_enum_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_enum_unit_case_ptr = register_class_ReflectionEnumUnitCase(reflection_class_constant_ptr);
 	reflection_enum_unit_case_ptr->create_object = reflection_objects_new;
 	reflection_enum_unit_case_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_enum_unit_case_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_enum_backed_case_ptr = register_class_ReflectionEnumBackedCase(reflection_enum_unit_case_ptr);
 	reflection_enum_backed_case_ptr->create_object = reflection_objects_new;
 	reflection_enum_backed_case_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_enum_backed_case_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_fiber_ptr = register_class_ReflectionFiber();
 	reflection_fiber_ptr->create_object = reflection_objects_new;
 	reflection_fiber_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_fiber_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_constant_ptr = register_class_ReflectionConstant(reflector_ptr);
 	reflection_constant_ptr->create_object = reflection_objects_new;
 	reflection_constant_ptr->default_object_handlers = &reflection_object_handlers;
-	reflection_constant_ptr->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 
 	reflection_property_hook_type_ptr = register_class_PropertyHookType();
 

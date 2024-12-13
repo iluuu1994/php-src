@@ -2390,6 +2390,8 @@ ZEND_API zend_result zend_startup_module_ex(zend_module_entry *module) /* {{{ */
 	}
 	module->module_started = 1;
 
+	uint32_t prev_class_count = zend_hash_num_elements(CG(class_table));
+
 	/* Check module dependencies */
 	if (module->deps) {
 		const zend_module_dep *dep = module->deps;
@@ -2434,6 +2436,19 @@ ZEND_API zend_result zend_startup_module_ex(zend_module_entry *module) /* {{{ */
 		}
 		EG(current_module) = NULL;
 	}
+
+	/* Mark classes with custom get_gc handler as potentially cyclic, even if
+	 * their properties don't indicate so. */
+	if (prev_class_count != zend_hash_num_elements(CG(class_table))) {
+		Bucket *p;
+		ZEND_HASH_MAP_FOREACH_BUCKET_FROM(CG(class_table), p, prev_class_count) {
+			zend_class_entry *ce = Z_PTR(p->val);
+			if (ce->default_object_handlers->get_gc != zend_std_get_gc) {
+				ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
+			}
+		} ZEND_HASH_FOREACH_END();
+	}
+
 	return SUCCESS;
 }
 /* }}} */
