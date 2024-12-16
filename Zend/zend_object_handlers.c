@@ -70,8 +70,6 @@ ZEND_API HashTable *rebuild_object_properties_internal(zend_object *zobj) /* {{{
 		zend_class_entry *ce = zobj->ce;
 		int i;
 
-		GC_TYPE_INFO(zobj) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
-
 		zobj->properties = zend_new_array(ce->default_properties_count);
 		if (ce->default_properties_count) {
 			zend_hash_real_init_mixed(zobj->properties);
@@ -1171,6 +1169,7 @@ write_std_property:
 				variable_ptr = &EG(error_zval);
 				goto exit;
 			}
+			GC_TYPE_INFO(zobj) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
 			if (UNEXPECTED(!(zobj->ce->ce_flags & ZEND_ACC_ALLOW_DYNAMIC_PROPERTIES))) {
 				if (UNEXPECTED(!zend_deprecated_dynamic_property(zobj, name))) {
 					variable_ptr = &EG(error_zval);
@@ -1389,6 +1388,7 @@ ZEND_API zval *zend_std_get_property_ptr_ptr(zend_object *zobj, zend_string *nam
 					return &EG(error_zval);
 				}
 			}
+			GC_TYPE_INFO(zobj) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
 			if (UNEXPECTED(zend_lazy_object_must_init(zobj))) {
 				zobj = zend_lazy_object_init(zobj);
 				if (!zobj) {

@@ -1770,6 +1770,7 @@ ZEND_API void object_properties_load(zend_object *object, HashTable *properties)
 						ZSTR_VAL(object->ce->name), property_info != ZEND_WRONG_PROPERTY_INFO ? zend_get_unmangled_property_name(key): "");
 				}
 
+				GC_TYPE_INFO(object) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
 				prop = zend_hash_update(zend_std_get_properties_ex(object), key, prop);
 				zval_add_ref(prop);
 			}
@@ -1782,6 +1783,7 @@ ZEND_API void object_properties_load(zend_object *object, HashTable *properties)
 					ZSTR_VAL(object->ce->name), h);
 			}
 
+			GC_TYPE_INFO(object) &= ~(GC_NOT_COLLECTABLE << GC_FLAGS_SHIFT);
 			prop = zend_hash_index_update(zend_std_get_properties_ex(object), h, prop);
 			zval_add_ref(prop);
 		}
@@ -2443,7 +2445,10 @@ ZEND_API zend_result zend_startup_module_ex(zend_module_entry *module) /* {{{ */
 		Bucket *p;
 		ZEND_HASH_MAP_FOREACH_BUCKET_FROM(CG(class_table), p, prev_class_count) {
 			zend_class_entry *ce = Z_PTR(p->val);
-			if (ce->default_object_handlers->get_gc != zend_std_get_gc) {
+			if ((ce->ce_flags & ZEND_ACC_ALLOW_DYNAMIC_PROPERTIES)
+			 || ce->create_object
+			 || ce->default_object_handlers->get_gc != zend_std_get_gc
+			 || ce->default_object_handlers->get_properties != zend_std_get_properties) {
 				ce->ce_flags |= ZEND_ACC_MAY_BE_CYCLIC;
 			}
 		} ZEND_HASH_FOREACH_END();
