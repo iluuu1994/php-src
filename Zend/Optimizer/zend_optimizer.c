@@ -830,15 +830,18 @@ static bool zend_optimizer_ignore_function(zval *fbc_zv, zend_string *filename)
 	}
 }
 
-zend_class_entry *zend_optimizer_get_class_entry(
-		const zend_script *script, const zend_op_array *op_array, zend_string *lcname) {
+zend_class_entry *zend_optimizer_get_class_entry_ex(
+		const zend_script *script, const zend_op_array *op_array, zend_string *lcname, zend_string *filename) {
 	zend_class_entry *ce = script ? zend_hash_find_ptr(&script->class_table, lcname) : NULL;
 	if (ce) {
 		return ce;
 	}
 
+	if (!filename && op_array) {
+		filename = op_array->filename;
+	}
 	zval *ce_zv = zend_hash_find(CG(class_table), lcname);
-	if (ce_zv && !zend_optimizer_ignore_class(ce_zv, op_array ? op_array->filename : NULL)) {
+	if (ce_zv && !zend_optimizer_ignore_class(ce_zv, filename)) {
 		return Z_PTR_P(ce_zv);
 	}
 
@@ -847,6 +850,11 @@ zend_class_entry *zend_optimizer_get_class_entry(
 	}
 
 	return NULL;
+}
+
+zend_class_entry *zend_optimizer_get_class_entry(
+		const zend_script *script, const zend_op_array *op_array, zend_string *lcname) {
+	return zend_optimizer_get_class_entry_ex(script, op_array, lcname, NULL);
 }
 
 zend_class_entry *zend_optimizer_get_class_entry_from_op1(
