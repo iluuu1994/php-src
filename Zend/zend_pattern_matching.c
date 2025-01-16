@@ -29,26 +29,45 @@ typedef enum {
 } pm_result;
 
 pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern);
+static zend_class_entry *get_class_from_fetch_type(uint32_t fetch_type);
 
 static pm_result match_type(zval *zv, zend_ast *type_ast)
 {
 	zend_ast *class_name_ast = type_ast->child[0];
+	uint32_t fetch_type;
+
 	if (class_name_ast) {
 		if (Z_TYPE_P(zv) != IS_OBJECT) {
 			return PM_MISMATCH;
 		}
 
-		zend_object *obj = Z_OBJ_P(zv);
 		zend_string *class_name = zend_ast_get_str(class_name_ast);
-		if (!zend_string_equals_ci(obj->ce->name, class_name)) {
-			zend_class_entry *expected_class = zend_lookup_class_ex(class_name, NULL, ZEND_FETCH_CLASS_NO_AUTOLOAD);
-			if (!expected_class || !instanceof_function(Z_OBJ_P(zv)->ce, expected_class)) {
-				return PM_MISMATCH;
+		fetch_type = zend_get_class_fetch_type(class_name);
+
+		zend_class_entry *expected_class = NULL;
+		if (fetch_type == ZEND_FETCH_CLASS_DEFAULT) {
+			zend_object *obj = Z_OBJ_P(zv);
+			if (zend_string_equals_ci(obj->ce->name, class_name)) {
+				return PM_MATCH;
 			}
+			expected_class = zend_lookup_class_ex(class_name, NULL, ZEND_FETCH_CLASS_NO_AUTOLOAD);
+		} else {
+non_default_fetch_type:
+			expected_class = get_class_from_fetch_type(fetch_type);
+			if (!expected_class) {
+				return PM_ERROR;
+			}
+		}
+		if (!expected_class || !instanceof_function(Z_OBJ_P(zv)->ce, expected_class)) {
+			return PM_MISMATCH;
 		}
 	} else {
 		zend_type type = ZEND_TYPE_INIT_MASK(type_ast->attr);
 		if (!ZEND_TYPE_CONTAINS_CODE(type, Z_TYPE_P(zv))) {
+			if (ZEND_TYPE_CONTAINS_CODE(type, IS_STATIC)) {
+				fetch_type = ZEND_FETCH_CLASS_STATIC;
+				goto non_default_fetch_type;
+			}
 			return PM_MISMATCH;
 		}
 	}
@@ -105,25 +124,9 @@ static pm_result match_object(zval *zv, zend_ast *pattern)
 	}
 
 	zend_object *obj = Z_OBJ_P(zv);
-	zend_ast *class_name_ast = pattern->child[0];
-
-	if (class_name_ast) {
-		zend_string *class_name = zend_ast_get_str(class_name_ast);
-		if (!zend_string_equals_ci(obj->ce->name, class_name)) {
-			zend_class_entry *expected_class = zend_lookup_class_ex(class_name, NULL, ZEND_FETCH_CLASS_NO_AUTOLOAD);
-			if (!expected_class || !instanceof_function(Z_OBJ_P(zv)->ce, expected_class)) {
-				return PM_MISMATCH;
-			}
-		}
-	} else {
-		uint32_t fetch_type = pattern->attr;
-		zend_class_entry *scope = get_class_from_fetch_type(fetch_type);
-		if (EG(exception)) {
-			return PM_ERROR;
-		}
-		if (!instanceof_function(Z_OBJ_P(zv)->ce, scope)) {
-			return PM_MISMATCH;
-		}
+	pm_result type_result = match_type(zv, pattern->child[0]);
+	if (type_result != PM_MATCH) {
+		return type_result;
 	}
 
 	zend_ast_list *elements = zend_ast_get_list(pattern->child[1]);
@@ -165,11 +168,6 @@ static pm_result match_range(zval *zv, zend_ast *pattern)
 
 static pm_result match_binding(zval *zv, zend_ast *pattern)
 {
-	zend_ast *sub_pattern = pattern->child[1];
-	if (sub_pattern && !zend_pattern_match_ex(zv, sub_pattern)) {
-		return PM_MISMATCH;
-	}
-
 	zend_pm_context *context = EG(pm_context);
 	zend_pm_bindings *bindings = context->bindings;
 	if (!bindings) {

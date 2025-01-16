@@ -964,9 +964,9 @@ attributed_class_statement:
 		property_modifiers optional_type_without_static property_list ';'
 			{ $$ = zend_ast_create(ZEND_AST_PROP_GROUP, $2, $3, NULL);
 			  $$->attr = $1; }
-	|	property_modifiers optional_type_without_static hooked_property
+	/*|	property_modifiers optional_type_without_static hooked_property
 			{ $$ = zend_ast_create(ZEND_AST_PROP_GROUP, $2, zend_ast_create_list(1, ZEND_AST_PROP_DECL, $3), NULL);
-			  $$->attr = $1; }
+			  $$->attr = $1; }*/
 	|	class_const_modifiers T_CONST class_const_list ';'
 			{ $$ = zend_ast_create(ZEND_AST_CLASS_CONST_GROUP, $3, NULL, NULL);
 			  $$->attr = $1; }
@@ -1125,7 +1125,7 @@ property_hook_list:
 
 optional_property_hook_list:
 		%empty	{ $$ = NULL; }
-	|	'{' property_hook_list '}'	{ $$ = $2; }
+	/*|	'{' property_hook_list '}'	{ $$ = $2; }*/
 ;
 
 property_hook_modifiers:
@@ -1379,8 +1379,8 @@ compound_pattern:
 ;
 
 type_pattern:
-		type_without_static			{ $$ = zend_ast_create(ZEND_AST_TYPE_PATTERN, $1); }
-	|	'?' type_without_static		{ $$ = zend_ast_create(ZEND_AST_TYPE_PATTERN, $2); $2->attr |= ZEND_TYPE_NULLABLE; }
+		type		{ $$ = zend_ast_create(ZEND_AST_TYPE_PATTERN, $1); }
+	|	'?' type	{ $$ = zend_ast_create(ZEND_AST_TYPE_PATTERN, $2); $2->attr |= ZEND_TYPE_NULLABLE; }
 ;
 
 scalar_pattern:
@@ -1394,7 +1394,7 @@ scalar_pattern:
 ;
 
 object_pattern:
-		class_name '{' object_pattern_element_list '}' { $$ = zend_ast_create(ZEND_AST_OBJECT_PATTERN, $1, $3); }
+		atomic_pattern '{' object_pattern_element_list '}' { $$ = zend_ast_create(ZEND_AST_OBJECT_PATTERN, $1, $3); }
 ;
 
 object_pattern_element_list:
@@ -1432,8 +1432,7 @@ range_pattern:
 ;
 
 binding_pattern:
-		T_VARIABLE { $$ = zend_ast_create(ZEND_AST_BINDING_PATTERN, $1, NULL); }
-	|	T_VARIABLE '@' pattern { $$ = zend_ast_create(ZEND_AST_BINDING_PATTERN, $1, $3); }
+		T_VARIABLE { $$ = zend_ast_create(ZEND_AST_BINDING_PATTERN, $1); }
 ;
 
 array_pattern:

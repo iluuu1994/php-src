@@ -42,10 +42,10 @@ var_dump($a);
 var_dump(new NotBox(43) is Box { value: $a });
 var_dump($a);
 
-var_dump(43 is $a @ int);
+var_dump(43 is $a & int);
 var_dump($a);
 
-var_dump([] is $a @ string);
+var_dump([] is $a & string);
 var_dump($a);
 
 var_dump(new Many() is Many { $a, $b, $c, $d });

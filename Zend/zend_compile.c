@@ -6624,43 +6624,6 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 	efree(jmp_end_opnums);
 }
 
-static void zend_compile_pattern_class_name(zend_ast *ast)
-{
-	zend_ast *class_name_ast = ast->child[0];
-	ZEND_ASSERT(class_name_ast->kind == ZEND_AST_ZVAL);
-
-	zend_string *class_name = zend_ast_get_str(class_name_ast);
-	uint32_t fetch_type = zend_get_class_fetch_type(class_name);
-
-	switch (fetch_type) {
-		case ZEND_FETCH_CLASS_SELF:
-		case ZEND_FETCH_CLASS_PARENT:
-		case ZEND_FETCH_CLASS_STATIC:
-			/* For the const-eval representation store the fetch type instead of the name. */
-			zend_string_release(class_name);
-			ast->child[0] = NULL;
-			ast->attr = fetch_type;
-			return;
-		case ZEND_FETCH_CLASS_DEFAULT: {
-			zend_string *tmp = zend_resolve_class_name_ast(class_name_ast);
-			zend_string_release_ex(class_name, 0);
-			if (tmp != class_name) {
-				zval *zv = zend_ast_get_zval(class_name_ast);
-				ZVAL_STR(zv, tmp);
-				class_name_ast->attr = ZEND_NAME_FQ;
-			}
-			break;
-		}
-		EMPTY_SWITCH_DEFAULT_CASE()
-	}
-}
-
-static void zend_compile_object_pattern(zend_ast **ast_ptr)
-{
-	zend_ast *ast = *ast_ptr;
-	zend_compile_pattern_class_name(ast);
-}
-
 static zend_type zend_compile_single_typename(zend_ast *ast);
 
 static void zend_compile_type_pattern(zend_ast **ast_ptr)
@@ -6682,6 +6645,7 @@ static void zend_compile_type_pattern(zend_ast **ast_ptr)
 	type_pattern_ast->child[0] = NULL;
 
 	if (ZEND_TYPE_IS_COMPLEX(type))  {
+		ZEND_ASSERT(ZEND_TYPE_HAS_NAME(type));
 		zend_string *class_name = ZEND_TYPE_NAME(type);
 		type_pattern_ast->child[0] = zend_ast_create_zval_from_str(class_name);
 	}
@@ -6774,9 +6738,6 @@ static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 	bool prev_inside_or_pattern = pattern_context->inside_or_pattern;
 
 	switch (ast->kind) {
-		case ZEND_AST_OBJECT_PATTERN:
-			zend_compile_object_pattern(ast_ptr);
-			break;
 		case ZEND_AST_TYPE_PATTERN:
 			zend_compile_type_pattern(ast_ptr);
 			break;
