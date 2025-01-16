@@ -124,12 +124,7 @@ static pm_result match_object(zval *zv, zend_ast *pattern)
 	}
 
 	zend_object *obj = Z_OBJ_P(zv);
-	pm_result type_result = match_type(zv, pattern->child[0]);
-	if (type_result != PM_MATCH) {
-		return type_result;
-	}
-
-	zend_ast_list *elements = zend_ast_get_list(pattern->child[1]);
+	zend_ast_list *elements = zend_ast_get_list(pattern->child[0]);
 	for (uint32_t i = 0; i < elements->children; i++) {
 		zend_ast *element = elements->child[i];
 		zend_ast *property_or_method_call = element->child[0];

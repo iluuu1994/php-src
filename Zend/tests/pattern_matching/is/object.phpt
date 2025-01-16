@@ -9,21 +9,21 @@ class Foo {
     ) {}
 
     public static function isSelfFoo($value) {
-        return $value is self {};
+        return $value is self;
     }
 
     public static function isStaticFoo($value) {
-        return $value is static {};
+        return $value is static;
     }
 }
 
 class Bar extends Foo implements Baz {
     public static function isSelfBar($value) {
-        return $value is self {};
+        return $value is self;
     }
 
     public static function isParentBar($value) {
-        return $value is parent {};
+        return $value is parent;
     }
 }
 
@@ -50,14 +50,14 @@ var_dump(null is Baz);
 var_dump(null is Qux);
 var_dump(null is Quux);
 
-var_dump($foo is Foo { a: 42 });
-var_dump($foo is Foo { a: 42|43 });
-var_dump($foo is Foo { a: 'hello world' });
-var_dump($foo is Foo { b: 42 });
-var_dump($bar is Foo { a: 42 });
-var_dump($bar is Foo { a: 42|43 });
-var_dump($bar is Foo { a: 'hello world' });
-var_dump($bar is Foo { b: 42 });
+var_dump($foo is { a: 42 });
+var_dump($foo is { a: 42|43 });
+var_dump($foo is { a: 'hello world' });
+var_dump($foo is { b: 42 });
+var_dump($bar is { a: 42 });
+var_dump($bar is { a: 42|43 });
+var_dump($bar is { a: 'hello world' });
+var_dump($bar is { b: 42 });
 
 var_dump(Foo::isSelfFoo($foo));
 var_dump(Foo::isSelfFoo($bar));
