@@ -2374,7 +2374,7 @@ static uint32_t zend_convert_type(const zend_script *script, zend_type type, zen
 		*pce = NULL;
 	}
 
-	if (!ZEND_TYPE_IS_SET(type)) {
+	if (!ZEND_TYPE_IS_CHECKED(type)) {
 		return MAY_BE_ANY|MAY_BE_ARRAY_KEY_ANY|MAY_BE_ARRAY_OF_ANY|MAY_BE_ARRAY_OF_REF|MAY_BE_RC1|MAY_BE_RCN;
 	}
 
