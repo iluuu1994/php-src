@@ -2,9 +2,15 @@
 Match expression block must not use return
 --FILE--
 <?php
-var_dump(match ($value) {
-    1 => { return; },
-});
+
+function test($a) {
+    var_dump([$a] + match ($a) {
+        42 => { return $a; },
+    });
+}
+
+var_dump(test(42));
+
 ?>
---EXPECTF--
-Fatal error: Match expression whose result is used must not contain return, break, continue or goto in %s on line %d
+--EXPECT--
+int(42)

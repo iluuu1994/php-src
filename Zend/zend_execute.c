@@ -4574,11 +4574,12 @@ ZEND_API void zend_unfinished_calls_gc(zend_execute_data *execute_data, zend_exe
 }
 /* }}} */
 
-static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t op_num) /* {{{ */
+static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t op_num, uint32_t try_num) /* {{{ */
 {
 	if (UNEXPECTED(EX(call))) {
 		zend_execute_data *call = EX(call);
 		zend_op *opline = EX(func)->op_array.opcodes + op_num;
+		zend_op *try_op = EX(func)->op_array.opcodes + try_num;
 		int level;
 		int do_exit;
 
@@ -4654,6 +4655,9 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 				if (!do_exit) {
 					opline--;
 				}
+				if (opline < try_op) {
+					return;
+				}
 			} while (!do_exit);
 			if (call->prev_execute_data) {
 				/* skip current call region */
@@ -4684,6 +4688,9 @@ static void cleanup_unfinished_calls(zend_execute_data *execute_data, uint32_t o
 							break;
 					}
 					opline--;
+					if (opline < try_op) {
+						return;
+					}
 				} while (!do_exit);
 			}
 
@@ -4781,8 +4788,67 @@ static void cleanup_live_vars(zend_execute_data *execute_data, uint32_t op_num, 
 }
 /* }}} */
 
+/* Clean up all variables that are allocated in this range, but freed outside. */
+static void cleanup_live_vars_range(zend_execute_data *execute_data, uint32_t range_start, uint32_t range_end) /* {{{ */
+{
+	int i;
+
+	for (i = 0; i < EX(func)->op_array.last_live_range; i++) {
+		const zend_live_range *range = &EX(func)->op_array.live_range[i];
+		if (range->start > range_end) {
+			/* further blocks will not be relevant... */
+			break;
+		} else if (range->start > range_start && range->end > range_end) {
+			uint32_t kind = range->var & ZEND_LIVE_MASK;
+			uint32_t var_num = range->var & ~ZEND_LIVE_MASK;
+			zval *var = EX_VAR(var_num);
+
+			if (kind == ZEND_LIVE_TMPVAR) {
+				zval_ptr_dtor_nogc(var);
+			} else if (kind == ZEND_LIVE_NEW) {
+				zend_object *obj;
+				ZEND_ASSERT(Z_TYPE_P(var) == IS_OBJECT);
+				obj = Z_OBJ_P(var);
+				zend_object_store_ctor_failed(obj);
+				OBJ_RELEASE(obj);
+			} else if (kind == ZEND_LIVE_LOOP) {
+				if (Z_TYPE_P(var) != IS_ARRAY && Z_FE_ITER_P(var) != (uint32_t)-1) {
+					zend_hash_iterator_del(Z_FE_ITER_P(var));
+				}
+				zval_ptr_dtor_nogc(var);
+			} else if (kind == ZEND_LIVE_ROPE) {
+				// Not sure about op_num...
+				ZEND_UNREACHABLE();
+				// zend_string **rope = (zend_string **)var;
+				// zend_op *last = EX(func)->op_array.opcodes + op_num;
+				// while ((last->opcode != ZEND_ROPE_ADD && last->opcode != ZEND_ROPE_INIT)
+				// 		|| last->result.var != var_num) {
+				// 	ZEND_ASSERT(last >= EX(func)->op_array.opcodes);
+				// 	last--;
+				// }
+				// if (last->opcode == ZEND_ROPE_INIT) {
+				// 	zend_string_release_ex(*rope, 0);
+				// } else {
+				// 	int j = last->extended_value;
+				// 	do {
+				// 		zend_string_release_ex(rope[j], 0);
+				// 	} while (j--);
+				// }
+			} else if (kind == ZEND_LIVE_SILENCE) {
+				/* restore previous error_reporting value */
+				if (E_HAS_ONLY_FATAL_ERRORS(EG(error_reporting))
+						&& !E_HAS_ONLY_FATAL_ERRORS(Z_LVAL_P(var))) {
+					EG(error_reporting) = Z_LVAL_P(var);
+				}
+			}
+		}
+	}
+}
+/* }}} */
+
 ZEND_API void zend_cleanup_unfinished_execution(zend_execute_data *execute_data, uint32_t op_num, uint32_t catch_op_num) {
-	cleanup_unfinished_calls(execute_data, op_num);
+	/* FIXME: This needs fixing for blocks without match expressions. */
+	cleanup_unfinished_calls(execute_data, op_num, 0);
 	cleanup_live_vars(execute_data, op_num, catch_op_num);
 }
 

@@ -2,9 +2,14 @@
 Match expression block must not use return
 --FILE--
 <?php
-foo(match (1) {
-    1 => { return; }
-});
+function test() {
+    var_dump(match (1) {
+        1 => { return; }
+    });
+    echo 'Unreached';
+}
+test();
 ?>
---EXPECTF--
-Fatal error: Match expression whose result is used must not contain return, break, continue or goto in %s on line %d
+===DONE===
+--EXPECT--
+===DONE===

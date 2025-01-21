@@ -9,5 +9,6 @@ var_dump(match (1) {
 });
 after:
 ?>
---EXPECTF--
-Fatal error: Match expression whose result is used must not contain return, break, continue or goto in %s on line %d
+===DONE===
+--EXPECT--
+===DONE===

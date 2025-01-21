@@ -2,9 +2,14 @@
 Match expression block must not use break
 --FILE--
 <?php
-var_dump(match ($value) {
-    1 => { break; },
-});
+function test() {
+    str_repeat('a', 10) . match (1) {
+        1 => { return; },
+    };
+}
+
+test();
 ?>
---EXPECTF--
-Fatal error: Match expression whose result is used must not contain return, break, continue or goto in %s on line %d
+===DONE===
+--EXPECT--
+===DONE===

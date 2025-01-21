@@ -64,6 +64,7 @@ typedef struct _zend_loop_var {
 	uint8_t var_type;
 	uint32_t   var_num;
 	uint32_t   try_catch_offset;
+	uint32_t   opcode_start;
 } zend_loop_var;
 
 static inline uint32_t zend_alloc_cache_slots(unsigned count) {
@@ -720,8 +721,10 @@ static inline void zend_begin_loop(
 	brk_cont_element->parent = parent;
 	brk_cont_element->kind = kind;
 
+	uint32_t start = get_next_op_number();
+	info.opcode_start = start;
+
 	if (loop_var && (loop_var->op_type & (IS_VAR|IS_TMP_VAR))) {
-		uint32_t start = get_next_op_number();
 
 		info.opcode = free_opcode;
 		info.var_type = loop_var->op_type;
@@ -5595,17 +5598,10 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, znode *return_valu
 		return 1;
 	}
 
-	zend_brk_cont_element *brk_ctrl_element = CG(context).current_brk_cont != -1
-		? &CG(context).brk_cont_array[CG(context).current_brk_cont]
-		: NULL;
-	if (brk_ctrl_element && brk_ctrl_element->kind == ZEND_BRK_CONT_KIND_MATCH_EXPR) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Match expression whose result is used must not contain return, break, continue or goto");
-	}
+	uint32_t free_range_opnum = (uint32_t)-1;
 
 	base = zend_stack_base(&CG(loop_var_stack));
 	for (; loop_var >= base; loop_var--) {
-		bool decrement_depth = false;
-
 		if (loop_var->opcode == ZEND_FAST_CALL) {
 			zend_op *opline = get_next_op();
 
@@ -5616,6 +5612,11 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, znode *return_valu
 				SET_NODE(opline->op2, return_value);
 			}
 			opline->op1.num = loop_var->try_catch_offset;
+			if (free_range_opnum != (uint32_t)-1) {
+				zend_op *opline = &CG(active_op_array)->opcodes[free_range_opnum];
+				opline->op1.num = loop_var->opcode_start;
+				free_range_opnum = (uint32_t)-1;
+			}
 		} else if (loop_var->opcode == ZEND_DISCARD_EXCEPTION) {
 			zend_op *opline = get_next_op();
 			opline->opcode = ZEND_DISCARD_EXCEPTION;
@@ -5623,33 +5624,31 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, znode *return_valu
 			opline->op1.var = loop_var->var_num;
 		} else if (loop_var->opcode == ZEND_RETURN) {
 			/* Stack separator */
+			if (free_range_opnum != (uint32_t)-1) {
+				zend_op *opline = &CG(active_op_array)->opcodes[free_range_opnum];
+				opline->op1.num = 0;
+			}
 			break;
-		} else if (depth <= 1) {
-			return 1;
-		} else if (loop_var->opcode == ZEND_NOP) {
-			/* Loop doesn't have freeable variable */
-			decrement_depth = true;
 		} else {
-			zend_op *opline;
-
-			ZEND_ASSERT(loop_var->var_type & (IS_VAR|IS_TMP_VAR));
-			opline = get_next_op();
-			opline->opcode = loop_var->opcode;
-			opline->op1_type = loop_var->var_type;
-			opline->op1.var = loop_var->var_num;
-			opline->extended_value = ZEND_FREE_ON_RETURN;
-			decrement_depth = true;
-		}
-		if (decrement_depth) {
-			depth--;
-			if (brk_ctrl_element) {
-				if (brk_ctrl_element->parent != -1) {
-					brk_ctrl_element = &CG(context).brk_cont_array[brk_ctrl_element->parent];
-					if (brk_ctrl_element->kind == ZEND_BRK_CONT_KIND_MATCH_EXPR) {
-						zend_error_noreturn(E_COMPILE_ERROR, "Match expression whose result is used must not contain return, break, continue or goto");
-					}
-				} else {
-					brk_ctrl_element = NULL;
+			if (free_range_opnum != (uint32_t)-1) {
+				zend_op *opline = &CG(active_op_array)->opcodes[free_range_opnum];
+				opline->op1.num = loop_var->opcode_start + 1;
+				free_range_opnum = (uint32_t)-1;
+			}
+			/* ZEND_FREE_RANGE does not decrease depth. */
+			if (loop_var->opcode != ZEND_FREE_RANGE && --depth == 0) {
+				break;
+			}
+			if (loop_var->opcode != ZEND_NOP) {
+				ZEND_ASSERT(loop_var->var_type == IS_UNUSED || (loop_var->var_type & (IS_VAR|IS_TMP_VAR)));
+				zend_op *opline = get_next_op();
+				opline->opcode = loop_var->opcode;
+				opline->op1_type = loop_var->var_type;
+				opline->op1.var = loop_var->var_num;
+				opline->extended_value = ZEND_FREE_ON_RETURN;
+				if (loop_var->opcode == ZEND_FREE_RANGE) {
+					free_range_opnum = get_next_op_number() - 1;
+					opline->op2.var = loop_var->opcode_start;
 				}
 			}
 		}
@@ -6447,9 +6446,19 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 	zend_ast_list *arms = zend_ast_get_list(ast->child[1]);
 	bool has_default_arm = 0;
 	uint32_t opnum_match = (uint32_t)-1;
+	uint32_t start_opnum = get_next_op_number();
 
 	znode expr_node;
 	zend_compile_expr(&expr_node, expr_ast);
+
+	if (result) {
+		zend_loop_var info = {0};
+		info.opcode = ZEND_FREE_RANGE;
+		info.var_type = IS_UNUSED;
+		info.var_num = (uint32_t)-1;
+		info.opcode_start = start_opnum;
+		zend_stack_push(&CG(loop_var_stack), &info);
+	}
 
 	zend_begin_loop(ZEND_FREE, &expr_node, result ? ZEND_BRK_CONT_KIND_MATCH_EXPR : ZEND_BRK_CONT_KIND_SWITCH_MATCH_STMT);
 
@@ -6621,6 +6630,11 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 
 	zend_end_loop(get_next_op_number(), &expr_node);
 
+	/* Pop ZEND_FREE_RANGE. */
+	if (result) {
+		zend_stack_del_top(&CG(loop_var_stack));
+	}
+
 	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
 		zend_op *opline = zend_emit_op(NULL, ZEND_FREE, &expr_node, NULL);
 		opline->extended_value = ZEND_FREE_SWITCH;
@@ -6663,6 +6677,7 @@ static void zend_compile_try(zend_ast *ast) /* {{{ */
 	}
 
 	try_catch_offset = zend_add_try_element(get_next_op_number());
+	uint32_t try_opnum = get_next_op_number();
 
 	if (finally_ast) {
 		zend_loop_var fast_call;
@@ -6676,6 +6691,7 @@ static void zend_compile_try(zend_ast *ast) /* {{{ */
 		fast_call.var_type = IS_TMP_VAR;
 		fast_call.var_num = CG(context).fast_call_var;
 		fast_call.try_catch_offset = try_catch_offset;
+		fast_call.opcode_start = try_opnum;
 		zend_stack_push(&CG(loop_var_stack), &fast_call);
 	}
 
