@@ -4817,23 +4817,21 @@ static void cleanup_live_vars_range(zend_execute_data *execute_data, uint32_t ra
 				}
 				zval_ptr_dtor_nogc(var);
 			} else if (kind == ZEND_LIVE_ROPE) {
-				// Not sure about op_num...
-				ZEND_UNREACHABLE();
-				// zend_string **rope = (zend_string **)var;
-				// zend_op *last = EX(func)->op_array.opcodes + op_num;
-				// while ((last->opcode != ZEND_ROPE_ADD && last->opcode != ZEND_ROPE_INIT)
-				// 		|| last->result.var != var_num) {
-				// 	ZEND_ASSERT(last >= EX(func)->op_array.opcodes);
-				// 	last--;
-				// }
-				// if (last->opcode == ZEND_ROPE_INIT) {
-				// 	zend_string_release_ex(*rope, 0);
-				// } else {
-				// 	int j = last->extended_value;
-				// 	do {
-				// 		zend_string_release_ex(rope[j], 0);
-				// 	} while (j--);
-				// }
+				zend_string **rope = (zend_string **)var;
+				zend_op *last = EX(func)->op_array.opcodes + range_end;
+				while ((last->opcode != ZEND_ROPE_ADD && last->opcode != ZEND_ROPE_INIT)
+						|| last->result.var != var_num) {
+					ZEND_ASSERT(last >= EX(func)->op_array.opcodes);
+					last--;
+				}
+				if (last->opcode == ZEND_ROPE_INIT) {
+					zend_string_release_ex(*rope, 0);
+				} else {
+					int j = last->extended_value;
+					do {
+						zend_string_release_ex(rope[j], 0);
+					} while (j--);
+				}
 			} else if (kind == ZEND_LIVE_SILENCE) {
 				/* restore previous error_reporting value */
 				if (E_HAS_ONLY_FATAL_ERRORS(EG(error_reporting))
