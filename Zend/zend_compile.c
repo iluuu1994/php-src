@@ -710,7 +710,7 @@ void zend_stop_lexing(void)
 }
 
 static inline void zend_begin_loop(
-		uint8_t free_opcode, const znode *loop_var, bool is_switch) /* {{{ */
+		uint8_t free_opcode, const znode *loop_var, zend_brk_ctrl_kind kind) /* {{{ */
 {
 	zend_brk_cont_element *brk_cont_element;
 	int parent = CG(context).current_brk_cont;
@@ -719,7 +719,7 @@ static inline void zend_begin_loop(
 	CG(context).current_brk_cont = CG(context).last_brk_cont;
 	brk_cont_element = get_next_brk_cont_element();
 	brk_cont_element->parent = parent;
-	brk_cont_element->is_switch = is_switch;
+	brk_cont_element->kind = kind;
 
 	uint32_t start = get_next_op_number();
 	info.opcode_start = start;
@@ -5821,16 +5821,17 @@ static void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 		}
 	}
 
-	if (ast->kind == ZEND_AST_CONTINUE) {
-		int d, cur = CG(context).current_brk_cont;
-		for (d = depth - 1; d > 0; d--) {
-			cur = CG(context).brk_cont_array[cur].parent;
-			ZEND_ASSERT(cur != -1);
-		}
+	int d, cur = CG(context).current_brk_cont;
+	for (d = depth - 1; d > 0; d--) {
+		cur = CG(context).brk_cont_array[cur].parent;
+		ZEND_ASSERT(cur != -1);
+	}
+	zend_brk_cont_element *current_brk_ctrl = &CG(context).brk_cont_array[cur];
 
-		if (CG(context).brk_cont_array[cur].is_switch) {
+	if (ast->kind == ZEND_AST_CONTINUE) {
+		if (current_brk_ctrl->kind == ZEND_BRK_CTRL_KIND_SWITCH_MATCH_STMT) {
 			if (depth == 1) {
-				if (CG(context).brk_cont_array[cur].parent == -1) {
+				if (current_brk_ctrl->parent == -1) {
 					zend_error(E_WARNING,
 						"\"continue\" targeting switch is equivalent to \"break\"");
 				} else {
@@ -5840,7 +5841,7 @@ static void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 						depth + 1);
 				}
 			} else {
-				if (CG(context).brk_cont_array[cur].parent == -1) {
+				if (current_brk_ctrl->parent == -1) {
 					zend_error(E_WARNING,
 						"\"continue " ZEND_LONG_FMT "\" targeting switch is equivalent to \"break " ZEND_LONG_FMT "\"",
 						depth, depth);
@@ -5852,6 +5853,10 @@ static void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 				}
 			}
 		}
+	}
+	if (current_brk_ctrl->kind == ZEND_BRK_CTRL_KIND_MATCH_EXPR) {
+		zend_error_noreturn(E_COMPILE_ERROR, "%s must not target match expression whose result is used",
+			ast->kind == ZEND_AST_BREAK ? "break" : "continue");
 	}
 
 	opline = zend_emit_op(NULL, ast->kind == ZEND_AST_BREAK ? ZEND_BRK : ZEND_CONT, NULL, NULL);
@@ -5966,7 +5971,7 @@ static void zend_compile_while(zend_ast *ast) /* {{{ */
 
 	opnum_jmp = zend_emit_jump(0);
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, ZEND_BRK_CTRL_KIND_LOOP);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -5989,7 +5994,7 @@ static void zend_compile_do_while(zend_ast *ast) /* {{{ */
 	znode cond_node;
 	uint32_t opnum_start, opnum_cond;
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, ZEND_BRK_CTRL_KIND_LOOP);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -6040,7 +6045,7 @@ static void zend_compile_for(zend_ast *ast) /* {{{ */
 
 	opnum_jmp = zend_emit_jump(0);
 
-	zend_begin_loop(ZEND_NOP, NULL, 0);
+	zend_begin_loop(ZEND_NOP, NULL, ZEND_BRK_CTRL_KIND_LOOP);
 
 	opnum_start = get_next_op_number();
 	zend_compile_stmt(stmt_ast);
@@ -6102,7 +6107,7 @@ static void zend_compile_foreach(zend_ast *ast) /* {{{ */
 	opnum_reset = get_next_op_number();
 	opline = zend_emit_op(&reset_node, by_ref ? ZEND_FE_RESET_RW : ZEND_FE_RESET_R, &expr_node, NULL);
 
-	zend_begin_loop(ZEND_FE_FREE, &reset_node, 0);
+	zend_begin_loop(ZEND_FE_FREE, &reset_node, ZEND_BRK_CTRL_KIND_LOOP);
 
 	opnum_fetch = get_next_op_number();
 	opline = zend_emit_op(NULL, by_ref ? ZEND_FE_FETCH_RW : ZEND_FE_FETCH_R, &reset_node, NULL);
@@ -6275,7 +6280,7 @@ static void zend_compile_switch(zend_ast *ast) /* {{{ */
 
 	zend_compile_expr(&expr_node, expr_ast);
 
-	zend_begin_loop(ZEND_FREE, &expr_node, 1);
+	zend_begin_loop(ZEND_FREE, &expr_node, ZEND_BRK_CTRL_KIND_SWITCH_MATCH_STMT);
 
 	case_node.op_type = IS_TMP_VAR;
 	case_node.u.op.var = get_temporary_variable();
@@ -6460,7 +6465,7 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 		zend_stack_push(&CG(loop_var_stack), &info);
 	}
 
-	zend_begin_loop(ZEND_FREE, &expr_node, /* is_switch */ true);
+	zend_begin_loop(ZEND_FREE, &expr_node, result ? ZEND_BRK_CTRL_KIND_MATCH_EXPR : ZEND_BRK_CTRL_KIND_SWITCH_MATCH_STMT);
 
 	znode case_node;
 	case_node.op_type = IS_TMP_VAR;

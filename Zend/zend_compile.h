@@ -155,13 +155,18 @@ struct _zend_op {
 #endif
 };
 
+typedef enum {
+	ZEND_BRK_CTRL_KIND_LOOP,
+	ZEND_BRK_CTRL_KIND_SWITCH_MATCH_STMT,
+	ZEND_BRK_CTRL_KIND_MATCH_EXPR,
+} zend_brk_ctrl_kind;
 
 typedef struct _zend_brk_cont_element {
 	int start;
 	int cont;
 	int brk;
 	int parent;
-	bool is_switch;
+	zend_brk_ctrl_kind kind;
 } zend_brk_cont_element;
 
 typedef struct _zend_label {
