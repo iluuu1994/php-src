@@ -155,6 +155,7 @@ struct _zend_op {
 #endif
 };
 
+
 typedef struct _zend_brk_cont_element {
 	int start;
 	int cont;

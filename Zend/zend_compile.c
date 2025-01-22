@@ -6438,6 +6438,7 @@ static bool can_match_use_jumptable(zend_ast_list *arms) {
 }
 
 static void zend_compile_stmt_list(zend_ast *ast);
+static void zend_compile_block_expr(znode *result, zend_ast *ast, bool omit_free_range);
 
 static void zend_compile_match(znode *result, zend_ast *ast)
 {
@@ -6601,8 +6602,15 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 		}
 
 		znode body_node;
-		zend_compile_expr(&body_node, body_ast);
 		if (result) {
+			/* Avoid ZEND_FREE_RANGE for block in match expression. Blocks in
+			 * match arms do not have preceding instructions. The instructions
+			 * preceding the match are handled by match itself. */
+			if (body_ast->kind == ZEND_AST_BLOCK_EXPR) {
+				zend_compile_block_expr(&body_node, body_ast, /* omit_free_range */ true);
+			} else {
+				zend_compile_expr(&body_node, body_ast);
+			}
 			if (is_first_case) {
 				zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &body_node, NULL);
 				is_first_case = 0;
@@ -6611,7 +6619,7 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 				SET_NODE(opline_qm_assign->result, result);
 			}
 		} else {
-			zend_do_free(&body_node);
+			zend_compile_stmt(body_ast);
 		}
 
 		jmp_end_opnums[i] = zend_emit_jump(0);
@@ -11405,6 +11413,36 @@ void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 }
 /* }}} */
 
+static void zend_compile_block_expr(znode *result, zend_ast *ast, bool omit_free_range)
+{
+	bool prev_in_block_expr = CG(context).in_block_expr;
+	CG(context).in_block_expr = true;
+	if (result && !omit_free_range) {
+		zend_loop_var info = {0};
+		info.opcode = ZEND_FREE_RANGE;
+		info.var_type = IS_UNUSED;
+		info.var_num = (uint32_t)-1;
+		info.opcode_start = get_next_op_number();
+		zend_stack_push(&CG(loop_var_stack), &info);
+	}
+	zend_compile_stmt_list(ast->child[0]);
+	zend_ast *result_expr_ast = ast->child[1];
+	if (result_expr_ast) {
+		if (result) {
+			zend_compile_expr(result, result_expr_ast);
+		} else {
+			zend_compile_stmt(result_expr_ast);
+		}
+	} else if (result) {
+		result->op_type = IS_CONST;
+		ZVAL_NULL(&result->u.constant);
+	}
+	if (result && !omit_free_range) {
+		zend_stack_del_top(&CG(loop_var_stack));
+	}
+	CG(context).in_block_expr = prev_in_block_expr;
+}
+
 static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 {
 	if (!ast) {
@@ -11507,10 +11545,12 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 		case ZEND_AST_THROW:
 			zend_compile_expr(NULL, ast);
 			break;
-		case ZEND_AST_MATCH: {
+		case ZEND_AST_MATCH:
 			zend_compile_match(NULL, ast);
 			break;
-		}
+		case ZEND_AST_BLOCK_EXPR:
+			zend_compile_block_expr(NULL, ast, /* omit_free_range */ false);
+			return;
 		default:
 		{
 			znode result;
@@ -11524,21 +11564,6 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 	}
 }
 /* }}} */
-
-static void zend_compile_block_expr(znode *result, zend_ast *ast)
-{
-	bool prev_in_block_expr = CG(context).in_block_expr;
-	CG(context).in_block_expr = true;
-	zend_compile_stmt_list(ast->child[0]);
-	zend_ast *result_expr_ast = ast->child[1];
-	if (result_expr_ast) {
-		zend_compile_expr(result, result_expr_ast);
-	} else {
-		result->op_type = IS_CONST;
-		ZVAL_NULL(&result->u.constant);
-	}
-	CG(context).in_block_expr = prev_in_block_expr;
-}
 
 static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 {
@@ -11677,7 +11702,7 @@ static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 			zend_compile_match(result, ast);
 			return;
 		case ZEND_AST_BLOCK_EXPR:
-			zend_compile_block_expr(result, ast);
+			zend_compile_block_expr(result, ast, /* omit_free_range */ false);
 			return;
 		default:
 			ZEND_ASSERT(0 /* not supported */);
