@@ -6443,7 +6443,37 @@ static bool can_match_use_jumptable(zend_ast_list *arms) {
 }
 
 static void zend_compile_stmt_list(zend_ast *ast);
-static void zend_compile_block_expr(znode *result, zend_ast *ast, bool omit_free_range);
+
+static void zend_compile_block_expr(znode *result, zend_ast *ast, bool omit_free_range)
+{
+	bool prev_in_block_expr = CG(context).in_block_expr;
+	CG(context).in_block_expr = true;
+	if (result && !omit_free_range) {
+		zend_loop_var info = {0};
+		info.opcode = ZEND_FREE_RANGE;
+		info.var_type = IS_UNUSED;
+		info.var_num = (uint32_t)-1;
+		info.opcode_start = get_next_op_number();
+		zend_stack_push(&CG(loop_var_stack), &info);
+	}
+	zend_compile_stmt_list(ast->child[0]);
+	zend_ast *result_expr_ast = ast->child[1];
+	if (result_expr_ast) {
+		if (result) {
+			zend_compile_expr(result, result_expr_ast);
+		} else {
+			zend_compile_stmt(result_expr_ast);
+		}
+	} else if (result) {
+		result->op_type = IS_CONST;
+		ZVAL_NULL(&result->u.constant);
+	}
+	if (result && !omit_free_range) {
+		zend_stack_del_top(&CG(loop_var_stack));
+	}
+	CG(context).in_block_expr = prev_in_block_expr;
+}
+
 
 static void zend_compile_match(znode *result, zend_ast *ast)
 {
@@ -11417,36 +11447,6 @@ void zend_compile_top_stmt(zend_ast *ast) /* {{{ */
 	}
 }
 /* }}} */
-
-static void zend_compile_block_expr(znode *result, zend_ast *ast, bool omit_free_range)
-{
-	bool prev_in_block_expr = CG(context).in_block_expr;
-	CG(context).in_block_expr = true;
-	if (result && !omit_free_range) {
-		zend_loop_var info = {0};
-		info.opcode = ZEND_FREE_RANGE;
-		info.var_type = IS_UNUSED;
-		info.var_num = (uint32_t)-1;
-		info.opcode_start = get_next_op_number();
-		zend_stack_push(&CG(loop_var_stack), &info);
-	}
-	zend_compile_stmt_list(ast->child[0]);
-	zend_ast *result_expr_ast = ast->child[1];
-	if (result_expr_ast) {
-		if (result) {
-			zend_compile_expr(result, result_expr_ast);
-		} else {
-			zend_compile_stmt(result_expr_ast);
-		}
-	} else if (result) {
-		result->op_type = IS_CONST;
-		ZVAL_NULL(&result->u.constant);
-	}
-	if (result && !omit_free_range) {
-		zend_stack_del_top(&CG(loop_var_stack));
-	}
-	CG(context).in_block_expr = prev_in_block_expr;
-}
 
 static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 {
