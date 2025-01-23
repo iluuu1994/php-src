@@ -213,6 +213,7 @@ typedef struct _zend_oparray_context {
 	zend_property_hook_kind active_property_hook_kind;
 	bool       in_jmp_frameless_branch;
 	bool       in_block_expr;
+	uint32_t   stmt_start;
 } zend_oparray_context;
 
 /* Class, property and method flags                  class|meth.|prop.|const*/

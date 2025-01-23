@@ -791,6 +791,11 @@ void zend_optimizer_shift_jump(zend_op_array *op_array, zend_op *opline, uint32_
 			opline->extended_value = ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value) - shiftlist[ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value)]);
 			break;
 		}
+		case ZEND_FREE_RANGE: {
+			opline->op1.num -= shiftlist[opline->op1.num];
+			opline->op2.num -= shiftlist[opline->op2.num];
+			break;
+		}
 	}
 }
 

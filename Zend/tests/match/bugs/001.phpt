@@ -6,7 +6,14 @@ WIP
 function test() {
     foreach ([1, 2, 3] as $value) {
         $x = match (1) {
-            1 => { return 42; },
+            1 => {
+                $y = match (1) {
+                    1 => {
+                        return 42;
+                    },
+                };
+                return 42;
+            },
         };
         var_dump($value);
     }
