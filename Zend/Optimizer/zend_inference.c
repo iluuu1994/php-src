@@ -2368,7 +2368,7 @@ static uint32_t zend_convert_type_declaration_mask(uint32_t type_mask) {
 	return result_mask;
 }
 
-static uint32_t zend_convert_type(const zend_script *script, zend_type type, zend_class_entry **pce)
+static uint32_t zend_convert_type(const zend_script *script, zend_type type, zend_class_entry **pce, zend_string *filename)
 {
 	if (pce) {
 		*pce = NULL;
@@ -2387,7 +2387,7 @@ static uint32_t zend_convert_type(const zend_script *script, zend_type type, zen
 			if (ZEND_TYPE_HAS_NAME(type)) {
 				zend_string *lcname = zend_string_tolower(ZEND_TYPE_NAME(type));
 				// TODO: Pass through op_array.
-				*pce = zend_optimizer_get_class_entry(script, NULL, lcname);
+				*pce = zend_optimizer_get_class_entry_ex(script, NULL, lcname, filename);
 				zend_string_release_ex(lcname, 0);
 			}
 		}
@@ -2398,9 +2398,14 @@ static uint32_t zend_convert_type(const zend_script *script, zend_type type, zen
 	return tmp;
 }
 
+ZEND_API uint32_t zend_fetch_arg_info_type_ex(const zend_script *script, const zend_arg_info *arg_info, zend_class_entry **pce, zend_string *filename)
+{
+	return zend_convert_type(script, arg_info->type, pce, filename);
+}
+
 ZEND_API uint32_t zend_fetch_arg_info_type(const zend_script *script, const zend_arg_info *arg_info, zend_class_entry **pce)
 {
-	return zend_convert_type(script, arg_info->type, pce);
+	return zend_fetch_arg_info_type_ex(script, arg_info, pce, NULL);
 }
 
 static const zend_property_info *lookup_prop_info(const zend_class_entry *ce, zend_string *name, zend_class_entry *scope) {
@@ -2489,7 +2494,7 @@ static const zend_property_info *zend_fetch_static_prop_info(const zend_script *
 	return prop_info;
 }
 
-static uint32_t zend_fetch_prop_type(const zend_script *script, const zend_property_info *prop_info, zend_class_entry **pce)
+static uint32_t zend_fetch_prop_type(const zend_script *script, const zend_property_info *prop_info, zend_class_entry **pce, zend_string *filename)
 {
 	if (!prop_info) {
 		if (pce) {
@@ -2498,7 +2503,7 @@ static uint32_t zend_fetch_prop_type(const zend_script *script, const zend_prope
 		return MAY_BE_ANY | MAY_BE_ARRAY_KEY_ANY | MAY_BE_ARRAY_OF_ANY | MAY_BE_ARRAY_OF_REF | MAY_BE_RC1 | MAY_BE_RCN;
 	}
 
-	return zend_convert_type(script, prop_info->type, pce);
+	return zend_convert_type(script, prop_info->type, pce, NULL);
 }
 
 static bool result_may_be_separated(zend_ssa *ssa, zend_ssa_op *ssa_op)
@@ -2748,7 +2753,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 			if (opline->opcode == ZEND_ASSIGN_OBJ_OP) {
 				prop_info = zend_fetch_prop_info(op_array, ssa, opline, ssa_op);
 				orig = t1;
-				t1 = zend_fetch_prop_type(script, prop_info, NULL);
+				t1 = zend_fetch_prop_type(script, prop_info, NULL, op_array->filename);
 				t2 = OP1_DATA_INFO();
 			} else if (opline->opcode == ZEND_ASSIGN_DIM_OP) {
 				if (t1 & MAY_BE_ARRAY_OF_REF) {
@@ -2759,7 +2764,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				t2 = OP1_DATA_INFO();
 			} else if (opline->opcode == ZEND_ASSIGN_STATIC_PROP_OP) {
 				prop_info = zend_fetch_static_prop_info(script, op_array, ssa, opline);
-				t1 = zend_fetch_prop_type(script, prop_info, NULL);
+				t1 = zend_fetch_prop_type(script, prop_info, NULL, op_array->filename);
 				t2 = OP1_DATA_INFO();
 			} else {
 				if (t1 & MAY_BE_REF) {
@@ -2821,7 +2826,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				} else if (opline->opcode == ZEND_ASSIGN_OBJ_OP) {
 					/* The return value must also satisfy the property type */
 					if (prop_info) {
-						t1 = zend_fetch_prop_type(script, prop_info, &ce);
+						t1 = zend_fetch_prop_type(script, prop_info, &ce, op_array->filename);
 						if ((t1 & (MAY_BE_LONG|MAY_BE_DOUBLE)) == MAY_BE_LONG
 						 && (tmp & (MAY_BE_LONG|MAY_BE_DOUBLE)) == MAY_BE_DOUBLE) {
 							/* DOUBLE may be auto-converted to LONG */
@@ -2840,7 +2845,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				} else if (opline->opcode == ZEND_ASSIGN_STATIC_PROP_OP) {
 					/* The return value must also satisfy the property type */
 					if (prop_info) {
-						t1 = zend_fetch_prop_type(script, prop_info, &ce);
+						t1 = zend_fetch_prop_type(script, prop_info, &ce, op_array->filename);
 						if ((t1 & (MAY_BE_LONG|MAY_BE_DOUBLE)) == MAY_BE_LONG
 						 && (tmp & (MAY_BE_LONG|MAY_BE_DOUBLE)) == MAY_BE_DOUBLE) {
 							/* DOUBLE may be auto-converted to LONG */
@@ -3037,7 +3042,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 			if (ssa_op->result_def >= 0) {
 				// TODO: If there is no __set we might do better
 				tmp = zend_fetch_prop_type(script,
-					zend_fetch_prop_info(op_array, ssa, opline, ssa_op), &ce);
+					zend_fetch_prop_info(op_array, ssa, opline, ssa_op), &ce, op_array->filename);
 				UPDATE_SSA_TYPE(tmp, ssa_op->result_def);
 				if (ce) {
 					UPDATE_SSA_OBJ_TYPE(ce, 1, ssa_op->result_def);
@@ -3307,7 +3312,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 			zend_arg_info *arg_info = &op_array->arg_info[opline->op1.num-1];
 
 			ce = NULL;
-			tmp = zend_fetch_arg_info_type(script, arg_info, &ce);
+			tmp = zend_fetch_arg_info_type_ex(script, arg_info, &ce, op_array->filename);
 			if (ZEND_ARG_SEND_MODE(arg_info)) {
 				tmp |= MAY_BE_REF;
 				ce = NULL;
@@ -3780,7 +3785,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				}
 				if (opline->op1_type == IS_UNUSED || (t1 & MAY_BE_OBJECT)) {
 					const zend_property_info *prop_info = zend_fetch_prop_info(op_array, ssa, opline, ssa_op);
-					tmp |= zend_fetch_prop_type(script, prop_info, &ce);
+					tmp |= zend_fetch_prop_type(script, prop_info, &ce, op_array->filename);
 					if (opline->opcode != ZEND_FETCH_OBJ_R && opline->opcode != ZEND_FETCH_OBJ_IS) {
 						tmp |= MAY_BE_REF | MAY_BE_INDIRECT;
 						if ((opline->extended_value & ZEND_FETCH_OBJ_FLAGS) == ZEND_FETCH_DIM_WRITE) {
@@ -3822,7 +3827,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 		case ZEND_FETCH_STATIC_PROP_UNSET:
 		case ZEND_FETCH_STATIC_PROP_FUNC_ARG:
 			tmp = zend_fetch_prop_type(script,
-				zend_fetch_static_prop_info(script, op_array, ssa, opline), &ce);
+				zend_fetch_static_prop_info(script, op_array, ssa, opline), &ce, op_array->filename);
 			if (opline->opcode != ZEND_FETCH_STATIC_PROP_R
 					&& opline->opcode != ZEND_FETCH_STATIC_PROP_IS) {
 				tmp |= MAY_BE_REF | MAY_BE_INDIRECT;
@@ -3914,7 +3919,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				UPDATE_SSA_TYPE(MAY_BE_RC1|MAY_BE_RCN|MAY_BE_ANY|MAY_BE_ARRAY_KEY_ANY|MAY_BE_ARRAY_OF_ANY, ssa_op->result_def);
 				break;
 			}
-			UPDATE_SSA_TYPE(zend_convert_type(script, cc->type, &ce), ssa_op->result_def);
+			UPDATE_SSA_TYPE(zend_convert_type(script, cc->type, &ce, op_array->filename), ssa_op->result_def);
 			if (ce) {
 				UPDATE_SSA_OBJ_TYPE(ce, /* is_instanceof */ true, ssa_op->result_def);
 			}
@@ -3962,7 +3967,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 				ce = NULL;
 			} else {
 				zend_arg_info *ret_info = op_array->arg_info - 1;
-				tmp = zend_fetch_arg_info_type(script, ret_info, &ce);
+				tmp = zend_fetch_arg_info_type_ex(script, ret_info, &ce, op_array->filename);
 				if ((tmp & MAY_BE_NULL) && opline->op1_type == IS_CV) {
 					tmp |= MAY_BE_UNDEF;
 				}
@@ -4018,7 +4023,7 @@ static zend_always_inline zend_result _zend_update_type_info(
 			if (ssa_op->result_def >= 0) {
 				const zend_property_info *prop_info = zend_fetch_static_prop_info(script, op_array, ssa, opline);
 				zend_class_entry *prop_ce;
-				tmp = zend_fetch_prop_type(script, prop_info, &prop_ce);
+				tmp = zend_fetch_prop_type(script, prop_info, &prop_ce, op_array->filename);
 				/* Internal objects may result in essentially anything. */
 				if (tmp & MAY_BE_OBJECT) {
 					goto unknown_opcode;
@@ -4516,6 +4521,7 @@ uint32_t zend_get_return_info_from_signature_only(
 		(use_tentative_return_info || !ZEND_ARG_TYPE_IS_TENTATIVE(func->common.arg_info - 1))
 	) {
 		zend_arg_info *ret_info = func->common.arg_info - 1;
+		// FIXME: Script file check?
 		type = zend_fetch_arg_info_type(script, ret_info, ce);
 		*ce_is_instanceof = ce != NULL;
 	} else {
