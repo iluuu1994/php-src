@@ -926,6 +926,51 @@ static void swap_live_range(zend_live_range *a, zend_live_range *b) {
 	b->end = tmp;
 }
 
+static void remove_dead_free_ranges(zend_op_array *op_array, zend_stack *stack, uint32_t opnum)
+{
+	while (!zend_stack_is_empty(stack)) {
+		uint32_t top_num = *(uint32_t*)zend_stack_top(stack);
+		zend_op *top = &op_array->opcodes[top_num];
+		/* We're past the range's start. */
+		if (opnum < top->op1.num) {
+			zend_stack_del_top(stack);
+		} else {
+			break;
+		}
+	}
+}
+
+static void append_free_range(zend_op_array *op_array, zend_stack *stack, zend_op *opline, uint32_t opnum)
+{
+	uint32_t i = zend_stack_count(stack);
+	uint32_t *existing_num = zend_stack_top(stack);
+	while (i-- != 0) {
+		zend_op *existing = &op_array->opcodes[*existing_num];
+		if (existing->op1.num <= opline->op1.num && existing->op2.num >= opline->op2.num) {
+			return;
+		} else if (existing->op1.num >= opline->op1.num && existing->op2.num <= opline->op2.num) {
+			*existing_num = opnum;
+			return;
+		}
+		existing_num--;
+	}
+	zend_stack_push(stack, &opnum);
+}
+
+static uint32_t find_free_range(zend_op_array *op_array, zend_stack *stack, uint32_t opnum)
+{
+	uint32_t i = zend_stack_count(stack);
+	uint32_t *num = zend_stack_top(stack);
+	while (i-- != 0) {
+		zend_op *op = &op_array->opcodes[*num];
+		if (op->op1.num <= opnum && op->op2.num > opnum) {
+			return *num;
+		}
+		num--;
+	}
+	return (uint32_t)-1;
+}
+
 static void zend_calc_live_ranges(
 		zend_op_array *op_array, zend_needs_live_range_cb needs_live_range) {
 	uint32_t opnum = op_array->last;
@@ -935,10 +980,18 @@ static void zend_calc_live_ranges(
 	uint32_t *last_use = do_alloca(sizeof(uint32_t) * op_array->T, use_heap);
 	memset(last_use, -1, sizeof(uint32_t) * op_array->T);
 
+	zend_stack free_range_stack;
+	zend_stack_init(&free_range_stack, sizeof(uint32_t));
+
 	ZEND_ASSERT(!op_array->live_range);
 	while (opnum > 0) {
 		opnum--;
 		opline--;
+
+		if (UNEXPECTED(opline->opcode == ZEND_FREE_RANGE)) {
+			remove_dead_free_ranges(op_array, &free_range_stack, opnum);
+			append_free_range(op_array, &free_range_stack, opline, opnum);
+		}
 
 		if ((opline->result_type & (IS_TMP_VAR|IS_VAR)) && !is_fake_def(opline)) {
 			uint32_t var_num = EX_VAR_TO_NUM(opline->result.var) - var_offset;
@@ -948,6 +1001,7 @@ static void zend_calc_live_ranges(
 			 * which case the last one starts the live range. As such, we can simply ignore
 			 * missing uses here. */
 			if (EXPECTED(last_use[var_num] != (uint32_t) -1)) {
+found:
 				/* Skip trivial live-range */
 				if (opnum + 1 != last_use[var_num]) {
 					uint32_t num;
@@ -963,6 +1017,11 @@ static void zend_calc_live_ranges(
 					emit_live_range(op_array, var_num, num, last_use[var_num], needs_live_range);
 				}
 				last_use[var_num] = (uint32_t) -1;
+			} else {
+				last_use[var_num] = find_free_range(op_array, &free_range_stack, opnum);
+				if (last_use[var_num] != (uint32_t) -1) {
+					goto found;
+				}
 			}
 		}
 
@@ -1024,6 +1083,7 @@ static void zend_calc_live_ranges(
 	}
 
 	free_alloca(last_use, use_heap);
+	zend_stack_destroy(&free_range_stack);
 }
 
 ZEND_API void zend_recalc_live_ranges(

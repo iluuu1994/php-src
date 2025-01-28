@@ -8049,6 +8049,7 @@ ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_ca
 		if (op_num < try_catch->catch_op && ex) {
 			/* Go to catch block */
 			cleanup_live_vars(execute_data, op_num, try_catch->catch_op);
+			cleanup_unfinished_calls(execute_data, op_num, try_catch->try_op);
 			ZEND_VM_JMP_EX(&EX(func)->op_array.opcodes[try_catch->catch_op], 0);
 
 		} else if (op_num < try_catch->finally_op) {
@@ -8060,6 +8061,7 @@ ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_ca
 			/* Go to finally block */
 			zval *fast_call = EX_VAR(EX(func)->op_array.opcodes[try_catch->finally_end].op1.var);
 			cleanup_live_vars(execute_data, op_num, try_catch->finally_op);
+			cleanup_unfinished_calls(execute_data, op_num, try_catch->catch_op ? try_catch->catch_op : try_catch->try_op);
 			Z_OBJ_P(fast_call) = EG(exception);
 			EG(exception) = NULL;
 			Z_OPLINE_NUM_P(fast_call) = (uint32_t)-1;
@@ -8099,6 +8101,7 @@ ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_ca
 		zend_observer_fcall_end(execute_data, NULL);
 	}
 	cleanup_live_vars(execute_data, op_num, 0);
+	cleanup_unfinished_calls(execute_data, op_num, 0);
 	if (UNEXPECTED((EX_CALL_INFO() & ZEND_CALL_GENERATOR) != 0)) {
 		zend_generator *generator = zend_get_running_generator(EXECUTE_DATA_C);
 		EG(current_execute_data) = EX(prev_execute_data);
@@ -8160,8 +8163,6 @@ ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 			current_try_catch_offset = i;
 		}
 	}
-
-	cleanup_unfinished_calls(execute_data, throw_op_num);
 
 	if (throw_op->result_type & (IS_VAR | IS_TMP_VAR)) {
 		switch (throw_op->opcode) {
@@ -9839,6 +9840,14 @@ ZEND_VM_HANDLER(209, ZEND_INIT_PARENT_PROPERTY_HOOK_CALL, CONST, UNUSED|NUM, NUM
 
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
+	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(210, ZEND_FREE_RANGE, UNUSED|NUM, UNUSED|NUM)
+{
+	USE_OPLINE
+	cleanup_unfinished_calls(execute_data, opline->op2.num, opline->op1.num);
+	cleanup_live_vars_range(execute_data, opline->op1.num, opline->op2.num);
 	ZEND_VM_NEXT_OPCODE();
 }
 
