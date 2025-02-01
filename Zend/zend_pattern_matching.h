@@ -19,29 +19,6 @@
 
 #include "zend.h"
 
-#define ZEND_PM_BINDINGS_SLOTS 8
-
-typedef struct {
-	uint32_t var;
-	zval value;
-} zend_pm_binding;
-
-typedef struct _zend_pm_bindings zend_pm_bindings;
-struct _zend_pm_bindings {
-	zend_pm_binding list[ZEND_PM_BINDINGS_SLOTS];
-	zend_pm_bindings *next;
-	uint8_t num_used;
-};
-
-typedef struct _zend_pm_context zend_pm_context;
-typedef struct _zend_pm_context {
-	zend_pm_bindings *bindings;
-	zend_pm_bindings *last_bindings;
-	zend_pm_bindings bindings_spare;
-	zend_pm_context *prev;
-} zend_pm_context;
-
-bool zend_pattern_match(zval *zv, zend_ast *pattern);
-void zend_pm_contexts_free(void);
+bool zend_pattern_match(zval *zv, zend_ast *pattern, zend_array *bindings);
 
 #endif

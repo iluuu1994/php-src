@@ -28,7 +28,11 @@ typedef enum {
 	PM_MATCH = 1,
 } pm_result;
 
-pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern);
+typedef struct {
+	zend_array *bindings;
+} pm_context;
+
+pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern, pm_context *context);
 static zend_class_entry *get_class_from_fetch_type(uint32_t fetch_type);
 
 static pm_result match_type(zval *zv, zend_ast *type_ast)
@@ -117,7 +121,7 @@ static zend_class_entry *get_class_from_fetch_type(uint32_t fetch_type)
 	return NULL;
 }
 
-static pm_result match_object(zval *zv, zend_ast *pattern)
+static pm_result match_object(zval *zv, zend_ast *pattern, pm_context *context)
 {
 	if (Z_TYPE_P(zv) != IS_OBJECT) {
 		return PM_MISMATCH;
@@ -132,7 +136,7 @@ static pm_result match_object(zval *zv, zend_ast *pattern)
 		zend_string *property_name = zend_ast_get_str(property_or_method_call);
 		zval property_result_rv;
 		zval *property_result = obj->handlers->read_property(obj, property_name, BP_VAR_R, NULL, &property_result_rv);
-		pm_result element_matched = zend_pattern_match_ex(property_result, element_pattern);
+		pm_result element_matched = zend_pattern_match_ex(property_result, element_pattern, context);
 		if (property_result == &property_result_rv) {
 			zval_ptr_dtor(property_result);
 		}
@@ -161,31 +165,15 @@ static pm_result match_range(zval *zv, zend_ast *pattern)
 	return PM_MATCH;
 }
 
-static pm_result match_binding(zval *zv, zend_ast *pattern)
+static pm_result match_binding(zval *zv, zend_ast *pattern, pm_context *context)
 {
-	zend_pm_context *context = EG(pm_context);
-	zend_pm_bindings *bindings = context->bindings;
-	if (!bindings) {
-		bindings = &context->bindings_spare;
-		context->bindings = bindings;
-		context->last_bindings = bindings;
-	} else if (bindings->num_used == ZEND_PM_BINDINGS_SLOTS) {
-		zend_pm_bindings *new_bindings = emalloc(sizeof(zend_pm_bindings));
-		new_bindings->num_used = 0;
-		new_bindings->next = NULL;
-		context->last_bindings->next = new_bindings;
-		context->last_bindings = new_bindings;
-		bindings = new_bindings;
-	}
-
-	zend_pm_binding *binding = &bindings->list[bindings->num_used++];
-	binding->var = (uint32_t) pattern->attr;
-	ZVAL_COPY(&binding->value, zv);
-
+	ZVAL_DEREF(zv);
+	Z_TRY_ADDREF_P(zv);
+	zend_hash_index_add(context->bindings, (zend_ulong) pattern->attr, zv);
 	return PM_MATCH;
 }
 
-static pm_result match_array(zval *zv, zend_ast *pattern)
+static pm_result match_array(zval *zv, zend_ast *pattern, pm_context *context)
 {
 	if (Z_TYPE_P(zv) != IS_ARRAY) {
 		return PM_MISMATCH;
@@ -225,7 +213,7 @@ static pm_result match_array(zval *zv, zend_ast *pattern)
 			element_zv = zend_hash_index_find(ht, index);
 			index++;
 		}
-		if (!element_zv || Z_TYPE_P(element_zv) == IS_UNDEF || !zend_pattern_match_ex(element_zv, pattern_ast)) {
+		if (!element_zv || Z_TYPE_P(element_zv) == IS_UNDEF || !zend_pattern_match_ex(element_zv, pattern_ast, context)) {
 			return PM_MISMATCH;
 		}
 	}
@@ -246,7 +234,7 @@ pm_result match_class_const(zval *zv, zend_ast *pattern)
 	return zend_is_identical(zv, constant_zv) ? PM_MATCH : PM_MISMATCH;
 }
 
-pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern)
+pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern, pm_context *context)
 {
 	ZVAL_DEREF(zv);
 
@@ -256,108 +244,38 @@ pm_result zend_pattern_match_ex(zval *zv, zend_ast *pattern)
 		case ZEND_AST_ZVAL:
 			return match_zval(zv, zend_ast_get_zval(pattern));
 		case ZEND_AST_OBJECT_PATTERN:
-			return match_object(zv, pattern);
+			return match_object(zv, pattern, context);
 		case ZEND_AST_WILDCARD_PATTERN:
 			return PM_MATCH;
 		case ZEND_AST_OR_PATTERN: {
-			pm_result lhs = zend_pattern_match_ex(zv, pattern->child[0]);
+			pm_result lhs = zend_pattern_match_ex(zv, pattern->child[0], context);
 			if (lhs != PM_MISMATCH) {
 				return lhs;
 			}
-			return zend_pattern_match_ex(zv, pattern->child[1]);
+			return zend_pattern_match_ex(zv, pattern->child[1], context);
 		}
 		case ZEND_AST_AND_PATTERN: {
-			pm_result lhs = zend_pattern_match_ex(zv, pattern->child[0]);
+			pm_result lhs = zend_pattern_match_ex(zv, pattern->child[0], context);
 			if (lhs != PM_MATCH) {
 				return lhs;
 			}
-			return zend_pattern_match_ex(zv, pattern->child[1]);
+			return zend_pattern_match_ex(zv, pattern->child[1], context);
 		}
 		case ZEND_AST_RANGE_PATTERN:
 			return match_range(zv, pattern);
 		case ZEND_AST_BINDING_PATTERN:
-			return match_binding(zv, pattern);
+			return match_binding(zv, pattern, context);
 		case ZEND_AST_ARRAY_PATTERN:
-			return match_array(zv, pattern);
+			return match_array(zv, pattern, context);
 		case ZEND_AST_CLASS_CONST_PATTERN:
 			return match_class_const(zv, pattern);
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
 
-static void create_context(void)
+bool zend_pattern_match(zval *zv, zend_ast *pattern, zend_array *bindings)
 {
-	if (!EG(pm_context)) {
-		EG(pm_context) = &EG(pm_context_spare);
-	} else {
-		zend_pm_context *prev = EG(pm_context);
-		EG(pm_context) = emalloc(sizeof(zend_pm_context));
-		EG(pm_context)->prev = prev;
-	}
-}
-
-static void pm_context_free(bool free_values)
-{
-	zend_pm_context *context = EG(pm_context);
-	zend_pm_bindings *bindings = context->bindings;
-
-	EG(pm_context) = context->prev;
-
-	while (bindings) {
-		if (free_values) {
-			for (uint8_t i = 0; i < bindings->num_used; i++) {
-				zval_ptr_dtor(&bindings->list[i].value);
-			}
-		}
-		zend_pm_bindings *next = bindings->next;
-		if (bindings != &context->bindings_spare) {
-			efree(bindings);
-		}
-		bindings = next;
-	}
-
-	context->bindings = NULL;
-	memset(&context->bindings_spare, 0, sizeof(context->bindings_spare));
-
-	if (context != &EG(pm_context_spare)) {
-		efree(context);
-	} else {
-		memset(context, 0, sizeof(zend_pm_context));
-	}
-}
-
-static void bind_variables(void)
-{
-	zend_pm_context *context = EG(pm_context);
-	zend_pm_bindings *bindings = context->bindings;
-	zend_execute_data *execute_data = EG(current_execute_data);
-	while (bindings) {
-		for (uint32_t i = 0; i < bindings->num_used; i++) {
-			zend_pm_binding *binding = &bindings->list[i];
-			zend_assign_to_variable(EX_VAR(binding->var), &binding->value, IS_CV, EX_USES_STRICT_TYPES());
-		}
-		bindings = bindings->next;
-	}
-}
-
-void zend_pm_contexts_free(void)
-{
-	while (EG(pm_context)) {
-		pm_context_free(false);
-	}
-}
-
-bool zend_pattern_match(zval *zv, zend_ast *pattern)
-{
-	// FIXME: Only create context when necessary
-	create_context();
-	pm_result result = zend_pattern_match_ex(zv, pattern);
-	if (result == PM_MATCH) {
-		bind_variables();
-		pm_context_free(true);
-		return true;
-	} else {
-		pm_context_free(true);
-		return false;
-	}
+	pm_context context = { .bindings = bindings };
+	pm_result result = zend_pattern_match_ex(zv, pattern, &context);
+	return result == PM_MATCH;
 }

@@ -314,8 +314,6 @@ struct _zend_executor_globals {
 #endif
 
 	zend_strtod_state strtod_state;
-	zend_pm_context *pm_context;
-	zend_pm_context pm_context_spare;
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
