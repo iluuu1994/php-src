@@ -6417,6 +6417,7 @@ static bool can_match_use_jumptable(zend_ast_list *arms) {
 }
 
 static void zend_compile_pattern(zend_ast **ast_ptr, void *context);
+static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr);
 
 typedef struct {
 	bool inside_or_pattern;
@@ -6496,47 +6497,9 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 					}
 				} else {
 					zend_ast **pattern_ast_ptr = &cond_ast->child[1];
-
-					znode bindings_node;
-					bindings_node.op_type = IS_TMP_VAR;
-					bindings_node.u.op.var = get_temporary_variable();
-
-					uint32_t is_opnum = get_next_op_number();
-					zend_op *is_opline = zend_emit_op_tmp(NULL, ZEND_IS, &expr_node, &bindings_node);
+					uint32_t is_opnum = zend_emit_is(NULL, &expr_node, pattern_ast_ptr);
+					zend_op *is_opline = &CG(active_op_array)->opcodes[is_opnum];
 					SET_NODE(is_opline->result, &case_node);
-					if (is_opline->op1_type == IS_CONST) {
-						Z_TRY_ADDREF_P(CT_CONSTANT(is_opline->op1));
-					}
-
-					uint32_t op_data_opnum = get_next_op_number();
-					zend_emit_op_data(NULL);
-
-					zend_compile_pattern_context pattern_context = { .bindings_var = bindings_node.u.op.var };
-					zend_compile_pattern(pattern_ast_ptr, &pattern_context);
-
-					zval pattern_zv;
-					ZVAL_AST(&pattern_zv, zend_ast_copy(*pattern_ast_ptr));
-					zend_ast_destroy(*pattern_ast_ptr);
-					*pattern_ast_ptr = zend_ast_create_zval(&pattern_zv);
-
-					znode pattern_node;
-					pattern_node.op_type = IS_CONST;
-					ZVAL_COPY(&pattern_node.u.constant, &pattern_zv);
-					zend_op *op_data_op = &CG(active_op_array)->opcodes[op_data_opnum];
-					SET_NODE(op_data_op->op1, &pattern_node);
-					op_data_op->extended_value = pattern_context.binding_offset;
-
-					is_opline = &CG(active_op_array)->opcodes[is_opnum];
-					is_opline->extended_value = get_next_op_number();
-
-					if (pattern_context.binding_offset) {
-						zend_emit_op(NULL, ZEND_FREE, &bindings_node, NULL);
-					}
-
-					if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
-						// FIXME: Verify live ranges recognizes that OP1 needs to be freed if an exception occurs
-						zend_emit_op(NULL, ZEND_FREE, &expr_node, NULL);
-					}
 				}
 
 				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
@@ -6814,20 +6777,14 @@ static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 	pattern_context->inside_or_pattern = prev_inside_or_pattern;
 }
 
-static void zend_compile_is(znode *result, zend_ast *ast)
+static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr)
 {
-	zend_ast *expr_ast = ast->child[0];
-	zend_ast **pattern_ast_ptr = &ast->child[1];
-
-	znode expr_node;
-	zend_compile_expr(&expr_node, expr_ast);
-
 	znode bindings_node;
 	bindings_node.op_type = IS_TMP_VAR;
 	bindings_node.u.op.var = get_temporary_variable();
 
 	uint32_t is_opnum = get_next_op_number();
-	zend_emit_op_tmp(result, ZEND_IS, &expr_node, &bindings_node);
+	zend_emit_op_tmp(result, ZEND_IS, expr_node, &bindings_node);
 
 	uint32_t op_data_opnum = get_next_op_number();
 	zend_emit_op_data(NULL);
@@ -6853,6 +6810,19 @@ static void zend_compile_is(znode *result, zend_ast *ast)
 	if (pattern_context.binding_offset) {
 		zend_emit_op(NULL, ZEND_FREE, &bindings_node, NULL);
 	}
+
+	return is_opnum;
+}
+
+static void zend_compile_is(znode *result, zend_ast *ast)
+{
+	zend_ast *expr_ast = ast->child[0];
+	zend_ast **pattern_ast_ptr = &ast->child[1];
+
+	znode expr_node;
+	zend_compile_expr(&expr_node, expr_ast);
+
+	zend_emit_is(result, &expr_node, pattern_ast_ptr);
 
 	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {
 		// FIXME: Verify live ranges recognizes that OP1 needs to be freed if an exception occurs
