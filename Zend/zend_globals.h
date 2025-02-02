@@ -43,6 +43,7 @@
 #include "zend_max_execution_timer.h"
 #include "zend_strtod.h"
 #include "zend_lazy_objects.h"
+#include "zend_pattern_matching.h"
 
 /* Define ZTS if you want a thread-safe Zend */
 /*#undef ZTS*/
