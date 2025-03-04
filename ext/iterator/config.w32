@@ -1,0 +1,3 @@
+EXTENSION('iterator', 'iterator.c', false /* never shared */, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+PHP_ITERATOR="yes";
+PHP_INSTALL_HEADERS("ext/iterator", "php_iterator.h");
