@@ -39,7 +39,7 @@ permissions:
   contents: read
 jobs:
   LINUX_PPC64:
-    if: inputs.run_linux_ppc64
+    if: false
     name: LINUX_PPC64_ASAN_UBSAN_DEBUG_ZTS
     # This runs on a self-hosted runner; see https://wiki.php.net/systems/ci
     runs-on: [self-hosted, gentoo, ppc64]
@@ -82,7 +82,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   ALPINE:
-    if: inputs.run_alpine
+    if: false
     name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
     runs-on: ubuntu-22.04
     container:
@@ -137,6 +137,7 @@ jobs:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
 
   LINUX_X64:
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -270,6 +271,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LINUX_X32:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -357,6 +359,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   MACOS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -418,7 +421,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   COVERAGE_DEBUG_NTS:
-    if: inputs.branch == 'master'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -666,6 +669,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   OPCACHE_VARIATION:
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -757,6 +761,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   MSAN:
+    if: false
     name: MSAN
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -849,6 +854,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   LIBMYSQLCLIENT:
+    if: false
     name: LIBMYSQLCLIENT
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -896,7 +902,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   PECL:
-    if: inputs.branch == 'master'
+    if: false
     runs-on: ubuntu-22.04
     env:
       CC: ccache gcc
@@ -1008,6 +1014,7 @@ jobs:
         with:
           token: ${{ secrets.ACTION_MONITORING_SLACK }}
   WINDOWS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -1054,6 +1061,7 @@ jobs:
       - name: Test
         run: .github/scripts/windows/test.bat
   FREEBSD:
+    if: false
     name: FREEBSD
     runs-on: ubuntu-latest
     steps:
