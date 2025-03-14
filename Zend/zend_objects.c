@@ -66,7 +66,7 @@ void zend_object_dtor_property(zend_object *object, zval *p)
 		if (UNEXPECTED(Z_ISREF_P(p)) &&
 				(ZEND_DEBUG || ZEND_REF_HAS_TYPE_SOURCES(Z_REF_P(p)))) {
 			zend_property_info *prop_info = zend_get_property_info_for_slot_self(object, p);
-			if (ZEND_TYPE_IS_SET(prop_info->type)) {
+			if (ZEND_TYPE_IS_CHECKED(prop_info->type)) {
 				ZEND_REF_DEL_TYPE_SOURCE(Z_REF_P(p), prop_info);
 			}
 		}

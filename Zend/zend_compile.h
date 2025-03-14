@@ -106,6 +106,11 @@ typedef struct _zend_declarables {
 	zend_long ticks;
 } zend_declarables;
 
+typedef enum {
+	ZEND_TYPES_MODE_CHECKED = 0,
+	ZEND_TYPES_MODE_ERASED,
+} zend_types_mode;
+
 /* Compilation context that is different for each file, but shared between op arrays. */
 typedef struct _zend_file_context {
 	zend_declarables declarables;
@@ -119,6 +124,7 @@ typedef struct _zend_file_context {
 	HashTable *imports_const;
 
 	HashTable seen_symbols;
+	zend_types_mode types_mode;
 } zend_file_context;
 
 typedef union _zend_parser_stack_elem {
