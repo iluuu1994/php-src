@@ -7757,7 +7757,7 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		if (type_ast) {
 			/* Allocate cache slot to speed-up run-time class resolution */
 			opline->extended_value =
-				zend_alloc_cache_slots(zend_type_get_num_classes(arg_info->type));
+				zend_alloc_cache_slots(1 + zend_type_get_num_classes(arg_info->type));
 		}
 
 		uint32_t arg_info_flags = _ZEND_ARG_INFO_FLAGS(is_ref, is_variadic, /* is_tentative */ 0)

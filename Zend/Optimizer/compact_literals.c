@@ -508,11 +508,9 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 				case ZEND_RECV:
 				case ZEND_RECV_VARIADIC:
 				{
-					size_t num_classes = type_num_classes(op_array, opline->op1.num);
-					if (num_classes) {
-						opline->extended_value = cache_size;
-						cache_size += num_classes * sizeof(void *);
-					}
+					size_t num_classes = 1 + type_num_classes(op_array, opline->op1.num);
+					opline->extended_value = cache_size;
+					cache_size += num_classes * sizeof(void *);
 					break;
 				}
 				case ZEND_VERIFY_RETURN_TYPE:

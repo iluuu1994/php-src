@@ -2757,8 +2757,12 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_verify_recv_
 	USE_OPLINE
 
 	SAVE_OPLINE();
-	if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), opline->op1.num, op_1, CACHE_ADDR(opline->extended_value)))) {
+	if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), opline->op1.num, op_1, CACHE_ADDR(opline->extended_value) + 1))) {
 		HANDLE_EXCEPTION();
+	}
+
+	if (EXPECTED(Z_TYPE_P(op_1) == IS_OBJECT)) {
+		CACHE_PTR(opline->extended_value, Z_OBJCE_P(op_1));
 	}
 
 	ZEND_VM_NEXT_OPCODE();
@@ -4190,7 +4194,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_RECV_INIT_SPEC_CON
 recv_init_check_type:
 		if ((EX(func)->op_array.fn_flags & ZEND_ACC_HAS_TYPE_HINTS) != 0) {
 			SAVE_OPLINE();
-			if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), arg_num, param, CACHE_ADDR(opline->extended_value)))) {
+			if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), arg_num, param, CACHE_ADDR(opline->extended_value) + 1))) {
 				HANDLE_EXCEPTION();
 			}
 		}
@@ -4265,7 +4269,9 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_RECV_SPEC_UNUSED_H
 
 	param = EX_VAR(opline->result.var);
 
-	if (UNEXPECTED(!(opline->op2.num & (1u << Z_TYPE_P(param))))) {
+	if (UNEXPECTED(!(opline->op2.num & (1u << Z_TYPE_P(param))))
+	 && !(EXPECTED(Z_TYPE_P(param) == IS_OBJECT)
+	  && CACHED_PTR(opline->extended_value) == Z_OBJCE_P(param))) {
 		ZEND_VM_TAIL_CALL(zend_verify_recv_arg_type_helper_SPEC(param ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_CC));
 	}
 
