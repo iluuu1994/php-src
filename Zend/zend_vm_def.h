@@ -5671,8 +5671,12 @@ ZEND_VM_HELPER(zend_verify_recv_arg_type_helper, ANY, ANY, zval *op_1)
 	USE_OPLINE
 
 	SAVE_OPLINE();
-	if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), opline->op1.num, op_1, CACHE_ADDR(opline->extended_value)))) {
+	if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), opline->op1.num, op_1, CACHE_ADDR(opline->extended_value) + 1))) {
 		HANDLE_EXCEPTION();
+	}
+
+	if (EXPECTED(Z_TYPE_P(op_1) == IS_OBJECT)) {
+		CACHE_PTR(opline->extended_value, Z_OBJCE_P(op_1));
 	}
 
 	ZEND_VM_NEXT_OPCODE();
@@ -5690,7 +5694,9 @@ ZEND_VM_HOT_HANDLER(63, ZEND_RECV, NUM, UNUSED, CACHE_SLOT)
 
 	param = EX_VAR(opline->result.var);
 
-	if (UNEXPECTED(!(opline->op2.num & (1u << Z_TYPE_P(param))))) {
+	if (UNEXPECTED(!(opline->op2.num & (1u << Z_TYPE_P(param))))
+	 && !(EXPECTED(Z_TYPE_P(param) == IS_OBJECT)
+	  && CACHED_PTR(opline->extended_value) == Z_OBJCE_P(param))) {
 		ZEND_VM_DISPATCH_TO_HELPER(zend_verify_recv_arg_type_helper, op_1, param);
 	}
 
@@ -5749,7 +5755,7 @@ ZEND_VM_HOT_HANDLER(64, ZEND_RECV_INIT, NUM, CONST, CACHE_SLOT)
 ZEND_VM_C_LABEL(recv_init_check_type):
 		if ((EX(func)->op_array.fn_flags & ZEND_ACC_HAS_TYPE_HINTS) != 0) {
 			SAVE_OPLINE();
-			if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), arg_num, param, CACHE_ADDR(opline->extended_value)))) {
+			if (UNEXPECTED(!zend_verify_recv_arg_type(EX(func), arg_num, param, CACHE_ADDR(opline->extended_value) + 1))) {
 				HANDLE_EXCEPTION();
 			}
 		}
