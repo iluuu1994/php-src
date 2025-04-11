@@ -434,6 +434,7 @@ static zend_always_inline uint32_t zend_visibility_to_set_visibility(uint32_t vi
 #define ZEND_SHORT_CIRCUITING_CHAIN_EMPTY 2
 
 // Must not clash with ZEND_SHORT_CIRCUITING_CHAIN_MASK
+// FIXME: Can we get rid of this? CHECK_VAR instruction should be inserted now instead.
 #define ZEND_JMP_NULL_BP_VAR_IS 4
 
 char *zend_visibility_string(uint32_t fn_flags);

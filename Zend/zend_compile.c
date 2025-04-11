@@ -535,6 +535,7 @@ static zend_always_inline uint32_t get_temporary_variable(void) /* {{{ */
 }
 /* }}} */
 
+// FIXME: Check all uses of lookup_cv() to see whether they need CHECK_VAR.
 static int lookup_cv(zend_string *name) /* {{{ */{
 	zend_op_array *op_array = CG(active_op_array);
 	int i = 0;
