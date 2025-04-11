@@ -348,9 +348,7 @@ static zend_always_inline zval *_get_zval_ptr_cv_BP_VAR_R(uint32_t var EXECUTE_D
 {
 	zval *ret = EX_VAR(var);
 
-	if (UNEXPECTED(Z_TYPE_P(ret) == IS_UNDEF)) {
-		return zval_undefined_cv(var EXECUTE_DATA_CC);
-	}
+	ZEND_ASSERT(Z_TYPE_P(ret) != IS_UNDEF);
 	return ret;
 }
 
@@ -358,9 +356,7 @@ static zend_always_inline zval *_get_zval_ptr_cv_deref_BP_VAR_R(uint32_t var EXE
 {
 	zval *ret = EX_VAR(var);
 
-	if (UNEXPECTED(Z_TYPE_P(ret) == IS_UNDEF)) {
-		return zval_undefined_cv(var EXECUTE_DATA_CC);
-	}
+	ZEND_ASSERT(Z_TYPE_P(ret) != IS_UNDEF);
 	ZVAL_DEREF(ret);
 	return ret;
 }
@@ -376,11 +372,7 @@ static zend_always_inline zval *_get_zval_ptr_cv_BP_VAR_RW(uint32_t var EXECUTE_
 {
 	zval *ret = EX_VAR(var);
 
-	if (UNEXPECTED(Z_TYPE_P(ret) == IS_UNDEF)) {
-		zval_undefined_cv(var EXECUTE_DATA_CC);
-		ZVAL_NULL(ret);
-		return ret;
-	}
+	ZEND_ASSERT(Z_TYPE_P(ret) != IS_UNDEF);
 	return ret;
 }
 
@@ -2045,6 +2037,7 @@ static zend_never_inline void zend_assign_to_string_offset(zval *str, zval *dim,
 		/* The string may be destroyed while throwing the notice.
 		 * Temporarily increase the refcount to detect this situation. */
 		GC_ADDREF(s);
+		// FIXME: Still needed?
 		if (UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 			zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 		}
@@ -3641,6 +3634,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 			name = Z_STR_P(varname);
 			tmp_name = NULL;
 		} else {
+			// FIXME: Still needed?
 			if (op1_type == IS_CV && UNEXPECTED(Z_TYPE_P(varname) == IS_UNDEF)) {
 				zval_undefined_cv(opline->op1.var EXECUTE_DATA_CC);
 			}

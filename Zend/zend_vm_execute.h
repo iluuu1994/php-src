@@ -24737,6 +24737,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -24810,6 +24811,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -24889,6 +24891,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -24962,6 +24965,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -25042,6 +25046,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -25115,6 +25120,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -25195,6 +25201,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -25268,6 +25275,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -27732,6 +27740,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -27805,6 +27814,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -27884,6 +27894,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -27957,6 +27968,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -28037,6 +28049,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -28110,6 +28123,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -28190,6 +28204,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -28263,6 +28278,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -29316,6 +29332,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -29389,6 +29406,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -29468,6 +29486,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -29541,6 +29560,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -29621,6 +29641,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -29694,6 +29715,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -29774,6 +29796,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -29847,6 +29870,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -32084,6 +32108,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -32157,6 +32182,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -32236,6 +32262,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -32309,6 +32336,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -32389,6 +32417,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -32462,6 +32491,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -32542,6 +32572,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -32615,6 +32646,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -44048,6 +44080,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -44121,6 +44154,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -44200,6 +44234,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -44273,6 +44308,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -44353,6 +44389,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -44426,6 +44463,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -44506,6 +44544,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CONST == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -44579,6 +44618,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -48000,6 +48040,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -48073,6 +48114,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -48152,6 +48194,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -48225,6 +48268,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -48305,6 +48349,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -48378,6 +48423,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -48458,6 +48504,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if ((IS_TMP_VAR|IS_VAR) == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -48531,6 +48578,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -50042,6 +50090,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -50115,6 +50164,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -50194,6 +50244,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -50267,6 +50318,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -50347,6 +50399,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -50420,6 +50473,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -50500,6 +50554,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_UNUSED == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -50573,6 +50628,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {
@@ -51340,8 +51396,9 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CHECK_VAR_SPEC_CV_UNUSED_HANDL
 
 	if (UNEXPECTED(Z_TYPE_INFO_P(op1) == IS_UNDEF)) {
 		SAVE_OPLINE();
-		ZVAL_UNDEFINED_OP1();
-		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+		zend_string *cv = CV_DEF_OF(EX_VAR_TO_NUM(opline->op1.var));
+		zend_throw_error_unchecked(NULL, "Undefined variable $%S", cv);
+		HANDLE_EXCEPTION();
 	}
 	ZEND_VM_NEXT_OPCODE();
 }
@@ -53498,6 +53555,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -53571,6 +53629,7 @@ try_assign_dim_array:
 			}
 
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
+			// FIXME: Still needed?
 			if (IS_CONST == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CONST & (IS_CV|IS_VAR)) {
@@ -53650,6 +53709,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -53723,6 +53783,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_TMP_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_TMP_VAR & (IS_CV|IS_VAR)) {
@@ -53803,6 +53864,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -53876,6 +53938,7 @@ try_assign_dim_array:
 			}
 
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
+			// FIXME: Still needed?
 			if (IS_VAR == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_VAR & (IS_CV|IS_VAR)) {
@@ -53956,6 +54019,7 @@ try_assign_dim_array:
 		SEPARATE_ARRAY(object_ptr);
 		if (IS_CV == IS_UNUSED) {
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -54029,6 +54093,7 @@ try_assign_dim_array:
 			}
 
 			value = EX_VAR((opline+1)->op1.var);
+			// FIXME: Still needed?
 			if (IS_CV == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (IS_CV & (IS_CV|IS_VAR)) {

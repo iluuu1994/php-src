@@ -2669,6 +2669,7 @@ ZEND_VM_C_LABEL(try_assign_dim_array):
 		SEPARATE_ARRAY(object_ptr);
 		if (OP2_TYPE == IS_UNUSED) {
 			value = GET_OP_DATA_ZVAL_PTR_UNDEF(BP_VAR_R);
+			// FIXME: Still needed?
 			if (OP_DATA_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(value) == IS_UNDEF)) {
 				HashTable *ht = Z_ARRVAL_P(object_ptr);
 				if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
@@ -2742,6 +2743,7 @@ ZEND_VM_C_LABEL(try_assign_dim_array):
 			}
 
 			value = GET_OP_DATA_ZVAL_PTR_UNDEF(BP_VAR_R);
+			// FIXME: Still needed?
 			if (OP_DATA_TYPE == IS_CV && UNEXPECTED(Z_ISUNDEF_P(value))) {
 				value = zval_undefined_cv((opline+1)->op1.var EXECUTE_DATA_CC);
 			} else if (OP_DATA_TYPE & (IS_CV|IS_VAR)) {
@@ -9214,8 +9216,9 @@ ZEND_VM_HANDLER(49, ZEND_CHECK_VAR, CV, UNUSED)
 
 	if (UNEXPECTED(Z_TYPE_INFO_P(op1) == IS_UNDEF)) {
 		SAVE_OPLINE();
-		ZVAL_UNDEFINED_OP1();
-		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+		zend_string *cv = CV_DEF_OF(EX_VAR_TO_NUM(opline->op1.var));
+		zend_throw_error_unchecked(NULL, "Undefined variable $%S", cv);
+		HANDLE_EXCEPTION();
 	}
 	ZEND_VM_NEXT_OPCODE();
 }

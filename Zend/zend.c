@@ -1807,6 +1807,34 @@ ZEND_API ZEND_COLD void zend_throw_error(zend_class_entry *exception_ce, const c
 }
 /* }}} */
 
+ZEND_API ZEND_COLD void zend_throw_error_unchecked(zend_class_entry *exception_ce, const char *format, ...)
+{
+	va_list va;
+	char *message = NULL;
+
+	if (!exception_ce) {
+		exception_ce = zend_ce_error;
+	}
+
+	/* Marker used to disable exception generation during preloading. */
+	if (EG(exception) == (void*)(uintptr_t)-1) {
+		return;
+	}
+
+	va_start(va, format);
+	zend_vspprintf(&message, 0, format, va);
+
+	//TODO: we can't convert compile-time errors to exceptions yet???
+	if (EG(current_execute_data) && !CG(in_compilation)) {
+		zend_throw_exception(exception_ce, message, 0);
+	} else {
+		zend_error_noreturn(E_ERROR, "%s", message);
+	}
+
+	efree(message);
+	va_end(va);
+}
+
 /* type should be one of the BP_VAR_* constants, only special messages happen for isset/empty and unset */
 ZEND_API ZEND_COLD void zend_illegal_container_offset(const zend_string *container, const zval *offset, int type)
 {

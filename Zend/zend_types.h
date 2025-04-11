@@ -1488,6 +1488,8 @@ static zend_always_inline uint32_t zval_delref_p(zval* pz) {
 #define ZVAL_DEREF(z) do {								\
 		if (UNEXPECTED(Z_ISREF_P(z))) {					\
 			(z) = Z_REFVAL_P(z);						\
+			/* FIXME: Verify this is beneficial. */		\
+			ZEND_ASSERT(Z_TYPE_P(z) != IS_UNDEF && Z_TYPE_P(z) != IS_REFERENCE);	\
 		}												\
 	} while (0)
 
