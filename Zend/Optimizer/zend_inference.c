@@ -5007,7 +5007,6 @@ ZEND_API bool zend_may_throw_ex(const zend_op *opline, const zend_ssa_op *ssa_op
 		case ZEND_NOP:
 		case ZEND_QM_ASSIGN:
 		case ZEND_JMP:
-		case ZEND_CHECK_VAR:
 		case ZEND_MAKE_REF:
 		case ZEND_BEGIN_SILENCE:
 		case ZEND_END_SILENCE:
@@ -5029,6 +5028,8 @@ ZEND_API bool zend_may_throw_ex(const zend_op *opline, const zend_ssa_op *ssa_op
 		case ZEND_JMP_NULL:
 		case ZEND_JMP_FRAMELESS:
 			return 0;
+		case ZEND_CHECK_VAR:
+			return t1 & MAY_BE_UNDEF;
 		case ZEND_IS_IDENTICAL:
 		case ZEND_IS_NOT_IDENTICAL:
 		case ZEND_CASE_STRICT:
