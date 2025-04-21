@@ -133,7 +133,7 @@ static void zend_dump_unused_op(const zend_op *opline, znode_op op, uint32_t fla
 	if (ZEND_VM_OP_NUM == (flags & ZEND_VM_OP_MASK)) {
 		fprintf(stderr, " %u", op.num);
 	} else if (ZEND_VM_OP_TRY_CATCH == (flags & ZEND_VM_OP_MASK)) {
-		if (op.num != (uint32_t)-1) {
+		if (op.num != (uint16_t)-1) {
 			fprintf(stderr, " try-catch(%u)", op.num);
 		}
 	} else if (ZEND_VM_OP_THIS == (flags & ZEND_VM_OP_MASK)) {
