@@ -34,7 +34,7 @@
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
-	op.num = (uint32_t) -1; \
+	op.num = (uint16_t) -1; \
 } while (0)
 
 #define MAKE_NOP(opline) do { \
@@ -66,14 +66,14 @@ typedef struct _zend_op zend_op;
 #endif
 
 typedef union _znode_op {
-	uint32_t      constant;
-	uint32_t      var;
-	uint32_t      num;
-	uint32_t      opline_num; /*  Needs to be signed */
+	uint16_t      constant;
+	uint16_t      var;
+	uint16_t      num;
+	uint16_t      opline_num; /*  Needs to be signed */
 #if ZEND_USE_ABS_JMP_ADDR
 	zend_op       *jmp_addr;
 #else
-	uint32_t      jmp_offset;
+	uint16_t      jmp_offset;
 #endif
 #if ZEND_USE_ABS_CONST_ADDR
 	zval          *zv;
@@ -139,7 +139,7 @@ struct _zend_op {
 	znode_op op1;
 	znode_op op2;
 	znode_op result;
-	uint32_t extended_value;
+	uint16_t extended_value;
 	uint32_t lineno;
 	uint8_t opcode;       /* Opcodes defined in Zend/zend_vm_opcodes.h */
 	uint8_t op1_type;     /* IS_UNUSED, IS_CONST, IS_TMP_VAR, IS_VAR, IS_CV */
@@ -733,8 +733,8 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 #define EX_VAR(n)				ZEND_CALL_VAR(execute_data, n)
 #define EX_VAR_NUM(n)			ZEND_CALL_VAR_NUM(execute_data, n)
 
-#define EX_VAR_TO_NUM(n)		((uint32_t)((n) / sizeof(zval) - ZEND_CALL_FRAME_SLOT))
-#define EX_NUM_TO_VAR(n)		((uint32_t)(((n) + ZEND_CALL_FRAME_SLOT) * sizeof(zval)))
+#define EX_VAR_TO_NUM(n)		((uint16_t)((n) / sizeof(zval) - ZEND_CALL_FRAME_SLOT))
+#define EX_NUM_TO_VAR(n)		((uint16_t)(((n) + ZEND_CALL_FRAME_SLOT) * sizeof(zval)))
 
 #define ZEND_OPLINE_TO_OFFSET(opline, target) \
 	((char*)(target) - (char*)(opline))
@@ -743,7 +743,7 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 	((char*)&(op_array)->opcodes[opline_num] - (char*)(opline))
 
 #define ZEND_OFFSET_TO_OPLINE(base, offset) \
-	((zend_op*)(((char*)(base)) + (int)offset))
+	((zend_op*)(((char*)(base)) + (int16_t)offset))
 
 #define ZEND_OFFSET_TO_OPLINE_NUM(op_array, base, offset) \
 	(ZEND_OFFSET_TO_OPLINE(base, offset) - op_array->opcodes)
