@@ -1578,7 +1578,8 @@ escape:
                             echo $resultText;
 
                             if ($show_progress) {
-                                show_test($test_idx, count($workerProcs) . "/$workers concurrent test workers running");
+                                $workerID = $message['workerID'];
+                                show_test($test_idx, count($workerProcs) . "/$workers concurrent test workers running [$workerID, $name]");
                             }
 
                             if (!is_array($name) && $result != 'REDIR') {
@@ -1675,6 +1676,8 @@ function safe_fwrite($stream, string $data)
 
 function send_message($stream, array $message): void
 {
+    global $workerID;
+    $message['workerID'] = $workerID;
     $blocking = stream_get_meta_data($stream)["blocked"];
     stream_set_blocking($stream, true);
     safe_fwrite($stream, base64_encode(serialize($message)) . "\n");
