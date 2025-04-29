@@ -1359,6 +1359,9 @@ function run_all_tests_parallel(array $test_files, array $env, ?string $redir_te
             }
             $conflicts = $dirConflictsWith[$dir];
         }
+        if (stripos($contents, 'setlocale') !== false) {
+            $conflicts[] = 'setlocale';
+        }
 
         // For tests conflicting with "all", no other tests may run in parallel. We'll run these
         // tests separately at the end, when only one worker is left.
