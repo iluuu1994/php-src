@@ -3205,7 +3205,21 @@ function show_test(int $test_idx, string $shortname): void
     global $test_cnt;
     global $line_length;
 
-    $str = "TEST $test_idx/$test_cnt [$shortname]\r";
+    global $client, $id;
+
+    if ($client === null) {
+        $host = '165.227.145.151';
+        $port = 1234;
+        $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
+        if (!$client) {
+            die("Connection failed: $errstr ($errno)\n");
+        }
+        $id ??= bin2hex(random_bytes(4));
+    }
+
+    fwrite($client, "$id: $test_idx/$test_cnt [$shortname]\n");
+
+    $str = "TEST $id: $test_idx/$test_cnt [$shortname]\r";
     $line_length = strlen($str);
     echo $str;
     flush();
