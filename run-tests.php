@@ -3218,6 +3218,7 @@ function show_test(int $test_idx, string $shortname): void
     }
 
     fwrite($client, "$id: $test_idx/$test_cnt [$shortname]\n");
+    fflush($client);
 
     $str = "TEST $id: $test_idx/$test_cnt [$shortname]\r";
     $line_length = strlen($str);
