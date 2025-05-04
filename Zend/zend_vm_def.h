@@ -10265,6 +10265,56 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_QM_ASSIGN, ((op->op1_type == IS_CONST) ? !Z_R
 	ZEND_VM_NEXT_OPCODE();
 }
 
+ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FETCH_DIM_R, (op->op1_type != IS_CONST && op->op2_type == IS_CONST && !(op2_info & (MAY_BE_ANY-MAY_BE_STRING))), ZEND_FETCH_DIM_R_STRING_INDEX, TMPVAR|CV, CONST, CACHE_SLOT)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+
+	zval *container, *dim;
+	zend_long offset;
+	HashTable *ht;
+
+	container = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	dim = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
+ZEND_VM_C_LABEL(fetch_dim_r_const_index_array):
+		ht = Z_ARRVAL_P(container);
+		uintptr_t offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+		if (offset && !HT_IS_PACKED(ht) && ht->nNumUsed >= offset) {
+			Bucket *b = &ht->arData[offset - 1];
+			if (b->key && zend_string_equals(b->key, Z_STR_P(dim))) {
+				ZVAL_COPY_DEREF(EX_VAR(opline->result.var), &b->val);
+				FREE_OP1();
+				ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+			}
+		}
+
+		zend_fetch_dimension_address_read_R_ex(container, dim, OP2_TYPE, CACHE_ADDR(opline->extended_value) OPLINE_CC EXECUTE_DATA_CC);
+		FREE_OP1();
+		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	} else if (EXPECTED(Z_TYPE_P(container) == IS_REFERENCE)) {
+		container = Z_REFVAL_P(container);
+		if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
+			ZEND_VM_C_GOTO(fetch_dim_r_const_index_array);
+		} else {
+			ZEND_VM_C_GOTO(fetch_dim_r_const_index_slow);
+		}
+	} else {
+ZEND_VM_C_LABEL(fetch_dim_r_const_index_slow):
+		if (OP2_TYPE == IS_CONST && Z_EXTRA_P(dim) == ZEND_EXTRA_VALUE) {
+			dim++;
+		}
+		zend_fetch_dimension_address_read_R_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
+		FREE_OP1();
+		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	}
+
+	ZVAL_NULL(EX_VAR(opline->result.var));
+	zend_undefined_offset(offset);
+	FREE_OP1();
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+}
+
 ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FETCH_DIM_R, (!(op2_info & (MAY_BE_UNDEF|MAY_BE_NULL|MAY_BE_STRING|MAY_BE_ARRAY|MAY_BE_OBJECT|MAY_BE_RESOURCE|MAY_BE_REF))), ZEND_FETCH_DIM_R_INDEX, CONST|TMPVAR|CV, CONST|TMPVARCV, SPEC(NO_CONST_CONST))
 {
 	USE_OPLINE
