@@ -17122,7 +17122,6 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_STRING
 	SAVE_OPLINE();
 
 	zval *container, *dim;
-	zend_long offset;
 	HashTable *ht;
 
 	container = _get_zval_ptr_var(opline->op1.var EXECUTE_DATA_CC);
@@ -17159,11 +17158,6 @@ fetch_dim_r_const_index_slow:
 		zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
-
-	ZVAL_NULL(EX_VAR(opline->result.var));
-	zend_undefined_offset(offset);
-	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
 static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -45875,7 +45869,6 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_STRING
 	SAVE_OPLINE();
 
 	zval *container, *dim;
-	zend_long offset;
 	HashTable *ht;
 
 	container = EX_VAR(opline->op1.var);
@@ -45912,11 +45905,6 @@ fetch_dim_r_const_index_slow:
 
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
-
-	ZVAL_NULL(EX_VAR(opline->result.var));
-	zend_undefined_offset(offset);
-
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
 static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
