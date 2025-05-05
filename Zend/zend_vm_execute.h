@@ -17116,23 +17116,41 @@ try_instanceof:
 	ZEND_VM_SMART_BRANCH(result, 1);
 }
 
-static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
 
-	zval *container, *dim;
-	HashTable *ht;
-
-	container = _get_zval_ptr_var(opline->op1.var EXECUTE_DATA_CC);
-	dim = RT_CONSTANT(opline, opline->op2);
+	zval *container = _get_zval_ptr_var(opline->op1.var EXECUTE_DATA_CC);
+	zval *dim = RT_CONSTANT(opline, opline->op2);
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 fetch_dim_r_const_index_array:
-		ht = Z_ARRVAL_P(container);
-		uintptr_t offset = (uintptr_t)CACHED_PTR(opline->extended_value);
-		if (offset && !HT_IS_PACKED(ht) && ht->nNumUsed >= offset) {
-			Bucket *b = &ht->arData[offset - 1];
-			if (b->key && zend_string_equals(b->key, Z_STR_P(dim))) {
+		HashTable *ht = Z_ARRVAL_P(container);
+		if (Z_TYPE_P(dim) == IS_LONG) {
+			zend_long offset = Z_LVAL_P(dim);
+			if (HT_IS_PACKED(ht)) {
+				if (EXPECTED((zend_ulong)offset < (zend_ulong)ht->nNumUsed)) {
+					zval *value = &ht->arPacked[offset];
+					if (EXPECTED(Z_TYPE_P(value) != IS_UNDEF)) {
+						ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
+						zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+						ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+					}
+				}
+				zend_undefined_offset(offset);
+				goto fetch_dim_r_cached_index_undef;
+			}
+		} else {
+			if (HT_IS_PACKED(ht)) {
+				zend_undefined_index(Z_STR_P(dim));
+				goto fetch_dim_r_cached_index_undef;
+			}
+		}
+
+		uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+		if (cached_offset && ht->nNumUsed >= cached_offset) {
+			Bucket *b = &ht->arData[cached_offset - 1];
+			if (!b->key ? (Z_TYPE_P(dim) == IS_LONG && b->h == Z_LVAL_P(dim)) : (Z_TYPE_P(dim) == IS_STRING && zend_string_equals(b->key, Z_STR_P(dim)))) {
 				ZVAL_COPY_DEREF(EX_VAR(opline->result.var), &b->val);
 				zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 				ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -17158,6 +17176,11 @@ fetch_dim_r_const_index_slow:
 		zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
+
+fetch_dim_r_cached_index_undef:
+	ZVAL_NULL(EX_VAR(opline->result.var));
+	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
 static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -45863,23 +45886,41 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_IS_NOT_IDENTICAL_NOTHROW_SPEC_
 	ZEND_VM_SMART_BRANCH(!result, 0);
 }
 
-static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
 {
 	USE_OPLINE
 	SAVE_OPLINE();
 
-	zval *container, *dim;
-	HashTable *ht;
-
-	container = EX_VAR(opline->op1.var);
-	dim = RT_CONSTANT(opline, opline->op2);
+	zval *container = EX_VAR(opline->op1.var);
+	zval *dim = RT_CONSTANT(opline, opline->op2);
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 fetch_dim_r_const_index_array:
-		ht = Z_ARRVAL_P(container);
-		uintptr_t offset = (uintptr_t)CACHED_PTR(opline->extended_value);
-		if (offset && !HT_IS_PACKED(ht) && ht->nNumUsed >= offset) {
-			Bucket *b = &ht->arData[offset - 1];
-			if (b->key && zend_string_equals(b->key, Z_STR_P(dim))) {
+		HashTable *ht = Z_ARRVAL_P(container);
+		if (Z_TYPE_P(dim) == IS_LONG) {
+			zend_long offset = Z_LVAL_P(dim);
+			if (HT_IS_PACKED(ht)) {
+				if (EXPECTED((zend_ulong)offset < (zend_ulong)ht->nNumUsed)) {
+					zval *value = &ht->arPacked[offset];
+					if (EXPECTED(Z_TYPE_P(value) != IS_UNDEF)) {
+						ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
+
+						ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+					}
+				}
+				zend_undefined_offset(offset);
+				goto fetch_dim_r_cached_index_undef;
+			}
+		} else {
+			if (HT_IS_PACKED(ht)) {
+				zend_undefined_index(Z_STR_P(dim));
+				goto fetch_dim_r_cached_index_undef;
+			}
+		}
+
+		uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+		if (cached_offset && ht->nNumUsed >= cached_offset) {
+			Bucket *b = &ht->arData[cached_offset - 1];
+			if (!b->key ? (Z_TYPE_P(dim) == IS_LONG && b->h == Z_LVAL_P(dim)) : (Z_TYPE_P(dim) == IS_STRING && zend_string_equals(b->key, Z_STR_P(dim)))) {
 				ZVAL_COPY_DEREF(EX_VAR(opline->result.var), &b->val);
 
 				ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -45905,6 +45946,11 @@ fetch_dim_r_const_index_slow:
 
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
+
+fetch_dim_r_cached_index_undef:
+	ZVAL_NULL(EX_VAR(opline->result.var));
+
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
 static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -58571,10 +58617,10 @@ ZEND_API void execute_ex(zend_execute_data *ex)
 			(void*)&&ZEND_NULL_LABEL,
 			(void*)&&ZEND_QM_ASSIGN_NOREF_SPEC_TMPVARCV_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
-			(void*)&&ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_LABEL,
-			(void*)&&ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_LABEL,
+			(void*)&&ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_LABEL,
+			(void*)&&ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
-			(void*)&&ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST_LABEL,
+			(void*)&&ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST_LABEL,
 			(void*)&&ZEND_NULL_LABEL,
 			(void*)&&ZEND_FETCH_DIM_R_INDEX_SPEC_CONST_TMPVARCV_LABEL,
 			(void*)&&ZEND_FETCH_DIM_R_INDEX_SPEC_CONST_TMPVARCV_LABEL,
@@ -60909,10 +60955,10 @@ zend_leave_helper_SPEC_LABEL:
 				ZEND_INSTANCEOF_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				VM_TRACE_OP_END(ZEND_INSTANCEOF_SPEC_TMPVAR_CONST)
 				HYBRID_BREAK();
-			HYBRID_CASE(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST):
-				VM_TRACE(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST)
-				ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
-				VM_TRACE_OP_END(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST)
+			HYBRID_CASE(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST):
+				VM_TRACE(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST)
+				ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+				VM_TRACE_OP_END(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST)
 				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_FETCH_DIM_R_INDEX_SPEC_TMPVAR_CONST):
 				VM_TRACE(ZEND_FETCH_DIM_R_INDEX_SPEC_TMPVAR_CONST)
@@ -63496,10 +63542,10 @@ zend_leave_helper_SPEC_LABEL:
 				ZEND_IS_NOT_IDENTICAL_NOTHROW_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 				VM_TRACE_OP_END(ZEND_IS_NOT_IDENTICAL_NOTHROW_SPEC_CV_CONST)
 				HYBRID_BREAK();
-			HYBRID_CASE(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST):
-				VM_TRACE(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST)
-				ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
-				VM_TRACE_OP_END(ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST)
+			HYBRID_CASE(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST):
+				VM_TRACE(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST)
+				ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
+				VM_TRACE_OP_END(ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST)
 				HYBRID_BREAK();
 			HYBRID_CASE(ZEND_FETCH_DIM_R_INDEX_SPEC_CV_CONST):
 				VM_TRACE(ZEND_FETCH_DIM_R_INDEX_SPEC_CV_CONST)
@@ -67778,10 +67824,10 @@ void zend_vm_init(void)
 		ZEND_NULL_HANDLER,
 		ZEND_QM_ASSIGN_NOREF_SPEC_TMPVARCV_HANDLER,
 		ZEND_NULL_HANDLER,
-		ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_HANDLER,
-		ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_TMPVAR_CONST_HANDLER,
+		ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_HANDLER,
+		ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_TMPVAR_CONST_HANDLER,
 		ZEND_NULL_HANDLER,
-		ZEND_FETCH_DIM_R_STRING_INDEX_SPEC_CV_CONST_HANDLER,
+		ZEND_FETCH_DIM_R_CACHED_INDEX_SPEC_CV_CONST_HANDLER,
 		ZEND_NULL_HANDLER,
 		ZEND_FETCH_DIM_R_INDEX_SPEC_CONST_TMPVARCV_HANDLER,
 		ZEND_FETCH_DIM_R_INDEX_SPEC_CONST_TMPVARCV_HANDLER,
@@ -68475,7 +68521,7 @@ ZEND_API void ZEND_FASTCALL zend_vm_set_opcode_handler_ex(zend_op* op, uint32_t 
 			}
 			break;
 		case ZEND_FETCH_DIM_R:
-			if (op->op1_type != IS_CONST && op->op2_type == IS_CONST && !(op2_info & (MAY_BE_ANY-MAY_BE_STRING))) {
+			if (op->op1_type != IS_CONST && op->op2_type == IS_CONST && !(op2_info & (MAY_BE_ANY-MAY_BE_STRING-MAY_BE_LONG))) {
 				spec = 3448 | SPEC_RULE_OP1;
 			} else if (!(op2_info & (MAY_BE_UNDEF|MAY_BE_NULL|MAY_BE_STRING|MAY_BE_ARRAY|MAY_BE_OBJECT|MAY_BE_RESOURCE|MAY_BE_REF))) {
 				if (op->op1_type == IS_CONST && op->op2_type == IS_CONST) {
