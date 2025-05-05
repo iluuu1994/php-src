@@ -17125,7 +17125,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED
 	zval *value;
 
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
-fetch_dim_r_const_index_array:
+fetch_dim_r_const_index_array:;
 		HashTable *ht = Z_ARRVAL_P(container);
 		if (Z_TYPE_P(dim) == IS_LONG) {
 			zend_long offset = Z_LVAL_P(dim);
@@ -45922,7 +45922,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED
 	zval *value;
 
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
-fetch_dim_r_const_index_array:
+fetch_dim_r_const_index_array:;
 		HashTable *ht = Z_ARRVAL_P(container);
 		if (Z_TYPE_P(dim) == IS_LONG) {
 			zend_long offset = Z_LVAL_P(dim);

@@ -10274,7 +10274,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FETCH_DIM_R, (op->op1_type != IS_CONST && op-
 	zval *value;
 
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
-ZEND_VM_C_LABEL(fetch_dim_r_const_index_array):
+ZEND_VM_C_LABEL(fetch_dim_r_const_index_array):;
 		HashTable *ht = Z_ARRVAL_P(container);
 		if (Z_TYPE_P(dim) == IS_LONG) {
 			zend_long offset = Z_LVAL_P(dim);
