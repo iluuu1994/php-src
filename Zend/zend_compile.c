@@ -3082,6 +3082,9 @@ static zend_op *zend_delayed_compile_dim(znode *result, zend_ast *ast, uint32_t 
 
 	opline = zend_delayed_emit_op(result, ZEND_FETCH_DIM_R, &var_node, &dim_node);
 	zend_adjust_for_fetch_type(opline, result, type);
+	if (type == BP_VAR_R && opline->op1_type != IS_CONST && opline->op2_type == IS_CONST) {
+		opline->extended_value = zend_alloc_cache_slot();
+	}
 	if (by_ref) {
 		opline->extended_value = ZEND_FETCH_DIM_REF;
 	}
@@ -8361,10 +8364,10 @@ static zend_op_array *zend_compile_func_decl_ex(
 			"nodiscard",
 			sizeof("nodiscard")-1
 		);
-	
+
 		if (nodiscard_attribute) {
 			op_array->fn_flags |= ZEND_ACC_NODISCARD;
-		}	
+		}
 	}
 
 	/* Do not leak the class scope into free standing functions, even if they are dynamically
