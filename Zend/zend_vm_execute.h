@@ -17122,6 +17122,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED
 
 	zval *container = _get_zval_ptr_var(opline->op1.var EXECUTE_DATA_CC);
 	zval *dim = RT_CONSTANT(opline, opline->op2);
+	zval *value;
+
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 fetch_dim_r_const_index_array:
 		HashTable *ht = Z_ARRVAL_P(container);
@@ -17129,8 +17131,9 @@ fetch_dim_r_const_index_array:
 			zend_long offset = Z_LVAL_P(dim);
 			if (HT_IS_PACKED(ht)) {
 				if (EXPECTED((zend_ulong)offset < (zend_ulong)ht->nNumUsed)) {
-					zval *value = &ht->arPacked[offset];
+					value = &ht->arPacked[offset];
 					if (EXPECTED(Z_TYPE_P(value) != IS_UNDEF)) {
+fetch_dim_r_cached_index_found:
 						ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 						if ((IS_TMP_VAR|IS_VAR) & (IS_TMP_VAR|IS_VAR)) {
 							SAVE_OPLINE();
@@ -17141,36 +17144,42 @@ fetch_dim_r_const_index_array:
 						}
 					}
 				}
-				SAVE_OPLINE();
-				zend_undefined_offset(offset);
+				goto fetch_dim_r_cached_index_undef;
+			}
+			uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+			if (cached_offset && ht->nNumUsed >= cached_offset) {
+				Bucket *b = &ht->arData[cached_offset - 1];
+				if (!b->key && b->h == offset) {
+					value = &b->val;
+					goto fetch_dim_r_cached_index_found;
+				}
+			}
+
+			value = _zend_hash_index_find(ht, offset);
+fetch_dim_r_cached_index_check:
+			if (EXPECTED(value)) {
+				Bucket *bucket = (Bucket*)((uintptr_t)value - XtOffsetOf(Bucket, val));
+				CACHE_PTR(opline->extended_value, (void *)(bucket - ht->arData + 1));
+				goto fetch_dim_r_cached_index_found;
+			} else {
 				goto fetch_dim_r_cached_index_undef;
 			}
 		} else {
 			if (UNEXPECTED(HT_IS_PACKED(ht))) {
-				SAVE_OPLINE();
-				zend_undefined_index(Z_STR_P(dim));
 				goto fetch_dim_r_cached_index_undef;
 			}
-		}
-
-		uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
-		if (cached_offset && ht->nNumUsed >= cached_offset) {
-			Bucket *b = &ht->arData[cached_offset - 1];
-			if (!b->key ? (Z_TYPE_P(dim) == IS_LONG && b->h == Z_LVAL_P(dim)) : (Z_TYPE_P(dim) == IS_STRING && zend_string_equals(b->key, Z_STR_P(dim)))) {
-				ZVAL_COPY_DEREF(EX_VAR(opline->result.var), &b->val);
-				if ((IS_TMP_VAR|IS_VAR) & (IS_TMP_VAR|IS_VAR)) {
-					zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
-					ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
-				} else {
-					ZEND_VM_NEXT_OPCODE();
+			uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+			if (cached_offset && ht->nNumUsed >= cached_offset) {
+				Bucket *b = &ht->arData[cached_offset - 1];
+				if (b->key && zend_string_equals(b->key, Z_STR_P(dim))) {
+					value = &b->val;
+					goto fetch_dim_r_cached_index_found;
 				}
 			}
-		}
 
-		SAVE_OPLINE();
-		zend_fetch_dimension_address_read_R_ex(container, dim, IS_CONST, CACHE_ADDR(opline->extended_value) OPLINE_CC EXECUTE_DATA_CC);
-		zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
-		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+			value = zend_hash_find(ht, Z_STR_P(dim));
+			goto fetch_dim_r_cached_index_check;
+		}
 	} else if (EXPECTED(Z_TYPE_P(container) == IS_REFERENCE)) {
 		container = Z_REFVAL_P(container);
 		if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
@@ -17183,13 +17192,20 @@ fetch_dim_r_const_index_slow:
 		if (IS_CONST == IS_CONST && Z_EXTRA_P(dim) == ZEND_EXTRA_VALUE) {
 			dim++;
 		}
+		SAVE_OPLINE();
 		zend_fetch_dimension_address_read_R_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 		zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
 
 fetch_dim_r_cached_index_undef:
+	SAVE_OPLINE();
 	ZVAL_NULL(EX_VAR(opline->result.var));
+	if (Z_TYPE_P(dim) == IS_LONG) {
+		zend_undefined_offset(Z_LVAL_P(dim));
+	} else {
+		zend_undefined_index(Z_STR_P(dim));
+	}
 	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
@@ -45903,6 +45919,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_DIM_R_CACHED
 
 	zval *container = EX_VAR(opline->op1.var);
 	zval *dim = RT_CONSTANT(opline, opline->op2);
+	zval *value;
+
 	if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 fetch_dim_r_const_index_array:
 		HashTable *ht = Z_ARRVAL_P(container);
@@ -45910,8 +45928,9 @@ fetch_dim_r_const_index_array:
 			zend_long offset = Z_LVAL_P(dim);
 			if (HT_IS_PACKED(ht)) {
 				if (EXPECTED((zend_ulong)offset < (zend_ulong)ht->nNumUsed)) {
-					zval *value = &ht->arPacked[offset];
+					value = &ht->arPacked[offset];
 					if (EXPECTED(Z_TYPE_P(value) != IS_UNDEF)) {
+fetch_dim_r_cached_index_found:
 						ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 						if (IS_CV & (IS_TMP_VAR|IS_VAR)) {
 							SAVE_OPLINE();
@@ -45922,36 +45941,42 @@ fetch_dim_r_const_index_array:
 						}
 					}
 				}
-				SAVE_OPLINE();
-				zend_undefined_offset(offset);
+				goto fetch_dim_r_cached_index_undef;
+			}
+			uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+			if (cached_offset && ht->nNumUsed >= cached_offset) {
+				Bucket *b = &ht->arData[cached_offset - 1];
+				if (!b->key && b->h == offset) {
+					value = &b->val;
+					goto fetch_dim_r_cached_index_found;
+				}
+			}
+
+			value = _zend_hash_index_find(ht, offset);
+fetch_dim_r_cached_index_check:
+			if (EXPECTED(value)) {
+				Bucket *bucket = (Bucket*)((uintptr_t)value - XtOffsetOf(Bucket, val));
+				CACHE_PTR(opline->extended_value, (void *)(bucket - ht->arData + 1));
+				goto fetch_dim_r_cached_index_found;
+			} else {
 				goto fetch_dim_r_cached_index_undef;
 			}
 		} else {
 			if (UNEXPECTED(HT_IS_PACKED(ht))) {
-				SAVE_OPLINE();
-				zend_undefined_index(Z_STR_P(dim));
 				goto fetch_dim_r_cached_index_undef;
 			}
-		}
-
-		uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
-		if (cached_offset && ht->nNumUsed >= cached_offset) {
-			Bucket *b = &ht->arData[cached_offset - 1];
-			if (!b->key ? (Z_TYPE_P(dim) == IS_LONG && b->h == Z_LVAL_P(dim)) : (Z_TYPE_P(dim) == IS_STRING && zend_string_equals(b->key, Z_STR_P(dim)))) {
-				ZVAL_COPY_DEREF(EX_VAR(opline->result.var), &b->val);
-				if (IS_CV & (IS_TMP_VAR|IS_VAR)) {
-
-					ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
-				} else {
-					ZEND_VM_NEXT_OPCODE();
+			uintptr_t cached_offset = (uintptr_t)CACHED_PTR(opline->extended_value);
+			if (cached_offset && ht->nNumUsed >= cached_offset) {
+				Bucket *b = &ht->arData[cached_offset - 1];
+				if (b->key && zend_string_equals(b->key, Z_STR_P(dim))) {
+					value = &b->val;
+					goto fetch_dim_r_cached_index_found;
 				}
 			}
+
+			value = zend_hash_find(ht, Z_STR_P(dim));
+			goto fetch_dim_r_cached_index_check;
 		}
-
-		SAVE_OPLINE();
-		zend_fetch_dimension_address_read_R_ex(container, dim, IS_CONST, CACHE_ADDR(opline->extended_value) OPLINE_CC EXECUTE_DATA_CC);
-
-		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	} else if (EXPECTED(Z_TYPE_P(container) == IS_REFERENCE)) {
 		container = Z_REFVAL_P(container);
 		if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
@@ -45964,13 +45989,20 @@ fetch_dim_r_const_index_slow:
 		if (IS_CONST == IS_CONST && Z_EXTRA_P(dim) == ZEND_EXTRA_VALUE) {
 			dim++;
 		}
+		SAVE_OPLINE();
 		zend_fetch_dimension_address_read_R_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	}
 
 fetch_dim_r_cached_index_undef:
+	SAVE_OPLINE();
 	ZVAL_NULL(EX_VAR(opline->result.var));
+	if (Z_TYPE_P(dim) == IS_LONG) {
+		zend_undefined_offset(Z_LVAL_P(dim));
+	} else {
+		zend_undefined_index(Z_STR_P(dim));
+	}
 
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
