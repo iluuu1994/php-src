@@ -535,6 +535,7 @@ static zend_always_inline uint32_t get_temporary_variable(void) /* {{{ */
 }
 /* }}} */
 
+// FIXME: Check all uses of lookup_cv() to see whether they need CHECK_VAR.
 static int lookup_cv(zend_string *name) /* {{{ */{
 	zend_op_array *op_array = CG(active_op_array);
 	int i = 0;
@@ -2870,7 +2871,7 @@ static void zend_compile_class_ref(znode *result, zend_ast *name_ast, uint32_t f
 }
 /* }}} */
 
-static zend_result zend_try_compile_cv(znode *result, zend_ast *ast) /* {{{ */
+static zend_result zend_try_compile_cv(znode *result, zend_ast *ast, uint32_t type) /* {{{ */
 {
 	zend_ast *name_ast = ast->child[0];
 	if (name_ast->kind == ZEND_AST_ZVAL) {
@@ -2889,6 +2890,11 @@ static zend_result zend_try_compile_cv(znode *result, zend_ast *ast) /* {{{ */
 
 		result->op_type = IS_CV;
 		result->u.op.var = lookup_cv(name);
+
+		// FIXME: Check whether the CV is guaranteed to be declared
+		if (type == BP_VAR_R || type == BP_VAR_RW) {
+			zend_emit_op(NULL, ZEND_CHECK_VAR, result, NULL);
+		}
 
 		if (UNEXPECTED(Z_TYPE_P(zv) != IS_STRING)) {
 			zend_string_release_ex(name, 0);
@@ -2994,7 +3000,7 @@ static zend_op *zend_compile_simple_var(znode *result, zend_ast *ast, uint32_t t
 			result->op_type = IS_TMP_VAR;
 		}
 		return opline;
-	} else if (zend_try_compile_cv(result, ast) == FAILURE) {
+	} else if (zend_try_compile_cv(result, ast, type) == FAILURE) {
 		return zend_compile_simple_var_no_cv(result, ast, type, delayed);
 	}
 	return NULL;
@@ -3420,7 +3426,7 @@ static void zend_compile_expr_with_potential_assign_to_self(
 		/* $a[0] = $a should evaluate the right $a first */
 		znode cv_node;
 
-		if (zend_try_compile_cv(&cv_node, expr_ast) == FAILURE) {
+		if (zend_try_compile_cv(&cv_node, expr_ast, BP_VAR_R) == FAILURE) {
 			zend_compile_simple_var_no_cv(expr_node, expr_ast, BP_VAR_R, 0);
 		} else {
 			zend_emit_op_tmp(expr_node, ZEND_QM_ASSIGN, &cv_node, NULL);
@@ -3510,7 +3516,7 @@ static void zend_compile_assign(znode *result, zend_ast *ast) /* {{{ */
 					/* list($a, $b) = $a should evaluate the right $a first */
 					znode cv_node;
 
-					if (zend_try_compile_cv(&cv_node, expr_ast) == FAILURE) {
+					if (zend_try_compile_cv(&cv_node, expr_ast, BP_VAR_R) == FAILURE) {
 						zend_compile_simple_var_no_cv(&expr_node, expr_ast, BP_VAR_R, 0);
 					} else {
 						zend_emit_op_tmp(&expr_node, ZEND_QM_ASSIGN, &cv_node, NULL);
@@ -3825,7 +3831,7 @@ static uint32_t zend_compile_args(
 							opcode = ZEND_SEND_VAR_EX;
 							CG(active_op_array)->fn_flags |= ZEND_ACC_USES_THIS;
 							break;
-						} else if (zend_try_compile_cv(&arg_node, arg) == SUCCESS) {
+						} else if (zend_try_compile_cv(&arg_node, arg, BP_VAR_FUNC_ARG) == SUCCESS) {
 							opcode = ZEND_SEND_VAR_EX;
 							break;
 						}
@@ -5423,7 +5429,7 @@ static void zend_compile_global_var(zend_ast *ast) /* {{{ */
 	// TODO(GLOBALS) Forbid "global $GLOBALS"?
 	if (is_this_fetch(var_ast)) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot use $this as global variable");
-	} else if (zend_try_compile_cv(&result, var_ast) == SUCCESS) {
+	} else if (zend_try_compile_cv(&result, var_ast, BP_VAR_W) == SUCCESS) {
 		zend_op *opline = zend_emit_op(NULL, ZEND_BIND_GLOBAL, &result, &name_node);
 		opline->extended_value = zend_alloc_cache_slot();
 	} else {
@@ -5549,7 +5555,7 @@ static void zend_compile_unset(zend_ast *ast) /* {{{ */
 		case ZEND_AST_VAR:
 			if (is_this_fetch(var_ast)) {
 				zend_error_noreturn(E_COMPILE_ERROR, "Cannot unset $this");
-			} else if (zend_try_compile_cv(&var_node, var_ast) == SUCCESS) {
+			} else if (zend_try_compile_cv(&var_node, var_ast, BP_VAR_UNSET) == SUCCESS) {
 				opline = zend_emit_op(NULL, ZEND_UNSET_CV, &var_node, NULL);
 			} else {
 				opline = zend_compile_simple_var_no_cv(NULL, var_ast, BP_VAR_UNSET, 0);
@@ -6100,7 +6106,7 @@ static void zend_compile_foreach(zend_ast *ast) /* {{{ */
 	if (is_this_fetch(value_ast)) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot re-assign $this");
 	} else if (value_ast->kind == ZEND_AST_VAR &&
-		zend_try_compile_cv(&value_node, value_ast) == SUCCESS) {
+		zend_try_compile_cv(&value_node, value_ast, BP_VAR_W) == SUCCESS) {
 		SET_NODE(opline->op2, &value_node);
 	} else {
 		opline->op2_type = IS_VAR;
@@ -10701,7 +10707,7 @@ static void zend_compile_isset_or_empty(znode *result, zend_ast *ast) /* {{{ */
 			if (is_this_fetch(var_ast)) {
 				opline = zend_emit_op(result, ZEND_ISSET_ISEMPTY_THIS, NULL, NULL);
 				CG(active_op_array)->fn_flags |= ZEND_ACC_USES_THIS;
-			} else if (zend_try_compile_cv(&var_node, var_ast) == SUCCESS) {
+			} else if (zend_try_compile_cv(&var_node, var_ast, BP_VAR_IS) == SUCCESS) {
 				opline = zend_emit_op(result, ZEND_ISSET_ISEMPTY_CV, &var_node, NULL);
 			} else {
 				opline = zend_compile_simple_var_no_cv(result, var_ast, BP_VAR_IS, 0);
