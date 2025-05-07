@@ -61,6 +61,7 @@ typedef struct _zend_op zend_op;
 # define ZEND_USE_ABS_JMP_ADDR      1
 # define ZEND_USE_ABS_CONST_ADDR    1
 #else
+/* FIXME: Get rid of these, they no longer make sense with slim ops. */
 # define ZEND_USE_ABS_JMP_ADDR      0
 # define ZEND_USE_ABS_CONST_ADDR    0
 #endif
@@ -155,6 +156,15 @@ struct _zend_op {
 #endif
 };
 
+/* A slimmer, more cache-friendly version of zend_op used at run-time. It should
+ * only be used within the VM. */
+typedef struct _zend_slim_op {
+	const void *handler;
+	znode_op op1;
+	znode_op op2;
+	znode_op result;
+	uint32_t extended_value;
+} zend_slim_op;
 
 typedef struct _zend_brk_cont_element {
 	int start;
@@ -533,6 +543,7 @@ struct _zend_op_array {
 	uint32_t last;      /* number of opcodes */
 
 	zend_op *opcodes;
+	zend_slim_op *slim_opcodes;
 	ZEND_MAP_PTR_DEF(HashTable *, static_variables_ptr);
 	HashTable *static_variables;
 	zend_string **vars; /* names of CV variables */
@@ -747,6 +758,19 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 
 #define ZEND_OFFSET_TO_OPLINE_NUM(op_array, base, offset) \
 	(ZEND_OFFSET_TO_OPLINE(base, offset) - op_array->opcodes)
+
+#define OP_OPERAND_EXCEEDS_SLIM(op) ((op) > UINT16_MAX)
+/* Convert slim op to wide. */
+#define OP_S2W_EX(op_array, opline) (&(op_array)->opcodes[opline - (op_array)->slim_opcodes])
+#define OP_S2W(opline)              OP_S2W_EX(op_array, opline)
+#define EX_SLIM_OPLINE()            EX(opline)
+#define EX_OPLINE()                 OP_S2W(EX_SLIM_OPLINE())
+
+# define ZEND_PASS_TWO_UPDATE_CONSTANT_SLIM(op_array, opline, node) do { \
+		(node).constant = \
+			(((char*)CT_CONSTANT_EX(op_array, (node).constant)) - \
+			((char*)opline)); \
+	} while (0)
 
 #if ZEND_USE_ABS_JMP_ADDR
 

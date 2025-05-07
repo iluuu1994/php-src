@@ -56,6 +56,8 @@ void init_op_array(zend_op_array *op_array, uint8_t type, int initial_ops_size)
 	*op_array->refcount = 1;
 	op_array->last = 0;
 	op_array->opcodes = emalloc(initial_ops_size * sizeof(zend_op));
+	/* Initialized in pass_two(). */
+	op_array->slim_opcodes = NULL;
 
 	op_array->last_var = 0;
 	op_array->vars = NULL;
@@ -1080,14 +1082,15 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		CG(context).literals_size = op_array->last_literal;
 	}
 #else
-	op_array->opcodes = (zend_op *) erealloc(op_array->opcodes,
-		ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16) +
-		sizeof(zval) * op_array->last_literal);
+	op_array->opcodes = (zend_op *) erealloc(op_array->opcodes, sizeof(zend_op) * op_array->last);
+	op_array->slim_opcodes = emalloc(
+		ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16)
+		+ sizeof(zval) * op_array->last_literal);
 	if (op_array->literals) {
-		memcpy(((char*)op_array->opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16),
+		memcpy(((char*)op_array->slim_opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16),
 			op_array->literals, sizeof(zval) * op_array->last_literal);
 		efree(op_array->literals);
-		op_array->literals = (zval*)(((char*)op_array->opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16));
+		op_array->literals = (zval*)(((char*)op_array->opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16));
 	}
 	CG(context).opcodes_size = op_array->last;
 	CG(context).literals_size = op_array->last_literal;
@@ -1101,6 +1104,7 @@ ZEND_API void pass_two(zend_op_array *op_array)
 
 	opline = op_array->opcodes;
 	end = opline + op_array->last;
+	zend_slim_op *slim_op = op_array->slim_opcodes;
 	while (opline < end) {
 		switch (opline->opcode) {
 			case ZEND_RECV_INIT:
@@ -1198,20 +1202,27 @@ ZEND_API void pass_two(zend_op_array *op_array)
 			}
 		}
 		if (opline->op1_type == IS_CONST) {
-			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op1);
+			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, slim_op, slim_op->op1);
 		} else if (opline->op1_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->op1.var = EX_NUM_TO_VAR(op_array->last_var + opline->op1.var);
+			slim_op->op1 = opline->op1;
 		}
 		if (opline->op2_type == IS_CONST) {
-			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op2);
+			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, slim_op, slim_op->op2);
 		} else if (opline->op2_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->op2.var = EX_NUM_TO_VAR(op_array->last_var + opline->op2.var);
+			slim_op->op2 = opline->op2;
 		}
 		if (opline->result_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->result.var = EX_NUM_TO_VAR(op_array->last_var + opline->result.var);
 		}
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
 		opline++;
+
+		slim_op->handler = opline->handler;
+		slim_op->result = opline->result;
+		slim_op->extended_value = opline->extended_value;
+		slim_op++;
 	}
 
 	zend_calc_live_ranges(op_array, NULL);
