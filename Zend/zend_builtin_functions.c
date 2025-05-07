@@ -1863,7 +1863,7 @@ ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int 
 	array_init(return_value);
 
 	call = EG(current_execute_data);
-	if (!call) {
+	if (!call || EG(capture_warnings_during_sccp) != 0) {
 		return;
 	}
 
@@ -1923,7 +1923,7 @@ ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int 
 
 		/* For frameless calls we add an additional frame for the call itself. */
 		if (ZEND_USER_CODE(call->func->type)) {
-			const zend_op *opline = call->opline;
+			const zend_op *opline = Z_WOP_FROM_EX(call);
 			if (!ZEND_OP_IS_FRAMELESS_ICALL(opline->opcode)) {
 				goto not_frameless_call;
 			}
@@ -1957,14 +1957,15 @@ ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int 
 			/* Steal file and line from the previous frame. */
 			if (call->func && ZEND_USER_CODE(call->func->common.type)) {
 				filename = call->func->op_array.filename;
-				if (call->opline->opcode == ZEND_HANDLE_EXCEPTION) {
+				zend_op *call_op = Z_WOP_FROM_EX(call);
+				if (call_op->opcode == ZEND_HANDLE_EXCEPTION) {
 					if (EG(opline_before_exception)) {
-						lineno = EG(opline_before_exception)->lineno;
+						lineno = Z_WOP_FROM_EX_OP(call, EG(opline_before_exception))->lineno;
 					} else {
 						lineno = call->func->op_array.line_end;
 					}
 				} else {
-					lineno = call->opline->lineno;
+					lineno = call_op->lineno;
 				}
 				ZVAL_STR_COPY(&tmp, filename);
 				_zend_hash_append_ex(stack_frame, ZSTR_KNOWN(ZEND_STR_FILE), &tmp, 1);
@@ -2008,14 +2009,15 @@ not_frameless_call:
 
 		if (prev && prev->func && ZEND_USER_CODE(prev->func->common.type)) {
 			filename = prev->func->op_array.filename;
-			if (prev->opline->opcode == ZEND_HANDLE_EXCEPTION) {
+			zend_op *prev_op = Z_WOP_FROM_EX(prev);
+			if (prev_op->opcode == ZEND_HANDLE_EXCEPTION) {
 				if (EG(opline_before_exception)) {
-					lineno = EG(opline_before_exception)->lineno;
+					lineno = Z_WOP_FROM_EX_OP(prev, EG(opline_before_exception))->lineno;
 				} else {
 					lineno = prev->func->op_array.line_end;
 				}
 			} else {
-				lineno = prev->opline->lineno;
+				lineno = prev_op->lineno;
 			}
 			ZVAL_STR_COPY(&tmp, filename);
 			_zend_hash_append_ex(stack_frame, ZSTR_KNOWN(ZEND_STR_FILE), &tmp, 1);
@@ -2042,7 +2044,7 @@ not_frameless_call:
 				if (prev && prev->func && ZEND_USER_CODE(prev->func->common.type)) {
 					ZVAL_STR_COPY(&tmp, prev->func->op_array.filename);
 					_zend_hash_append_ex(stack_frame, ZSTR_KNOWN(ZEND_STR_FILE), &tmp, 1);
-					ZVAL_LONG(&tmp, prev->opline->lineno);
+					ZVAL_LONG(&tmp, Z_WOP_FROM_EX(prev)->lineno);
 					_zend_hash_append_ex(stack_frame, ZSTR_KNOWN(ZEND_STR_LINE), &tmp, 1);
 					break;
 				}
@@ -2092,7 +2094,7 @@ not_frameless_call:
 			bool build_filename_arg = 1;
 			zend_string *pseudo_function_name;
 			uint32_t include_kind = 0;
-			if (prev && prev->func && ZEND_USER_CODE(prev->func->common.type) && prev->opline->opcode == ZEND_INCLUDE_OR_EVAL) {
+			if (prev && prev->func && ZEND_USER_CODE(prev->func->common.type) && Z_WOP_FROM_EX(prev)->opcode == ZEND_INCLUDE_OR_EVAL) {
 				include_kind = prev->opline->extended_value;
 			}
 
@@ -2154,7 +2156,7 @@ skip_frame:
 		 && prev
 		 && prev->func
 		 && ZEND_USER_CODE(prev->func->common.type)
-		 && prev->opline->opcode == ZEND_INCLUDE_OR_EVAL) {
+		 && Z_WOP_FROM_EX(prev)->opcode == ZEND_INCLUDE_OR_EVAL) {
 			fake_frame = 1;
 		} else {
 			fake_frame = 0;

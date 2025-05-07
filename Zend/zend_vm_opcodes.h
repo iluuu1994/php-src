@@ -56,6 +56,7 @@
 #define ZEND_VM_OP_CONSTRUCTOR   0x00000080
 #define ZEND_VM_OP_CONST_FETCH   0x00000090
 #define ZEND_VM_OP_CACHE_SLOT    0x000000a0
+#define ZEND_VM_EXT_FULL_MASK    0x0fff0000
 #define ZEND_VM_EXT_VAR_FETCH    0x00010000
 #define ZEND_VM_EXT_ISSET        0x00020000
 #define ZEND_VM_EXT_CACHE_SLOT   0x00040000
@@ -74,13 +75,20 @@
 #define ZEND_VM_EXT_SRC          0x0b000000
 #define ZEND_VM_NO_CONST_CONST   0x40000000
 #define ZEND_VM_COMMUTATIVE      0x80000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_NONE 0x00000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_EXT_VALUE 0x100000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_OP1 0x200000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_OP2 0x300000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_RESULT 0x400000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_OP_DATA_OP2 0x500000000
+#define ZEND_VM_QUICK_OP_FLAGS_FIELD_MASK 0x700000000
 #define ZEND_VM_OP1_FLAGS(flags) (flags & 0xff)
 #define ZEND_VM_OP2_FLAGS(flags) ((flags >> 8) & 0xff)
 
 BEGIN_EXTERN_C()
 
 ZEND_API const char* ZEND_FASTCALL zend_get_opcode_name(uint8_t opcode);
-ZEND_API uint32_t ZEND_FASTCALL zend_get_opcode_flags(uint8_t opcode);
+ZEND_API uint64_t ZEND_FASTCALL zend_get_opcode_flags(uint8_t opcode);
 ZEND_API uint8_t zend_get_opcode_id(const char *name, size_t length);
 
 END_EXTERN_C()

@@ -23,7 +23,7 @@
  * php zend_vm_gen.php
  */
 
-ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -35,10 +35,10 @@ ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	add_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -79,10 +79,12 @@ ZEND_VM_C_LABEL(add_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_add_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_add_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -94,10 +96,10 @@ ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	sub_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -138,10 +140,12 @@ ZEND_VM_C_LABEL(sub_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_sub_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_sub_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -153,10 +157,10 @@ ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	mul_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -200,7 +204,9 @@ ZEND_VM_C_LABEL(mul_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_mul_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_mul_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(4, ZEND_DIV, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -227,7 +233,7 @@ ZEND_VM_COLD_HELPER(zend_mod_by_zero_helper, ANY, ANY)
 	HANDLE_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -239,10 +245,10 @@ ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	mod_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -272,10 +278,12 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(5, ZEND_MOD, CONST|TMPVARCV, CONST|TMPVARCV)
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_mod_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_mod_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -287,10 +295,10 @@ ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	shift_left_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -314,10 +322,12 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(6, ZEND_SL, CONST|TMPVARCV, CONST|TMPVARCV)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_left_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_left_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -329,10 +339,10 @@ ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	shift_right_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -354,7 +364,9 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(7, ZEND_SR, CONST|TMPVARCV, CONST|TMPVARCV)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_right_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_right_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(12, ZEND_POW, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -492,7 +504,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(17, ZEND_IS_NOT_IDENTICAL, CONST|TMP|VAR|CV, CON
 	ZEND_VM_SMART_BRANCH(result, 1);
 }
 
-ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -505,10 +517,10 @@ ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret == 0, 1);
@@ -569,10 +581,12 @@ ZEND_VM_C_LABEL(is_equal_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -585,10 +599,10 @@ ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret != 0, 1);
@@ -649,10 +663,12 @@ ZEND_VM_C_LABEL(is_not_equal_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_not_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_not_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -665,10 +681,10 @@ ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret < 0, 1);
@@ -714,10 +730,12 @@ ZEND_VM_C_LABEL(is_smaller_double):
 			ZEND_VM_C_GOTO(is_smaller_double);
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -730,10 +748,10 @@ ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret <= 0, 1);
@@ -783,7 +801,9 @@ ZEND_VM_C_LABEL(is_smaller_or_equal_double):
 			ZEND_VM_C_GOTO(is_smaller_or_equal_double);
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_or_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_or_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -800,7 +820,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPV
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -812,10 +832,10 @@ ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_or_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -836,10 +856,12 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(9, ZEND_BW_OR, CONST|TMPVARCV, CONST|TMPVARCV, 
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_or_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_or_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -851,10 +873,10 @@ ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_and_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -875,10 +897,12 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(10, ZEND_BW_AND, CONST|TMPVARCV, CONST|TMPVARCV
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_and_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_and_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -890,10 +914,10 @@ ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_xor_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -914,7 +938,9 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(11, ZEND_BW_XOR, CONST|TMPVARCV, CONST|TMPVARCV
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_xor_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = RT_OP1_TYPE;
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_xor_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(15, ZEND_BOOL_XOR, CONST|TMPVAR|CV, CONST|TMPVAR|CV, SPEC(COMMUTATIVE))
@@ -931,7 +957,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(15, ZEND_BOOL_XOR, CONST|TMPVAR|CV, CONST|TMPVAR
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1)
+ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1, uint8_t op1_type)
 {
 	USE_OPLINE
 
@@ -940,7 +966,9 @@ ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1)
 		op_1 = ZVAL_UNDEFINED_OP1();
 	}
 	bitwise_not_function(EX_VAR(opline->result.var), op_1);
-	FREE_OP1();
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
+		zval_ptr_dtor_nogc(op_1);
+	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
@@ -955,7 +983,8 @@ ZEND_VM_HOT_NOCONST_HANDLER(13, ZEND_BW_NOT, CONST|TMPVARCV, UNUSED)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_not_helper, op_1, op1);
+	uint8_t op1_type = RT_OP1_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_not_helper, op_1, op1, op1_type, op1_type);
 }
 
 ZEND_VM_COLD_CONST_HANDLER(14, ZEND_BOOL_NOT, CONST|TMPVAR|CV, UNUSED)
@@ -1053,7 +1082,7 @@ ZEND_VM_C_LABEL(assign_op_object):
 		cache_slot = (OP2_TYPE == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+				if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -1078,7 +1107,7 @@ ZEND_VM_C_LABEL(assign_op_object):
 					}
 				} while (0);
 
-				if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+				if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -1109,7 +1138,7 @@ ZEND_VM_HANDLER(29, ZEND_ASSIGN_STATIC_PROP_OP, ANY, ANY, OP)
 
 	SAVE_OPLINE();
 
-	prop = zend_fetch_static_property_address(&prop_info, (opline+1)->extended_value, BP_VAR_RW, 0 OPLINE_CC EXECUTE_DATA_CC);
+	prop = zend_fetch_static_property_address(&prop_info, (opline+1)->extended_value, BP_VAR_RW, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		UNDEF_RESULT();
 		FREE_OP_DATA();
@@ -1144,7 +1173,7 @@ ZEND_VM_HANDLER(29, ZEND_ASSIGN_STATIC_PROP_OP, ANY, ANY, OP)
 		}
 	} while (0);
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), prop);
 	}
 
@@ -1186,7 +1215,7 @@ ZEND_VM_C_LABEL(assign_dim_op_new_array):
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((opline+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(RT_OP_DATA_TYPE, (opline+1)->op1);
 
 		do {
 			if (OP2_TYPE != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -1200,10 +1229,10 @@ ZEND_VM_C_LABEL(assign_dim_op_new_array):
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((opline+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP_DATA();
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -1243,7 +1272,7 @@ ZEND_VM_C_LABEL(assign_dim_op_new_array):
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 ZEND_VM_C_LABEL(assign_dim_op_ret_null):
 			FREE_OP_DATA();
-			if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+			if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -1276,7 +1305,7 @@ ZEND_VM_HANDLER(26, ZEND_ASSIGN_OP, VAR|CV, CONST|TMPVAR|CV, OP)
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -1330,7 +1359,7 @@ ZEND_VM_C_LABEL(pre_incdec_object):
 		cache_slot = (OP2_TYPE == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+				if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -1432,7 +1461,7 @@ ZEND_VM_HANDLER(38, ZEND_PRE_INC_STATIC_PROP, ANY, ANY, CACHE_SLOT)
 
 	SAVE_OPLINE();
 
-	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_RW, 0 OPLINE_CC EXECUTE_DATA_CC);
+	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_RW, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
@@ -1466,7 +1495,7 @@ ZEND_VM_HANDLER(40, ZEND_POST_INC_STATIC_PROP, ANY, ANY, CACHE_SLOT)
 
 	SAVE_OPLINE();
 
-	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_RW, 0 OPLINE_CC EXECUTE_DATA_CC);
+	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_RW, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
@@ -1516,7 +1545,7 @@ ZEND_VM_HELPER(zend_pre_inc_helper, VAR|CV, ANY)
 		increment_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -1533,7 +1562,7 @@ ZEND_VM_HOT_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY, SPEC(RETVAL))
 
 	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
 		fast_long_increment_function(var_ptr);
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 			ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
 		}
 		ZEND_VM_NEXT_OPCODE();
@@ -1568,7 +1597,7 @@ ZEND_VM_HELPER(zend_pre_dec_helper, VAR|CV, ANY)
 		decrement_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -1585,7 +1614,7 @@ ZEND_VM_HOT_HANDLER(35, ZEND_PRE_DEC, VAR|CV, ANY, SPEC(RETVAL))
 
 	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
 		fast_long_decrement_function(var_ptr);
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 			ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
 		}
 		ZEND_VM_NEXT_OPCODE();
@@ -1854,7 +1883,7 @@ ZEND_VM_HANDLER(89, ZEND_FETCH_IS, CONST|TMPVAR|CV, UNUSED, VAR_FETCH)
 }
 
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CONST|VAR) */
-ZEND_VM_INLINE_HELPER(zend_fetch_static_prop_helper, ANY, ANY, int type)
+ZEND_VM_INLINE_HELPER(zend_fetch_static_prop_helper, ANY, ANY, int type, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 	zval *prop;
@@ -1864,7 +1893,7 @@ ZEND_VM_INLINE_HELPER(zend_fetch_static_prop_helper, ANY, ANY, int type)
 
 	prop = zend_fetch_static_property_address(
 		&prop_info, opline->extended_value & ~ZEND_FETCH_OBJ_FLAGS, type,
-		type == BP_VAR_W ? opline->extended_value : 0 OPLINE_CC EXECUTE_DATA_CC);
+		type == BP_VAR_W ? opline->extended_value : 0, op1_type, op2_type OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		ZEND_ASSERT(EG(exception) || (type == BP_VAR_IS));
 		prop = &EG(uninitialized_zval);
@@ -1891,19 +1920,25 @@ ZEND_VM_C_LABEL(copy_deref):
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
 ZEND_VM_HANDLER(173, ZEND_FETCH_STATIC_PROP_R, ANY, CLASS_FETCH, CACHE_SLOT)
 {
-	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_R);
+	uint8_t op1_type = OP1_TYPE;
+	uint8_t op2_type = OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_R, op1_type, op1_type, op2_type, op2_type);
 }
 
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
 ZEND_VM_HANDLER(174, ZEND_FETCH_STATIC_PROP_W, ANY, CLASS_FETCH, FETCH_REF|DIM_WRITE|CACHE_SLOT)
 {
-	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_W);
+	uint8_t op1_type = OP1_TYPE;
+	uint8_t op2_type = OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_W, op1_type, op1_type, op2_type, op2_type);
 }
 
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
 ZEND_VM_HANDLER(175, ZEND_FETCH_STATIC_PROP_RW, ANY, CLASS_FETCH, CACHE_SLOT)
 {
-	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_RW);
+	uint8_t op1_type = OP1_TYPE;
+	uint8_t op2_type = OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_RW, op1_type, op1_type, op2_type, op2_type);
 }
 
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
@@ -1919,13 +1954,17 @@ ZEND_VM_HANDLER(177, ZEND_FETCH_STATIC_PROP_FUNC_ARG, ANY, CLASS_FETCH, FETCH_RE
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
 ZEND_VM_HANDLER(178, ZEND_FETCH_STATIC_PROP_UNSET, ANY, CLASS_FETCH, CACHE_SLOT)
 {
-	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_UNSET);
+	uint8_t op1_type = OP1_TYPE;
+	uint8_t op2_type = OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_UNSET, op1_type, op1_type, op2_type, op2_type);
 }
 
 /* No specialization for op_types (CONST|TMPVAR|CV, UNUSED|CLASS_FETCH|CONST|VAR) */
 ZEND_VM_HANDLER(176, ZEND_FETCH_STATIC_PROP_IS, ANY, CLASS_FETCH, CACHE_SLOT)
 {
-	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_IS);
+	uint8_t op1_type = OP1_TYPE;
+	uint8_t op2_type = OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_fetch_static_prop_helper, type, BP_VAR_IS, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(81, ZEND_FETCH_DIM_R, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -2143,9 +2182,9 @@ ZEND_VM_C_LABEL(fetch_obj_r_fast_copy):
 						zend_init_cvs(0, hook->op_array.last_var EXECUTE_DATA_CC);
 
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
-						opline = hook->op_array.opcodes;
+						opline = hook->op_array.slim_opcodes;
 #else
-						EX(opline) = hook->op_array.opcodes;
+						EX(opline) = hook->op_array.slim_opcodes;
 #endif
 						LOAD_OPLINE_EX();
 						ZEND_OBSERVER_SAVE_OPLINE();
@@ -2504,7 +2543,7 @@ ZEND_VM_C_LABEL(assign_obj_simple):
 					} else {
 ZEND_VM_C_LABEL(fast_assign_obj):
 						value = zend_assign_to_variable_ex(property_val, value, OP_DATA_TYPE, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+						if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						ZEND_VM_C_GOTO(exit_assign_obj);
@@ -2561,7 +2600,7 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+					if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					ZEND_VM_C_GOTO(exit_assign_obj);
@@ -2600,7 +2639,7 @@ ZEND_VM_C_LABEL(fast_assign_obj):
 	}
 
 ZEND_VM_C_LABEL(free_and_exit_assign_obj):
-	if (UNEXPECTED(RETURN_VALUE_USED(opline)) && value) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	FREE_OP_DATA();
@@ -2624,7 +2663,7 @@ ZEND_VM_HANDLER(25, ZEND_ASSIGN_STATIC_PROP, ANY, ANY, CACHE_SLOT, SPEC(OP_DATA=
 
 	SAVE_OPLINE();
 
-	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_W, 0 OPLINE_CC EXECUTE_DATA_CC);
+	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value, BP_VAR_W, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		FREE_OP_DATA();
 		UNDEF_RESULT();
@@ -2640,7 +2679,7 @@ ZEND_VM_HANDLER(25, ZEND_ASSIGN_STATIC_PROP, ANY, ANY, CACHE_SLOT, SPEC(OP_DATA=
 		value = zend_assign_to_variable_ex(prop, value, OP_DATA_TYPE, EX_USES_STRICT_TYPES(), &garbage);
 	}
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 
@@ -2717,7 +2756,7 @@ ZEND_VM_C_LABEL(try_assign_dim_array):
 			value = GET_OP_DATA_ZVAL_PTR(BP_VAR_R);
 			value = zend_assign_to_variable_ex(variable_ptr, value, OP_DATA_TYPE, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -2792,7 +2831,7 @@ ZEND_VM_C_LABEL(try_assign_dim_array):
 			dim = GET_OP2_ZVAL_PTR(BP_VAR_R);
 ZEND_VM_C_LABEL(assign_dim_error):
 			FREE_OP_DATA();
-			if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+			if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -2815,11 +2854,11 @@ ZEND_VM_HANDLER(22, ZEND_ASSIGN, VAR|CV, CONST|TMP|VAR|CV, SPEC(RETVAL))
 	value = GET_OP2_ZVAL_PTR(BP_VAR_R);
 	variable_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_W);
 
-	if (!ZEND_VM_SPEC || UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (!ZEND_VM_SPEC || UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		zend_refcounted *garbage = NULL;
 
 		value = zend_assign_to_variable_ex(variable_ptr, value, OP2_TYPE, EX_USES_STRICT_TYPES(), &garbage);
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -2855,12 +2894,12 @@ ZEND_VM_HANDLER(30, ZEND_ASSIGN_REF, VAR|CV, VAR|CV, SRC)
 			   UNEXPECTED(!Z_ISREF_P(value_ptr))) {
 
 		variable_ptr = zend_wrong_assign_to_variable_reference(
-			variable_ptr, value_ptr, &garbage OPLINE_CC EXECUTE_DATA_CC);
+			variable_ptr, value_ptr, &garbage EXECUTE_DATA_CC);
 	} else {
 		zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), variable_ptr);
 	}
 
@@ -2919,7 +2958,7 @@ ZEND_VM_HANDLER(33, ZEND_ASSIGN_STATIC_PROP_REF, ANY, ANY, CACHE_SLOT|SRC)
 
 	SAVE_OPLINE();
 
-	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value & ~ZEND_RETURNS_FUNCTION, BP_VAR_W, 0 OPLINE_CC EXECUTE_DATA_CC);
+	prop = zend_fetch_static_property_address(&prop_info, opline->extended_value & ~ZEND_RETURNS_FUNCTION, BP_VAR_W, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	if (UNEXPECTED(!prop)) {
 		FREE_OP_DATA();
 		UNDEF_RESULT();
@@ -2937,7 +2976,7 @@ ZEND_VM_HANDLER(33, ZEND_ASSIGN_STATIC_PROP_REF, ANY, ANY, CACHE_SLOT|SRC)
 	value_ptr = GET_OP_DATA_ZVAL_PTR_PTR(BP_VAR_W);
 
 	if (OP_DATA_TYPE == IS_VAR && (opline->extended_value & ZEND_RETURNS_FUNCTION) && UNEXPECTED(!Z_ISREF_P(value_ptr))) {
-		if (UNEXPECTED(!zend_wrong_assign_to_variable_reference(prop, value_ptr, &garbage OPLINE_CC EXECUTE_DATA_CC))) {
+		if (UNEXPECTED(!zend_wrong_assign_to_variable_reference(prop, value_ptr, &garbage EXECUTE_DATA_CC))) {
 			prop = &EG(uninitialized_zval);
 		}
 	} else if (ZEND_TYPE_IS_SET(prop_info->type)) {
@@ -2946,7 +2985,7 @@ ZEND_VM_HANDLER(33, ZEND_ASSIGN_STATIC_PROP_REF, ANY, ANY, CACHE_SLOT|SRC)
 		zend_assign_to_variable_reference(prop, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), prop);
 	}
 
@@ -4114,7 +4153,7 @@ ZEND_VM_HOT_HANDLER(129, ZEND_DO_ICALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 	bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-	ret = RETURN_VALUE_USED(opline) ? EX_VAR(opline->result.var) : &retval;
+	ret = RETURN_VALUE_USED(EX_WOP2) ? EX_VAR(opline->result.var) : &retval;
 	ZVAL_NULL(ret);
 
 	ZEND_OBSERVER_FCALL_BEGIN(call);
@@ -4148,7 +4187,7 @@ ZEND_VM_HOT_HANDLER(129, ZEND_DO_ICALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 		EG(vm_stack_top) = (zval*)call;
 	}
 
-	if (!RETURN_VALUE_USED(opline)) {
+	if (!RETURN_VALUE_USED(EX_WOP2)) {
 		i_zval_ptr_dtor(ret);
 	}
 
@@ -4172,7 +4211,7 @@ ZEND_VM_HOT_HANDLER(130, ZEND_DO_UCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
-	if (RETURN_VALUE_USED(opline)) {
+	if (RETURN_VALUE_USED(EX_WOP2)) {
 		ret = EX_VAR(opline->result.var);
 	}
 
@@ -4197,7 +4236,7 @@ ZEND_VM_HOT_HANDLER(131, ZEND_DO_FCALL_BY_NAME, ANY, ANY, SPEC(RETVAL,OBSERVER))
 	SAVE_OPLINE();
 	EX(call) = call->prev_execute_data;
 
-	const uint32_t no_discard = RETURN_VALUE_USED(opline) ? 0 : ZEND_ACC_NODISCARD;
+	const uint32_t no_discard = RETURN_VALUE_USED(EX_WOP2) ? 0 : ZEND_ACC_NODISCARD;
 
 	if (UNEXPECTED(fbc->common.fn_flags & (ZEND_ACC_DEPRECATED|no_discard))) {
 		if (fbc->common.fn_flags & ZEND_ACC_DEPRECATED) {
@@ -4208,7 +4247,7 @@ ZEND_VM_HOT_HANDLER(131, ZEND_DO_FCALL_BY_NAME, ANY, ANY, SPEC(RETVAL,OBSERVER))
 		}
 		if (UNEXPECTED(EG(exception) != NULL)) {
 			UNDEF_RESULT();
-			if (!RETURN_VALUE_USED(opline)) {
+			if (!RETURN_VALUE_USED(EX_WOP2)) {
 				ret = &retval;
 				ZVAL_UNDEF(ret);
 			}
@@ -4218,7 +4257,7 @@ ZEND_VM_HOT_HANDLER(131, ZEND_DO_FCALL_BY_NAME, ANY, ANY, SPEC(RETVAL,OBSERVER))
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
 		ret = NULL;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ret = EX_VAR(opline->result.var);
 		}
 
@@ -4243,7 +4282,7 @@ ZEND_VM_HOT_HANDLER(131, ZEND_DO_FCALL_BY_NAME, ANY, ANY, SPEC(RETVAL,OBSERVER))
 		bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-		ret = RETURN_VALUE_USED(opline) ? EX_VAR(opline->result.var) : &retval;
+		ret = RETURN_VALUE_USED(EX_WOP2) ? EX_VAR(opline->result.var) : &retval;
 		ZVAL_NULL(ret);
 
 		ZEND_OBSERVER_FCALL_BEGIN(call);
@@ -4284,7 +4323,7 @@ ZEND_VM_C_LABEL(fcall_by_name_end):
 			EG(vm_stack_top) = (zval*)call;
 		}
 
-		if (!RETURN_VALUE_USED(opline)) {
+		if (!RETURN_VALUE_USED(EX_WOP2)) {
 			i_zval_ptr_dtor(ret);
 		}
 	}
@@ -4308,7 +4347,7 @@ ZEND_VM_HOT_HANDLER(60, ZEND_DO_FCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 	SAVE_OPLINE();
 	EX(call) = call->prev_execute_data;
 
-	const uint32_t no_discard = RETURN_VALUE_USED(opline) ? 0 : ZEND_ACC_NODISCARD;
+	const uint32_t no_discard = RETURN_VALUE_USED(EX_WOP2) ? 0 : ZEND_ACC_NODISCARD;
 
 	if (UNEXPECTED(fbc->common.fn_flags & (ZEND_ACC_DEPRECATED|no_discard))) {
 		if (fbc->common.fn_flags & ZEND_ACC_DEPRECATED) {
@@ -4322,7 +4361,7 @@ ZEND_VM_HOT_HANDLER(60, ZEND_DO_FCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 				OBJ_RELEASE(ZEND_CLOSURE_OBJECT(call->func));
 			}
 			UNDEF_RESULT();
-			if (!RETURN_VALUE_USED(opline)) {
+			if (!RETURN_VALUE_USED(EX_WOP2)) {
 				ret = &retval;
 				ZVAL_UNDEF(ret);
 			}
@@ -4332,7 +4371,7 @@ ZEND_VM_HOT_HANDLER(60, ZEND_DO_FCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
 		ret = NULL;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ret = EX_VAR(opline->result.var);
 		}
 
@@ -4366,7 +4405,7 @@ ZEND_VM_HOT_HANDLER(60, ZEND_DO_FCALL, ANY, ANY, SPEC(RETVAL,OBSERVER))
 		bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-		ret = RETURN_VALUE_USED(opline) ? EX_VAR(opline->result.var) : &retval;
+		ret = RETURN_VALUE_USED(EX_WOP2) ? EX_VAR(opline->result.var) : &retval;
 		ZVAL_NULL(ret);
 
 		ZEND_OBSERVER_FCALL_BEGIN(call);
@@ -4405,7 +4444,7 @@ ZEND_VM_C_LABEL(fcall_end):
 			zend_free_extra_named_params(call->extra_named_params);
 		}
 
-		if (!RETURN_VALUE_USED(opline)) {
+		if (!RETURN_VALUE_USED(EX_WOP2)) {
 			i_zval_ptr_dtor(ret);
 		}
 	}
@@ -4840,7 +4879,7 @@ ZEND_VM_HANDLER(107, ZEND_CATCH, CONST, JMP_ADDR, LAST_CATCH|CACHE_SLOT)
 
 	exception = EG(exception);
 	EG(exception) = NULL;
-	if (RETURN_VALUE_USED(opline)) {
+	if (RETURN_VALUE_USED(EX_WOP2)) {
 		/* Always perform a strict assignment. There is a reasonable expectation that if you
 		 * write "catch (Exception $e)" then $e will actually be instanceof Exception. As such,
 		 * we should not permit coercion to string here. */
@@ -5855,7 +5894,7 @@ ZEND_VM_COLD_CONST_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -5868,7 +5907,7 @@ ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret == 0, 1);
@@ -5922,7 +5961,8 @@ ZEND_VM_C_LABEL(case_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_case_helper, op_1, op1, op_2, op2);
+	uint8_t op2_type = RT_OP2_TYPE;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_case_helper, op_1, op1, op_2, op2, op2_type, op2_type);
 }
 
 ZEND_VM_HANDLER(68, ZEND_NEW, UNUSED|CLASS_FETCH|CONST|VAR, UNUSED|CACHE_SLOT, NUM)
@@ -5964,7 +6004,7 @@ ZEND_VM_HANDLER(68, ZEND_NEW, UNUSED|CLASS_FETCH|CONST|VAR, UNUSED|CACHE_SLOT, N
 	if (constructor == NULL) {
 		/* If there are no arguments, skip over the DO_FCALL opcode. We check if the next
 		 * opcode is DO_FCALL in case EXT instructions are used. */
-		if (EXPECTED(opline->extended_value == 0 && (opline+1)->opcode == ZEND_DO_FCALL)) {
+		if (EXPECTED(opline->extended_value == 0 && Z_WOP_FROM_OP(opline+1)->opcode == ZEND_DO_FCALL)) {
 			ZEND_VM_NEXT_OPCODE_EX(1, 2);
 		}
 
@@ -6070,7 +6110,7 @@ ZEND_VM_HOT_HANDLER(99, ZEND_FETCH_CONSTANT, UNUSED|CONST_FETCH, CONST, CACHE_SL
 	}
 
 	SAVE_OPLINE();
-	zend_quick_get_constant(RT_CONSTANT(opline, opline->op2) + 1, opline->op1.num OPLINE_CC EXECUTE_DATA_CC);
+	zend_quick_get_constant(RT_CONSTANT(opline, opline->op2) + 1, opline->op1.num, opline->extended_value OPLINE_CC EXECUTE_DATA_CC);
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
@@ -6526,18 +6566,18 @@ ZEND_VM_HANDLER(73, ZEND_INCLUDE_OR_EVAL, CONST|TMPVAR|CV, ANY, EVAL, SPEC(OBSER
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	} else if (new_op_array == ZEND_FAKE_OP_ARRAY) {
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 	} else if (UNEXPECTED(new_op_array == NULL)) {
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ZVAL_FALSE(EX_VAR(opline->result.var));
 		}
 	} else if (new_op_array->last == 1
 			&& new_op_array->opcodes[0].opcode == ZEND_RETURN
 			&& new_op_array->opcodes[0].op1_type == IS_CONST
 			&& EXPECTED(zend_execute_ex == execute_ex)) {
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			const zend_op *op = new_op_array->opcodes;
 
 			ZVAL_COPY(EX_VAR(opline->result.var), RT_CONSTANT(op, op->op1));
@@ -6548,7 +6588,7 @@ ZEND_VM_HANDLER(73, ZEND_INCLUDE_OR_EVAL, CONST|TMPVAR|CV, ANY, EVAL, SPEC(OBSER
 	} else {
 		zval *return_value = NULL;
 		zend_execute_data *call;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			return_value = EX_VAR(opline->result.var);
 		}
 
@@ -7058,7 +7098,7 @@ ZEND_VM_HELPER(zend_fe_fetch_object_helper, ANY, ANY)
 			p++;
 		}
 		EG(ht_iterators)[Z_FE_ITER_P(array)].pos = pos;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			if (UNEXPECTED(!p->key)) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 			} else if (ZSTR_VAL(p->key)[0]) {
@@ -7101,7 +7141,7 @@ ZEND_VM_C_LABEL(fe_fetch_r_exit):
 			/* failure in get_current_data */
 			ZEND_VM_C_GOTO(fe_fetch_r_exit);
 		}
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			if (funcs->get_current_key) {
 				funcs->get_current_key(iter, EX_VAR(opline->result.var));
 				if (UNEXPECTED(EG(exception) != NULL)) {
@@ -7162,7 +7202,7 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, VAR, ANY, JMP_ADDR)
 			value++;
 		}
 		Z_FE_POS_P(array) = pos + 1;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ZVAL_LONG(EX_VAR(opline->result.var), pos);
 		}
 	} else {
@@ -7185,7 +7225,7 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, VAR, ANY, JMP_ADDR)
 			p++;
 		}
 		Z_FE_POS_P(array) = pos;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			if (!p->key) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 			} else {
@@ -7243,7 +7283,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 				value++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos + 1;
-			if (RETURN_VALUE_USED(opline)) {
+			if (RETURN_VALUE_USED(EX_WOP2)) {
 				ZVAL_LONG(EX_VAR(opline->result.var), pos);
 			}
 		} else {
@@ -7263,7 +7303,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 				p++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
-			if (RETURN_VALUE_USED(opline)) {
+			if (RETURN_VALUE_USED(EX_WOP2)) {
 				if (!p->key) {
 					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 				} else {
@@ -7323,7 +7363,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 				p++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
-			if (RETURN_VALUE_USED(opline)) {
+			if (RETURN_VALUE_USED(EX_WOP2)) {
 				if (UNEXPECTED(!p->key)) {
 					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 				} else if (ZSTR_VAL(p->key)[0]) {
@@ -7364,7 +7404,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 				/* failure in get_current_data */
 				ZEND_VM_C_GOTO(fe_fetch_w_exit);
 			}
-			if (RETURN_VALUE_USED(opline)) {
+			if (RETURN_VALUE_USED(EX_WOP2)) {
 				if (funcs->get_current_key) {
 					funcs->get_current_key(iter, EX_VAR(opline->result.var));
 					if (UNEXPECTED(EG(exception) != NULL)) {
@@ -7487,7 +7527,7 @@ ZEND_VM_HANDLER(180, ZEND_ISSET_ISEMPTY_STATIC_PROP, ANY, CLASS_FETCH, ISSET|CAC
 
 	SAVE_OPLINE();
 
-	value = zend_fetch_static_property_address(NULL, opline->extended_value & ~ZEND_ISEMPTY, BP_VAR_IS, 0 OPLINE_CC EXECUTE_DATA_CC);
+	value = zend_fetch_static_property_address(NULL, opline->extended_value & ~ZEND_ISEMPTY, BP_VAR_IS, 0, OP1_TYPE, OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 
 	if (!(opline->extended_value & ZEND_ISEMPTY)) {
 		result = value != NULL && Z_TYPE_P(value) > IS_NULL &&
@@ -8053,20 +8093,20 @@ ZEND_VM_HOT_HANDLER(0, ZEND_NOP, ANY, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_catch_offset, uint32_t op_num)
+ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint16_t try_catch_offset, uint16_t op_num)
 {
 	/* May be NULL during generator closing (only finally blocks are executed) */
 	zend_object *ex = EG(exception);
 
 	/* Walk try/catch/finally structures upwards, performing the necessary actions */
-	for (; try_catch_offset != (uint32_t) -1; try_catch_offset--) {
+	for (; try_catch_offset != (uint16_t) -1; try_catch_offset--) {
 		zend_try_catch_element *try_catch =
 			&EX(func)->op_array.try_catch_array[try_catch_offset];
 
 		if (op_num < try_catch->catch_op && ex) {
 			/* Go to catch block */
 			cleanup_live_vars(execute_data, op_num, try_catch->catch_op);
-			ZEND_VM_JMP_EX(&EX(func)->op_array.opcodes[try_catch->catch_op], 0);
+			ZEND_VM_JMP_EX(&EX(func)->op_array.slim_opcodes[try_catch->catch_op], 0);
 
 		} else if (op_num < try_catch->finally_op) {
 			if (ex && zend_is_unwind_exit(ex)) {
@@ -8080,7 +8120,7 @@ ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_ca
 			Z_OBJ_P(fast_call) = EG(exception);
 			EG(exception) = NULL;
 			Z_OPLINE_NUM_P(fast_call) = (uint32_t)-1;
-			ZEND_VM_JMP_EX(&EX(func)->op_array.opcodes[try_catch->finally_op], 0);
+			ZEND_VM_JMP_EX(&EX(func)->op_array.slim_opcodes[try_catch->finally_op], 0);
 
 		} else if (op_num < try_catch->finally_end) {
 			zval *fast_call = EX_VAR(EX(func)->op_array.opcodes[try_catch->finally_end].op1.var);
@@ -8132,14 +8172,15 @@ ZEND_VM_HELPER(zend_dispatch_try_catch_finally_helper, ANY, ANY, uint32_t try_ca
 
 ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 {
-	const zend_op *throw_op = EG(opline_before_exception);
+	const zend_slim_op *throw_sop = EG(opline_before_exception);
 
 	/* Exception was thrown before executing any op */
-	if (UNEXPECTED(!throw_op)) {
+	if (UNEXPECTED(!throw_sop)) {
 		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper, try_catch_offset, -1, op_num, 0);
 	}
 
-	uint32_t throw_op_num = throw_op - EX(func)->op_array.opcodes;
+	const zend_op *throw_op = Z_WOP_FROM_OP(throw_sop);
+	uint32_t throw_op_num = throw_sop - EX(func)->op_array.slim_opcodes;
 	int i, current_try_catch_offset = -1;
 
 	if ((throw_op->opcode == ZEND_FREE || throw_op->opcode == ZEND_FE_FREE)
@@ -8208,8 +8249,11 @@ ZEND_VM_HANDLER(150, ZEND_USER_OPCODE, ANY, ANY)
 	USE_OPLINE
 	int ret;
 
+	zend_op *wop = Z_WOP;
+
 	SAVE_OPLINE();
-	ret = zend_user_opcode_handlers[opline->opcode](execute_data);
+	ret = zend_user_opcode_handlers[wop->opcode](execute_data);
+	// FIXME: Why is this needed?
 	opline = EX(opline);
 
 	switch (ret) {
@@ -8229,7 +8273,7 @@ ZEND_VM_HANDLER(150, ZEND_USER_OPCODE, ANY, ANY)
 		case ZEND_USER_OPCODE_LEAVE:
 			ZEND_VM_LEAVE();
 		case ZEND_USER_OPCODE_DISPATCH:
-			ZEND_VM_DISPATCH(opline->opcode, opline);
+			ZEND_VM_DISPATCH(wop->opcode, opline);
 		default:
 			ZEND_VM_DISPATCH((uint8_t)(ret & 0xff), opline);
 	}
@@ -8469,7 +8513,7 @@ ZEND_VM_HANDLER(160, ZEND_YIELD, CONST|TMP|VAR|CV|UNUSED, CONST|TMPVAR|CV|UNUSED
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if (RETURN_VALUE_USED(opline)) {
+	if (RETURN_VALUE_USED(EX_WOP2)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -8532,7 +8576,7 @@ ZEND_VM_C_LABEL(yield_from_try_again):
 					zend_generator_yield_from(generator, new_gen);
 				}
 			} else {
-				if (RETURN_VALUE_USED(opline)) {
+				if (RETURN_VALUE_USED(EX_WOP2)) {
 					ZVAL_COPY(EX_VAR(opline->result.var), &new_gen->retval);
 				}
 				ZEND_VM_NEXT_OPCODE();
@@ -8573,7 +8617,7 @@ ZEND_VM_C_LABEL(yield_from_try_again):
 
 	/* This is the default return value
 	 * when the expression is a Generator, it will be overwritten in zend_generator_resume() */
-	if (RETURN_VALUE_USED(opline)) {
+	if (RETURN_VALUE_USED(EX_WOP2)) {
 		ZVAL_NULL(EX_VAR(opline->result.var));
 	}
 
@@ -8618,7 +8662,7 @@ ZEND_VM_HANDLER(162, ZEND_FAST_CALL, JMP_ADDR, ANY)
 
 	Z_OBJ_P(fast_call) = NULL;
 	/* set return address */
-	Z_OPLINE_NUM_P(fast_call) = opline - EX(func)->op_array.opcodes;
+	Z_OPLINE_NUM_P(fast_call) = opline - EX(func)->op_array.slim_opcodes;
 	ZEND_VM_JMP_EX(OP_JMP_ADDR(opline, opline->op1), 0);
 }
 
@@ -8626,10 +8670,10 @@ ZEND_VM_HANDLER(163, ZEND_FAST_RET, ANY, TRY_CATCH)
 {
 	USE_OPLINE
 	zval *fast_call = EX_VAR(opline->op1.var);
-	uint32_t current_try_catch_offset, current_op_num;
+	uint16_t current_try_catch_offset, current_op_num;
 
 	if (Z_OPLINE_NUM_P(fast_call) != (uint32_t)-1) {
-		const zend_op *fast_ret = EX(func)->op_array.opcodes + Z_OPLINE_NUM_P(fast_call);
+		const zend_slim_op *fast_ret = EX(func)->op_array.slim_opcodes + Z_OPLINE_NUM_P(fast_call);
 
 		ZEND_VM_JMP_EX(fast_ret + 1, 0);
 	}
@@ -8638,7 +8682,7 @@ ZEND_VM_HANDLER(163, ZEND_FAST_RET, ANY, TRY_CATCH)
 	EG(exception) = Z_OBJ_P(fast_call);
 	Z_OBJ_P(fast_call) = NULL;
 	current_try_catch_offset = opline->op2.num;
-	current_op_num = opline - EX(func)->op_array.opcodes;
+	current_op_num = opline - EX(func)->op_array.slim_opcodes;
 	ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper, try_catch_offset, current_try_catch_offset, op_num, current_op_num);
 }
 
@@ -8835,7 +8879,7 @@ ZEND_VM_C_LABEL(defined_false):
 			ZEND_VM_SMART_BRANCH_FALSE();
 		}
 	}
-	if (zend_quick_check_constant(RT_CONSTANT(opline, opline->op1) OPLINE_CC EXECUTE_DATA_CC) != SUCCESS) {
+	if (zend_quick_check_constant(RT_CONSTANT(opline, opline->op1), opline->extended_value OPLINE_CC EXECUTE_DATA_CC) != SUCCESS) {
 		CACHE_PTR(opline->extended_value, ENCODE_SPECIAL_CACHE_NUM(zend_hash_num_elements(EG(zend_constants))));
 		ZEND_VM_C_GOTO(defined_false);
 	} else {
@@ -8848,8 +8892,8 @@ ZEND_VM_HANDLER(151, ZEND_ASSERT_CHECK, ANY, JMP_ADDR)
 	USE_OPLINE
 
 	if (EG(assertions) <= 0) {
-		zend_op *target = OP_JMP_ADDR(opline, opline->op2);
-		if (RETURN_VALUE_USED(opline)) {
+		zend_slim_op *target = OP_JMP_ADDR(opline, opline->op2);
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 		ZEND_VM_JMP_EX(target, 0);
@@ -9741,7 +9785,7 @@ ZEND_VM_HANDLER(204, ZEND_FRAMELESS_ICALL_0, UNUSED, UNUSED, NUM, SPEC(OBSERVER)
 	} else
 #endif
 	{
-		zend_frameless_function_0 function = (zend_frameless_function_0)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_0 function = (zend_frameless_function_0)ZEND_FLF_HANDLER(opline->extended_value);
 		function(EX_VAR(opline->result.var));
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -9766,7 +9810,7 @@ ZEND_VM_HANDLER(205, ZEND_FRAMELESS_ICALL_1, ANY, UNUSED, NUM, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_1 function = (zend_frameless_function_1)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_1 function = (zend_frameless_function_1)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1);
 	}
 	FREE_OP1();
@@ -9794,7 +9838,7 @@ ZEND_VM_HANDLER(206, ZEND_FRAMELESS_ICALL_2, ANY, ANY, NUM, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_2 function = (zend_frameless_function_2)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_2 function = (zend_frameless_function_2)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1, arg2);
 	}
 
@@ -9830,7 +9874,7 @@ ZEND_VM_HANDLER(207, ZEND_FRAMELESS_ICALL_3, ANY, ANY, NUM, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_3 function = (zend_frameless_function_3)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_3 function = (zend_frameless_function_3)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1, arg2, arg3);
 	}
 
@@ -10179,7 +10223,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_INC, (res_info == MAY_BE_LONG && op1_info
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	Z_LVAL_P(var_ptr)++;
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
 	}
 	ZEND_VM_NEXT_OPCODE();
@@ -10192,7 +10236,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_INC, (op1_info == MAY_BE_LONG), ZEND_PRE_
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	fast_long_increment_function(var_ptr);
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
 	}
 	ZEND_VM_NEXT_OPCODE();
@@ -10205,7 +10249,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_DEC, (res_info == MAY_BE_LONG && op1_info
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	Z_LVAL_P(var_ptr)--;
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
 	}
 	ZEND_VM_NEXT_OPCODE();
@@ -10218,7 +10262,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_DEC, (op1_info == MAY_BE_LONG), ZEND_PRE_
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	fast_long_decrement_function(var_ptr);
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
 	}
 	ZEND_VM_NEXT_OPCODE();
@@ -10448,7 +10492,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_inf
 			value++;
 		}
 		Z_FE_POS_P(array) = pos + 1;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			ZVAL_LONG(EX_VAR(opline->result.var), pos);
 		}
 	} else {
@@ -10471,7 +10515,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_inf
 			p++;
 		}
 		Z_FE_POS_P(array) = pos;
-		if (RETURN_VALUE_USED(opline)) {
+		if (RETURN_VALUE_USED(EX_WOP2)) {
 			if (!p->key) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 			} else {
@@ -10497,7 +10541,7 @@ ZEND_VM_HELPER(zend_interrupt_helper, ANY, ANY)
 		zend_interrupt_function(execute_data);
 		if (EG(exception)) {
 			/* We have to UNDEF result, because ZEND_HANDLE_EXCEPTION is going to free it */
-			const zend_op *throw_op = EG(opline_before_exception);
+			const zend_op *throw_op = Z_WOP_FROM_OP(EG(opline_before_exception));
 
 			if (throw_op
 			 && throw_op->result_type & (IS_TMP_VAR|IS_VAR)

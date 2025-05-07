@@ -531,6 +531,7 @@ ZEND_API bool zend_is_compiling(void) /* {{{ */
 
 static zend_always_inline uint32_t get_temporary_variable(void) /* {{{ */
 {
+	ZEND_ASSERT(((uint32_t)CG(active_op_array)->T + 1) <= UINT16_MAX);
 	return (uint32_t)CG(active_op_array)->T++;
 }
 /* }}} */
@@ -5847,7 +5848,7 @@ static void zend_compile_break_continue(zend_ast *ast) /* {{{ */
 void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 {
 	zend_label *dest;
-	int current, remove_oplines = opline->op1.num;
+	int16_t current, remove_oplines = opline->op1.num;
 	zval *label;
 	uint32_t opnum = opline - op_array->opcodes;
 
@@ -5896,11 +5897,19 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 	opline->op1.opline_num = dest->opline_num;
 	opline->extended_value = 0;
 
+	zend_slim_op *sop = op_array->slim_opcodes + opnum;
+
 	ZEND_ASSERT(remove_oplines >= 0);
 	while (remove_oplines--) {
 		opline--;
 		MAKE_NOP(opline);
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
+
+		sop--;
+		sop->handler = opline->handler;
+		sop->op1.num = (uint16_t) -1;
+		sop->op2.num = (uint16_t) -1;
+		sop->result.num = (uint16_t) -1;
 	}
 }
 /* }}} */
@@ -8361,10 +8370,10 @@ static zend_op_array *zend_compile_func_decl_ex(
 			"nodiscard",
 			sizeof("nodiscard")-1
 		);
-	
+
 		if (nodiscard_attribute) {
 			op_array->fn_flags |= ZEND_ACC_NODISCARD;
-		}	
+		}
 	}
 
 	/* Do not leak the class scope into free standing functions, even if they are dynamically
@@ -11043,11 +11052,11 @@ static void zend_compile_rope_finalize(znode *result, uint32_t rope_elements, ze
 		while (opline != init_opline) {
 			opline--;
 			if (opline->opcode == ZEND_ROPE_ADD &&
-			    opline->result.var == (uint32_t)-1) {
+			    opline->result.var == (uint16_t)-1) {
 				opline->op1.var = var;
 				opline->result.var = var;
 			} else if (opline->opcode == ZEND_ROPE_INIT &&
-			           opline->result.var == (uint32_t)-1) {
+			           opline->result.var == (uint16_t)-1) {
 				opline->result.var = var;
 			}
 		}

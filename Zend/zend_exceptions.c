@@ -174,9 +174,9 @@ void zend_exception_restore(void) /* {{{ */
 static zend_always_inline bool is_handle_exception_set(void) {
 	zend_execute_data *execute_data = EG(current_execute_data);
 	return !execute_data
-		|| !execute_data->func
-		|| !ZEND_USER_CODE(execute_data->func->common.type)
-		|| execute_data->opline->opcode == ZEND_HANDLE_EXCEPTION;
+		|| !EX(func)
+		|| !ZEND_USER_CODE(EX(func)->common.type)
+		|| EX_WOP->opcode == ZEND_HANDLE_EXCEPTION;
 }
 
 ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /* {{{ */
@@ -235,7 +235,7 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 		return;
 	}
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
-	EG(current_execute_data)->opline = EG(exception_op);
+	EG(current_execute_data)->opline = EG(exception_slim_op);
 }
 /* }}} */
 
@@ -1078,7 +1078,7 @@ ZEND_API ZEND_COLD void zend_throw_unwind_exit(void)
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_unwind_exit();
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
-	EG(current_execute_data)->opline = EG(exception_op);
+	EG(current_execute_data)->opline = EG(exception_slim_op);
 }
 
 ZEND_API ZEND_COLD void zend_throw_graceful_exit(void)
@@ -1086,7 +1086,7 @@ ZEND_API ZEND_COLD void zend_throw_graceful_exit(void)
 	ZEND_ASSERT(!EG(exception));
 	EG(exception) = zend_create_graceful_exit();
 	EG(opline_before_exception) = EG(current_execute_data)->opline;
-	EG(current_execute_data)->opline = EG(exception_op);
+	EG(current_execute_data)->opline = EG(exception_slim_op);
 }
 
 ZEND_API bool zend_is_unwind_exit(const zend_object *ex)

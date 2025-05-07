@@ -294,12 +294,14 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 		 * from where it occurs in the code. */
 		zend_function dummy_func;
 		zend_op *opline;
+		zend_slim_op *sop;
 
 		memset(&dummy_func, 0, sizeof(zend_function));
 
 		call = zend_vm_stack_push_call_frame_ex(
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_execute_data), sizeof(zval)) +
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op), sizeof(zval)) +
+			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op), sizeof(zval)) +
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_function), sizeof(zval)),
 			0, &dummy_func, 0, NULL);
 
@@ -308,10 +310,15 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 		opline->opcode = ZEND_DO_FCALL;
 		opline->lineno = attribute_data->lineno;
 
-		call->opline = opline;
+		sop = (zend_slim_op*)(opline + 1);
+		memset(opline, 0, sizeof(zend_op));
+		opline->opcode = ZEND_DO_FCALL;
+		opline->lineno = attribute_data->lineno;
+
+		call->opline = sop;
 		call->call = NULL;
 		call->return_value = NULL;
-		call->func = (zend_function*)(call->opline + 1);
+		call->func = (zend_function*)(sop + 1);
 		call->prev_execute_data = EG(current_execute_data);
 
 		memset(call->func, 0, sizeof(zend_function));
@@ -320,6 +327,8 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 			attribute_data->flags & ZEND_ATTRIBUTE_STRICT_TYPES ? ZEND_ACC_STRICT_TYPES : 0;
 		call->func->op_array.fn_flags |= ZEND_ACC_CALL_VIA_TRAMPOLINE;
 		call->func->op_array.filename = filename;
+		call->func->op_array.opcodes = opline;
+		call->func->op_array.slim_opcodes = sop;
 
 		EG(current_execute_data) = call;
 	}

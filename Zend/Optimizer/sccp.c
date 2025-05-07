@@ -804,14 +804,15 @@ static inline zend_result ct_eval_func_call_ex(
 
 	zend_execute_data *prev_execute_data = EG(current_execute_data);
 	zend_execute_data *execute_data, dummy_frame;
-	zend_op dummy_opline;
+	zend_slim_op dummy_opline;
 
 	/* Add a dummy frame to get the correct strict_types behavior. */
 	memset(&dummy_frame, 0, sizeof(zend_execute_data));
-	memset(&dummy_opline, 0, sizeof(zend_op));
+	memset(&dummy_opline, 0, sizeof(zend_slim_op));
 	dummy_frame.func = (zend_function *) op_array;
 	dummy_frame.opline = &dummy_opline;
-	dummy_opline.opcode = ZEND_DO_FCALL;
+	// FIXME: Do we need this?
+	// dummy_opline.opcode = ZEND_DO_FCALL;
 
 	execute_data = safe_emalloc(num_args, sizeof(zval), ZEND_CALL_FRAME_SLOT * sizeof(zval));
 	memset(execute_data, 0, sizeof(zend_execute_data));
@@ -2134,7 +2135,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 			if (opline->opcode == ZEND_ASSIGN) {
 				/* We can't drop the ASSIGN, but we can remove the result. */
 				if (var->use_chain < 0 && var->phi_use_chain == NULL) {
-					opline->result_type = IS_UNUSED;
+					SET_UNUSED(opline->result);
 					zend_ssa_remove_result_def(ssa, ssa_op);
 				}
 				return 0;
@@ -2165,7 +2166,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 						case ZEND_YIELD:
 						case ZEND_YIELD_FROM:
 						case ZEND_ASSERT_CHECK:
-							opline->result_type = IS_UNUSED;
+							SET_UNUSED(opline->result);
 							zend_ssa_remove_result_def(ssa, ssa_op);
 							break;
 						default:
@@ -2237,7 +2238,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 					 * operand, based on type inference information. Make sure the operand is
 					 * freed and leave further cleanup to DCE. */
 					opline->opcode = ZEND_FREE;
-					opline->result_type = IS_UNUSED;
+					SET_UNUSED(opline->result);
 					removed_ops++;
 				} else {
 					return 0;
@@ -2305,7 +2306,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 				if (ssa->vars[ssa_op->result_def].use_chain < 0
 						&& ssa->vars[ssa_op->result_def].phi_use_chain == NULL) {
 					zend_ssa_remove_result_def(ssa, ssa_op);
-					opline->result_type = IS_UNUSED;
+					SET_UNUSED(opline->result);
 				} else if (opline->opcode != ZEND_PRE_INC &&
 						opline->opcode != ZEND_PRE_DEC) {
 					/* op1_def and result_def are different */

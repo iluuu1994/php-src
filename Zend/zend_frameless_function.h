@@ -37,7 +37,7 @@
 #define ZEND_OP_IS_FRAMELESS_ICALL(opcode) ((opcode) >= ZEND_FRAMELESS_ICALL_0 && (opcode) <= ZEND_FRAMELESS_ICALL_3)
 #define ZEND_FLF_NUM_ARGS(opcode) ((opcode) - ZEND_FRAMELESS_ICALL_0)
 #define ZEND_FLF_FUNC(opline) (zend_flf_functions[(opline)->extended_value])
-#define ZEND_FLF_HANDLER(opline) (zend_flf_handlers[(opline)->extended_value])
+#define ZEND_FLF_HANDLER(extended_value) (zend_flf_handlers[extended_value])
 
 #define ZEND_FRAMELESS_FUNCTION(name, arity) \
 	void ZEND_FRAMELESS_FUNCTION_NAME(name, arity)(ZEND_FRAMELESS_FUNCTION_PARAMETERS_##arity)

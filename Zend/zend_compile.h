@@ -34,7 +34,7 @@
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
-	op.num = (uint32_t) -1; \
+	op.num = (uint16_t) -1; \
 } while (0)
 
 #define MAKE_NOP(opline) do { \
@@ -54,30 +54,12 @@
 typedef struct _zend_op_array zend_op_array;
 typedef struct _zend_op zend_op;
 
-/* On 64-bit systems less optimal, but more compact VM code leads to better
- * performance. So on 32-bit systems we use absolute addresses for jump
- * targets and constants, but on 64-bit systems relative 32-bit offsets */
-#if SIZEOF_SIZE_T == 4
-# define ZEND_USE_ABS_JMP_ADDR      1
-# define ZEND_USE_ABS_CONST_ADDR    1
-#else
-# define ZEND_USE_ABS_JMP_ADDR      0
-# define ZEND_USE_ABS_CONST_ADDR    0
-#endif
-
 typedef union _znode_op {
-	uint32_t      constant;
-	uint32_t      var;
-	uint32_t      num;
-	uint32_t      opline_num; /*  Needs to be signed */
-#if ZEND_USE_ABS_JMP_ADDR
-	zend_op       *jmp_addr;
-#else
-	uint32_t      jmp_offset;
-#endif
-#if ZEND_USE_ABS_CONST_ADDR
-	zval          *zv;
-#endif
+	uint16_t      constant;
+	uint16_t      var;
+	uint16_t      num;
+	uint16_t      opline_num; /*  Needs to be signed */
+	uint16_t      jmp_offset;
 } znode_op;
 
 typedef struct _znode { /* used only during compilation */
@@ -139,7 +121,7 @@ struct _zend_op {
 	znode_op op1;
 	znode_op op2;
 	znode_op result;
-	uint32_t extended_value;
+	uint16_t extended_value;
 	uint32_t lineno;
 	uint8_t opcode;       /* Opcodes defined in Zend/zend_vm_opcodes.h */
 	uint8_t op1_type;     /* IS_UNUSED, IS_CONST, IS_TMP_VAR, IS_VAR, IS_CV */
@@ -155,6 +137,15 @@ struct _zend_op {
 #endif
 };
 
+/* A slimmer, more cache-friendly version of zend_op used at run-time. It should
+ * only be used within the VM. */
+typedef struct _zend_slim_op {
+	const void *handler;
+	znode_op op1;
+	znode_op op2;
+	znode_op result;
+	uint16_t extended_value;
+} zend_slim_op;
 
 typedef struct _zend_brk_cont_element {
 	int start;
@@ -533,6 +524,8 @@ struct _zend_op_array {
 	uint32_t last;      /* number of opcodes */
 
 	zend_op *opcodes;
+	zend_slim_op *slim_opcodes;
+
 	ZEND_MAP_PTR_DEF(HashTable *, static_variables_ptr);
 	HashTable *static_variables;
 	zend_string **vars; /* names of CV variables */
@@ -621,7 +614,7 @@ union _zend_function {
 };
 
 struct _zend_execute_data {
-	const zend_op       *opline;           /* executed opline                */
+	const zend_slim_op  *opline;           /* executed opline                */
 	zend_execute_data   *call;             /* current call                   */
 	zval                *return_value;
 	zend_function       *func;             /* executed function              */
@@ -733,42 +726,45 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 #define EX_VAR(n)				ZEND_CALL_VAR(execute_data, n)
 #define EX_VAR_NUM(n)			ZEND_CALL_VAR_NUM(execute_data, n)
 
-#define EX_VAR_TO_NUM(n)		((uint32_t)((n) / sizeof(zval) - ZEND_CALL_FRAME_SLOT))
-#define EX_NUM_TO_VAR(n)		((uint32_t)(((n) + ZEND_CALL_FRAME_SLOT) * sizeof(zval)))
+#define EX_VAR_TO_NUM(n)		((uint16_t)((n) / sizeof(zval) - ZEND_CALL_FRAME_SLOT))
+#define EX_NUM_TO_VAR(n)		((uint16_t)(((n) + ZEND_CALL_FRAME_SLOT) * sizeof(zval)))
 
 #define ZEND_OPLINE_TO_OFFSET(opline, target) \
 	((char*)(target) - (char*)(opline))
 
 #define ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, opline_num) \
-	((char*)&(op_array)->opcodes[opline_num] - (char*)(opline))
+	_Generic((opline), \
+		zend_op*: ((char*)&(op_array)->opcodes[opline_num] - (char*)(opline)), \
+		const zend_op*: ((char*)&(op_array)->opcodes[opline_num] - (char*)(opline)), \
+		zend_slim_op*: ((char*)&(op_array)->slim_opcodes[opline_num] - (char*)(opline)), \
+		const zend_slim_op*: ((char*)&(op_array)->slim_opcodes[opline_num] - (char*)(opline)))
 
 #define ZEND_OFFSET_TO_OPLINE(base, offset) \
-	((zend_op*)(((char*)(base)) + (int)offset))
+	_Generic((base), \
+		zend_op*: ((zend_op*)(((char*)(base)) + (int16_t)offset)), \
+		const zend_op*: ((zend_op*)(((char*)(base)) + (int16_t)offset)), \
+		zend_slim_op*: ((zend_slim_op*)(((char*)(base)) + (int16_t)offset)), \
+		const zend_slim_op*: ((zend_slim_op*)(((char*)(base)) + (int16_t)offset)))
 
 #define ZEND_OFFSET_TO_OPLINE_NUM(op_array, base, offset) \
 	(ZEND_OFFSET_TO_OPLINE(base, offset) - op_array->opcodes)
 
-#if ZEND_USE_ABS_JMP_ADDR
+#define OP_OPERAND_IS_WIDE(op) ((op) > UINT16_MAX)
 
-/* run-time jump target */
-# define OP_JMP_ADDR(opline, node) \
-	(node).jmp_addr
+static zend_always_inline zend_op *_zend_sop_to_wop(const zend_op_array *op_array, const zend_slim_op *slim_op)
+{
+	return &op_array->opcodes[slim_op - op_array->slim_opcodes];
+}
 
-# define ZEND_SET_OP_JMP_ADDR(opline, node, val) do { \
-		(node).jmp_addr = (val); \
-	} while (0)
-
-/* convert jump target from compile-time to run-time */
-# define ZEND_PASS_TWO_UPDATE_JMP_TARGET(op_array, opline, node) do { \
-		(node).jmp_addr = (op_array)->opcodes + (node).opline_num; \
-	} while (0)
-
-/* convert jump target back from run-time to compile-time */
-# define ZEND_PASS_TWO_UNDO_JMP_TARGET(op_array, opline, node) do { \
-		(node).opline_num = (node).jmp_addr - (op_array)->opcodes; \
-	} while (0)
-
-#else
+#define Z_WOP_FROM_EX_OP(ex, op) \
+	/* (EXPECTED((op) != EG(exception_slim_op)) */ \
+	((op) != EG(exception_slim_op) \
+		? _zend_sop_to_wop(&(ex)->func->op_array, op) \
+		: EG(exception_op))
+#define Z_WOP_FROM_EX(ex) Z_WOP_FROM_EX_OP(ex, (ex)->opline)
+#define Z_WOP_FROM_OP(op) Z_WOP_FROM_EX_OP(EG(current_execute_data), op)
+#define Z_WOP             Z_WOP_FROM_EX(EG(current_execute_data))
+#define EX_WOP            Z_WOP_FROM_EX(execute_data)
 
 /* run-time jump target */
 # define OP_JMP_ADDR(opline, node) \
@@ -788,27 +784,12 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 		(node).opline_num = ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, (node).jmp_offset); \
 	} while (0)
 
-#endif
-
 /* constant-time constant */
 # define CT_CONSTANT_EX(op_array, num) \
 	((op_array)->literals + (num))
 
 # define CT_CONSTANT(node) \
 	CT_CONSTANT_EX(CG(active_op_array), (node).constant)
-
-#if ZEND_USE_ABS_CONST_ADDR
-
-/* run-time constant */
-# define RT_CONSTANT(opline, node) \
-	(node).zv
-
-/* convert constant from compile-time to run-time */
-# define ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, node) do { \
-		(node).zv = CT_CONSTANT_EX(op_array, (node).constant); \
-	} while (0)
-
-#else
 
 /* At run-time, constants are allocated together with op_array->opcodes
  * and addressed relatively to current opline.
@@ -824,8 +805,6 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 			(((char*)CT_CONSTANT_EX(op_array, (node).constant)) - \
 			((char*)opline)); \
 	} while (0)
-
-#endif
 
 /* convert constant back from run-time to compile-time */
 #define ZEND_PASS_TWO_UNDO_CONSTANT(op_array, opline, node) do { \
@@ -993,6 +972,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 uint32_t zend_get_class_fetch_type(const zend_string *name);
 ZEND_API uint8_t zend_get_call_op(const zend_op *init_op, zend_function *fbc, bool result_used);
 ZEND_API bool zend_is_smart_branch(const zend_op *opline);
+ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op);
 
 typedef bool (*zend_auto_global_callback)(zend_string *name);
 typedef struct _zend_auto_global {

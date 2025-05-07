@@ -2378,7 +2378,7 @@ ZEND_METHOD(ReflectionGenerator, getExecutingLine)
 
 	REFLECTION_CHECK_VALID_GENERATOR(ex)
 
-	ZVAL_LONG(return_value, ex->opline->lineno);
+	ZVAL_LONG(return_value, Z_WOP_FROM_EX(ex)->lineno);
 }
 /* }}} */
 
@@ -7577,7 +7577,7 @@ ZEND_METHOD(ReflectionFiber, getExecutingLine)
 		prev_execute_data = prev_execute_data->prev_execute_data;
 	}
 	if (prev_execute_data && prev_execute_data->func && ZEND_USER_CODE(prev_execute_data->func->common.type)) {
-		RETURN_LONG(prev_execute_data->opline->lineno);
+		RETURN_LONG(Z_WOP_FROM_EX(prev_execute_data)->lineno);
 	}
 	RETURN_NULL();
 }

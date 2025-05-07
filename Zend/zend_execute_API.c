@@ -597,7 +597,7 @@ ZEND_API zend_function *zend_active_function_ex(zend_execute_data *execute_data)
 
 	/* Resolve function if op is a frameless call. */
 	if (ZEND_USER_CODE(func->type)) {
-		const zend_op *op = EX(opline);
+		const zend_op *op = EX_WOP;
 		if (ZEND_OP_IS_FRAMELESS_ICALL(op->opcode)) {
 			func = ZEND_FLF_FUNC(op);
 		}
@@ -684,6 +684,10 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 		return lineno_override;
 	}
 
+	if (EG(capture_warnings_during_sccp) != 0) {
+		return 0;
+	}
+
 	zend_execute_data *ex = EG(current_execute_data);
 
 	while (ex && (!ex->func || !ZEND_USER_CODE(ex->func->type))) {
@@ -694,11 +698,12 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 			/* Missing SAVE_OPLINE()? Falling back to first line of function */
 			return ex->func->op_array.opcodes[0].lineno;
 		}
-		if (EG(exception) && ex->opline->opcode == ZEND_HANDLE_EXCEPTION &&
-		    ex->opline->lineno == 0 && EG(opline_before_exception)) {
-			return EG(opline_before_exception)->lineno;
+		if (EG(exception)
+		 && ex->opline == EG(exception_slim_op)
+		 && EG(opline_before_exception)) {
+			return Z_WOP_FROM_EX_OP(ex, EG(opline_before_exception))->lineno;
 		}
-		return ex->opline->lineno;
+		return Z_WOP_FROM_EX(ex)->lineno;
 	} else {
 		return 0;
 	}

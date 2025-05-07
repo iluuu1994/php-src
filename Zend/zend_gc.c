@@ -2161,7 +2161,7 @@ static void zend_gc_check_root_tmpvars(void) {
 			continue;
 		}
 
-		uint32_t op_num = ex->opline - ex->func->op_array.opcodes;
+		uint32_t op_num = Z_WOP_FROM_EX(ex) - ex->func->op_array.opcodes;
 		for (uint32_t i = 0; i < func->op_array.last_live_range; i++) {
 			const zend_live_range *range = &func->op_array.live_range[i];
 			if (range->start > op_num) {
@@ -2191,7 +2191,7 @@ static void zend_gc_remove_root_tmpvars(void) {
 			continue;
 		}
 
-		uint32_t op_num = ex->opline - ex->func->op_array.opcodes;
+		uint32_t op_num = Z_WOP_FROM_EX(ex) - ex->func->op_array.opcodes;
 		for (uint32_t i = 0; i < func->op_array.last_live_range; i++) {
 			const zend_live_range *range = &func->op_array.live_range[i];
 			if (range->start > op_num) {

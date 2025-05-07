@@ -121,7 +121,7 @@ ZEND_API void zend_objects_destroy_object(zend_object *object)
 		}
 
 		zend_object *old_exception;
-		const zend_op *old_opline_before_exception;
+		const zend_slim_op *old_opline_before_exception;
 
 		if (destructor->op_array.fn_flags & (ZEND_ACC_PRIVATE|ZEND_ACC_PROTECTED)) {
 			if (destructor->op_array.fn_flags & ZEND_ACC_PRIVATE) {

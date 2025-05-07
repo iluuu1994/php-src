@@ -839,7 +839,7 @@ try_again:
 
 			/* Reads from backing store can only occur in hooks, and hence will always remain simple. */
 			zend_execute_data *execute_data = EG(current_execute_data);
-			if (cache_slot && EX(opline) && EX(opline)->opcode == ZEND_FETCH_OBJ_R && EX(opline)->op1_type == IS_UNUSED) {
+			if (cache_slot && EX(opline) && EX_WOP->opcode == ZEND_FETCH_OBJ_R && EX_WOP->op1_type == IS_UNUSED) {
 				ZEND_SET_PROPERTY_HOOK_SIMPLE_READ(cache_slot);
 			}
 
@@ -1104,8 +1104,8 @@ found:;
 					 && EX(func)
 					 && ZEND_USER_CODE(EX(func)->common.type)
 					 && EX(opline)
-					 && EX(opline)->opcode == ZEND_ASSIGN_OBJ
-					 && EX(opline)->result_type) {
+					 && EX_WOP->opcode == ZEND_ASSIGN_OBJ
+					 && EX_WOP->result_type) {
 						ZVAL_COPY_DEREF(EX_VAR(EX(opline)->result.var), variable_ptr);
 						variable_ptr = NULL;
 					}
@@ -1164,7 +1164,7 @@ found:;
 
 			/* Writes to backing store can only occur in hooks, and hence will always remain simple. */
 			zend_execute_data *execute_data = EG(current_execute_data);
-			if (cache_slot && EX(opline) && EX(opline)->opcode == ZEND_ASSIGN_OBJ && EX(opline)->op1_type == IS_UNUSED) {
+			if (cache_slot && EX(opline) && EX_WOP->opcode == ZEND_ASSIGN_OBJ && EX_WOP->op1_type == IS_UNUSED) {
 				ZEND_SET_PROPERTY_HOOK_SIMPLE_WRITE(cache_slot);
 			}
 
@@ -1695,6 +1695,7 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 		func->fn_flags |= ZEND_ACC_STATIC;
 	}
 	func->opcodes = &EG(call_trampoline_op);
+	func->slim_opcodes = &EG(call_trampoline_sop);
 	ZEND_MAP_PTR_INIT(func->run_time_cache, (void**)dummy);
 	func->scope = fbc->common.scope;
 	/* reserve space for arguments, local and temporary variables */
