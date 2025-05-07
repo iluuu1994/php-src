@@ -679,6 +679,11 @@ static void zend_init_exception_op(void) /* {{{ */
 	ZEND_VM_SET_OPCODE_HANDLER(EG(exception_op)+1);
 	EG(exception_op)[2].opcode = ZEND_HANDLE_EXCEPTION;
 	ZEND_VM_SET_OPCODE_HANDLER(EG(exception_op)+2);
+
+	memset(EG(exception_slim_op), 0, sizeof(EG(exception_slim_op)));
+	EG(exception_slim_op)[0].handler = EG(exception_op)[0].handler;
+	EG(exception_slim_op)[1].handler = EG(exception_op)[1].handler;
+	EG(exception_slim_op)[2].handler = EG(exception_op)[2].handler;
 }
 /* }}} */
 
@@ -1473,7 +1478,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 	/* Report about uncaught exception in case of fatal errors */
 	if (EG(exception)) {
 		zend_execute_data *ex;
-		const zend_op *opline;
+		const zend_slim_op *opline;
 
 		if (type & E_FATAL_ERRORS) {
 			ex = EG(current_execute_data);
@@ -1481,7 +1486,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 			while (ex && (!ex->func || !ZEND_USER_CODE(ex->func->type))) {
 				ex = ex->prev_execute_data;
 			}
-			if (ex && ex->opline->opcode == ZEND_HANDLE_EXCEPTION &&
+			if (ex && ex->opline == EG(exception_slim_op) &&
 			    EG(opline_before_exception)) {
 				opline = EG(opline_before_exception);
 			}
@@ -1587,12 +1592,13 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 
 	if (type == E_PARSE) {
 		/* eval() errors do not affect exit_status */
-		if (!(EG(current_execute_data) &&
-			EG(current_execute_data)->func &&
-			ZEND_USER_CODE(EG(current_execute_data)->func->type) &&
-			EG(current_execute_data)->opline->opcode == ZEND_INCLUDE_OR_EVAL &&
-			EG(current_execute_data)->opline->extended_value == ZEND_EVAL)) {
-			EG(exit_status) = 255;
+		if (!(EG(current_execute_data)
+		 && EG(current_execute_data)->func
+		 && ZEND_USER_CODE(EG(current_execute_data)->func->type))) {
+			zend_op *opline = Z_WOP_FROM_EX(EG(current_execute_data));
+			if (opline->opcode == ZEND_INCLUDE_OR_EVAL && opline->extended_value == ZEND_EVAL) {
+				EG(exit_status) = 255;
+			}
 		}
 	}
 }

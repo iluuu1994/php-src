@@ -152,7 +152,7 @@ ZEND_API const void* ZEND_FASTCALL zend_get_opcode_handler_func(const zend_op *o
 #endif
 }
 
-ZEND_API const zend_op *zend_get_halt_op(void)
+ZEND_API const zend_slim_op *zend_get_halt_op(void)
 {
 #if ZEND_VM_KIND == ZEND_VM_KIND_HYBRID
 	return &hybrid_halt_op;

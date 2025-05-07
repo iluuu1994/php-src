@@ -293,20 +293,21 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 		/* Set up dummy call frame that makes it look like the attribute was invoked
 		 * from where it occurs in the code. */
 		zend_function dummy_func;
-		zend_op *opline;
+		zend_slim_op *opline;
 
 		memset(&dummy_func, 0, sizeof(zend_function));
 
 		call = zend_vm_stack_push_call_frame_ex(
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_execute_data), sizeof(zval)) +
-			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op), sizeof(zval)) +
+			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op), sizeof(zval)) +
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_function), sizeof(zval)),
 			0, &dummy_func, 0, NULL);
 
-		opline = (zend_op*)(call + 1);
-		memset(opline, 0, sizeof(zend_op));
-		opline->opcode = ZEND_DO_FCALL;
-		opline->lineno = attribute_data->lineno;
+		opline = (zend_slim_op*)(call + 1);
+		memset(opline, 0, sizeof(zend_slim_op));
+		// FIXME: Needed?
+		// opline->opcode = ZEND_DO_FCALL;
+		// opline->lineno = attribute_data->lineno;
 
 		call->opline = opline;
 		call->call = NULL;

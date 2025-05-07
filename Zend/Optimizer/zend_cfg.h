@@ -100,12 +100,9 @@ typedef struct _zend_cfg {
 #define ZEND_CALL_TREE                 (1<<23)
 #define ZEND_SSA_USE_CV_RESULTS        (1<<22)
 
+/* FIXME: These should be removed, wide ops don't use relative literals anymore. */
 #define CRT_CONSTANT_EX(op_array, opline, node) \
-	(((op_array)->fn_flags & ZEND_ACC_DONE_PASS_TWO) ? \
-		RT_CONSTANT(opline, (node)) \
-	: \
-		CT_CONSTANT_EX(op_array, (node).constant) \
-	)
+	CT_CONSTANT_EX(op_array, (node).constant)
 
 #define CRT_CONSTANT(node) \
 	CRT_CONSTANT_EX(op_array, opline, node)

@@ -804,14 +804,15 @@ static inline zend_result ct_eval_func_call_ex(
 
 	zend_execute_data *prev_execute_data = EG(current_execute_data);
 	zend_execute_data *execute_data, dummy_frame;
-	zend_op dummy_opline;
+	zend_slim_op dummy_opline;
 
 	/* Add a dummy frame to get the correct strict_types behavior. */
 	memset(&dummy_frame, 0, sizeof(zend_execute_data));
-	memset(&dummy_opline, 0, sizeof(zend_op));
+	memset(&dummy_opline, 0, sizeof(zend_slim_op));
 	dummy_frame.func = (zend_function *) op_array;
 	dummy_frame.opline = &dummy_opline;
-	dummy_opline.opcode = ZEND_DO_FCALL;
+	// FIXME: Do we need this?
+	// dummy_opline.opcode = ZEND_DO_FCALL;
 
 	execute_data = safe_emalloc(num_args, sizeof(zval), ZEND_CALL_FRAME_SLOT * sizeof(zval));
 	memset(execute_data, 0, sizeof(zend_execute_data));

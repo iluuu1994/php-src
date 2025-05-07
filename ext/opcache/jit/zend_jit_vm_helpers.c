@@ -35,13 +35,13 @@
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
 # if defined(__x86_64__)
 register zend_execute_data* volatile execute_data __asm__("%r14");
-register const zend_op* volatile opline __asm__("%r15");
+register const zend_slim_op* volatile opline __asm__("%r15");
 # elif defined(i386)
 register zend_execute_data* volatile execute_data __asm__("%esi");
-register const zend_op* volatile opline __asm__("%edi");
+register const zend_slim_op* volatile opline __asm__("%edi");
 # elif defined(__aarch64__)
 register zend_execute_data* volatile execute_data __asm__("x27");
-register const zend_op* volatile opline __asm__("x28");
+register const zend_slim_op* volatile opline __asm__("x28");
 # endif
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
 #endif

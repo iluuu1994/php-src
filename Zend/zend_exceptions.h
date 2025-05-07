@@ -85,9 +85,9 @@ ZEND_API bool zend_is_graceful_exit(const zend_object *ex);
 
 static zend_always_inline void zend_rethrow_exception(zend_execute_data *execute_data)
 {
-	if (EX(opline)->opcode != ZEND_HANDLE_EXCEPTION) {
+	if (EX(opline) != EG(exception_slim_op)) {
 		EG(opline_before_exception) = EX(opline);
-		EX(opline) = EG(exception_op);
+		EX(opline) = EG(exception_slim_op);
 	}
 }
 
