@@ -1276,20 +1276,6 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 			case ZEND_DEFINED:
 			case ZEND_IN_ARRAY:
 			case ZEND_ARRAY_KEY_EXISTS:
-				if (opline->result_type & IS_TMP_VAR) {
-					/* reinitialize result_type of smart branch instructions */
-					if (opline + 1 < end) {
-						if ((opline+1)->opcode == ZEND_JMPZ
-						 && (opline+1)->op1_type == IS_TMP_VAR
-						 && (opline+1)->op1.var == opline->result.var) {
-							opline->result_type = IS_SMART_BRANCH_JMPZ | IS_TMP_VAR;
-						} else if ((opline+1)->opcode == ZEND_JMPNZ
-						 && (opline+1)->op1_type == IS_TMP_VAR
-						 && (opline+1)->op1.var == opline->result.var) {
-							opline->result_type = IS_SMART_BRANCH_JMPNZ | IS_TMP_VAR;
-						}
-					}
-				}
 				break;
 		}
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
@@ -1398,20 +1384,6 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 			case ZEND_DEFINED:
 			case ZEND_IN_ARRAY:
 			case ZEND_ARRAY_KEY_EXISTS:
-				if (opline->result_type & IS_TMP_VAR) {
-					/* reinitialize result_type of smart branch instructions */
-					if (opline + 1 < end) {
-						if ((opline+1)->opcode == ZEND_JMPZ
-						 && (opline+1)->op1_type == IS_TMP_VAR
-						 && (opline+1)->op1.var == opline->result.var) {
-							opline->result_type = IS_SMART_BRANCH_JMPZ | IS_TMP_VAR;
-						} else if ((opline+1)->opcode == ZEND_JMPNZ
-						 && (opline+1)->op1_type == IS_TMP_VAR
-						 && (opline+1)->op1.var == opline->result.var) {
-							opline->result_type = IS_SMART_BRANCH_JMPNZ | IS_TMP_VAR;
-						}
-					}
-				}
 				break;
 		}
 #ifdef ZEND_VERIFY_TYPE_INFERENCE
