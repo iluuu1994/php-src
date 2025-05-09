@@ -97,7 +97,7 @@
 # define OPLINE_DC
 # define OPLINE_CC
 #else
-# define OPLINE_D           const zend_op* opline
+# define OPLINE_D           const zend_slim_op* opline
 # define OPLINE_C           opline
 # define OPLINE_DC          , OPLINE_D
 # define OPLINE_CC          , OPLINE_C
@@ -105,7 +105,7 @@
 
 #if defined(ZEND_VM_IP_GLOBAL_REG) && ((ZEND_VM_KIND == ZEND_VM_KIND_CALL) || (ZEND_VM_KIND == ZEND_VM_KIND_HYBRID))
 # pragma GCC diagnostic ignored "-Wvolatile-register-var"
-  register const zend_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
+  register const zend_slim_op* volatile opline __asm__(ZEND_VM_IP_GLOBAL_REG);
 # pragma GCC diagnostic warning "-Wvolatile-register-var"
 #else
 #endif
@@ -1567,7 +1567,7 @@ static void frameless_observed_call_copy(zend_execute_data *call, uint32_t arg, 
 
 ZEND_API void zend_frameless_observed_call(zend_execute_data *execute_data)
 {
-	const zend_op *opline = EX(opline);
+	const zend_op *opline = EX_OPLINE;
 	uint8_t num_args = ZEND_FLF_NUM_ARGS(opline->opcode);
 	zend_function *fbc = ZEND_FLF_FUNC(opline);
 	zval *result = EX_VAR(opline->result.var);
@@ -2175,7 +2175,8 @@ static ZEND_COLD zend_long zend_throw_incdec_ref_error(
 	}
 }
 
-static ZEND_COLD zend_long zend_throw_incdec_prop_error(zend_property_info *prop OPLINE_DC) {
+static ZEND_COLD zend_long zend_throw_incdec_prop_error(zend_property_info *prop) {
+	zend_op *opline = EX_OPLINE_EX(EG(current_execute_data));
 	zend_string *type_str = zend_type_to_string(prop->type);
 	if (ZEND_IS_INCREMENT(opline->opcode)) {
 		zend_type_error("Cannot increment property %s::$%s of type %s past its maximal value",
@@ -2244,7 +2245,7 @@ static void zend_incdec_typed_prop(zend_property_info *prop_info, zval *var_ptr,
 
 	if (UNEXPECTED(Z_TYPE_P(var_ptr) == IS_DOUBLE) && Z_TYPE_P(copy) == IS_LONG) {
 		if (!(ZEND_TYPE_FULL_MASK(prop_info->type) & MAY_BE_DOUBLE)) {
-			zend_long val = zend_throw_incdec_prop_error(prop_info OPLINE_CC);
+			zend_long val = zend_throw_incdec_prop_error(prop_info);
 			ZVAL_LONG(var_ptr, val);
 		}
 	} else if (UNEXPECTED(!zend_verify_property_type(prop_info, var_ptr, EX_USES_STRICT_TYPES()))) {
@@ -2266,7 +2267,7 @@ static void zend_pre_incdec_property_zval(zval *prop, zend_property_info *prop_i
 		}
 		if (UNEXPECTED(Z_TYPE_P(prop) != IS_LONG) && prop_info
 				&& !(ZEND_TYPE_FULL_MASK(prop_info->type) & MAY_BE_DOUBLE)) {
-			zend_long val = zend_throw_incdec_prop_error(prop_info OPLINE_CC);
+			zend_long val = zend_throw_incdec_prop_error(prop_info);
 			ZVAL_LONG(prop, val);
 		}
 	} else {
@@ -2305,7 +2306,7 @@ static void zend_post_incdec_property_zval(zval *prop, zend_property_info *prop_
 		}
 		if (UNEXPECTED(Z_TYPE_P(prop) != IS_LONG) && prop_info
 				&& !(ZEND_TYPE_FULL_MASK(prop_info->type) & MAY_BE_DOUBLE)) {
-			zend_long val = zend_throw_incdec_prop_error(prop_info OPLINE_CC);
+			zend_long val = zend_throw_incdec_prop_error(prop_info);
 			ZVAL_LONG(prop, val);
 		}
 	} else {

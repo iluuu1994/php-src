@@ -632,7 +632,7 @@ union _zend_function {
 };
 
 struct _zend_execute_data {
-	const zend_op       *opline;           /* executed opline                */
+	const zend_slim_op  *opline;           /* executed opline                */
 	zend_execute_data   *call;             /* current call                   */
 	zval                *return_value;
 	zend_function       *func;             /* executed function              */
@@ -759,12 +759,22 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 #define ZEND_OFFSET_TO_OPLINE_NUM(op_array, base, offset) \
 	(ZEND_OFFSET_TO_OPLINE(base, offset) - op_array->opcodes)
 
-#define OP_OPERAND_EXCEEDS_SLIM(op) ((op) > UINT16_MAX)
+#define OP_OPERAND_IS_WIDE(op) ((op) > UINT16_MAX)
+
+static zend_always_inline zend_op *OP_S2W_EX(const zend_op_array *op_array, const zend_slim_op *slim_op)
+{
+	return &op_array->opcodes[slim_op - op_array->slim_opcodes];
+}
+
 /* Convert slim op to wide. */
-#define OP_S2W_EX(op_array, opline) (&(op_array)->opcodes[opline - (op_array)->slim_opcodes])
 #define OP_S2W(opline)              OP_S2W_EX(op_array, opline)
-#define EX_SLIM_OPLINE()            EX(opline)
-#define EX_OPLINE()                 OP_S2W(EX_SLIM_OPLINE())
+#define EX_SLIM_OPLINE              EX(opline)
+#define EX_OPLINE_EX2(ex, opline) \
+	(opline != EG(exception_slim_op) \
+		? OP_S2W_EX(&(ex)->func->op_array, opline) \
+		: EG(exception_op))
+#define EX_OPLINE_EX(ex)            EX_OPLINE_EX2(ex, (ex)->opline)
+#define EX_OPLINE                   EX_OPLINE_EX(execute_data)
 
 # define ZEND_PASS_TWO_UPDATE_CONSTANT_SLIM(op_array, opline, node) do { \
 		(node).constant = \
