@@ -777,7 +777,8 @@ static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op
 }
 
 #define Z_WOP_FROM_EX_OP(ex, op) \
-	(EXPECTED((op) != EG(exception_slim_op)) \
+	/* (EXPECTED((op) != EG(exception_slim_op)) */ \
+	((op) != EG(exception_slim_op) \
 		? _zend_sop_to_wop(&(ex)->func->op_array, op) \
 		: EG(exception_op))
 #define Z_WOP_FROM_EX(ex) Z_WOP_FROM_EX_OP(ex, (ex)->opline)
