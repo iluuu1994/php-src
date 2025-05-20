@@ -692,6 +692,9 @@ static void zend_init_call_trampoline_op(void) /* {{{ */
 	memset(&EG(call_trampoline_op), 0, sizeof(EG(call_trampoline_op)));
 	EG(call_trampoline_op).opcode = ZEND_CALL_TRAMPOLINE;
 	ZEND_VM_SET_OPCODE_HANDLER(&EG(call_trampoline_op));
+
+	memset(&EG(call_trampoline_sop), 0, sizeof(EG(call_trampoline_sop)));
+	EG(call_trampoline_sop).handler = EG(call_trampoline_op).handler;
 }
 /* }}} */
 

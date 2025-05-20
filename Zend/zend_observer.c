@@ -76,6 +76,7 @@ ZEND_API void zend_observer_post_startup(void)
 		 * is called before any extensions have registered as an observer. So we
 		 * adjust the offset to the observed handler when we know we need to observe. */
 		ZEND_VM_SET_OPCODE_HANDLER(&EG(call_trampoline_op));
+		EG(call_trampoline_sop).handler = EG(call_trampoline_op).handler;
 
 		/* ZEND_HANDLE_EXCEPTION also has SPEC(OBSERVER) and no observer extensions
 		 * exist when zend_init_exception_op() is called. */

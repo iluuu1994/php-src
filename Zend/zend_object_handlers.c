@@ -1695,6 +1695,7 @@ ZEND_API zend_function *zend_get_call_trampoline_func(const zend_class_entry *ce
 		func->fn_flags |= ZEND_ACC_STATIC;
 	}
 	func->opcodes = &EG(call_trampoline_op);
+	func->slim_opcodes = &EG(call_trampoline_sop);
 	ZEND_MAP_PTR_INIT(func->run_time_cache, (void**)dummy);
 	func->scope = fbc->common.scope;
 	/* reserve space for arguments, local and temporary variables */
