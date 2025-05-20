@@ -1595,7 +1595,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		if (!(EG(current_execute_data)
 		 && EG(current_execute_data)->func
 		 && ZEND_USER_CODE(EG(current_execute_data)->func->type))) {
-			zend_op *opline = Z_WOP_FROM_EX(EG(current_execute_data));
+			zend_op *opline = Z_WOP;
 			if (opline->opcode == ZEND_INCLUDE_OR_EVAL && opline->extended_value == ZEND_EVAL) {
 				EG(exit_status) = 255;
 			}

@@ -1939,7 +1939,7 @@ static zend_op_array *file_cache_compile_file(zend_file_handle *file_handle, int
 			if (!EG(current_execute_data) || !EG(current_execute_data)->opline ||
 			    !EG(current_execute_data)->func ||
 			    !ZEND_USER_CODE(EG(current_execute_data)->func->common.type) ||
-			    Z_WOP_FROM_EX(EG(current_execute_data))->opcode != ZEND_INCLUDE_OR_EVAL ||
+			    Z_WOP->opcode != ZEND_INCLUDE_OR_EVAL ||
 			    (EG(current_execute_data)->opline->extended_value != ZEND_INCLUDE_ONCE &&
 			     EG(current_execute_data)->opline->extended_value != ZEND_REQUIRE_ONCE)) {
 				if (zend_hash_add_empty_element(&EG(included_files), persistent_script->script.filename) != NULL) {

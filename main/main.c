@@ -1040,7 +1040,7 @@ PHPAPI ZEND_COLD void php_verror(const char *docref, const char *params, int typ
 				EG(current_execute_data)->func &&
 				ZEND_USER_CODE(EG(current_execute_data)->func->common.type) &&
 				EG(current_execute_data)->opline &&
-				Z_WOP_FROM_EX(EG(current_execute_data))->opcode == ZEND_INCLUDE_OR_EVAL
+				Z_WOP->opcode == ZEND_INCLUDE_OR_EVAL
 	) {
 		switch (EG(current_execute_data)->opline->extended_value) {
 			case ZEND_EVAL:
