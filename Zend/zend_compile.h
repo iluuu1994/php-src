@@ -771,6 +771,11 @@ static zend_always_inline zend_op *_zend_sop_to_wop(const zend_op_array *op_arra
 	return &op_array->opcodes[slim_op - op_array->slim_opcodes];
 }
 
+static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op_array, const zend_op *wop)
+{
+	return &op_array->slim_opcodes[wop - op_array->opcodes];
+}
+
 #define Z_WOP_FROM_EX_OP(ex, op) \
 	(EXPECTED((op) != EG(exception_slim_op)) \
 		? _zend_sop_to_wop(&(ex)->func->op_array, op) \
@@ -779,6 +784,11 @@ static zend_always_inline zend_op *_zend_sop_to_wop(const zend_op_array *op_arra
 #define Z_WOP_FROM_OP(op) Z_WOP_FROM_EX_OP(EG(current_execute_data), op)
 #define Z_WOP             Z_WOP_FROM_EX(EG(current_execute_data))
 #define EX_WOP            Z_WOP_FROM_EX(execute_data)
+
+#define W_SOP_FROM_F_OP(f, op) \
+	(EXPECTED((op) != EG(exception_op)) \
+		? _zend_wop_to_sop(f, op) \
+		: EG(exception_slim_op))
 
 # define ZEND_PASS_TWO_UPDATE_CONSTANT_SLIM(op_array, opline, node) do { \
 		(node).constant = \
