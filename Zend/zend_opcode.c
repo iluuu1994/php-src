@@ -1223,7 +1223,16 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		if (opline->result_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->result.var = slim_op->result.var = EX_NUM_TO_VAR(op_array->last_var + opline->result.var);
 		}
+
+		uint8_t prev_op1_type = opline->op1_type;
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
+
+		/* Check if operands were swapped. */
+		if (opline->op1_type != prev_op1_type) {
+			znode_op tmp = slim_op->op1;
+			slim_op->op1 = slim_op->op2;
+			slim_op->op2 = tmp;
+		}
 
 		slim_op->handler = opline->handler;
 		slim_op->result = opline->result;
