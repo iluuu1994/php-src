@@ -607,7 +607,6 @@ ZEND_API void destroy_op_array(zend_op_array *op_array)
 		}
 	}
 	efree(op_array->opcodes);
-	efree(op_array->slim_opcodes);
 
 	zend_string_release_ex(op_array->filename, 0);
 	if (op_array->doc_comment) {
@@ -1083,15 +1082,16 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		CG(context).literals_size = op_array->last_literal;
 	}
 #else
-	op_array->opcodes = (zend_op *) erealloc(op_array->opcodes, sizeof(zend_op) * op_array->last);
-	op_array->slim_opcodes = emalloc(
-		ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16)
+	op_array->opcodes = (zend_op *) erealloc(op_array->opcodes,
+		ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16)
+		+ ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16)
 		+ sizeof(zval) * op_array->last_literal);
+	op_array->slim_opcodes = (zend_slim_op*)(((char*)op_array->opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16));
 	if (op_array->literals) {
-		memcpy(((char*)op_array->slim_opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16),
-			op_array->literals, sizeof(zval) * op_array->last_literal);
-		efree(op_array->literals);
+		zval *literals = op_array->literals;
 		op_array->literals = (zval*)(((char*)op_array->slim_opcodes) + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16));
+		memcpy(op_array->literals, literals, sizeof(zval) * op_array->last_literal);
+		efree(literals);
 	}
 	CG(context).opcodes_size = op_array->last;
 	CG(context).literals_size = op_array->last_literal;
@@ -1208,15 +1208,14 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		slim_op->result = opline->result;
 
 		if (opline->op1_type == IS_CONST) {
-			// FIXME: Allocating wops+sops together will allow us to use relative literals for both ops.
 			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, slim_op, slim_op->op1);
-			opline->op1 = slim_op->op1;
+			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op1);
 		} else if (opline->op1_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->op1.var = slim_op->op1.var = EX_NUM_TO_VAR(op_array->last_var + opline->op1.var);
 		}
 		if (opline->op2_type == IS_CONST) {
 			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, slim_op, slim_op->op2);
-			opline->op2 = slim_op->op2;
+			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op2);
 		} else if (opline->op2_type & (IS_VAR|IS_TMP_VAR)) {
 			opline->op2.var = slim_op->op2.var = EX_NUM_TO_VAR(op_array->last_var + opline->op2.var);
 		}

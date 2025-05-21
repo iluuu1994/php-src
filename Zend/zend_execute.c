@@ -1652,7 +1652,7 @@ static zend_never_inline void zend_binary_assign_op_obj_dim(zend_object *obj, zv
 	}
 	zend_op *wop = EX_WOP;
 	zend_op *wop_data = wop + 1;
-	value = get_op_data_zval_ptr_r(wop_data->op1_type, wop_data->op1);
+	value = get_op_data_zval_ptr_r(wop_data->op1_type, (opline+1)->op1);
 	if ((z = obj->handlers->read_dimension(obj, property, BP_VAR_R, &rv)) != NULL) {
 
 		if (zend_binary_op(&res, z, value OPLINE_CC) == SUCCESS) {
@@ -3649,7 +3649,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 	uint8_t op1_type = wop->op1_type, op2_type = wop->op2_type;
 
 	if (EXPECTED(op2_type == IS_CONST)) {
-		zval *class_name = RT_CONSTANT(opline, wop->op2);
+		zval *class_name = RT_CONSTANT(opline, opline->op2);
 
 		ZEND_ASSERT(op1_type != IS_CONST || CACHED_PTR(cache_slot) == NULL);
 
@@ -3681,7 +3681,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 	}
 
 	if (EXPECTED(op1_type == IS_CONST)) {
-		name = Z_STR_P(RT_CONSTANT(opline, wop->op1));
+		name = Z_STR_P(RT_CONSTANT(opline, opline->op1));
 		result = zend_std_get_static_property_with_info(ce, name, fetch_type, &property_info);
 	} else {
 		zend_string *tmp_name;
@@ -5532,7 +5532,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_handle_undef_args(zend_execute_data *cal
 			zend_op *opline = &op_array->opcodes[i];
 			zend_slim_op *sop = &op_array->slim_opcodes[i];
 			if (EXPECTED(opline->opcode == ZEND_RECV_INIT)) {
-				zval *default_value = RT_CONSTANT(sop, opline->op2);
+				zval *default_value = RT_CONSTANT(opline, opline->op2);
 				if (Z_OPT_TYPE_P(default_value) == IS_CONSTANT_AST) {
 					if (UNEXPECTED(!RUN_TIME_CACHE(op_array))) {
 						init_func_run_time_cache(op_array);

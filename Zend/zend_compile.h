@@ -791,12 +791,6 @@ static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op
 		? _zend_wop_to_sop(f, op) \
 		: EG(exception_slim_op))
 
-# define ZEND_PASS_TWO_UPDATE_CONSTANT_SLIM(op_array, opline, node) do { \
-		(node).constant = \
-			(((char*)CT_CONSTANT_EX(op_array, (node).constant)) - \
-			((char*)opline)); \
-	} while (0)
-
 #if ZEND_USE_ABS_JMP_ADDR
 
 /* run-time jump target */

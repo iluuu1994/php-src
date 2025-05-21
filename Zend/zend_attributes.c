@@ -287,6 +287,7 @@ ZEND_API zend_result zend_get_attribute_value(zval *ret, zend_attribute *attr, u
 
 ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attribute_ce, zend_attribute *attribute_data, zend_class_entry *scope, zend_string *filename)
 {
+#if false
 	zend_execute_data *call = NULL;
 
 	if (filename) {
@@ -324,6 +325,7 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 
 		EG(current_execute_data) = call;
 	}
+#endif
 
 	zval *args = NULL;
 	HashTable *named_params = NULL;
@@ -365,10 +367,12 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 		zend_array_destroy(named_params);
 	}
 
+#if false
 	if (filename) {
 		EG(current_execute_data) = call->prev_execute_data;
 		zend_vm_stack_free_call_frame(call);
 	}
+#endif
 
 	return result;
 }

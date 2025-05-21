@@ -986,7 +986,7 @@ static ZEND_COLD zend_string *zend_get_function_declaration(
 						}
 					}
 					if (precv && precv->opcode == ZEND_RECV_INIT && precv->op2_type != IS_UNUSED) {
-						zval *zv = RT_CONSTANT(W_SOP_FROM_F_OP(&fptr->op_array, precv), precv->op2);
+						zval *zv = RT_CONSTANT(precv, precv->op2);
 
 						if (Z_TYPE_P(zv) == IS_FALSE) {
 							smart_str_appends(&str, "false");
