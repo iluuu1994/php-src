@@ -2390,6 +2390,19 @@ static inline uint32_t zend_emit_cond_jump(uint8_t opcode, znode *cond, uint32_t
 	uint32_t opnum = get_next_op_number();
 	zend_op *opline;
 
+	if (cond->op_type == IS_TMP_VAR && opnum > 0) {
+		opline = CG(active_op_array)->opcodes + opnum - 1;
+		if (opline->result_type == IS_TMP_VAR
+		 && opline->result.var == cond->u.op.var
+		 && zend_is_smart_branch(opline)) {
+			if (opcode == ZEND_JMPZ) {
+				opline->result_type = IS_TMP_VAR | IS_SMART_BRANCH_JMPZ;
+			} else {
+				ZEND_ASSERT(opcode == ZEND_JMPNZ);
+				opline->result_type = IS_TMP_VAR | IS_SMART_BRANCH_JMPNZ;
+			}
+		}
+	}
 	opline = zend_emit_op(NULL, opcode, cond, NULL);
 	opline->op2.opline_num = opnum_target;
 	return opnum;
