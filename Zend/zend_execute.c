@@ -116,16 +116,6 @@
 #define _UNUSED_CODE 3
 #define _CV_CODE     4
 
-/* Redeclare Z_WOP macros to omit EG fetches. */
-// #undef Z_WOP_FROM_EX_OP
-// #undef Z_WOP_FROM_EX
-// #undef Z_WOP_FROM_OP
-// #undef EX_WOP
-// #define Z_WOP_FROM_EX_OP(ex, op) _zend_sop_to_wop(&(ex)->func->op_array, op)
-// #define Z_WOP_FROM_EX(ex)        Z_WOP_FROM_EX_OP(ex, opline)
-// #define Z_WOP_FROM_OP(op)        Z_WOP_FROM_EX_OP(execute_data, op)
-// #define EX_WOP                   Z_WOP_FROM_EX_OP(execute_data, opline)
-// #define Z_WOP_FROM_EX_OP(ex, op) (_zend_sop_to_wop(&(ex)->func->op_array, op))
 #define EX_WOP2 Z_WOP_FROM_EX_OP(execute_data, opline)
 
 typedef int (ZEND_FASTCALL *incdec_t)(zval *);
@@ -5834,7 +5824,18 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 /* This callback disables optimization of "vm_stack_data" variable in VM */
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
 
+/* Redeclare Z_WOP_FROM_EX_OP to omit exception check. */
+#undef Z_WOP_FROM_EX_OP
+#define Z_WOP_FROM_EX_OP(ex, op) _zend_sop_to_wop(&(ex)->func->op_array, op)
+
 #include "zend_vm_execute.h"
+
+#undef Z_WOP_FROM_EX_OP
+#define Z_WOP_FROM_EX_OP(ex, op) \
+	/* (EXPECTED((op) != EG(exception_slim_op)) */ \
+	((op) != EG(exception_slim_op) \
+		? _zend_sop_to_wop(&(ex)->func->op_array, op) \
+		: EG(exception_op))
 
 ZEND_API zend_result zend_set_user_opcode_handler(zend_uchar opcode, user_opcode_handler_t handler)
 {
