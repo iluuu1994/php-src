@@ -117,7 +117,7 @@
 #define _CV_CODE     4
 
 /* Redeclare Z_WOP macros to omit EG fetches. */
-#undef Z_WOP_FROM_EX_OP
+// #undef Z_WOP_FROM_EX_OP
 // #undef Z_WOP_FROM_EX
 // #undef Z_WOP_FROM_OP
 // #undef EX_WOP
@@ -125,7 +125,7 @@
 // #define Z_WOP_FROM_EX(ex)        Z_WOP_FROM_EX_OP(ex, opline)
 // #define Z_WOP_FROM_OP(op)        Z_WOP_FROM_EX_OP(execute_data, op)
 // #define EX_WOP                   Z_WOP_FROM_EX_OP(execute_data, opline)
-#define Z_WOP_FROM_EX_OP(ex, op) (_zend_sop_to_wop(&(ex)->func->op_array, op))
+// #define Z_WOP_FROM_EX_OP(ex, op) (_zend_sop_to_wop(&(ex)->func->op_array, op))
 #define EX_WOP2 Z_WOP_FROM_EX_OP(execute_data, opline)
 
 typedef int (ZEND_FASTCALL *incdec_t)(zval *);

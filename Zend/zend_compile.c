@@ -5896,11 +5896,19 @@ void zend_resolve_goto_label(zend_op_array *op_array, zend_op *opline) /* {{{ */
 	opline->op1.opline_num = dest->opline_num;
 	opline->extended_value = 0;
 
+	zend_slim_op *sop = op_array->slim_opcodes + opnum;
+
 	ZEND_ASSERT(remove_oplines >= 0);
 	while (remove_oplines--) {
 		opline--;
 		MAKE_NOP(opline);
 		ZEND_VM_SET_OPCODE_HANDLER(opline);
+
+		sop--;
+		sop->handler = opline->handler;
+		sop->op1.num = (uint32_t) -1;
+		sop->op2.num = (uint32_t) -1;
+		sop->result.num = (uint32_t) -1;
 	}
 }
 /* }}} */
