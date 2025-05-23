@@ -605,7 +605,7 @@ ZEND_API zend_generator *zend_generator_update_current(zend_generator *generator
 	zend_generator_remove_child(&new_root_parent->node, new_root);
 
 	if (EXPECTED(EG(exception) == NULL) && EXPECTED((OBJ_FLAGS(&generator->std) & IS_OBJ_DESTRUCTOR_CALLED) == 0)) {
-		zend_op *yield_from = (zend_op *) new_root->execute_data->opline;
+		zend_op *yield_from = Z_WOP_FROM_EX(new_root->execute_data);
 
 		if (yield_from->opcode == ZEND_YIELD_FROM) {
 			if (Z_ISUNDEF(new_root_parent->retval)) {
