@@ -1566,7 +1566,7 @@ static zend_never_inline void zend_assign_to_object_dim(zend_object *obj, zval *
 {
 	obj->handlers->write_dimension(obj, dim, value);
 
-	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP))) {
+	if (UNEXPECTED(RETURN_VALUE_USED(EX_WOP2))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 }
