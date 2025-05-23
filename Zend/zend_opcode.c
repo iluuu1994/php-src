@@ -1166,7 +1166,7 @@ ZEND_API void pass_two(zend_op_array *op_array)
 					call--;
 				}
 				if (call->result_type == IS_UNUSED) {
-					opline->result_type = IS_UNUSED;
+					SET_UNUSED(opline->result);
 				}
 				ZEND_PASS_TWO_UPDATE_JMP_TARGET(op_array, slim_op, opline->op2);
 				break;
