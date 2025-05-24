@@ -5711,9 +5711,12 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 
 
 #define ZEND_VM_REPEATABLE_OPCODE \
+	const void *prev_handler; \
 	do {
 #define ZEND_VM_REPEAT_OPCODE(_opcode) \
-	} while (UNEXPECTED(opline->handler == (++opline)->handler)); \
+		prev_handler = opline->handler; \
+		opline++; \
+	} while (UNEXPECTED(prev_handler == opline->handler)); \
 	OPLINE = opline; \
 	ZEND_VM_CONTINUE()
 #define ZEND_VM_SMART_BRANCH(_result, _check) do { \
