@@ -5710,8 +5710,12 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	OPLINE++
 
 
-#define ZEND_VM_REPEATABLE_OPCODE
-#define ZEND_VM_REPEAT_OPCODE(_opcode)
+#define ZEND_VM_REPEATABLE_OPCODE \
+	do {
+#define ZEND_VM_REPEAT_OPCODE(_opcode) \
+	} while (UNEXPECTED(Z_WOP_FROM_EX_OP(execute_data, ++opline)->opcode == _opcode)); \
+	OPLINE = opline; \
+	ZEND_VM_CONTINUE()
 #define ZEND_VM_SMART_BRANCH(_result, _check) do { \
 		zend_op *wop = EX_WOP2; \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
