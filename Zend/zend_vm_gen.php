@@ -749,7 +749,7 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
         // FIXME: We can specialize this better by looking at the return_op of the slim op if we know it doesn't contain special flags, we don't need the exact value.
         "/RETURN_VALUE_USED\(EX_WOP2\)/" => isset($extra_spec['RETVAL'])
             ? $extra_spec['RETVAL']
-            : "(opline->result.var != (uint32_t)-1)",
+            : "(opline->result.var != (uint16_t)-1)",
         "/arg_num <= MAX_ARG_FLAG_NUM/" => isset($extra_spec['QUICK_ARG']) ? $extra_spec['QUICK_ARG'] : "arg_num <= MAX_ARG_FLAG_NUM",
         "/ZEND_VM_SMART_BRANCH\(\s*([^,)]*)\s*,\s*([^)]*)\s*\)/" => isset($extra_spec['SMART_BRANCH']) ?
             ($extra_spec['SMART_BRANCH'] == 1 ?

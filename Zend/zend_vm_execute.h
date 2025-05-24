@@ -815,7 +815,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_OP_SPEC_HAN
 		}
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), prop);
 	}
 
@@ -1003,7 +1003,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_SPEC_OP_DAT
 		value = zend_assign_to_variable_ex(prop, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 
@@ -1040,7 +1040,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_SPEC_OP_DAT
 		value = zend_assign_to_variable_ex(prop, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 
@@ -1077,7 +1077,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_SPEC_OP_DAT
 		value = zend_assign_to_variable_ex(prop, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 
@@ -1114,7 +1114,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_SPEC_OP_DAT
 		value = zend_assign_to_variable_ex(prop, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), value);
 	}
 
@@ -1162,7 +1162,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_STATIC_PROP_REF_SPEC_HA
 		zend_assign_to_variable_reference(prop, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), prop);
 	}
 
@@ -1466,7 +1466,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_OBS
 	bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-	ret = (opline->result.var != (uint32_t)-1) ? EX_VAR(opline->result.var) : &retval;
+	ret = (opline->result.var != (uint16_t)-1) ? EX_VAR(opline->result.var) : &retval;
 	ZVAL_NULL(ret);
 
 	zend_observer_fcall_begin_specialized(call, false);
@@ -1500,7 +1500,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_ICALL_SPEC_OBS
 		EG(vm_stack_top) = (zval*)call;
 	}
 
-	if (!(opline->result.var != (uint32_t)-1)) {
+	if (!(opline->result.var != (uint16_t)-1)) {
 		i_zval_ptr_dtor(ret);
 	}
 
@@ -1572,7 +1572,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_UCALL_SPEC_OBS
 	EX(call) = call->prev_execute_data;
 
 	ret = NULL;
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		ret = EX_VAR(opline->result.var);
 	}
 
@@ -1815,7 +1815,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 	SAVE_OPLINE();
 	EX(call) = call->prev_execute_data;
 
-	const uint32_t no_discard = (opline->result.var != (uint32_t)-1) ? 0 : ZEND_ACC_NODISCARD;
+	const uint32_t no_discard = (opline->result.var != (uint16_t)-1) ? 0 : ZEND_ACC_NODISCARD;
 
 	if (UNEXPECTED(fbc->common.fn_flags & (ZEND_ACC_DEPRECATED|no_discard))) {
 		if (fbc->common.fn_flags & ZEND_ACC_DEPRECATED) {
@@ -1826,7 +1826,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 		}
 		if (UNEXPECTED(EG(exception) != NULL)) {
 			UNDEF_RESULT();
-			if (!(opline->result.var != (uint32_t)-1)) {
+			if (!(opline->result.var != (uint16_t)-1)) {
 				ret = &retval;
 				ZVAL_UNDEF(ret);
 			}
@@ -1836,7 +1836,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
 		ret = NULL;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ret = EX_VAR(opline->result.var);
 		}
 
@@ -1861,7 +1861,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_BY_NAME_
 		bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-		ret = (opline->result.var != (uint32_t)-1) ? EX_VAR(opline->result.var) : &retval;
+		ret = (opline->result.var != (uint16_t)-1) ? EX_VAR(opline->result.var) : &retval;
 		ZVAL_NULL(ret);
 
 		zend_observer_fcall_begin_specialized(call, false);
@@ -1902,7 +1902,7 @@ fcall_by_name_end:
 			EG(vm_stack_top) = (zval*)call;
 		}
 
-		if (!(opline->result.var != (uint32_t)-1)) {
+		if (!(opline->result.var != (uint16_t)-1)) {
 			i_zval_ptr_dtor(ret);
 		}
 	}
@@ -2176,7 +2176,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 	SAVE_OPLINE();
 	EX(call) = call->prev_execute_data;
 
-	const uint32_t no_discard = (opline->result.var != (uint32_t)-1) ? 0 : ZEND_ACC_NODISCARD;
+	const uint32_t no_discard = (opline->result.var != (uint16_t)-1) ? 0 : ZEND_ACC_NODISCARD;
 
 	if (UNEXPECTED(fbc->common.fn_flags & (ZEND_ACC_DEPRECATED|no_discard))) {
 		if (fbc->common.fn_flags & ZEND_ACC_DEPRECATED) {
@@ -2190,7 +2190,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 				OBJ_RELEASE(ZEND_CLOSURE_OBJECT(call->func));
 			}
 			UNDEF_RESULT();
-			if (!(opline->result.var != (uint32_t)-1)) {
+			if (!(opline->result.var != (uint16_t)-1)) {
 				ret = &retval;
 				ZVAL_UNDEF(ret);
 			}
@@ -2200,7 +2200,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 
 	if (EXPECTED(fbc->type == ZEND_USER_FUNCTION)) {
 		ret = NULL;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ret = EX_VAR(opline->result.var);
 		}
 
@@ -2234,7 +2234,7 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DO_FCALL_SPEC_OBS
 		bool should_throw = zend_internal_call_should_throw(fbc, call);
 #endif
 
-		ret = (opline->result.var != (uint32_t)-1) ? EX_VAR(opline->result.var) : &retval;
+		ret = (opline->result.var != (uint16_t)-1) ? EX_VAR(opline->result.var) : &retval;
 		ZVAL_NULL(ret);
 
 		zend_observer_fcall_begin_specialized(call, false);
@@ -2273,7 +2273,7 @@ fcall_end:
 			zend_free_extra_named_params(call->extra_named_params);
 		}
 
-		if (!(opline->result.var != (uint32_t)-1)) {
+		if (!(opline->result.var != (uint16_t)-1)) {
 			i_zval_ptr_dtor(ret);
 		}
 	}
@@ -3030,7 +3030,7 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_fe_fetch_obj
 			p++;
 		}
 		EG(ht_iterators)[Z_FE_ITER_P(array)].pos = pos;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			if (UNEXPECTED(!p->key)) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 			} else if (ZSTR_VAL(p->key)[0]) {
@@ -3073,7 +3073,7 @@ fe_fetch_r_exit:
 			/* failure in get_current_data */
 			goto fe_fetch_r_exit;
 		}
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			if (funcs->get_current_key) {
 				funcs->get_current_key(iter, EX_VAR(opline->result.var));
 				if (UNEXPECTED(EG(exception) != NULL)) {
@@ -3259,13 +3259,13 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_NOP_SPEC_HANDLER(Z
 	ZEND_VM_NEXT_OPCODE();
 }
 
-static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_dispatch_try_catch_finally_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_EX uint32_t try_catch_offset, uint32_t op_num)
+static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_dispatch_try_catch_finally_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_EX uint16_t try_catch_offset, uint16_t op_num)
 {
 	/* May be NULL during generator closing (only finally blocks are executed) */
 	zend_object *ex = EG(exception);
 
 	/* Walk try/catch/finally structures upwards, performing the necessary actions */
-	for (; try_catch_offset != (uint32_t) -1; try_catch_offset--) {
+	for (; try_catch_offset != (uint16_t) -1; try_catch_offset--) {
 		zend_try_catch_element *try_catch =
 			&EX(func)->op_array.try_catch_array[try_catch_offset];
 
@@ -3496,7 +3496,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FAST_RET_SPEC_HANDLER(ZEND_OPC
 {
 	USE_OPLINE
 	zval *fast_call = EX_VAR(opline->op1.var);
-	uint32_t current_try_catch_offset, current_op_num;
+	uint16_t current_try_catch_offset, current_op_num;
 
 	if (Z_OPLINE_NUM_P(fast_call) != (uint32_t)-1) {
 		const zend_slim_op *fast_ret = EX(func)->op_array.slim_opcodes + Z_OPLINE_NUM_P(fast_call);
@@ -3518,7 +3518,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSERT_CHECK_SPEC_HANDLER(ZEND
 
 	if (EG(assertions) <= 0) {
 		zend_slim_op *target = OP_JMP_ADDR(opline, opline->op2);
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 		ZEND_VM_JMP_EX(target, 0);
@@ -5113,7 +5113,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_CATCH_SPEC_CONST_HANDLER(ZEND_
 
 	exception = EG(exception);
 	EG(exception) = NULL;
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* Always perform a strict assignment. There is a reasonable expectation that if you
 		 * write "catch (Exception $e)" then $e will actually be instanceof Exception. As such,
 		 * we should not permit coercion to string here. */
@@ -5300,18 +5300,18 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CONST_HAN
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	} else if (new_op_array == ZEND_FAKE_OP_ARRAY) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 	} else if (UNEXPECTED(new_op_array == NULL)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_FALSE(EX_VAR(opline->result.var));
 		}
 	} else if (new_op_array->last == 1
 			&& new_op_array->opcodes[0].opcode == ZEND_RETURN
 			&& new_op_array->opcodes[0].op1_type == IS_CONST
 			&& EXPECTED(zend_execute_ex == execute_ex)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			const zend_op *op = new_op_array->opcodes;
 
 			ZVAL_COPY(EX_VAR(opline->result.var), RT_CONSTANT(op, op->op1));
@@ -5322,7 +5322,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CONST_HAN
 	} else {
 		zval *return_value = NULL;
 		zend_execute_data *call;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			return_value = EX_VAR(opline->result.var);
 		}
 
@@ -5383,18 +5383,18 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_OBSERVER_
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	} else if (new_op_array == ZEND_FAKE_OP_ARRAY) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 	} else if (UNEXPECTED(new_op_array == NULL)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_FALSE(EX_VAR(opline->result.var));
 		}
 	} else if (new_op_array->last == 1
 			&& new_op_array->opcodes[0].opcode == ZEND_RETURN
 			&& new_op_array->opcodes[0].op1_type == IS_CONST
 			&& EXPECTED(zend_execute_ex == execute_ex)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			const zend_op *op = new_op_array->opcodes;
 
 			ZVAL_COPY(EX_VAR(opline->result.var), RT_CONSTANT(op, op->op1));
@@ -5405,7 +5405,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_OBSERVER_
 	} else {
 		zval *return_value = NULL;
 		zend_execute_data *call;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			return_value = EX_VAR(opline->result.var);
 		}
 
@@ -5872,7 +5872,7 @@ yield_from_try_again:
 					zend_generator_yield_from(generator, new_gen);
 				}
 			} else {
-				if ((opline->result.var != (uint32_t)-1)) {
+				if ((opline->result.var != (uint16_t)-1)) {
 					ZVAL_COPY(EX_VAR(opline->result.var), &new_gen->retval);
 				}
 				ZEND_VM_NEXT_OPCODE();
@@ -5912,7 +5912,7 @@ yield_from_try_again:
 
 	/* This is the default return value
 	 * when the expression is a Generator, it will be overwritten in zend_generator_resume() */
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		ZVAL_NULL(EX_VAR(opline->result.var));
 	}
 
@@ -8192,7 +8192,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_CONST_HANDLER
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -10531,7 +10531,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_TMPVAR_HANDLE
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -11375,7 +11375,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_UNUSED_HANDLE
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -13021,7 +13021,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CONST_CV_HANDLER(ZE
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -15492,18 +15492,18 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_TMPVAR_HA
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	} else if (new_op_array == ZEND_FAKE_OP_ARRAY) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 	} else if (UNEXPECTED(new_op_array == NULL)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_FALSE(EX_VAR(opline->result.var));
 		}
 	} else if (new_op_array->last == 1
 			&& new_op_array->opcodes[0].opcode == ZEND_RETURN
 			&& new_op_array->opcodes[0].op1_type == IS_CONST
 			&& EXPECTED(zend_execute_ex == execute_ex)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			const zend_op *op = new_op_array->opcodes;
 
 			ZVAL_COPY(EX_VAR(opline->result.var), RT_CONSTANT(op, op->op1));
@@ -15514,7 +15514,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_TMPVAR_HA
 	} else {
 		zval *return_value = NULL;
 		zend_execute_data *call;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			return_value = EX_VAR(opline->result.var);
 		}
 
@@ -15604,7 +15604,7 @@ yield_from_try_again:
 					zend_generator_yield_from(generator, new_gen);
 				}
 			} else {
-				if ((opline->result.var != (uint32_t)-1)) {
+				if ((opline->result.var != (uint16_t)-1)) {
 					ZVAL_COPY(EX_VAR(opline->result.var), &new_gen->retval);
 				}
 				ZEND_VM_NEXT_OPCODE();
@@ -15645,7 +15645,7 @@ yield_from_try_again:
 
 	/* This is the default return value
 	 * when the expression is a Generator, it will be overwritten in zend_generator_resume() */
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		ZVAL_NULL(EX_VAR(opline->result.var));
 	}
 
@@ -21073,7 +21073,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_CONST_HANDLER(Z
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -21515,7 +21515,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_TMPVAR_HANDLER(
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -21971,7 +21971,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_UNUSED_HANDLER(
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -22372,7 +22372,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_TMP_CV_HANDLER(ZEND
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -22445,7 +22445,7 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_pre_inc_help
 		increment_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -22515,7 +22515,7 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_pre_dec_help
 		decrement_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -23119,7 +23119,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SPEC_VA
 			value++;
 		}
 		Z_FE_POS_P(array) = pos + 1;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_LONG(EX_VAR(opline->result.var), pos);
 		}
 	} else {
@@ -23142,7 +23142,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SPEC_VA
 			p++;
 		}
 		Z_FE_POS_P(array) = pos;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			if (!p->key) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 			} else {
@@ -23200,7 +23200,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_RW_SPEC_VAR_HANDLER(Z
 				value++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos + 1;
-			if ((opline->result.var != (uint32_t)-1)) {
+			if ((opline->result.var != (uint16_t)-1)) {
 				ZVAL_LONG(EX_VAR(opline->result.var), pos);
 			}
 		} else {
@@ -23220,7 +23220,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_RW_SPEC_VAR_HANDLER(Z
 				p++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
-			if ((opline->result.var != (uint32_t)-1)) {
+			if ((opline->result.var != (uint16_t)-1)) {
 				if (!p->key) {
 					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 				} else {
@@ -23280,7 +23280,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_RW_SPEC_VAR_HANDLER(Z
 				p++;
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
-			if ((opline->result.var != (uint32_t)-1)) {
+			if ((opline->result.var != (uint16_t)-1)) {
 				if (UNEXPECTED(!p->key)) {
 					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
 				} else if (ZSTR_VAL(p->key)[0]) {
@@ -23321,7 +23321,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_RW_SPEC_VAR_HANDLER(Z
 				/* failure in get_current_data */
 				goto fe_fetch_w_exit;
 			}
-			if ((opline->result.var != (uint32_t)-1)) {
+			if ((opline->result.var != (uint16_t)-1)) {
 				if (funcs->get_current_key) {
 					funcs->get_current_key(iter, EX_VAR(opline->result.var));
 					if (UNEXPECTED(EG(exception) != NULL)) {
@@ -23648,7 +23648,7 @@ assign_op_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -23673,7 +23673,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -23740,7 +23740,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -23783,7 +23783,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -23815,7 +23815,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_VAR_CONST_HANDL
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -23868,7 +23868,7 @@ pre_incdec_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -24150,7 +24150,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -24207,7 +24207,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -24246,7 +24246,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -24304,7 +24304,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -24361,7 +24361,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -24400,7 +24400,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -24458,7 +24458,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -24515,7 +24515,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -24554,7 +24554,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -24612,7 +24612,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -24669,7 +24669,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -24708,7 +24708,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -24788,7 +24788,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -24862,7 +24862,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -24940,7 +24940,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -25015,7 +25015,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -25093,7 +25093,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -25168,7 +25168,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -25246,7 +25246,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -25320,7 +25320,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -26375,7 +26375,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_CONST_HANDLER(Z
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -26639,7 +26639,7 @@ assign_op_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -26664,7 +26664,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -26731,7 +26731,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -26774,7 +26774,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -26807,7 +26807,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_VAR_TMPVAR_HAND
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -26861,7 +26861,7 @@ pre_incdec_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -27146,7 +27146,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -27203,7 +27203,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -27242,7 +27242,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -27300,7 +27300,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -27357,7 +27357,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -27396,7 +27396,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -27454,7 +27454,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -27511,7 +27511,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -27550,7 +27550,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -27608,7 +27608,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -27665,7 +27665,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -27704,7 +27704,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -27784,7 +27784,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -27858,7 +27858,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -27936,7 +27936,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -28011,7 +28011,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -28089,7 +28089,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -28164,7 +28164,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -28242,7 +28242,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -28316,7 +28316,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -28896,7 +28896,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_TMPVAR_HANDLER(
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -29142,7 +29142,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_REF_SPEC_VAR_VAR_HANDLE
 		zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), variable_ptr);
 	}
 
@@ -29202,7 +29202,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -29245,7 +29245,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -29369,7 +29369,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -29443,7 +29443,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -29521,7 +29521,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -29596,7 +29596,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -29674,7 +29674,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -29749,7 +29749,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -29827,7 +29827,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -29901,7 +29901,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -30847,7 +30847,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_UNUSED_HANDLER(
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -30998,7 +30998,7 @@ assign_op_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -31023,7 +31023,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -31090,7 +31090,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -31133,7 +31133,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -31165,7 +31165,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_VAR_CV_HANDLER(
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -31218,7 +31218,7 @@ pre_incdec_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -31500,7 +31500,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -31557,7 +31557,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -31596,7 +31596,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -31654,7 +31654,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -31711,7 +31711,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -31750,7 +31750,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -31808,7 +31808,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -31865,7 +31865,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -31904,7 +31904,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -31962,7 +31962,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -32019,7 +32019,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -32058,7 +32058,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -32138,7 +32138,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -32212,7 +32212,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -32290,7 +32290,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -32365,7 +32365,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -32443,7 +32443,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -32518,7 +32518,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -32596,7 +32596,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -32670,7 +32670,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -32767,7 +32767,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_REF_SPEC_VAR_CV_HANDLER
 		zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), variable_ptr);
 	}
 
@@ -33343,7 +33343,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_VAR_CV_HANDLER(ZEND
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -33668,7 +33668,7 @@ assign_op_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -33693,7 +33693,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -33758,7 +33758,7 @@ pre_incdec_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -34248,7 +34248,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -34305,7 +34305,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -34344,7 +34344,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -34402,7 +34402,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -34459,7 +34459,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -34498,7 +34498,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -34556,7 +34556,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -34613,7 +34613,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -34652,7 +34652,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -34710,7 +34710,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -34767,7 +34767,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -34806,7 +34806,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -35652,7 +35652,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_CONST_HANDLE
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -35844,7 +35844,7 @@ assign_op_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -35869,7 +35869,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -35934,7 +35934,7 @@ pre_incdec_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -36421,7 +36421,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -36478,7 +36478,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -36517,7 +36517,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -36575,7 +36575,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -36632,7 +36632,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -36671,7 +36671,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -36729,7 +36729,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -36786,7 +36786,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -36825,7 +36825,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -36883,7 +36883,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -36940,7 +36940,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -36979,7 +36979,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -37653,7 +37653,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_TMPVAR_HANDL
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -38190,7 +38190,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_UNUSED_HANDL
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -38493,7 +38493,7 @@ assign_op_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -38518,7 +38518,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -38583,7 +38583,7 @@ pre_incdec_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -39068,7 +39068,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -39125,7 +39125,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -39164,7 +39164,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -39222,7 +39222,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -39279,7 +39279,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -39318,7 +39318,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -39376,7 +39376,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -39433,7 +39433,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -39472,7 +39472,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -39530,7 +39530,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -39587,7 +39587,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -39626,7 +39626,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -40297,7 +40297,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_UNUSED_CV_HANDLER(Z
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -40364,7 +40364,7 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_pre_inc_help
 		increment_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -40433,7 +40433,7 @@ static zend_never_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_pre_dec_help
 		decrement_function(var_ptr);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -41132,18 +41132,18 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CV_HANDLE
 		UNDEF_RESULT();
 		HANDLE_EXCEPTION();
 	} else if (new_op_array == ZEND_FAKE_OP_ARRAY) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_TRUE(EX_VAR(opline->result.var));
 		}
 	} else if (UNEXPECTED(new_op_array == NULL)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			ZVAL_FALSE(EX_VAR(opline->result.var));
 		}
 	} else if (new_op_array->last == 1
 			&& new_op_array->opcodes[0].opcode == ZEND_RETURN
 			&& new_op_array->opcodes[0].op1_type == IS_CONST
 			&& EXPECTED(zend_execute_ex == execute_ex)) {
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			const zend_op *op = new_op_array->opcodes;
 
 			ZVAL_COPY(EX_VAR(opline->result.var), RT_CONSTANT(op, op->op1));
@@ -41154,7 +41154,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_INCLUDE_OR_EVAL_SPEC_CV_HANDLE
 	} else {
 		zval *return_value = NULL;
 		zend_execute_data *call;
-		if ((opline->result.var != (uint32_t)-1)) {
+		if ((opline->result.var != (uint16_t)-1)) {
 			return_value = EX_VAR(opline->result.var);
 		}
 
@@ -41585,7 +41585,7 @@ yield_from_try_again:
 					zend_generator_yield_from(generator, new_gen);
 				}
 			} else {
-				if ((opline->result.var != (uint32_t)-1)) {
+				if ((opline->result.var != (uint16_t)-1)) {
 					ZVAL_COPY(EX_VAR(opline->result.var), &new_gen->retval);
 				}
 				ZEND_VM_NEXT_OPCODE();
@@ -41625,7 +41625,7 @@ yield_from_try_again:
 
 	/* This is the default return value
 	 * when the expression is a Generator, it will be overwritten in zend_generator_resume() */
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		ZVAL_NULL(EX_VAR(opline->result.var));
 	}
 
@@ -42604,7 +42604,7 @@ assign_op_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -42629,7 +42629,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -42696,7 +42696,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -42739,7 +42739,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -42771,7 +42771,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_CV_CONST_HANDLE
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -42824,7 +42824,7 @@ pre_incdec_object:
 		cache_slot = (IS_CONST == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -43426,7 +43426,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -43483,7 +43483,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -43522,7 +43522,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -43580,7 +43580,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -43637,7 +43637,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -43676,7 +43676,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -43734,7 +43734,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -43791,7 +43791,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -43830,7 +43830,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -43888,7 +43888,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -43945,7 +43945,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -43984,7 +43984,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -44064,7 +44064,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -44138,7 +44138,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -44216,7 +44216,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -44291,7 +44291,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -44369,7 +44369,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -44444,7 +44444,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -44522,7 +44522,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -44596,7 +44596,7 @@ try_assign_dim_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -45722,7 +45722,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_CONST_HANDLER(ZE
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -46558,7 +46558,7 @@ assign_op_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -46583,7 +46583,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -46650,7 +46650,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -46693,7 +46693,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -46726,7 +46726,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_CV_TMPVAR_HANDL
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -46780,7 +46780,7 @@ pre_incdec_object:
 		cache_slot = ((IS_TMP_VAR|IS_VAR) == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -47379,7 +47379,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -47436,7 +47436,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -47475,7 +47475,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -47533,7 +47533,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -47590,7 +47590,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -47629,7 +47629,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -47687,7 +47687,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -47744,7 +47744,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -47783,7 +47783,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -47841,7 +47841,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -47898,7 +47898,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -47937,7 +47937,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -48017,7 +48017,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -48091,7 +48091,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -48169,7 +48169,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -48244,7 +48244,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -48322,7 +48322,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -48397,7 +48397,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -48475,7 +48475,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -48549,7 +48549,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -49435,7 +49435,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_TMPVAR_HANDLER(Z
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -49653,7 +49653,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_REF_SPEC_CV_VAR_HANDLER
 		zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), variable_ptr);
 	}
 
@@ -49758,7 +49758,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -49801,7 +49801,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -50060,7 +50060,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -50134,7 +50134,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -50212,7 +50212,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -50287,7 +50287,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -50365,7 +50365,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -50440,7 +50440,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -50518,7 +50518,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -50592,7 +50592,7 @@ try_assign_dim_array:
 			dim = NULL;
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -51288,7 +51288,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_UNUSED_HANDLER(Z
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
@@ -52062,7 +52062,7 @@ assign_op_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR((opline+1)->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -52087,7 +52087,7 @@ assign_op_object:
 					}
 				} while (0);
 
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_COPY(EX_VAR(opline->result.var), zptr);
 				}
 			}
@@ -52154,7 +52154,7 @@ assign_dim_op_new_array:
 			zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 		} while (0);
 
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
 		FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
@@ -52197,7 +52197,7 @@ assign_dim_op_new_array:
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
 			FREE_OP(Z_WOP_FROM_EX_OP(execute_data, opline+1)->op1_type, (opline+1)->op1.var);
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -52229,7 +52229,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OP_SPEC_CV_CV_HANDLER(Z
 		zend_binary_op(var_ptr, var_ptr, value OPLINE_CC);
 	} while (0);
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 	}
 
@@ -52282,7 +52282,7 @@ pre_incdec_object:
 		cache_slot = (IS_CV == IS_CONST) ? CACHE_ADDR(opline->extended_value) : _cache_slot;
 		if (EXPECTED((zptr = zobj->handlers->get_property_ptr_ptr(zobj, name, BP_VAR_RW, cache_slot)) != NULL)) {
 			if (UNEXPECTED(Z_ISERROR_P(zptr))) {
-				if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+				if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 					ZVAL_NULL(EX_VAR(opline->result.var));
 				}
 			} else {
@@ -52879,7 +52879,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -52936,7 +52936,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -52975,7 +52975,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -53033,7 +53033,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -53090,7 +53090,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -53129,7 +53129,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -53187,7 +53187,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -53244,7 +53244,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -53283,7 +53283,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 	zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
@@ -53341,7 +53341,7 @@ assign_obj_simple:
 					} else {
 fast_assign_obj:
 						value = zend_assign_to_variable_ex(property_val, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
-						if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+						if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 							ZVAL_COPY(EX_VAR(opline->result.var), value);
 						}
 						goto exit_assign_obj;
@@ -53398,7 +53398,7 @@ fast_assign_obj:
 						}
 					}
 					zend_hash_add_new(zobj->properties, name, value);
-					if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+					if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 						ZVAL_COPY(EX_VAR(opline->result.var), value);
 					}
 					goto exit_assign_obj;
@@ -53437,7 +53437,7 @@ fast_assign_obj:
 	}
 
 free_and_exit_assign_obj:
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1)) && value) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1)) && value) {
 		ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
 	}
 
@@ -53517,7 +53517,7 @@ try_assign_dim_array:
 			value = RT_CONSTANT((opline+1), (opline+1)->op1);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CONST, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -53591,7 +53591,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -53669,7 +53669,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_tmp((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_TMP_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -53744,7 +53744,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -53822,7 +53822,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_var((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_VAR, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -53897,7 +53897,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 			zval_ptr_dtor_nogc(EX_VAR((opline+1)->op1.var));
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -53975,7 +53975,7 @@ try_assign_dim_array:
 			value = _get_zval_ptr_cv_BP_VAR_R((opline+1)->op1.var EXECUTE_DATA_CC);
 			value = zend_assign_to_variable_ex(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES(), &garbage);
 		}
-		if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), value);
 		}
 		if (garbage) {
@@ -54049,7 +54049,7 @@ try_assign_dim_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 assign_dim_error:
 
-			if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
 		}
@@ -54146,7 +54146,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_REF_SPEC_CV_CV_HANDLER(
 		zend_assign_to_variable_reference(variable_ptr, value_ptr, &garbage);
 	}
 
-	if (UNEXPECTED((opline->result.var != (uint32_t)-1))) {
+	if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), variable_ptr);
 	}
 
@@ -55027,7 +55027,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_YIELD_SPEC_CV_CV_HANDLER(ZEND_
 		ZVAL_LONG(&generator->key, generator->largest_used_integer_key);
 	}
 
-	if ((opline->result.var != (uint32_t)-1)) {
+	if ((opline->result.var != (uint16_t)-1)) {
 		/* If the return value of yield is used set the send
 		 * target and initialize it to NULL */
 		generator->send_target = EX_VAR(opline->result.var);
