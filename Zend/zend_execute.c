@@ -5820,8 +5820,9 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 
 // FIXME: We cannot assume opline belongs to EG(current_execute_data).
 #define UNDEF_RESULT() do { \
-		if (Z_WOP_FROM_OP(opline)->result_type & (IS_VAR | IS_TMP_VAR)) { \
-			ZVAL_UNDEF(EX_VAR(Z_WOP_FROM_OP(opline)->result.var)); \
+		zend_op *wop = EX_WOP2; \
+		if (wop->result_type & (IS_VAR | IS_TMP_VAR)) { \
+			ZVAL_UNDEF(EX_VAR(wop->result.var)); \
 		} \
 	} while (0)
 
