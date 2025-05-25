@@ -1237,6 +1237,19 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		slim_op->result = opline->result;
 		slim_op->extended_value = opline->extended_value;
 
+		// uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
+		// if (!op1_flags || (op1_flags & ZEND_VM_OP_TMPVARCV)) {
+		// 	if (slim_op->op1.num & (1 << 15)) {
+		// 		abort();
+		// 	}
+		// }
+		// uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
+		// if (!op2_flags || (op2_flags & ZEND_VM_OP_TMPVARCV)) {
+		// 	if (slim_op->op2.num & (0b11 << 14)) {
+		// 		abort();
+		// 	}
+		// }
+
 		opline++;
 		slim_op++;
 	}
