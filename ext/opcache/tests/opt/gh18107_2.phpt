@@ -40,10 +40,10 @@ $_main:
 0007 ECHO string("foo")
 0008 T6 = FAST_CALL 0010
 0009 JMP 0015
-0010 V7 = NEW 1 string("Exception")
+0010 V2 = NEW 1 string("Exception")
 0011 SEND_VAL_EX string("Should not happen") 1
 0012 DO_FCALL
-0013 THROW V7
+0013 THROW V2
 0014 FAST_RET T6
 0015 RETURN int(1)
 EXCEPTION TABLE:

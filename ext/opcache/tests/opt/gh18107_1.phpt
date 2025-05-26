@@ -34,10 +34,10 @@ $_main:
 0004 DO_FCALL
 0005 THROW V3
 0006 JMP 0006
-0007 V6 = NEW 1 string("Exception")
+0007 V1 = NEW 1 string("Exception")
 0008 SEND_VAL_EX string("Should not happen") 1
 0009 DO_FCALL
-0010 THROW V6
+0010 THROW V1
 0011 FAST_RET T5
 EXCEPTION TABLE:
      0006, -, 0007, 0011

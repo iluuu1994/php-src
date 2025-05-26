@@ -31,6 +31,7 @@
 #include "zend_llist.h"
 #include "zend_frameless_function.h"
 #include "zend_property_hooks.h"
+#include "zend_bitset.h"
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
@@ -202,6 +203,9 @@ typedef struct _zend_oparray_context {
 	uint32_t   try_catch_offset;
 	int        current_brk_cont;
 	int        last_brk_cont;
+	uint32_t   var_counter;
+	zend_bitset reserved_vars;
+	uint32_t reserved_vars_capacity;
 	zend_brk_cont_element *brk_cont_array;
 	HashTable *labels;
 	zend_string *active_property_info_name;

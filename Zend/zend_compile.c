@@ -344,6 +344,9 @@ void zend_oparray_context_begin(zend_oparray_context *prev_context, zend_op_arra
 	CG(context).in_jmp_frameless_branch = false;
 	CG(context).active_property_info_name = NULL;
 	CG(context).active_property_hook_kind = (zend_property_hook_kind)-1;
+	CG(context).var_counter = 0;
+	CG(context).reserved_vars = NULL;
+	CG(context).reserved_vars_capacity = 0;
 }
 /* }}} */
 
@@ -352,6 +355,11 @@ void zend_oparray_context_end(zend_oparray_context *prev_context) /* {{{ */
 	if (CG(context).brk_cont_array) {
 		efree(CG(context).brk_cont_array);
 		CG(context).brk_cont_array = NULL;
+	}
+	if (CG(context).reserved_vars) {
+		efree(CG(context).reserved_vars);
+		CG(context).reserved_vars = NULL;
+		CG(context).reserved_vars_capacity = 0;
 	}
 	if (CG(context).labels) {
 		zend_hash_destroy(CG(context).labels);
@@ -529,11 +537,69 @@ ZEND_API bool zend_is_compiling(void) /* {{{ */
 }
 /* }}} */
 
-static zend_always_inline uint32_t get_temporary_variable(void) /* {{{ */
+static void mark_var_as_reserved(uint32_t var)
 {
-	return (uint32_t)CG(active_op_array)->T++;
+	zend_bitset_incl(CG(context).reserved_vars, var);
+}
+
+static zend_always_inline uint32_t get_temporary_variable_ex(bool unique) /* {{{ */
+{
+	uint32_t var_num;
+
+	if (unique) {
+		var_num = CG(active_op_array)->T;
+	} else {
+try_again:
+		var_num = CG(context).var_counter++;
+
+		zend_loop_var *loop_var = zend_stack_top(&CG(loop_var_stack));
+		if (loop_var) {
+			zend_loop_var *base = zend_stack_base(&CG(loop_var_stack));
+			for (; loop_var >= base; loop_var--) {
+				if (loop_var->opcode == ZEND_RETURN) {
+					break;
+				}
+				if (loop_var->var_num == var_num) {
+					goto try_again;
+				}
+				if ((var_num + 1) < CG(context).reserved_vars_capacity
+				&& zend_bitset_in(CG(context).reserved_vars, var_num)) {
+					goto try_again;
+				}
+			}
+		}
+	}
+
+	if (CG(active_op_array)->T < (var_num + 1)) {
+		CG(active_op_array)->T = var_num + 1;
+
+		if (CG(active_op_array)->T > CG(context).reserved_vars_capacity) {
+			uint32_t cap, old_cap;
+			cap = old_cap = CG(context).reserved_vars_capacity;
+			if (cap < 64) {
+				cap = 64;
+			} else {
+				cap *= 2;
+			}
+			CG(context).reserved_vars_capacity = cap;
+			CG(context).reserved_vars = erealloc(CG(context).reserved_vars, zend_bitset_len(cap) * sizeof(zend_ulong));
+
+			zend_bitset start = CG(context).reserved_vars + zend_bitset_len(old_cap);
+			zend_bitset end = CG(context).reserved_vars + zend_bitset_len(cap);
+			while (start < end) {
+				*start = 0;
+				start++;
+			}
+		}
+	}
+	return var_num;
 }
 /* }}} */
+
+static zend_always_inline uint32_t get_temporary_variable(void)
+{
+	return get_temporary_variable_ex(false);
+}
 
 static int lookup_cv(zend_string *name) /* {{{ */{
 	zend_op_array *op_array = CG(active_op_array);
@@ -5594,6 +5660,8 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, znode *return_valu
 				SET_NODE(opline->op2, return_value);
 			}
 			opline->op1.num = loop_var->try_catch_offset;
+
+			mark_var_as_reserved(opline->result.var);
 		} else if (loop_var->opcode == ZEND_DISCARD_EXCEPTION) {
 			zend_op *opline = get_next_op();
 			opline->opcode = ZEND_DISCARD_EXCEPTION;
@@ -5617,6 +5685,8 @@ static bool zend_handle_loops_and_finally_ex(zend_long depth, znode *return_valu
 			opline->op1.var = loop_var->var_num;
 			opline->extended_value = ZEND_FREE_ON_RETURN;
 			depth--;
+
+			mark_var_as_reserved(loop_var->var_num);
 	    }
 	}
 	return (depth == 0);
@@ -5694,6 +5764,11 @@ static void zend_compile_return(zend_ast *ast) /* {{{ */
 		} else {
 			zend_emit_op_tmp(&expr_node, ZEND_QM_ASSIGN, &expr_node, NULL);
 		}
+	}
+	if ((CG(active_op_array)->fn_flags & ZEND_ACC_HAS_FINALLY_BLOCK)
+	 && (expr_node.op_type & (IS_VAR|IS_TMP_VAR))
+	 && zend_has_finally()) {
+		mark_var_as_reserved(expr_node.u.op.var);
 	}
 
 	/* Generator return types are handled separately */
@@ -6648,7 +6723,7 @@ static void zend_compile_try(zend_ast *ast) /* {{{ */
 		if (!(CG(active_op_array)->fn_flags & ZEND_ACC_HAS_FINALLY_BLOCK)) {
 			CG(active_op_array)->fn_flags |= ZEND_ACC_HAS_FINALLY_BLOCK;
 		}
-		CG(context).fast_call_var = get_temporary_variable();
+		CG(context).fast_call_var = get_temporary_variable_ex(true);
 
 		/* Push FAST_CALL on unwind stack */
 		fast_call.opcode = ZEND_FAST_CALL;
@@ -9178,7 +9253,10 @@ static void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel)
 		zend_enum_register_props(ce);
 	}
 
+	zend_oparray_context orig_oparray_context;
+	zend_oparray_context_begin(&orig_oparray_context, NULL);
 	zend_compile_stmt(stmt_ast);
+	zend_oparray_context_end(&orig_oparray_context);
 
 	/* Reset lineno for final opcodes and errors */
 	CG(zend_lineno) = ast->lineno;
@@ -11025,18 +11103,25 @@ static void zend_compile_rope_finalize(znode *result, uint32_t rope_elements, ze
 		zend_make_tmp_result(result, opline);
 		MAKE_NOP(init_opline);
 	} else {
-		uint32_t var;
+		uint32_t var, last_var;
 
 		init_opline->extended_value = rope_elements;
 		opline->opcode = ZEND_ROPE_END;
+
+retry:
 		zend_make_tmp_result(result, opline);
-		var = opline->op1.var = get_temporary_variable();
+
+		var = last_var = opline->op1.var = get_temporary_variable();
 
 		/* Allocates the necessary number of zval slots to keep the rope */
 		uint32_t i = ((rope_elements * sizeof(zend_string*)) + (sizeof(zval) - 1)) / sizeof(zval);
 		while (i > 1) {
-			get_temporary_variable();
+			uint32_t current_var = get_temporary_variable();
 			i--;
+			if (current_var != last_var + 1) {
+				goto retry;
+			}
+			last_var = current_var;
 		}
 
 		/* Update all the previous opcodes to use the same variable */
@@ -11630,6 +11715,9 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 	if (FC(declarables).ticks && !zend_is_unticked_stmt(ast)) {
 		zend_emit_tick();
 	}
+
+	/* Expression temporaries are freed, reset temporary var counter. */
+	CG(context).var_counter = 0;
 }
 /* }}} */
 

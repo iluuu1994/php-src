@@ -95,8 +95,8 @@ BB3:
      ; level=1
      #8.CV0($a) [long] RANGE[-27..-7] = Phi(#4.CV0($a) [long] RANGE[-27..-27], #6.CV0($a) [long] RANGE[-7..-7])
      #9.CV1($b) [long] RANGE[-20..-10] = Phi(#5.CV1($b) [long] RANGE[-20..-20], #7.CV1($b) [long] RANGE[-10..-10])
-0009 #10.T8 [long] RANGE[-20..-1] = BW_OR #8.CV0($a) [long] RANGE[-27..-7] #9.CV1($b) [long] RANGE[-20..-10]
-0010 RETURN #10.T8 [long] RANGE[-20..-1]
+0009 #10.T2 [long] RANGE[-20..-1] = BW_OR #8.CV0($a) [long] RANGE[-27..-7] #9.CV1($b) [long] RANGE[-20..-10]
+0010 RETURN #10.T2 [long] RANGE[-20..-1]
 
 test_and:
      ; (lines=11, args=0, vars=2, tmps=%d, ssa_vars=11, no_loops)
@@ -141,5 +141,5 @@ BB3:
      ; level=1
      #8.CV0($a) [long] RANGE[-12..-9] = Phi(#4.CV0($a) [long] RANGE[-12..-12], #6.CV0($a) [long] RANGE[-9..-9])
      #9.CV1($b) [long] RANGE[-27..-25] = Phi(#5.CV1($b) [long] RANGE[-27..-27], #7.CV1($b) [long] RANGE[-25..-25])
-0009 #10.T8 [long] RANGE[-28..-25] = BW_AND #8.CV0($a) [long] RANGE[-12..-9] #9.CV1($b) [long] RANGE[-27..-25]
-0010 RETURN #10.T8 [long] RANGE[-28..-25]
+0009 #10.T2 [long] RANGE[-28..-25] = BW_AND #8.CV0($a) [long] RANGE[-12..-9] #9.CV1($b) [long] RANGE[-27..-25]
+0010 RETURN #10.T2 [long] RANGE[-28..-25]
