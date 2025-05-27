@@ -42,7 +42,7 @@
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
 		if ((src)->op_type == IS_CONST) { \
-			target.constant = zend_add_literal(&(src)->u.constant); \
+			target.constant = zend_add_literal(&(src)->u.constant, /* reuse */ true); \
 		} else { \
 			target = (src)->u.op; \
 		} \
@@ -347,6 +347,7 @@ void zend_oparray_context_begin(zend_oparray_context *prev_context, zend_op_arra
 	CG(context).var_counter = 0;
 	CG(context).reserved_vars = NULL;
 	CG(context).reserved_vars_capacity = 0;
+	CG(context).literal_cache = NULL;
 }
 /* }}} */
 
@@ -365,6 +366,11 @@ void zend_oparray_context_end(zend_oparray_context *prev_context) /* {{{ */
 		zend_hash_destroy(CG(context).labels);
 		FREE_HASHTABLE(CG(context).labels);
 		CG(context).labels = NULL;
+	}
+	if (CG(context).literal_cache) {
+		zend_strictmap_dtor(CG(context).literal_cache);
+		efree(CG(context).literal_cache);
+		CG(context).literal_cache = NULL;
 	}
 	CG(context) = *prev_context;
 }
@@ -647,11 +653,33 @@ static inline void zend_insert_literal(zend_op_array *op_array, zval *zv, int li
 }
 /* }}} */
 
+#define LITERAL_CACHE_BIAS_LOWERCASE 1
+
+static zend_strictmap *get_literal_cache(void)
+{
+	zend_strictmap *literal_cache = CG(context).literal_cache;
+	if (!literal_cache) {
+		literal_cache = CG(context).literal_cache = emalloc(sizeof(zend_strictmap));
+		zend_strictmap_init(literal_cache);
+	}
+	return literal_cache;
+}
+
 /* Is used while compiling a function, using the context to keep track
    of an approximate size to avoid to relocate to often.
    Literals are truncated to actual size in the second compiler pass (pass_two()). */
-static int zend_add_literal(zval *zv) /* {{{ */
+static int zend_add_literal(zval *zv, bool reuse) /* {{{ */
 {
+	zend_strictmap *literal_cache = get_literal_cache();
+	bool zv_reusable = Z_TYPE_P(zv) != IS_CONSTANT_AST && Z_TYPE_P(zv) != IS_PTR;
+
+	if (reuse && zv_reusable) {
+		zend_strictmap_entry *entry = zend_strictmap_find(literal_cache, zv);
+		if (entry) {
+			return Z_LVAL(entry->value);
+		}
+	}
+
 	zend_op_array *op_array = CG(active_op_array);
 	int i = op_array->last_literal;
 	op_array->last_literal++;
@@ -662,29 +690,59 @@ static int zend_add_literal(zval *zv) /* {{{ */
 		op_array->literals = (zval*)erealloc(op_array->literals, CG(context).literals_size * sizeof(zval));
 	}
 	zend_insert_literal(op_array, zv, i);
+
+	/* Even if we're not reusing existing literals here, it's still fine for
+	 * these literals to be used elsewhere. */
+	if (zv_reusable) {
+		zval tmp;
+		ZVAL_LONG(&tmp, i);
+		zend_strictmap_insert(literal_cache, zv, &tmp);
+	}
+
 	return i;
 }
 /* }}} */
 
-static inline int zend_add_literal_string(zend_string **str) /* {{{ */
+static inline int zend_add_literal_string_ex(zend_string **str, bool reuse) /* {{{ */
 {
 	int ret;
 	zval zv;
 	ZVAL_STR(&zv, *str);
-	ret = zend_add_literal(&zv);
+	ret = zend_add_literal(&zv, reuse);
 	*str = Z_STR(zv);
 	return ret;
 }
 /* }}} */
 
+static inline int zend_add_literal_string(zend_string **str)
+{
+	return zend_add_literal_string_ex(str, /* reuse */ true);
+}
+
 static int zend_add_func_name_literal(zend_string *name) /* {{{ */
 {
+	zval name_zv;
+	ZVAL_STR(&name_zv, name);
+
+	zend_strictmap *literal_cache = get_literal_cache();
+	zend_ulong h = ZSTR_HASH(name) + LITERAL_CACHE_BIAS_LOWERCASE;
+	zend_strictmap_entry *entry = zend_strictmap_find_known_hash(literal_cache, &name_zv, h);
+	if (entry) {
+		return Z_LVAL(entry->value);
+	}
+
 	/* Original name */
-	int ret = zend_add_literal_string(&name);
+	int ret = zend_add_literal_string_ex(&name, /* reuse */ false);
 
 	/* Lowercased name */
 	zend_string *lc_name = zend_string_tolower(name);
-	zend_add_literal_string(&lc_name);
+	zend_add_literal_string_ex(&lc_name, /* reuse */ false);
+
+	zval tmp;
+	/* name may have been replaced with interned string. */
+	ZVAL_STR(&name_zv, name);
+	ZVAL_LONG(&tmp, ret);
+	zend_strictmap_insert(literal_cache, &name_zv, &tmp);
 
 	return ret;
 }
@@ -696,17 +754,17 @@ static int zend_add_ns_func_name_literal(zend_string *name) /* {{{ */
 	size_t unqualified_name_len;
 
 	/* Original name */
-	int ret = zend_add_literal_string(&name);
+	int ret = zend_add_literal_string_ex(&name, /* reuse */ false);
 
 	/* Lowercased name */
 	zend_string *lc_name = zend_string_tolower(name);
-	zend_add_literal_string(&lc_name);
+	zend_add_literal_string_ex(&lc_name, /* reuse */ false);
 
 	/* Lowercased unqualified name */
 	if (zend_get_unqualified_name(name, &unqualified_name, &unqualified_name_len)) {
 		lc_name = zend_string_alloc(unqualified_name_len, 0);
 		zend_str_tolower_copy(ZSTR_VAL(lc_name), unqualified_name, unqualified_name_len);
-		zend_add_literal_string(&lc_name);
+		zend_add_literal_string_ex(&lc_name, /* reuse */ false);
 	}
 
 	return ret;
@@ -715,14 +773,8 @@ static int zend_add_ns_func_name_literal(zend_string *name) /* {{{ */
 
 static int zend_add_class_name_literal(zend_string *name) /* {{{ */
 {
-	/* Original name */
-	int ret = zend_add_literal_string(&name);
-
-	/* Lowercased name */
-	zend_string *lc_name = zend_string_tolower(name);
-	zend_add_literal_string(&lc_name);
-
-	return ret;
+	/* The behavior is the same as for func names. */
+	return zend_add_func_name_literal(name);
 }
 /* }}} */
 
@@ -730,7 +782,7 @@ static int zend_add_const_name_literal(zend_string *name, bool unqualified) /* {
 {
 	zend_string *tmp_name;
 
-	int ret = zend_add_literal_string(&name);
+	int ret = zend_add_literal_string_ex(&name, /* reuse */ false);
 
 	size_t ns_len = 0, after_ns_len = ZSTR_LEN(name);
 	const char *after_ns = zend_memrchr(ZSTR_VAL(name), '\\', ZSTR_LEN(name));
@@ -742,7 +794,7 @@ static int zend_add_const_name_literal(zend_string *name, bool unqualified) /* {
 		/* lowercased namespace name & original constant name */
 		tmp_name = zend_string_init(ZSTR_VAL(name), ZSTR_LEN(name), 0);
 		zend_str_tolower(ZSTR_VAL(tmp_name), ns_len);
-		zend_add_literal_string(&tmp_name);
+		zend_add_literal_string_ex(&tmp_name, /* reuse */ false);
 
 		if (!unqualified) {
 			return ret;
@@ -753,7 +805,7 @@ static int zend_add_const_name_literal(zend_string *name, bool unqualified) /* {
 
 	/* original unqualified constant name */
 	tmp_name = zend_string_init(after_ns, after_ns_len, 0);
-	zend_add_literal_string(&tmp_name);
+	zend_add_literal_string_ex(&tmp_name, /* reuse */ false);
 
 	return ret;
 }
@@ -762,7 +814,7 @@ static int zend_add_const_name_literal(zend_string *name, bool unqualified) /* {
 #define LITERAL_STR(op, str) do { \
 		zval _c; \
 		ZVAL_STR(&_c, str); \
-		op.constant = zend_add_literal(&_c); \
+		op.constant = zend_add_literal(&_c, /* reuse */ true); \
 	} while (0)
 
 void zend_stop_lexing(void)
@@ -2859,7 +2911,7 @@ static inline void zend_handle_numeric_dim(zend_op *opline, znode *dim_node) /* 
 			/* For numeric indexes we also keep the original value to use by ArrayAccess
 			 * See bug #63217
 			 */
-			int c = zend_add_literal(&dim_node->u.constant);
+			int c = zend_add_literal(&dim_node->u.constant, /* reuse */ false);
 			ZEND_ASSERT(opline->op2.constant + 1 == c);
 			ZVAL_LONG(CT_CONSTANT(opline->op2), index);
 			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = ZEND_EXTRA_VALUE;
@@ -9325,7 +9377,7 @@ link_unbound:
 	 * LITERAL_STR() here we would not change the `lcname` pointer to the new value, and it would point to the
 	 * now-freed string. This will cause issues when we use `lcname` in the code below. We solve this by using
 	 * zend_add_literal_string() which gives us the new value. */
-	opline->op1.constant = zend_add_literal_string(&lcname);
+	opline->op1.constant = zend_add_literal_string_ex(&lcname, /* reuse */ false);
 
 	if (decl->flags & ZEND_ACC_ANON_CLASS) {
 		opline->opcode = ZEND_DECLARE_ANON_CLASS;
@@ -9345,7 +9397,7 @@ link_unbound:
 		} while (!zend_hash_add_ptr(CG(class_table), key, ce));
 
 		/* RTD key is placed after lcname literal in op1 */
-		zend_add_literal_string(&key);
+		zend_add_literal_string_ex(&key, /* reuse */ false);
 
 		opline->opcode = ZEND_DECLARE_CLASS;
 		if (toplevel
