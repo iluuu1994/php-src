@@ -519,27 +519,28 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 		GC_TYPE_INFO(op_array->static_variables) = GC_ARRAY | ((IS_ARRAY_IMMUTABLE|GC_NOT_COLLECTABLE) << GC_FLAGS_SHIFT);
 	}
 
-	if (op_array->literals) {
-		zval *p, *end;
-
-		orig_literals = op_array->literals;
-#if ZEND_USE_ABS_CONST_ADDR
-		p = zend_shared_memdup_put_free(op_array->literals, sizeof(zval) * op_array->last_literal);
-#else
-		p = zend_shared_memdup_put(op_array->literals, sizeof(zval) * op_array->last_literal);
-#endif
-		end = p + op_array->last_literal;
-		op_array->literals = p;
-		while (p < end) {
-			zend_persist_zval(p);
-			p++;
-		}
-	}
-
 	{
 		zend_op *new_opcodes = zend_shared_memdup_put(op_array->opcodes, sizeof(zend_op) * op_array->last);
 		zend_op *opline = new_opcodes;
 		zend_op *end = new_opcodes + op_array->last;
+
+		if (op_array->literals) {
+			zval *p, *end;
+
+			orig_literals = op_array->literals;
+	#if ZEND_USE_ABS_CONST_ADDR
+			p = zend_shared_memdup_put_free(op_array->literals, sizeof(zval) * op_array->last_literal);
+	#else
+			p = zend_shared_memdup_put(op_array->literals, sizeof(zval) * op_array->last_literal);
+	#endif
+			end = p + op_array->last_literal;
+			op_array->literals = p;
+			while (p < end) {
+				zend_persist_zval(p);
+				p++;
+			}
+		}
+
 		int offset = 0;
 
 		for (; opline < end ; opline++, offset++) {
@@ -561,7 +562,7 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 				opline->op1.constant =
 					(char*)(op_array->literals +
 						((zval*)((char*)(op_array->opcodes + (opline - new_opcodes)) +
-						(int32_t)opline->op1.constant) - orig_literals)) -
+						(int16_t)opline->op1.constant) - orig_literals)) -
 					(char*)opline;
 				if (opline->opcode == ZEND_SEND_VAL
 				 || opline->opcode == ZEND_SEND_VAL_EX
@@ -573,7 +574,7 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 				opline->op2.constant =
 					(char*)(op_array->literals +
 						((zval*)((char*)(op_array->opcodes + (opline - new_opcodes)) +
-						(int32_t)opline->op2.constant) - orig_literals)) -
+						(int16_t)opline->op2.constant) - orig_literals)) -
 					(char*)opline;
 			}
 #endif
