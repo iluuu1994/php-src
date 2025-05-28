@@ -337,13 +337,10 @@ typedef enum _zend_jit_trace_stop {
 #define ZEND_JIT_EXIT_FIXED         (1U<<31) /* the exit_info can't be changed by zend_jit_snapshot_handler() */
 
 typedef union _zend_op_trace_info {
-	zend_op dummy; /* the size of this structure must be the same as zend_op */
-	struct {
-		const void *orig_handler;
-		const void *call_handler;
-		int16_t    *counter;
-		uint8_t     trace_flags;
-	};
+	const void *orig_handler;
+	const void *call_handler;
+	int16_t    *counter;
+	uint8_t     trace_flags;
 } zend_op_trace_info;
 
 typedef struct _zend_jit_op_array_trace_extension {
@@ -353,8 +350,8 @@ typedef struct _zend_jit_op_array_trace_extension {
 	zend_op_trace_info trace_info[1];
 } zend_jit_op_array_trace_extension;
 
-#define ZEND_OP_TRACE_INFO(opline, offset) \
-	((zend_op_trace_info*)(((char*)opline) + offset))
+#define ZEND_OP_TRACE_INFO(op_array, opline, jit_extension) \
+	((zend_op_trace_info*)(&(jit_extension)->trace_info[(opline) - (op_array)->opcodes]))
 
 /* Recorder */
 typedef enum _zend_jit_trace_op {

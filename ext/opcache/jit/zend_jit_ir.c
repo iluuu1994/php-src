@@ -17106,9 +17106,8 @@ static int zend_jit_trace_handler(zend_jit_ctx *jit, const zend_op_array *op_arr
 {
 	zend_jit_op_array_trace_extension *jit_extension =
 		(zend_jit_op_array_trace_extension*)ZEND_FUNC_INFO(op_array);
-	size_t offset = jit_extension->offset;
 	const void *handler =
-		(zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(opline, offset)->call_handler;
+		(zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(jit_extension->op_array, opline, jit_extension)->call_handler;
 	ir_ref ref;
 
 	zend_jit_set_ip(jit, opline);

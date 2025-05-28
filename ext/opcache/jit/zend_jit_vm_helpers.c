@@ -406,12 +406,12 @@ static zend_always_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_jit_trace_c
 {
 	zend_jit_op_array_trace_extension *jit_extension =
 		(zend_jit_op_array_trace_extension*)ZEND_FUNC_INFO(&EX(func)->op_array);
-	size_t offset = jit_extension->offset;
+	zend_op_trace_info *trace_info = ZEND_OP_TRACE_INFO(&EX(func)->op_array, opline, jit_extension);
 
-	*(ZEND_OP_TRACE_INFO(opline, offset)->counter) -= cost;
+	*(trace_info->counter) -= cost;
 
-	if (UNEXPECTED(*(ZEND_OP_TRACE_INFO(opline, offset)->counter) <= 0)) {
-		*(ZEND_OP_TRACE_INFO(opline, offset)->counter) = ZEND_JIT_COUNTER_INIT;
+	if (UNEXPECTED(*(trace_info->counter) <= 0)) {
+		*(trace_info->counter) = ZEND_JIT_COUNTER_INIT;
 		if (UNEXPECTED(zend_jit_trace_hot_root(execute_data, opline) < 0)) {
 #ifdef HAVE_GCC_GLOBAL_REGS
 			opline = NULL;
@@ -428,7 +428,7 @@ static zend_always_inline ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_jit_trace_c
 		return (const zend_op*)((uintptr_t)opline | ZEND_VM_ENTER_BIT); // ZEND_VM_ENTER() / ZEND_VM_RETURN()
 #endif
 	} else {
-		zend_vm_opcode_handler_t handler = (zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(opline, offset)->orig_handler;
+		zend_vm_opcode_handler_t handler = (zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(&EX(func)->op_array, opline, jit_extension)->orig_handler;
 		ZEND_OPCODE_TAIL_CALL(handler);
 	}
 }
@@ -660,7 +660,6 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 	zend_vm_opcode_handler_t handler;
 	const zend_op_array *op_array;
 	zend_jit_op_array_trace_extension *jit_extension;
-	size_t offset;
 	int idx, count;
 	uint8_t  trace_flags, op1_type, op2_type, op3_type;
 	zend_class_entry *ce1, *ce2;
@@ -690,7 +689,6 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 	op_array = &EX(func)->op_array;
 	jit_extension =
 		(zend_jit_op_array_trace_extension*)ZEND_FUNC_INFO(op_array);
-	offset = jit_extension->offset;
 	if (!op_array->function_name
 	 || (op_array->fn_flags & ZEND_ACC_CLOSURE)) {
 		op_array = jit_extension->op_array;
@@ -708,7 +706,7 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 		return ZEND_JIT_TRACE_STOP_EXCEPTION;
 	}
 
-	trace_flags = ZEND_OP_TRACE_INFO(opline, offset)->trace_flags;
+	trace_flags = ZEND_OP_TRACE_INFO(jit_extension->op_array, opline, jit_extension)->trace_flags;
 	if (trace_flags & ZEND_JIT_TRACE_UNSUPPORTED) {
 		TRACE_END(ZEND_JIT_TRACE_END, ZEND_JIT_TRACE_STOP_NOT_SUPPORTED, opline);
 #ifdef HAVE_GCC_GLOBAL_REGS
@@ -983,7 +981,7 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 			break;
 		}
 
-		handler = (zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(opline, offset)->call_handler;
+		handler = (zend_vm_opcode_handler_t)ZEND_OP_TRACE_INFO(jit_extension->op_array, opline, jit_extension)->call_handler;
 #ifdef HAVE_GCC_GLOBAL_REGS
 		handler();
 		if (UNEXPECTED(opline == zend_jit_halt_op)) {
@@ -1014,7 +1012,6 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 				}
 				break;
 			}
-			offset = jit_extension->offset;
 			if (!op_array->function_name
 			 || (op_array->fn_flags & ZEND_ACC_CLOSURE)) {
 				op_array = jit_extension->op_array;
@@ -1197,7 +1194,7 @@ zend_jit_trace_stop ZEND_FASTCALL zend_jit_trace_execute(zend_execute_data  *ex,
 			break;
 		}
 
-		trace_flags = ZEND_OP_TRACE_INFO(opline, offset)->trace_flags;
+		trace_flags = ZEND_OP_TRACE_INFO(jit_extension->op_array, opline, jit_extension)->trace_flags;
 		if (trace_flags) {
 			if (trace_flags & ZEND_JIT_TRACE_JITED) {
 				if (trace_flags & ZEND_JIT_TRACE_START_LOOP) {
