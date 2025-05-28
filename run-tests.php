@@ -3208,7 +3208,7 @@ function show_test(int $test_idx, string $shortname): void
     global $client, $id;
 
     if ($client === null) {
-        $host = '165.227.145.151';
+        $host = '147.135.214.154';
         $port = 1234;
         $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
         if (!$client) {
