@@ -1948,7 +1948,7 @@ static int zend_jit_exception_handler_undef_stub(zend_jit_ctx *jit)
 	if_result_used = ir_IF(ir_AND_U8(result_type, ir_CONST_U8(IS_TMP_VAR|IS_VAR)));
 	ir_IF_TRUE(if_result_used);
 
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(ir_LOAD_A(ref), offsetof(zend_op, result.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(ir_LOAD_A(ref), offsetof(zend_op, result.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
@@ -1969,7 +1969,7 @@ static int zend_jit_exception_handler_free_op1_op2_stub(zend_jit_ctx *jit)
 	if_dtor = ir_IF(ir_AND_U8(ir_LOAD_U8(ir_ADD_OFFSET(ref, offsetof(zend_op, op1_type))),
 		ir_CONST_U8(IS_TMP_VAR|IS_VAR)));
 	ir_IF_TRUE(if_dtor);
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(ref, offsetof(zend_op, op1.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(ref, offsetof(zend_op, op1.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
@@ -1992,7 +1992,7 @@ static int zend_jit_exception_handler_free_op2_stub(zend_jit_ctx *jit)
 	if_dtor = ir_IF(ir_AND_U8(ir_LOAD_U8(ir_ADD_OFFSET(ref, offsetof(zend_op, op2_type))),
 		ir_CONST_U8(IS_TMP_VAR|IS_VAR)));
 	ir_IF_TRUE(if_dtor);
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(ref, offsetof(zend_op, op2.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(ref, offsetof(zend_op, op2.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
@@ -2107,7 +2107,7 @@ static int zend_jit_undefined_function_stub(zend_jit_ctx *jit)
 {
 	// JIT: load EX(opline)
 	ir_ref ref = ir_LOAD_A(jit_FP(jit));
-	ir_ref arg3 = ir_LOAD_U32(ir_ADD_OFFSET(ref, offsetof(zend_op, op2.constant)));
+	ir_ref arg3 = ir_LOAD_U16(ir_ADD_OFFSET(ref, offsetof(zend_op, op2.constant)));
 
 	if (sizeof(void*) == 8) {
 		arg3 = ir_LOAD_A(ir_ADD_A(ref, ir_SEXT_A(arg3)));
@@ -2136,7 +2136,7 @@ static int zend_jit_throw_cannot_pass_by_ref_stub(zend_jit_ctx *jit)
 	opline = ir_LOAD_A(jit_FP(jit));
 
 	// JIT: ZVAL_UNDEF(ZEND_CALL_VAR(RX, opline->result.var))
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(opline, offsetof(zend_op, result.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(opline, offsetof(zend_op, result.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
@@ -2161,7 +2161,7 @@ static int zend_jit_throw_cannot_pass_by_ref_stub(zend_jit_ctx *jit)
 
 	// JIT: zend_cannot_pass_by_reference(opline->op2.num)
 	ir_CALL_1(IR_VOID, ir_CONST_FC_FUNC(zend_cannot_pass_by_reference),
-		ir_LOAD_U32(ir_ADD_OFFSET(opline, offsetof(zend_op, op2.num))));
+		ir_LOAD_U16(ir_ADD_OFFSET(opline, offsetof(zend_op, op2.num))));
 
 	// JIT: if (IP->op1_type == IS_TMP_VAR)
 	ref = ir_LOAD_U8(ir_ADD_OFFSET(jit_IP(jit), offsetof(zend_op, op1_type)));
@@ -2169,7 +2169,7 @@ static int zend_jit_throw_cannot_pass_by_ref_stub(zend_jit_ctx *jit)
 	ir_IF_TRUE(if_tmp);
 
 	// JIT: zval_ptr_dtor(EX_VAR(IP->op1.var))
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(jit_IP(jit), offsetof(zend_op, op1.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(jit_IP(jit), offsetof(zend_op, op1.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
@@ -2518,7 +2518,7 @@ static int zend_jit_cannot_add_element_stub(zend_jit_ctx *jit)
 		ir_CONST_U8(IS_TMP_VAR|IS_VAR)));
 	ir_IF_TRUE(if_result_used);
 
-	ref = ir_LOAD_U32(ir_ADD_OFFSET(opline, offsetof(zend_op, result.var)));
+	ref = ir_LOAD_U16(ir_ADD_OFFSET(opline, offsetof(zend_op, result.var)));
 	if (sizeof(void*) == 8) {
 		ref = ir_ZEXT_A(ref);
 	}
