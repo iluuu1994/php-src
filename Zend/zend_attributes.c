@@ -303,7 +303,7 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_function), sizeof(zval)),
 			0, &dummy_func, 0, NULL);
 
-		opline = (zend_op*)(call + 1);
+		opline = (zend_op*)((uintptr_t)call + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_execute_data), sizeof(zval)));
 		memset(opline, 0, sizeof(zend_op));
 		opline->opcode = ZEND_DO_FCALL;
 		opline->lineno = attribute_data->lineno;
@@ -311,7 +311,7 @@ ZEND_API zend_result zend_get_attribute_object(zval *obj, zend_class_entry *attr
 		call->opline = opline;
 		call->call = NULL;
 		call->return_value = NULL;
-		call->func = (zend_function*)(call->opline + 1);
+		call->func = (zend_function*)((uintptr_t)opline + ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op), sizeof(zval)));
 		call->prev_execute_data = EG(current_execute_data);
 
 		memset(call->func, 0, sizeof(zend_function));
