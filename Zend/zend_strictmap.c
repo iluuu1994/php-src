@@ -176,7 +176,7 @@ zend_strictmap_entry *zend_strictmap_find_known_hash(const zend_strictmap *ht, z
 	while (idx != SM_INVALID_INDEX) {
 		ZEND_ASSERT(idx < ht->capacity);
 		p = data + idx;
-		if (SM_IT_HASH(p) == h && zend_is_identical(&p->key, key)) {
+		if (SM_IT_HASH(p) == (uint32_t)h && zend_is_identical(&p->key, key)) {
 			return p;
 		}
 		idx = SM_IT_NEXT(p);
