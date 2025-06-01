@@ -35,10 +35,6 @@
 
 #include "Zend/zend_types.h"
 
-zend_long zend_stricthash_hash(zval *value);
-
-static zend_always_inline uint32_t zend_stricthash_hash_uint32_t(zval *value) {
-	return (uint32_t) (zend_ulong) zend_stricthash_hash(value);
-}
+zend_ulong zend_stricthash_hash(zval *value);
 
 #endif	/* ZEND_STRICTHASH_H */

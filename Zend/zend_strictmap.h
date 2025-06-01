@@ -76,9 +76,12 @@ typedef struct _zend_strictmap {
 
 void zend_strictmap_dtor(zend_strictmap *array);
 void zend_strictmap_init(zend_strictmap *array);
+
+/* Note: Refcounting is up to the user for both key and value! */
 bool zend_strictmap_insert(zend_strictmap *array, zval *key, zval *value);
-zend_strictmap_entry *zend_strictmap_find_value(const zend_strictmap *array, zval *value);
-// Unused and untested
-//bool zend_strictmap_remove_key(zend_strictmap *array, zval *key);
+bool zend_strictmap_insert_hash_known(zend_strictmap *array, zval *key, zend_ulong h, zval *value);
+
+zend_strictmap_entry *zend_strictmap_find(const zend_strictmap *ht, zval *key);
+zend_strictmap_entry *zend_strictmap_find_known_hash(const zend_strictmap *array, zval *value, zend_ulong h);
 
 #endif	/* ZEND_STRICTMAP_H */

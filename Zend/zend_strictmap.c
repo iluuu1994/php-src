@@ -47,7 +47,6 @@
 
 static size_t zend_strictmap_offset_bytes_for_capacity(uint32_t capacity);
 static void zend_strictmap_grow(zend_strictmap *array);
-static zend_strictmap_entry *zend_strictmap_find_entry(const zend_strictmap *ht, zval *key, const uint32_t h);
 static zend_strictmap_entry *zend_strictmap_alloc_entries(uint32_t capacity);
 
 void zend_strictmap_init(zend_strictmap *array)
@@ -70,14 +69,12 @@ void zend_strictmap_dtor(zend_strictmap *array)
 }
 
 /* Returns true if a new entry was added to the map, false if updated. Based on _zend_hash_add_or_update_i. */
-bool zend_strictmap_insert(zend_strictmap *array, zval *key, zval *value)
+bool zend_strictmap_insert_hash_known(zend_strictmap *array, zval *key, zend_ulong h, zval *value)
 {
 	ZEND_ASSERT(Z_TYPE_P(key) != IS_UNDEF);
 	ZEND_ASSERT(Z_TYPE_P(value) != IS_UNDEF);
 
-	const uint32_t h = zend_stricthash_hash_uint32_t(key);
-
-	zend_strictmap_entry *p = zend_strictmap_find_entry(array, key, h);
+	zend_strictmap_entry *p = zend_strictmap_find_known_hash(array, key, h);
 	if (p) {
 		ZVAL_COPY_VALUE(&p->value, value);
 		return false;
@@ -111,63 +108,10 @@ bool zend_strictmap_insert(zend_strictmap *array, zval *key, zval *value)
 	return true;
 }
 
-// Unused and untested
-// bool zend_strictmap_remove_key(zend_strictmap *array, zval *key)
-// {
-// 	if (array->count == 0) {
-// 		return false;
-// 	}
-// 	zend_strictmap_entry *const entries = array->data;
-// 	const uint32_t h = zend_stricthash_hash_uint32_t(key);
-// 	zend_strictmap_entry *entry = zend_strictmap_find_entry(array, key, h);
-// 	if (!entry) {
-// 		return false;
-// 	}
-// 	ZEND_ASSERT(SM_IT_HASH(entry) == h);
-//
-// 	const uint32_t nIndex = h | array->hash_mask;
-// 	uint32_t i = SM_HASH(array, nIndex);
-//
-// 	const uint32_t idx = entry - entries;
-// 	if (i == idx) {
-// 		SM_HASH(array, nIndex) = SM_IT_NEXT(entry);
-// 	} else {
-// 		zend_strictmap_entry *prev = &array->data[i];
-// 		while (SM_IT_NEXT(prev) != idx) {
-// 			i = SM_IT_NEXT(prev);
-// 			prev = &array->data[i];
-// 		}
-// 		SM_IT_NEXT(prev) = SM_IT_NEXT(entry);
-// 	}
-//
-// 	array->count--;
-//
-// 	SM_IT_NEXT(entry) = array->free_index_chain;
-// 	array->free_index_chain = idx;
-//
-// 	if (array->first_used_index == idx) {
-// 		if (array->count == 0) {
-// 			ZEND_ASSERT(array->used_indices == 0);
-// 			array->first_used_index = 0;
-// 		} else {
-// 			ZEND_ASSERT(array->first_used_index < array->used_indices);
-// 			do {
-// 				array->first_used_index++;
-// 			} while (array->first_used_index < array->used_indices && (UNEXPECTED(Z_ISUNDEF(array->data[array->first_used_index].key))));
-// 			ZEND_ASSERT(array->first_used_index < array->used_indices);
-// 		}
-// 	}
-// 	zval old_key;
-// 	zval old_value;
-// 	ZVAL_COPY_VALUE(&old_key, &entry->key);
-// 	ZVAL_COPY_VALUE(&old_value, &entry->value);
-// 	ZEND_ASSERT(array->count <= array->used_indices);
-// 	ZEND_ASSERT(array->first_used_index < array->used_indices || (array->first_used_index == array->used_indices && array->count == 0));
-// 	ZVAL_UNDEF(&entry->key);
-// 	ZVAL_UNDEF(&entry->value);
-//
-// 	return true;
-// }
+bool zend_strictmap_insert(zend_strictmap *array, zval *key, zval *value)
+{
+	return zend_strictmap_insert_hash_known(array, key, zend_stricthash_hash(key), value);
+}
 
 static size_t zend_strictmap_offset_bytes_for_capacity(uint32_t capacity) {
 	return capacity * sizeof(uint32_t);
@@ -222,7 +166,7 @@ static void zend_strictmap_grow(zend_strictmap *array)
 	array->free_index_chain = SM_INVALID_INDEX;
 }
 
-static zend_strictmap_entry *zend_strictmap_find_entry(const zend_strictmap *ht, zval *key, const uint32_t h)
+zend_strictmap_entry *zend_strictmap_find_known_hash(const zend_strictmap *ht, zval *key, zend_ulong h)
 {
 	zend_strictmap_entry *p;
 
@@ -238,4 +182,9 @@ static zend_strictmap_entry *zend_strictmap_find_entry(const zend_strictmap *ht,
 		idx = SM_IT_NEXT(p);
 	}
 	return NULL;
+}
+
+zend_strictmap_entry *zend_strictmap_find(const zend_strictmap *ht, zval *key)
+{
+	return zend_strictmap_find_known_hash(ht, key, zend_stricthash_hash(key));
 }

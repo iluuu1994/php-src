@@ -87,9 +87,9 @@ typedef struct _array_rec_prot_node {
 	const struct _array_rec_prot_node *prev;
 } array_rec_prot_node;
 
-static zend_long zend_stricthash_array(HashTable *const ht, const array_rec_prot_node *const node);
+static zend_ulong zend_stricthash_array(HashTable *const ht, const array_rec_prot_node *const node);
 static uint64_t zend_convert_double_to_uint64_t(double value);
-static zend_always_inline zend_long zend_stricthash_inner(zval *value, array_rec_prot_node *node);
+static zend_always_inline zend_ulong zend_stricthash_inner(zval *value, array_rec_prot_node *node);
 
 static zend_always_inline uint64_t zend_inline_hash_of_uint64(uint64_t orig) {
 	/* Copied from code written for igbinary. Works best when data that frequently
@@ -98,12 +98,12 @@ static zend_always_inline uint64_t zend_inline_hash_of_uint64(uint64_t orig) {
 	return ZEND_BSWAP_64(data);
 }
 
-zend_long zend_stricthash_hash(zval *value) {
+zend_ulong zend_stricthash_hash(zval *value) {
 	uint64_t raw_data = zend_stricthash_inner(value, NULL);
 	return zend_inline_hash_of_uint64(raw_data);
 }
 
-static zend_always_inline zend_long zend_stricthash_inner(zval *value, array_rec_prot_node *node) {
+static zend_always_inline zend_ulong zend_stricthash_inner(zval *value, array_rec_prot_node *node) {
 again:
 	switch (Z_TYPE_P(value)) {
 		case IS_NULL:
@@ -166,7 +166,7 @@ inline static uint64_t zend_convert_double_to_uint64_t(double value) {
 #endif
 }
 
-static zend_long zend_stricthash_array(HashTable *const ht, const array_rec_prot_node *const node) {
+static zend_ulong zend_stricthash_array(HashTable *const ht, const array_rec_prot_node *const node) {
 	if (zend_hash_num_elements(ht) == 0) {
 		return ZEND_STRICTHASH_HASH_EMPTY_ARRAY;
 	}
@@ -198,7 +198,7 @@ static zend_long zend_stricthash_array(HashTable *const ht, const array_rec_prot
 	ZEND_HASH_FOREACH_KEY_VAL(ht, num_key, str_key, field_value) {
 		/* str_key is in a hash table, meaning that the hash was already computed. */
 		result += str_key ? ZSTR_H(str_key) : (zend_ulong) num_key;
-		zend_long field_hash = zend_stricthash_inner(field_value, new_node_ptr);
+		zend_ulong field_hash = zend_stricthash_inner(field_value, new_node_ptr);
 		result += (field_hash + (result << 7));
 		result = zend_inline_hash_of_uint64(result);
 	} ZEND_HASH_FOREACH_END();

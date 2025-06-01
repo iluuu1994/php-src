@@ -32,6 +32,7 @@
 #include "zend_frameless_function.h"
 #include "zend_property_hooks.h"
 #include "zend_bitset.h"
+#include "zend_strictmap.h"
 
 #define SET_UNUSED(op) do { \
 	op ## _type = IS_UNUSED; \
@@ -209,6 +210,7 @@ typedef struct _zend_oparray_context {
 	zend_brk_cont_element *brk_cont_array;
 	HashTable *labels;
 	zend_string *active_property_info_name;
+	zend_strictmap *literal_cache;
 	zend_property_hook_kind active_property_hook_kind;
 	bool       in_jmp_frameless_branch;
 } zend_oparray_context;
