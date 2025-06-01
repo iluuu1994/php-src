@@ -38,6 +38,7 @@
 #include "zend_call_stack.h"
 #include "zend_frameless_function.h"
 #include "zend_property_hooks.h"
+#include "zend_stricthash.h"
 
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
@@ -654,6 +655,7 @@ static inline void zend_insert_literal(zend_op_array *op_array, zval *zv, int li
 /* }}} */
 
 #define LITERAL_CACHE_BIAS_LOWERCASE 1
+#define LITERAL_CACHE_BIAS_DIM_NUM_STR 2
 
 static zend_strictmap *get_literal_cache(void)
 {
@@ -2905,20 +2907,37 @@ static inline void zend_handle_numeric_op(znode *node) /* {{{ */
 
 static inline void zend_handle_numeric_dim(zend_op *opline, znode *dim_node) /* {{{ */
 {
+	opline->op2_type = IS_CONST;
+
 	if (Z_TYPE(dim_node->u.constant) == IS_STRING) {
 		zend_ulong index;
 
 		if (ZEND_HANDLE_NUMERIC(Z_STR(dim_node->u.constant), index)) {
+			zend_strictmap *literal_cache = get_literal_cache();
+			zend_ulong h = zend_stricthash_hash(&dim_node->u.constant) + LITERAL_CACHE_BIAS_DIM_NUM_STR;
+			/* FIXME: Maybe just use index in case str goes away (e.g. is interned). */
+			zend_strictmap_entry *entry = zend_strictmap_find_known_hash(literal_cache, &dim_node->u.constant, h);
+			if (entry) {
+				opline->op2.constant = Z_LVAL(entry->value);
+				return;
+			}
+
+			zval tmp;
+			ZVAL_LONG(&tmp, index);
+			opline->op2.constant = zend_add_literal(&tmp, /* reuse */ false);
+
 			/* For numeric indexes we also keep the original value to use by ArrayAccess
-			 * See bug #63217
-			 */
-			int c = zend_add_literal(&dim_node->u.constant, /* reuse */ false);
-			ZEND_ASSERT(opline->op2.constant + 1 == c);
-			ZVAL_LONG(CT_CONSTANT(opline->op2), index);
+			 * See bug #63217 */
+			zend_add_literal(&dim_node->u.constant, /* reuse */ false);
 			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = ZEND_EXTRA_VALUE;
+
+			ZVAL_LONG(&tmp, opline->op2.constant);
+			zend_strictmap_insert_hash_known(literal_cache, &dim_node->u.constant, h, &tmp);
 			return;
 		}
 	}
+
+	opline->op2.constant = zend_add_literal(&dim_node->u.constant, /* reuse */ true);
 }
 /* }}} */
 
@@ -3199,7 +3218,7 @@ static zend_op *zend_delayed_compile_dim(znode *result, zend_ast *ast, uint32_t 
 		zend_compile_expr(&dim_node, dim_ast);
 	}
 
-	opline = zend_delayed_emit_op(result, ZEND_FETCH_DIM_R, &var_node, &dim_node);
+	opline = zend_delayed_emit_op(result, ZEND_FETCH_DIM_R, &var_node, NULL);
 	zend_adjust_for_fetch_type(opline, result, type);
 	if (by_ref) {
 		opline->extended_value = ZEND_FETCH_DIM_REF;
@@ -3207,6 +3226,8 @@ static zend_op *zend_delayed_compile_dim(znode *result, zend_ast *ast, uint32_t 
 
 	if (dim_node.op_type == IS_CONST) {
 		zend_handle_numeric_dim(opline, &dim_node);
+	} else {
+		SET_NODE(opline->op2, &dim_node);
 	}
 	return opline;
 }
@@ -3280,10 +3301,12 @@ static zend_op *zend_delayed_compile_prop(znode *result, zend_ast *ast, uint32_t
 
 	zend_compile_expr(&prop_node, prop_ast);
 
+	if (prop_node.op_type == IS_CONST) {
+		convert_to_string(&prop_node.u.constant);
+		zend_string_hash_val(Z_STR(prop_node.u.constant));
+	}
 	opline = zend_delayed_emit_op(result, ZEND_FETCH_OBJ_R, &obj_node, &prop_node);
 	if (opline->op2_type == IS_CONST) {
-		convert_to_string(CT_CONSTANT(opline->op2));
-		zend_string_hash_val(Z_STR_P(CT_CONSTANT(opline->op2)));
 		opline->extended_value = zend_alloc_cache_slots(3);
 	}
 
@@ -3317,13 +3340,15 @@ static zend_op *zend_compile_static_prop(znode *result, zend_ast *ast, uint32_t 
 
 	zend_compile_expr(&prop_node, prop_ast);
 
+	if (prop_node.op_type == IS_CONST) {
+		convert_to_string(&prop_node.u.constant);
+	}
 	if (delayed) {
 		opline = zend_delayed_emit_op(result, ZEND_FETCH_STATIC_PROP_R, &prop_node, NULL);
 	} else {
 		opline = zend_emit_op(result, ZEND_FETCH_STATIC_PROP_R, &prop_node, NULL);
 	}
 	if (opline->op1_type == IS_CONST) {
-		convert_to_string(CT_CONSTANT(opline->op1));
 		opline->extended_value = zend_alloc_cache_slots(3);
 	}
 	if (class_node.op_type == IS_CONST) {
@@ -3455,10 +3480,12 @@ static void zend_compile_list_assign(
 		zend_verify_list_assign_target(var_ast, array_style);
 
 		opline = zend_emit_op(&fetch_result,
-			elem_ast->attr ? (expr_node->op_type == IS_CV ? ZEND_FETCH_DIM_W : ZEND_FETCH_LIST_W) : ZEND_FETCH_LIST_R, expr_node, &dim_node);
+			elem_ast->attr ? (expr_node->op_type == IS_CV ? ZEND_FETCH_DIM_W : ZEND_FETCH_LIST_W) : ZEND_FETCH_LIST_R, expr_node, NULL);
 
 		if (dim_node.op_type == IS_CONST) {
 			zend_handle_numeric_dim(opline, &dim_node);
+		} else {
+			SET_NODE(opline->op2, &dim_node);
 		}
 
 		if (elem_ast->attr) {
@@ -5299,7 +5326,7 @@ static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 		}
 
 		zval_ptr_dtor(&name_node.u.constant);
-		ZVAL_NEW_STR(&name_node.u.constant, lcname);
+		ZVAL_STR(&name_node.u.constant, lcname);
 
 		opline = zend_emit_op(NULL, ZEND_INIT_FCALL, NULL, &name_node);
 		opline->result.num = zend_alloc_cache_slot();
@@ -5307,6 +5334,7 @@ static void zend_compile_call(znode *result, zend_ast *ast, uint32_t type) /* {{
 		/* Store offset to function from symbol table in op2.extra. */
 		if (fbc->type == ZEND_INTERNAL_FUNCTION) {
 			Bucket *fbc_bucket = (Bucket*)((uintptr_t)fbc_zv - XtOffsetOf(Bucket, val));
+			// FIXME: Make sure this won't collide with other extra flags.
 			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = fbc_bucket - CG(function_table)->arData;
 		}
 
@@ -6400,16 +6428,13 @@ static void zend_compile_switch(zend_ast *ast) /* {{{ */
 
 	jumptable_type = determine_switch_jumptable_type(cases);
 	if (jumptable_type != IS_UNDEF && should_use_jumptable(cases, jumptable_type)) {
-		znode jumptable_op;
-
 		ALLOC_HASHTABLE(jumptable);
 		zend_hash_init(jumptable, cases->children, NULL, NULL, 0);
-		jumptable_op.op_type = IS_CONST;
-		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
 
+		/* Only set jumptable op after population to avoid erroneous caching. */
 		opline = zend_emit_op(NULL,
 			jumptable_type == IS_LONG ? ZEND_SWITCH_LONG : ZEND_SWITCH_STRING,
-			&expr_node, &jumptable_op);
+			&expr_node, NULL);
 		if (opline->op1_type == IS_CONST) {
 			Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
 		}
@@ -6507,6 +6532,15 @@ static void zend_compile_switch(zend_ast *ast) /* {{{ */
 		zval_ptr_dtor_nogc(&expr_node.u.constant);
 	}
 
+	if (jumptable) {
+		ZEND_ASSERT(opnum_switch != (uint32_t)-1);
+		opline = &CG(active_op_array)->opcodes[opnum_switch];
+		znode jumptable_op;
+		jumptable_op.op_type = IS_CONST;
+		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
+		SET_NODE(opline->op2, &jumptable_op);
+	}
+
 	efree(jmpnz_opnums);
 }
 /* }}} */
@@ -6589,14 +6623,11 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 	}
 
 	if (uses_jumptable) {
-		znode jumptable_op;
-
 		ALLOC_HASHTABLE(jumptable);
 		zend_hash_init(jumptable, num_conds, NULL, NULL, 0);
-		jumptable_op.op_type = IS_CONST;
-		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
 
-		zend_op *opline = zend_emit_op(NULL, ZEND_MATCH, &expr_node, &jumptable_op);
+		/* Only set jumptable op after population to avoid erroneous caching. */
+		zend_op *opline = zend_emit_op(NULL, ZEND_MATCH, &expr_node, NULL);
 		if (opline->op1_type == IS_CONST) {
 			Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
 		}
@@ -6733,6 +6764,15 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 		opline->extended_value = ZEND_FREE_SWITCH;
 	} else if (expr_node.op_type == IS_CONST) {
 		zval_ptr_dtor_nogc(&expr_node.u.constant);
+	}
+
+	if (jumptable) {
+		ZEND_ASSERT(opnum_match != (uint32_t)-1);
+		zend_op *opline = &CG(active_op_array)->opcodes[opnum_match];
+		znode jumptable_op;
+		jumptable_op.op_type = IS_CONST;
+		ZVAL_ARR(&jumptable_op.u.constant, jumptable);
+		SET_NODE(opline->op2, &jumptable_op);
 	}
 
 	if (jmpnz_opnums != NULL) {
@@ -11137,7 +11177,7 @@ static void zend_compile_rope_finalize(znode *result, uint32_t rope_elements, ze
 	if (rope_elements == 1) {
 		if (opline->op2_type == IS_CONST) {
 			GET_NODE(result, opline->op2);
-			ZVAL_UNDEF(CT_CONSTANT(opline->op2));
+			// ZVAL_UNDEF(CT_CONSTANT(opline->op2));
 			SET_UNUSED(opline->op2);
 			MAKE_NOP(opline);
 		} else {
