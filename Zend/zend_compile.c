@@ -676,6 +676,7 @@ static int zend_add_literal(zval *zv, bool reuse) /* {{{ */
 	if (reuse && zv_reusable) {
 		zend_strictmap_entry *entry = zend_strictmap_find(literal_cache, zv);
 		if (entry) {
+			zval_ptr_dtor_nogc(zv);
 			return Z_LVAL(entry->value);
 		}
 	}
