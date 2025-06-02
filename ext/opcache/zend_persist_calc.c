@@ -264,7 +264,8 @@ static void zend_persist_op_array_calc_ex(zend_op_array *op_array)
 	}
 
 	zend_shared_alloc_register_xlat_entry(op_array->opcodes, op_array->opcodes);
-	ADD_SIZE(sizeof(zend_op) * op_array->last);
+	ADD_SIZE(ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16));
+	ADD_SIZE(ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16));
 
 	/* ZEND_ACC_PTR_OPS and ZEND_ACC_OVERRIDE use the same value */
 	if ((op_array->fn_flags & ZEND_ACC_PTR_OPS) && !op_array->function_name) {

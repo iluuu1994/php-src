@@ -437,6 +437,8 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 		persist_ptr = zend_shared_alloc_get_xlat_entry(op_array->opcodes);
 		if (persist_ptr) {
 			op_array->opcodes = persist_ptr;
+			op_array->slim_opcodes = zend_shared_alloc_get_xlat_entry(op_array->slim_opcodes);
+			ZEND_ASSERT(op_array->slim_opcodes != NULL);
 			if (op_array->static_variables) {
 				op_array->static_variables = zend_shared_alloc_get_xlat_entry(op_array->static_variables);
 				ZEND_ASSERT(op_array->static_variables != NULL);
@@ -519,44 +521,48 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 		GC_TYPE_INFO(op_array->static_variables) = GC_ARRAY | ((IS_ARRAY_IMMUTABLE|GC_NOT_COLLECTABLE) << GC_FLAGS_SHIFT);
 	}
 
-	if (op_array->literals) {
-		zval *p, *end;
-
-		orig_literals = op_array->literals;
-		p = zend_shared_memdup_put(op_array->literals, sizeof(zval) * op_array->last_literal);
-		end = p + op_array->last_literal;
-		op_array->literals = p;
-		while (p < end) {
-			zend_persist_zval(p);
-			p++;
-		}
-	}
-
 	{
-		zend_op *new_opcodes = zend_shared_memdup_put(op_array->opcodes, sizeof(zend_op) * op_array->last);
+		zend_op *new_opcodes = zend_shared_memdup_put(op_array->opcodes, ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16));
+		zend_slim_op *new_slim_opcodes = zend_shared_memdup_put(op_array->slim_opcodes, ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16));
+
+		if (op_array->literals) {
+			zval *p, *end;
+
+			orig_literals = op_array->literals;
+			p = zend_shared_memdup_put(op_array->literals, sizeof(zval) * op_array->last_literal);
+			end = p + op_array->last_literal;
+			op_array->literals = p;
+			while (p < end) {
+				zend_persist_zval(p);
+				p++;
+			}
+		}
+
+		/* Make sure distance between literals + ops stay the same. */
+		ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_opcodes);
+		ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->slim_opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_slim_opcodes);
+
 		zend_op *opline = new_opcodes;
+		zend_slim_op *slim_op = new_slim_opcodes;
 		zend_op *end = new_opcodes + op_array->last;
 		int offset = 0;
 
-		for (; opline < end ; opline++, offset++) {
+		for (; opline < end ; opline++, offset++, slim_op++) {
 			if (opline->op1_type == IS_CONST) {
-				opline->op1.constant =
-					(char*)(op_array->literals +
-						((zval*)((char*)(op_array->opcodes + (opline - new_opcodes)) +
-						(int32_t)opline->op1.constant) - orig_literals)) -
-					(char*)opline;
 				if (opline->opcode == ZEND_SEND_VAL
 				 || opline->opcode == ZEND_SEND_VAL_EX
 				 || opline->opcode == ZEND_QM_ASSIGN) {
+					uint8_t prev_op1_type = opline->op1_type;
 					zend_vm_set_opcode_handler_ex(opline, 0, 0, 0);
+					slim_op->handler = opline->handler;
+
+					/* Check if operands were swapped. */
+					if (opline->op1_type != prev_op1_type) {
+						znode_op tmp = slim_op->op1;
+						slim_op->op1 = slim_op->op2;
+						slim_op->op2 = tmp;
+					}
 				}
-			}
-			if (opline->op2_type == IS_CONST) {
-				opline->op2.constant =
-					(char*)(op_array->literals +
-						((zval*)((char*)(op_array->opcodes + (opline - new_opcodes)) +
-						(int32_t)opline->op2.constant) - orig_literals)) -
-					(char*)opline;
 			}
 			if (opline->opcode == ZEND_OP_DATA && (opline-1)->opcode == ZEND_DECLARE_ATTRIBUTED_CONST) {
 				zval *literal = RT_CONSTANT(opline, opline->op1);
@@ -568,6 +574,7 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 
 		efree(op_array->opcodes);
 		op_array->opcodes = new_opcodes;
+		op_array->slim_opcodes = new_slim_opcodes;
 	}
 
 	if (op_array->filename) {
