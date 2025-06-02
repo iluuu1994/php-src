@@ -2037,7 +2037,7 @@ zend_op_array *persistent_compile_file(zend_file_handle *file_handle, int type)
 	     (EG(current_execute_data) &&
 	      EG(current_execute_data)->func &&
 	      ZEND_USER_CODE(EG(current_execute_data)->func->common.type) &&
-	      ZCG(cache_opline) == EG(current_execute_data)->opline))) {
+	      ZCG(cache_opline) == Z_WOP))) {
 
 		persistent_script = ZCG(cache_persistent_script);
 		if (ZSTR_LEN(ZCG(key))) {
@@ -2225,7 +2225,7 @@ zend_op_array *persistent_compile_file(zend_file_handle *file_handle, int type)
 			    !EG(current_execute_data)->func ||
 			    !ZEND_USER_CODE(EG(current_execute_data)->func->common.type) ||
 			    !EG(current_execute_data)->opline ||
-			    EG(current_execute_data)->opline->opcode != ZEND_INCLUDE_OR_EVAL ||
+			    Z_WOP->opcode != ZEND_INCLUDE_OR_EVAL ||
 			    (EG(current_execute_data)->opline->extended_value != ZEND_INCLUDE_ONCE &&
 			     EG(current_execute_data)->opline->extended_value != ZEND_REQUIRE_ONCE)) {
 				if (zend_hash_add_empty_element(&EG(included_files), persistent_script->script.filename) != NULL) {
@@ -2524,7 +2524,7 @@ static zend_result persistent_stream_open_function(zend_file_handle *handle)
 		    (EG(current_execute_data) &&
 		     EG(current_execute_data)->func &&
 		     ZEND_USER_CODE(EG(current_execute_data)->func->common.type) &&
-		     ZCG(cache_opline) == EG(current_execute_data)->opline)) {
+		     ZCG(cache_opline) == Z_WOP)) {
 
 			/* we are in include_once or FastCGI request */
 			handle->opened_path = zend_string_copy(ZCG(cache_persistent_script)->script.filename);
@@ -2547,7 +2547,7 @@ static zend_string* persistent_zend_resolve_path(zend_string *filename)
 		    (EG(current_execute_data) &&
 		     EG(current_execute_data)->func &&
 		     ZEND_USER_CODE(EG(current_execute_data)->func->common.type) &&
-		     EG(current_execute_data)->opline->opcode == ZEND_INCLUDE_OR_EVAL &&
+		     Z_WOP->opcode == ZEND_INCLUDE_OR_EVAL &&
 		     (EG(current_execute_data)->opline->extended_value == ZEND_INCLUDE_ONCE ||
 		      EG(current_execute_data)->opline->extended_value == ZEND_REQUIRE_ONCE))) {
 
@@ -2563,7 +2563,7 @@ static zend_string* persistent_zend_resolve_path(zend_string *filename)
 					if (bucket != NULL) {
 						zend_persistent_script *persistent_script = (zend_persistent_script *)bucket->data;
 						if (!persistent_script->corrupted) {
-							ZCG(cache_opline) = EG(current_execute_data) ? EG(current_execute_data)->opline : NULL;
+							ZCG(cache_opline) = EG(current_execute_data) ? Z_WOP : NULL;
 							ZCG(cache_persistent_script) = persistent_script;
 							return zend_string_copy(persistent_script->script.filename);
 						}
@@ -2596,7 +2596,7 @@ static zend_string* persistent_zend_resolve_path(zend_string *filename)
 						} else {
 							ZSTR_LEN(ZCG(key)) = 0;
 						}
-						ZCG(cache_opline) = EG(current_execute_data) ? EG(current_execute_data)->opline : NULL;
+						ZCG(cache_opline) = EG(current_execute_data) ? Z_WOP : NULL;
 						ZCG(cache_persistent_script) = persistent_script;
 						return resolved_path;
 					}
