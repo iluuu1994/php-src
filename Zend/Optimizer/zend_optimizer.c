@@ -1178,13 +1178,11 @@ static void zend_revert_pass_two(zend_op_array *op_array)
 		opline->result_type &= (IS_TMP_VAR|IS_VAR|IS_CV|IS_CONST);
 		opline++;
 	}
-#if !ZEND_USE_ABS_CONST_ADDR
 	if (op_array->literals) {
 		zval *literals = emalloc(sizeof(zval) * op_array->last_literal);
 		memcpy(literals, op_array->literals, sizeof(zval) * op_array->last_literal);
 		op_array->literals = literals;
 	}
-#endif
 
 	op_array->fn_flags &= ~ZEND_ACC_DONE_PASS_TWO;
 }
@@ -1192,13 +1190,9 @@ static void zend_revert_pass_two(zend_op_array *op_array)
 static void zend_redo_pass_two(zend_op_array *op_array)
 {
 	zend_op *opline, *end;
-#if ZEND_USE_ABS_JMP_ADDR && !ZEND_USE_ABS_CONST_ADDR
-	zend_op *old_opcodes = op_array->opcodes;
-#endif
 
 	ZEND_ASSERT((op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO) == 0);
 
-#if !ZEND_USE_ABS_CONST_ADDR
 	if (op_array->last_literal) {
 		op_array->opcodes = (zend_op *) erealloc(op_array->opcodes,
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16) +
@@ -1213,7 +1207,6 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 		}
 		op_array->literals = NULL;
 	}
-#endif
 
 	opline = op_array->opcodes;
 	end = opline + op_array->last;
@@ -1226,38 +1219,6 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 		}
 		/* fix jumps to point to new array */
 		switch (opline->opcode) {
-#if ZEND_USE_ABS_JMP_ADDR && !ZEND_USE_ABS_CONST_ADDR
-			case ZEND_JMP:
-			case ZEND_FAST_CALL:
-				opline->op1.jmp_addr = &op_array->opcodes[opline->op1.jmp_addr - old_opcodes];
-				break;
-			case ZEND_JMPZ:
-			case ZEND_JMPNZ:
-			case ZEND_JMPZ_EX:
-			case ZEND_JMPNZ_EX:
-			case ZEND_JMP_SET:
-			case ZEND_COALESCE:
-			case ZEND_FE_RESET_R:
-			case ZEND_FE_RESET_RW:
-			case ZEND_ASSERT_CHECK:
-			case ZEND_JMP_NULL:
-			case ZEND_BIND_INIT_STATIC_OR_JMP:
-			case ZEND_JMP_FRAMELESS:
-				opline->op2.jmp_addr = &op_array->opcodes[opline->op2.jmp_addr - old_opcodes];
-				break;
-			case ZEND_CATCH:
-				if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-					opline->op2.jmp_addr = &op_array->opcodes[opline->op2.jmp_addr - old_opcodes];
-				}
-				break;
-			case ZEND_FE_FETCH_R:
-			case ZEND_FE_FETCH_RW:
-			case ZEND_SWITCH_LONG:
-			case ZEND_SWITCH_STRING:
-			case ZEND_MATCH:
-				/* relative extended_value don't have to be changed */
-				break;
-#endif
 			case ZEND_IS_IDENTICAL:
 			case ZEND_IS_NOT_IDENTICAL:
 			case ZEND_IS_EQUAL:
@@ -1302,13 +1263,9 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 {
 	zend_op *opline, *end;
-#if ZEND_USE_ABS_JMP_ADDR && !ZEND_USE_ABS_CONST_ADDR
-	zend_op *old_opcodes = op_array->opcodes;
-#endif
 
 	ZEND_ASSERT((op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO) == 0);
 
-#if !ZEND_USE_ABS_CONST_ADDR
 	if (op_array->last_literal) {
 		op_array->opcodes = (zend_op *) erealloc(op_array->opcodes,
 			ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16) +
@@ -1323,7 +1280,6 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 		}
 		op_array->literals = NULL;
 	}
-#endif
 
 	opline = op_array->opcodes;
 	end = opline + op_array->last;
@@ -1348,38 +1304,6 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 
 		/* fix jumps to point to new array */
 		switch (opline->opcode) {
-#if ZEND_USE_ABS_JMP_ADDR && !ZEND_USE_ABS_CONST_ADDR
-			case ZEND_JMP:
-			case ZEND_FAST_CALL:
-				opline->op1.jmp_addr = &op_array->opcodes[opline->op1.jmp_addr - old_opcodes];
-				break;
-			case ZEND_JMPZ:
-			case ZEND_JMPNZ:
-			case ZEND_JMPZ_EX:
-			case ZEND_JMPNZ_EX:
-			case ZEND_JMP_SET:
-			case ZEND_COALESCE:
-			case ZEND_FE_RESET_R:
-			case ZEND_FE_RESET_RW:
-			case ZEND_ASSERT_CHECK:
-			case ZEND_JMP_NULL:
-			case ZEND_BIND_INIT_STATIC_OR_JMP:
-			case ZEND_JMP_FRAMELESS:
-				opline->op2.jmp_addr = &op_array->opcodes[opline->op2.jmp_addr - old_opcodes];
-				break;
-			case ZEND_CATCH:
-				if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-					opline->op2.jmp_addr = &op_array->opcodes[opline->op2.jmp_addr - old_opcodes];
-				}
-				break;
-			case ZEND_FE_FETCH_R:
-			case ZEND_FE_FETCH_RW:
-			case ZEND_SWITCH_LONG:
-			case ZEND_SWITCH_STRING:
-			case ZEND_MATCH:
-				/* relative extended_value don't have to be changed */
-				break;
-#endif
 			case ZEND_IS_IDENTICAL:
 			case ZEND_IS_NOT_IDENTICAL:
 			case ZEND_IS_EQUAL:

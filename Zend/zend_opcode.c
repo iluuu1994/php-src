@@ -601,8 +601,7 @@ ZEND_API void destroy_op_array(zend_op_array *op_array)
 			zval_ptr_dtor_nogc(literal);
 			literal++;
 		}
-		if (ZEND_USE_ABS_CONST_ADDR
-		 || !(op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO)) {
+		if (!(op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO)) {
 			efree(op_array->literals);
 		}
 	}
@@ -1072,16 +1071,6 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		CG(context).vars_size = op_array->last_var;
 	}
 
-#if ZEND_USE_ABS_CONST_ADDR
-	if (CG(context).opcodes_size != op_array->last) {
-		op_array->opcodes = (zend_op *) erealloc(op_array->opcodes, sizeof(zend_op)*op_array->last);
-		CG(context).opcodes_size = op_array->last;
-	}
-	if (CG(context).literals_size != op_array->last_literal) {
-		op_array->literals = (zval*)erealloc(op_array->literals, sizeof(zval) * op_array->last_literal);
-		CG(context).literals_size = op_array->last_literal;
-	}
-#else
 	op_array->opcodes = (zend_op *) erealloc(op_array->opcodes,
 		ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_op) * op_array->last, 16)
 		+ ZEND_MM_ALIGNED_SIZE_EX(sizeof(zend_slim_op) * op_array->last, 16)
@@ -1095,7 +1084,6 @@ ZEND_API void pass_two(zend_op_array *op_array)
 	}
 	CG(context).opcodes_size = op_array->last;
 	CG(context).literals_size = op_array->last_literal;
-#endif
 
     op_array->T += ZEND_OBSERVER_ENABLED; // reserve last temporary for observers if enabled
 

@@ -549,10 +549,8 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
 	{
 		zend_op *opline, *end;
 
-#if !ZEND_USE_ABS_CONST_ADDR
 		zval *literals = op_array->literals;
 		UNSERIALIZE_PTR(literals);
-#endif
 
 		SERIALIZE_PTR(op_array->opcodes);
 		opline = op_array->opcodes;
@@ -566,55 +564,12 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
 				SERIALIZE_ATTRIBUTES(Z_PTR_P(literal));
 			}
 
-#if ZEND_USE_ABS_CONST_ADDR
-			if (opline->op1_type == IS_CONST) {
-				SERIALIZE_PTR(opline->op1.zv);
-			}
-			if (opline->op2_type == IS_CONST) {
-				SERIALIZE_PTR(opline->op2.zv);
-			}
-#else
 			if (opline->op1_type == IS_CONST) {
 				opline->op1.constant = RT_CONSTANT(opline, opline->op1) - literals;
 			}
 			if (opline->op2_type == IS_CONST) {
 				opline->op2.constant = RT_CONSTANT(opline, opline->op2) - literals;
 			}
-#endif
-#if ZEND_USE_ABS_JMP_ADDR
-			switch (opline->opcode) {
-				case ZEND_JMP:
-				case ZEND_FAST_CALL:
-					SERIALIZE_PTR(opline->op1.jmp_addr);
-					break;
-				case ZEND_JMPZ:
-				case ZEND_JMPNZ:
-				case ZEND_JMPZ_EX:
-				case ZEND_JMPNZ_EX:
-				case ZEND_JMP_SET:
-				case ZEND_COALESCE:
-				case ZEND_FE_RESET_R:
-				case ZEND_FE_RESET_RW:
-				case ZEND_ASSERT_CHECK:
-				case ZEND_JMP_NULL:
-				case ZEND_BIND_INIT_STATIC_OR_JMP:
-				case ZEND_JMP_FRAMELESS:
-					SERIALIZE_PTR(opline->op2.jmp_addr);
-					break;
-				case ZEND_CATCH:
-					if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-						SERIALIZE_PTR(opline->op2.jmp_addr);
-					}
-					break;
-				case ZEND_FE_FETCH_R:
-				case ZEND_FE_FETCH_RW:
-				case ZEND_SWITCH_LONG:
-				case ZEND_SWITCH_STRING:
-				case ZEND_MATCH:
-					/* relative extended_value don't have to be changed */
-					break;
-			}
-#endif
 			zend_serialize_opcode_handler(opline);
 			opline++;
 		}
@@ -1457,54 +1412,12 @@ static void zend_file_cache_unserialize_op_array(zend_op_array           *op_arr
 		opline = op_array->opcodes;
 		end = opline + op_array->last;
 		while (opline < end) {
-#if ZEND_USE_ABS_CONST_ADDR
-			if (opline->op1_type == IS_CONST) {
-				UNSERIALIZE_PTR(opline->op1.zv);
-			}
-			if (opline->op2_type == IS_CONST) {
-				UNSERIALIZE_PTR(opline->op2.zv);
-			}
-#else
 			if (opline->op1_type == IS_CONST) {
 				ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op1);
 			}
 			if (opline->op2_type == IS_CONST) {
 				ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op2);
 			}
-#endif
-#if ZEND_USE_ABS_JMP_ADDR
-			switch (opline->opcode) {
-				case ZEND_JMP:
-				case ZEND_FAST_CALL:
-					UNSERIALIZE_PTR(opline->op1.jmp_addr);
-					break;
-				case ZEND_JMPZ:
-				case ZEND_JMPNZ:
-				case ZEND_JMPZ_EX:
-				case ZEND_JMPNZ_EX:
-				case ZEND_JMP_SET:
-				case ZEND_COALESCE:
-				case ZEND_FE_RESET_R:
-				case ZEND_FE_RESET_RW:
-				case ZEND_ASSERT_CHECK:
-				case ZEND_JMP_NULL:
-				case ZEND_BIND_INIT_STATIC_OR_JMP:
-				case ZEND_JMP_FRAMELESS:
-					UNSERIALIZE_PTR(opline->op2.jmp_addr);
-					break;
-				case ZEND_CATCH:
-					if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-						UNSERIALIZE_PTR(opline->op2.jmp_addr);
-					}
-					break;
-				case ZEND_FE_FETCH_R:
-				case ZEND_FE_FETCH_RW:
-				case ZEND_SWITCH_LONG:
-				case ZEND_SWITCH_STRING:
-					/* relative extended_value don't have to be changed */
-					break;
-			}
-#endif
 
 			if (opline->opcode == ZEND_OP_DATA
 				&& (opline-1)->opcode == ZEND_DECLARE_ATTRIBUTED_CONST

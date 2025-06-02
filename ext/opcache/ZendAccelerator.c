@@ -4691,20 +4691,12 @@ static zend_result accel_preload(const char *config, bool in_child)
 
 		/* Store all functions and classes in a single pseudo-file */
 		CG(compiled_filename) = ZSTR_INIT_LITERAL("$PRELOAD$", 0);
-#if ZEND_USE_ABS_CONST_ADDR
-		init_op_array(&script->script.main_op_array, ZEND_USER_FUNCTION, 1);
-#else
 		init_op_array(&script->script.main_op_array, ZEND_USER_FUNCTION, 2);
-#endif
 		script->script.main_op_array.fn_flags |= ZEND_ACC_DONE_PASS_TWO;
 		script->script.main_op_array.last = 1;
 		script->script.main_op_array.last_literal = 1;
 		script->script.main_op_array.T = ZEND_OBSERVER_ENABLED;
-#if ZEND_USE_ABS_CONST_ADDR
-		script->script.main_op_array.literals = (zval*)emalloc(sizeof(zval));
-#else
 		script->script.main_op_array.literals = (zval*)(script->script.main_op_array.opcodes + 1);
-#endif
 		ZVAL_NULL(script->script.main_op_array.literals);
 		memset(script->script.main_op_array.opcodes, 0, sizeof(zend_op));
 		script->script.main_op_array.opcodes[0].opcode = ZEND_RETURN;

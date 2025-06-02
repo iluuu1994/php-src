@@ -71,17 +71,10 @@ typedef uintptr_t zend_jit_addr;
 		(jit->ra[Z_SSA_VAR(addr)].flags & ZREG_LOAD) : \
 		0)
 
-#if ZEND_USE_ABS_CONST_ADDR
-# define OP_ADDR(opline, type, op) \
-	(((opline)->type == IS_CONST) ? \
-		ZEND_ADDR_CONST_ZVAL((opline)->op.zv) : \
-		ZEND_ADDR_MEM_ZVAL(ZREG_FP, (opline)->op.var))
-#else
 # define OP_ADDR(opline, type, op) \
 	(((opline)->type == IS_CONST) ? \
 		ZEND_ADDR_CONST_ZVAL(RT_CONSTANT(opline, (opline)->op)) : \
 		ZEND_ADDR_MEM_ZVAL(ZREG_FP, (opline)->op.var))
-#endif
 
 #define OP_REG_ADDR(opline, ssa_op, type, op, _ssa_op) \
 	((ctx.ra && (ssa_op)->_ssa_op >= 0 && ctx.ra[(ssa_op)->_ssa_op].ref) ? \

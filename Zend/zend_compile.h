@@ -54,31 +54,12 @@
 typedef struct _zend_op_array zend_op_array;
 typedef struct _zend_op zend_op;
 
-/* On 64-bit systems less optimal, but more compact VM code leads to better
- * performance. So on 32-bit systems we use absolute addresses for jump
- * targets and constants, but on 64-bit systems relative 32-bit offsets */
-#if SIZEOF_SIZE_T == 4
-# define ZEND_USE_ABS_JMP_ADDR      1
-# define ZEND_USE_ABS_CONST_ADDR    1
-#else
-/* FIXME: Get rid of these, they no longer make sense with slim ops. */
-# define ZEND_USE_ABS_JMP_ADDR      0
-# define ZEND_USE_ABS_CONST_ADDR    0
-#endif
-
 typedef union _znode_op {
 	uint16_t      constant;
 	uint16_t      var;
 	uint16_t      num;
 	uint16_t      opline_num; /*  Needs to be signed */
-#if ZEND_USE_ABS_JMP_ADDR
-	zend_op       *jmp_addr;
-#else
 	uint16_t      jmp_offset;
-#endif
-#if ZEND_USE_ABS_CONST_ADDR
-	zval          *zv;
-#endif
 } znode_op;
 
 typedef struct _znode { /* used only during compilation */
@@ -791,28 +772,6 @@ static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op
 		? _zend_wop_to_sop(f, op) \
 		: EG(exception_slim_op))
 
-#if ZEND_USE_ABS_JMP_ADDR
-
-/* run-time jump target */
-# define OP_JMP_ADDR(opline, node) \
-	(node).jmp_addr
-
-# define ZEND_SET_OP_JMP_ADDR(opline, node, val) do { \
-		(node).jmp_addr = (val); \
-	} while (0)
-
-/* convert jump target from compile-time to run-time */
-# define ZEND_PASS_TWO_UPDATE_JMP_TARGET(op_array, opline, node) do { \
-		(node).jmp_addr = (op_array)->opcodes + (node).opline_num; \
-	} while (0)
-
-/* convert jump target back from run-time to compile-time */
-# define ZEND_PASS_TWO_UNDO_JMP_TARGET(op_array, opline, node) do { \
-		(node).opline_num = (node).jmp_addr - (op_array)->opcodes; \
-	} while (0)
-
-#else
-
 /* run-time jump target */
 # define OP_JMP_ADDR(opline, node) \
 	ZEND_OFFSET_TO_OPLINE(opline, (node).jmp_offset)
@@ -831,27 +790,12 @@ static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op
 		(node).opline_num = ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, (node).jmp_offset); \
 	} while (0)
 
-#endif
-
 /* constant-time constant */
 # define CT_CONSTANT_EX(op_array, num) \
 	((op_array)->literals + (num))
 
 # define CT_CONSTANT(node) \
 	CT_CONSTANT_EX(CG(active_op_array), (node).constant)
-
-#if ZEND_USE_ABS_CONST_ADDR
-
-/* run-time constant */
-# define RT_CONSTANT(opline, node) \
-	(node).zv
-
-/* convert constant from compile-time to run-time */
-# define ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, node) do { \
-		(node).zv = CT_CONSTANT_EX(op_array, (node).constant); \
-	} while (0)
-
-#else
 
 /* At run-time, constants are allocated together with op_array->opcodes
  * and addressed relatively to current opline.
@@ -867,8 +811,6 @@ static zend_always_inline zend_slim_op *_zend_wop_to_sop(const zend_op_array *op
 			(((char*)CT_CONSTANT_EX(op_array, (node).constant)) - \
 			((char*)opline)); \
 	} while (0)
-
-#endif
 
 /* convert constant back from run-time to compile-time */
 #define ZEND_PASS_TWO_UNDO_CONSTANT(op_array, opline, node) do { \
