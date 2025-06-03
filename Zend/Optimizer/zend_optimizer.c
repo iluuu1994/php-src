@@ -1160,11 +1160,11 @@ static void zend_optimize(zend_op_array      *op_array,
 }
 
 #define SOP_TO_WOP_OFFSET(node) do { \
-		(node) = (node) / sizeof(zend_slim_op) * sizeof(zend_op); \
+		(node) = (uint16_t)((int16_t)(node) / (uint16_t)sizeof(zend_slim_op) * (uint16_t)sizeof(zend_op)); \
 	} while (0)
 
 #define WOP_TO_SOP_OFFSET(node) do { \
-		(node) = (node) / sizeof(zend_op) * sizeof(zend_slim_op); \
+		(node) = (uint16_t)((int16_t)(node) / (uint16_t)sizeof(zend_op) * (uint16_t)sizeof(zend_slim_op)); \
 	} while (0)
 
 static void zend_revert_pass_two(zend_op_array *op_array)
