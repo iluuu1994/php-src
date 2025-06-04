@@ -1197,16 +1197,11 @@ static void zend_revert_pass_two(zend_op_array *op_array)
 			SOP_TO_WOP_OFFSET(opline->extended_value);
 		}
 		switch (opline->opcode) {
-			case ZEND_CATCH:
-				if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-					SOP_TO_WOP_OFFSET(opline->op2.jmp_offset);
-				}
-				break;
 			case ZEND_SWITCH_LONG:
 			case ZEND_SWITCH_STRING:
 			case ZEND_MATCH:
 			{
-				HashTable *jumptable = Z_ARRVAL_P(CT_CONSTANT(opline->op2));
+				HashTable *jumptable = Z_ARRVAL_P(CT_CONSTANT_EX(op_array, opline->op2.constant));
 				ZEND_HASH_FOREACH_VAL(jumptable, zval *zv) {
 					SOP_TO_WOP_OFFSET(Z_LVAL_P(zv));
 				} ZEND_HASH_FOREACH_END();
@@ -1226,7 +1221,7 @@ static void zend_revert_pass_two(zend_op_array *op_array)
 	op_array->fn_flags &= ~ZEND_ACC_DONE_PASS_TWO;
 }
 
-static void zend_restore_sop_offset(zend_op *opline)
+static void zend_restore_sop_offset(zend_op_array *op_array, zend_op *opline)
 {
 	/* Restore zend_op to store zend_slim_op offsets. */
 	uint32_t op_flags = zend_get_opcode_flags(opline->opcode);
@@ -1240,16 +1235,11 @@ static void zend_restore_sop_offset(zend_op *opline)
 		WOP_TO_SOP_OFFSET(opline->extended_value);
 	}
 	switch (opline->opcode) {
-		case ZEND_CATCH:
-			if (!(opline->extended_value & ZEND_LAST_CATCH)) {
-				WOP_TO_SOP_OFFSET(opline->op2.jmp_offset);
-			}
-			break;
 		case ZEND_SWITCH_LONG:
 		case ZEND_SWITCH_STRING:
 		case ZEND_MATCH:
 		{
-			HashTable *jumptable = Z_ARRVAL_P(CT_CONSTANT(opline->op2));
+			HashTable *jumptable = Z_ARRVAL_P(CT_CONSTANT_EX(op_array, opline->op2.constant));
 			ZEND_HASH_FOREACH_VAL(jumptable, zval *zv) {
 				WOP_TO_SOP_OFFSET(Z_LVAL_P(zv));
 			} ZEND_HASH_FOREACH_END();
@@ -1321,7 +1311,7 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 				break;
 		}
 
-		zend_restore_sop_offset(opline);
+		zend_restore_sop_offset(op_array, opline);
 
 		slim_op->op1 = opline->op1;
 		slim_op->op2 = opline->op2;
@@ -1430,7 +1420,7 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 				break;
 		}
 
-		zend_restore_sop_offset(opline);
+		zend_restore_sop_offset(op_array, opline);
 
 		slim_op->op1 = opline->op1;
 		slim_op->op2 = opline->op2;

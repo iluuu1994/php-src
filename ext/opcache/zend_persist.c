@@ -536,11 +536,11 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 				zend_persist_zval(p);
 				p++;
 			}
-		}
 
-		/* Make sure distance between literals + ops stay the same. */
-		ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_opcodes);
-		ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->slim_opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_slim_opcodes);
+			/* Make sure distance between literals + ops stay the same. */
+			ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_opcodes);
+			ZEND_ASSERT((uintptr_t)orig_literals - (uintptr_t)op_array->slim_opcodes == (uintptr_t)op_array->literals - (uintptr_t)new_slim_opcodes);
+		}
 
 		zend_op *opline = new_opcodes;
 		zend_slim_op *slim_op = new_slim_opcodes;

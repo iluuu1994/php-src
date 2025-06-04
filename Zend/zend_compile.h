@@ -733,7 +733,11 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 	((char*)(target) - (char*)(opline))
 
 #define ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, opline_num) \
-	((char*)&(op_array)->slim_opcodes[opline_num] - (char*)(opline))
+	_Generic((opline), \
+		zend_op*: ((char*)&(op_array)->opcodes[opline_num] - (char*)(opline)), \
+		const zend_op*: ((char*)&(op_array)->opcodes[opline_num] - (char*)(opline)), \
+		zend_slim_op*: ((char*)&(op_array)->slim_opcodes[opline_num] - (char*)(opline)), \
+		const zend_slim_op*: ((char*)&(op_array)->slim_opcodes[opline_num] - (char*)(opline)))
 
 #define ZEND_OFFSET_TO_OPLINE(base, offset) \
 	_Generic((base), \
