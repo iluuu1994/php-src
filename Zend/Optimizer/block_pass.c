@@ -306,7 +306,7 @@ static void zend_optimize_block(zend_basic_block *block, zend_op_array *op_array
 								if (src < op_array->opcodes + block->start) {
 									break;
 								}
-								src->result_type = IS_UNUSED;
+								SET_UNUSED(src->result);
 								VAR_SOURCE(opline->op1) = NULL;
 								MAKE_NOP(opline);
 								++(*opt_count);
@@ -325,7 +325,7 @@ static void zend_optimize_block(zend_basic_block *block, zend_op_array *op_array
 					    src->opcode != ZEND_FETCH_OBJ_R &&
 					    src->opcode != ZEND_NEW &&
 					    src->opcode != ZEND_FETCH_THIS) {
-						src->result_type = IS_UNUSED;
+						SET_UNUSED(src->result);
 						MAKE_NOP(opline);
 						++(*opt_count);
 						if (src->opcode == ZEND_QM_ASSIGN) {
@@ -413,8 +413,8 @@ static void zend_optimize_block(zend_basic_block *block, zend_op_array *op_array
 					literal_dtor(&ZEND_OP1_LITERAL(opline));
 					literal_dtor(&ZEND_OP2_LITERAL(opline));
 					opline->opcode = ZEND_JMP;
-					opline->op1_type = IS_UNUSED;
-					opline->op2_type = IS_UNUSED;
+					SET_UNUSED(opline->op1);
+					SET_UNUSED(opline->op2);
 					block->successors_count = 1;
 					block->successors[0] = target;
 				}
@@ -821,8 +821,7 @@ optimize_type_check:
 					opline->opcode = ZEND_CAST;
 					opline->extended_value = IS_STRING;
 					COPY_NODE(opline->op1, opline->op2);
-					opline->op2_type = IS_UNUSED;
-					opline->op2.var = 0;
+					SET_UNUSED(opline->op2);
 					++(*opt_count);
 				} else if (opline->op2_type == IS_CONST &&
 			           Z_TYPE(ZEND_OP2_LITERAL(opline)) == IS_STRING &&
@@ -831,8 +830,7 @@ optimize_type_check:
 					literal_dtor(&ZEND_OP2_LITERAL(opline));
 					opline->opcode = ZEND_CAST;
 					opline->extended_value = IS_STRING;
-					opline->op2_type = IS_UNUSED;
-					opline->op2.var = 0;
+					SET_UNUSED(opline->op2);
 					++(*opt_count);
 				} else if (opline->opcode == ZEND_CONCAT &&
 				           (opline->op1_type == IS_CONST ||
@@ -1606,7 +1604,7 @@ static void zend_t_usage(zend_cfg *cfg, zend_op_array *op_array, zend_bitset use
 						case ZEND_DO_ICALL:
 						case ZEND_DO_UCALL:
 						case ZEND_DO_FCALL_BY_NAME:
-							opline->result_type = IS_UNUSED;
+							SET_UNUSED(opline->result);
 							break;
 						case ZEND_POST_INC:
 						case ZEND_POST_DEC:
@@ -1615,7 +1613,7 @@ static void zend_t_usage(zend_cfg *cfg, zend_op_array *op_array, zend_bitset use
 						case ZEND_POST_INC_STATIC_PROP:
 						case ZEND_POST_DEC_STATIC_PROP:
 							opline->opcode -= 2;
-							opline->result_type = IS_UNUSED;
+							SET_UNUSED(opline->result);
 							break;
 						case ZEND_QM_ASSIGN:
 						case ZEND_BOOL:
