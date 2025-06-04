@@ -1863,7 +1863,7 @@ ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int 
 	array_init(return_value);
 
 	call = EG(current_execute_data);
-	if (!call) {
+	if (!call || EG(capture_warnings_during_sccp) != 0) {
 		return;
 	}
 

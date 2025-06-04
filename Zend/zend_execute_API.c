@@ -684,6 +684,10 @@ ZEND_API uint32_t zend_get_executed_lineno(void) /* {{{ */
 		return lineno_override;
 	}
 
+	if (EG(capture_warnings_during_sccp) != 0) {
+		return 0;
+	}
+
 	zend_execute_data *ex = EG(current_execute_data);
 
 	while (ex && (!ex->func || !ZEND_USER_CODE(ex->func->type))) {
