@@ -508,6 +508,7 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
 			SERIALIZE_PTR(op_array->static_variables);
 			SERIALIZE_PTR(op_array->literals);
 			SERIALIZE_PTR(op_array->opcodes);
+			SERIALIZE_PTR(op_array->slim_opcodes);
 			SERIALIZE_PTR(op_array->arg_info);
 			SERIALIZE_PTR(op_array->vars);
 			SERIALIZE_STR(op_array->function_name);
@@ -553,6 +554,7 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
 		UNSERIALIZE_PTR(literals);
 
 		SERIALIZE_PTR(op_array->opcodes);
+		SERIALIZE_PTR(op_array->slim_opcodes);
 		opline = op_array->opcodes;
 		UNSERIALIZE_PTR(opline);
 		end = opline + op_array->last;
@@ -562,13 +564,6 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
 			) {
 				zval *literal = RT_CONSTANT(opline, opline->op1);
 				SERIALIZE_ATTRIBUTES(Z_PTR_P(literal));
-			}
-
-			if (opline->op1_type == IS_CONST) {
-				opline->op1.constant = RT_CONSTANT(opline, opline->op1) - literals;
-			}
-			if (opline->op2_type == IS_CONST) {
-				opline->op2.constant = RT_CONSTANT(opline, opline->op2) - literals;
 			}
 			zend_serialize_opcode_handler(opline);
 			opline++;
@@ -1370,6 +1365,7 @@ static void zend_file_cache_unserialize_op_array(zend_op_array           *op_arr
 		UNSERIALIZE_PTR(op_array->static_variables);
 		UNSERIALIZE_PTR(op_array->literals);
 		UNSERIALIZE_PTR(op_array->opcodes);
+		UNSERIALIZE_PTR(op_array->slim_opcodes);
 		UNSERIALIZE_PTR(op_array->arg_info);
 		UNSERIALIZE_PTR(op_array->vars);
 		UNSERIALIZE_STR(op_array->function_name);
@@ -1409,16 +1405,10 @@ static void zend_file_cache_unserialize_op_array(zend_op_array           *op_arr
 		zend_op *opline, *end;
 
 		UNSERIALIZE_PTR(op_array->opcodes);
+		UNSERIALIZE_PTR(op_array->slim_opcodes);
 		opline = op_array->opcodes;
 		end = opline + op_array->last;
 		while (opline < end) {
-			if (opline->op1_type == IS_CONST) {
-				ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op1);
-			}
-			if (opline->op2_type == IS_CONST) {
-				ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op2);
-			}
-
 			if (opline->opcode == ZEND_OP_DATA
 				&& (opline-1)->opcode == ZEND_DECLARE_ATTRIBUTED_CONST
 			) {
