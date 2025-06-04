@@ -25,6 +25,19 @@
 #include "zend_dump.h"
 #include "zend_smart_str.h"
 
+#define SOP_TO_WOP_OFFSET(node) \
+	(uint16_t)((int16_t)(node) / (uint16_t)sizeof(zend_slim_op) * (uint16_t)sizeof(zend_op))
+
+#define CRT_OP_JMP_ADDR(op_array, opline, op) \
+	((((op_array)->fn_flags) & ZEND_ACC_DONE_PASS_TWO) \
+		? ((zend_op*)(((char*)(opline)) + (int16_t)SOP_TO_WOP_OFFSET((op).num))) \
+		: OP_JMP_ADDR(opline, op))
+
+#define CRT_OFFSET_TO_OPLINE_NUM(op_array, base, offset) \
+	((((op_array)->fn_flags) & ZEND_ACC_DONE_PASS_TWO) \
+		? ((zend_op*)(((char*)(base)) + (int16_t)SOP_TO_WOP_OFFSET(offset))) - op_array->opcodes \
+		: ZEND_OFFSET_TO_OPLINE(base, offset) - op_array->opcodes)
+
 void zend_dump_ht(HashTable *ht)
 {
 	zend_ulong index;
@@ -662,7 +675,7 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 			if (b) {
 				fprintf(stderr, " BB%d", b->successors[n++]);
 			} else {
-				fprintf(stderr, " %04u", (uint32_t)(OP_JMP_ADDR(opline, opline->op1) - op_array->opcodes));
+				fprintf(stderr, " %04u", (uint32_t)(CRT_OP_JMP_ADDR(op_array, opline, opline->op1) - op_array->opcodes));
 			}
 		} else {
 			zend_dump_unused_op(opline, opline->op1, op1_flags);
@@ -689,7 +702,7 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 				if (b) {
 					fprintf(stderr, " BB%d,", b->successors[n++]);
 				} else {
-					fprintf(stderr, " %04u,", (uint32_t)ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, Z_LVAL_P(zv)));
+					fprintf(stderr, " %04u,", (uint32_t)CRT_OFFSET_TO_OPLINE_NUM(op_array, opline, Z_LVAL_P(zv)));
 				}
 			} ZEND_HASH_FOREACH_END();
 			fprintf(stderr, " default:");
@@ -724,7 +737,7 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 				if (b) {
 					fprintf(stderr, " BB%d", b->successors[n++]);
 				} else {
-					fprintf(stderr, " %04u", (uint32_t)(OP_JMP_ADDR(opline, opline->op2) - op_array->opcodes));
+					fprintf(stderr, " %04u", (uint32_t)(CRT_OP_JMP_ADDR(op_array, opline, opline->op2) - op_array->opcodes));
 				}
 			}
 		} else {
@@ -736,7 +749,7 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 		if (b) {
 			fprintf(stderr, " BB%d", b->successors[n++]);
 		} else {
-			fprintf(stderr, " %04u", (uint32_t)ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value));
+			fprintf(stderr, " %04u", (uint32_t)CRT_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value));
 		}
 	}
 	if (opline->result_type == IS_CONST) {
