@@ -9740,7 +9740,7 @@ ZEND_VM_HANDLER(204, ZEND_FRAMELESS_ICALL_0, UNUSED, UNUSED, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_0 function = (zend_frameless_function_0)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_0 function = (zend_frameless_function_0)ZEND_FLF_HANDLER(opline->extended_value);
 		function(EX_VAR(opline->result.var));
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -9765,7 +9765,7 @@ ZEND_VM_HANDLER(205, ZEND_FRAMELESS_ICALL_1, ANY, UNUSED, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_1 function = (zend_frameless_function_1)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_1 function = (zend_frameless_function_1)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1);
 	}
 	FREE_OP1();
@@ -9793,7 +9793,7 @@ ZEND_VM_HANDLER(206, ZEND_FRAMELESS_ICALL_2, ANY, ANY, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_2 function = (zend_frameless_function_2)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_2 function = (zend_frameless_function_2)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1, arg2);
 	}
 
@@ -9829,7 +9829,7 @@ ZEND_VM_HANDLER(207, ZEND_FRAMELESS_ICALL_3, ANY, ANY, SPEC(OBSERVER))
 	} else
 #endif
 	{
-		zend_frameless_function_3 function = (zend_frameless_function_3)ZEND_FLF_HANDLER(opline);
+		zend_frameless_function_3 function = (zend_frameless_function_3)ZEND_FLF_HANDLER(opline->extended_value);
 		function(result, arg1, arg2, arg3);
 	}
 

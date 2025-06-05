@@ -1050,6 +1050,64 @@ ZEND_API void zend_recalc_live_ranges(
 	zend_calc_live_ranges(op_array, needs_live_range);
 }
 
+// FIXME: Proper naming
+static uint16_t get_sop_tmpvarcv_type(uint8_t op_type)
+{
+	return op_type == IS_CV ? 1 : 0;
+}
+
+static uint16_t get_sop_any_type(uint8_t op_type)
+{
+	switch (op_type) {
+		case IS_UNUSED: return 0;
+		case IS_CONST: return 1;
+		case IS_TMP_VAR:
+		case IS_VAR: return 2;
+		case IS_CV: return 3;
+		EMPTY_SWITCH_DEFAULT_CASE();
+	}
+}
+
+ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
+{
+	// FIXME: Support op-data
+	if (opline->opcode == ZEND_OP_DATA) {
+		return;
+	}
+
+	// FIXME: Not super clean
+	if (slim_op->extended_value == (uint16_t)-1) {
+		slim_op->extended_value = 0;
+	}
+
+	uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
+	uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
+	uint16_t op1_num_bits = 0, op2_num_bits = 0;
+
+	if (!op1_flags) op1_num_bits = 2;
+	else if ((op1_flags & ZEND_VM_OP_TMPVARCV)) op1_num_bits = 1;
+
+	if (!op2_flags) op2_num_bits = 2;
+	else if ((op2_flags & ZEND_VM_OP_TMPVARCV)) op2_num_bits = 1;
+
+	uint16_t mask = ((1 << (op1_num_bits + op2_num_bits)) - 1) << (16 - op1_num_bits - op2_num_bits);
+	if (slim_op->extended_value & mask) {
+		printf("Overflow, needs to be wide op");
+		abort();
+	}
+
+	uint16_t op1_bits = 0, op2_bits = 0;
+
+	if (!op1_flags) op1_bits = get_sop_any_type(opline->op1_type);
+	else if (op1_flags & ZEND_VM_OP_TMPVARCV) op1_bits = get_sop_tmpvarcv_type(opline->op1_type);
+
+	if (!op2_flags) op2_bits = get_sop_any_type(opline->op2_type);
+	else if (op2_flags & ZEND_VM_OP_TMPVARCV) op2_bits = get_sop_tmpvarcv_type(opline->op2_type);
+
+	slim_op->extended_value |= op1_bits << (16 - op1_num_bits);
+	slim_op->extended_value |= op2_bits << (16 - op1_num_bits - op2_num_bits);
+}
+
 ZEND_API void pass_two(zend_op_array *op_array)
 {
 	zend_op *opline, *end;
@@ -1225,18 +1283,7 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		slim_op->result = opline->result;
 		slim_op->extended_value = opline->extended_value;
 
-		// uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
-		// if (!op1_flags || (op1_flags & ZEND_VM_OP_TMPVARCV)) {
-		// 	if (slim_op->op1.num & (1 << 15)) {
-		// 		abort();
-		// 	}
-		// }
-		// uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
-		// if (!op2_flags || (op2_flags & ZEND_VM_OP_TMPVARCV)) {
-		// 	if (slim_op->op2.num & (0b11 << 14)) {
-		// 		abort();
-		// 	}
-		// }
+		zend_setup_sop_op_types(opline, slim_op);
 
 		opline++;
 		slim_op++;

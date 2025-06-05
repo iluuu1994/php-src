@@ -131,6 +131,26 @@ typedef int (ZEND_FASTCALL *incdec_t)(zval *);
 #define get_obj_zval_ptr_undef(op_type, node, type) _get_obj_zval_ptr_undef(op_type, node, type EXECUTE_DATA_CC OPLINE_CC)
 #define get_obj_zval_ptr_ptr(op_type, node, type) _get_obj_zval_ptr_ptr(op_type, node, type EXECUTE_DATA_CC)
 
+static uint8_t get_any_type_from_sop_bits(uint8_t bits)
+{
+	switch (bits) {
+		case 0: return IS_UNUSED;
+		case 1: return IS_CONST;
+		case 2: return IS_VAR;
+		case 3: return IS_CV;
+		EMPTY_SWITCH_DEFAULT_CASE();
+	}
+}
+
+static uint8_t get_tmpvarcv_type_from_sop_bits(uint8_t bits)
+{
+	switch (bits) {
+		case 0: return IS_VAR;
+		case 1: return IS_CV;
+		EMPTY_SWITCH_DEFAULT_CASE();
+	}
+}
+
 #define RETURN_VALUE_USED(opline) ((opline)->result_type != IS_UNUSED)
 
 static ZEND_FUNCTION(pass)
@@ -1626,7 +1646,7 @@ static zend_always_inline int zend_binary_op(zval *ret, zval *op1, zval *op2 OPL
 		pow_function
 	};
 	/* size_t cast makes GCC to better optimize 64-bit PIC code */
-	size_t opcode = (size_t)opline->extended_value;
+	size_t opcode = (size_t)(opline->extended_value & UINT8_MAX);
 
 	return zend_binary_ops[opcode - ZEND_ADD](ret, op1, op2);
 }
