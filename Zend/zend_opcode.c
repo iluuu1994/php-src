@@ -1080,32 +1080,44 @@ ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
 		slim_op->extended_value = 0;
 	}
 
+	uint16_t added_bits = 0;
+	uint8_t num_bits = 0;
+
+	if (zend_is_smart_branch(opline)) {
+		if (opline->result_type & IS_SMART_BRANCH_JMPNZ) {
+			num_bits += 2;
+			added_bits |= 0xc000;
+		} else if (opline->result_type & IS_SMART_BRANCH_JMPZ) {
+			num_bits += 2;
+			added_bits |= 0x8000;
+		}
+	}
+
 	uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
+	if (op1_flags & ZEND_VM_OP_TMPVARCV) {
+		num_bits += 1;
+		added_bits |= get_sop_tmpvarcv_type(opline->op1_type) << (16 - num_bits);
+	} else if (!op1_flags) {
+		num_bits += 2;
+		added_bits |= get_sop_any_type(opline->op1_type) << (16 - num_bits);
+	}
+
 	uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
-	uint16_t op1_num_bits = 0, op2_num_bits = 0;
+	if (op2_flags & ZEND_VM_OP_TMPVARCV) {
+		num_bits += 1;
+		added_bits |= get_sop_tmpvarcv_type(opline->op2_type) << (16 - num_bits);
+	} else if (!op2_flags) {
+		num_bits += 2;
+		added_bits |= get_sop_any_type(opline->op2_type) << (16 - num_bits);
+	}
 
-	if (!op1_flags) op1_num_bits = 2;
-	else if ((op1_flags & ZEND_VM_OP_TMPVARCV)) op1_num_bits = 1;
-
-	if (!op2_flags) op2_num_bits = 2;
-	else if ((op2_flags & ZEND_VM_OP_TMPVARCV)) op2_num_bits = 1;
-
-	uint16_t mask = ((1 << (op1_num_bits + op2_num_bits)) - 1) << (16 - op1_num_bits - op2_num_bits);
+	uint16_t mask = ((1 << num_bits) - 1) << (16 - num_bits);
 	if (slim_op->extended_value & mask) {
 		printf("Overflow, needs to be wide op");
 		abort();
 	}
 
-	uint16_t op1_bits = 0, op2_bits = 0;
-
-	if (!op1_flags) op1_bits = get_sop_any_type(opline->op1_type);
-	else if (op1_flags & ZEND_VM_OP_TMPVARCV) op1_bits = get_sop_tmpvarcv_type(opline->op1_type);
-
-	if (!op2_flags) op2_bits = get_sop_any_type(opline->op2_type);
-	else if (op2_flags & ZEND_VM_OP_TMPVARCV) op2_bits = get_sop_tmpvarcv_type(opline->op2_type);
-
-	slim_op->extended_value |= op1_bits << (16 - op1_num_bits);
-	slim_op->extended_value |= op2_bits << (16 - op1_num_bits - op2_num_bits);
+	slim_op->extended_value |= added_bits;
 }
 
 ZEND_API void pass_two(zend_op_array *op_array)

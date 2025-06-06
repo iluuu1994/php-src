@@ -686,6 +686,32 @@ function format_condition($condition) {
     return "(" . $condition . ")";
 }
 
+function is_smart_branch($opcode) {
+    switch ($opcode) {
+        case 'ZEND_IS_IDENTICAL':
+        case 'ZEND_IS_NOT_IDENTICAL':
+        case 'ZEND_IS_EQUAL':
+        case 'ZEND_IS_NOT_EQUAL':
+        case 'ZEND_IS_SMALLER':
+        case 'ZEND_IS_SMALLER_OR_EQUAL':
+        case 'ZEND_CASE':
+        case 'ZEND_CASE_STRICT':
+        case 'ZEND_ISSET_ISEMPTY_CV':
+        case 'ZEND_ISSET_ISEMPTY_VAR':
+        case 'ZEND_ISSET_ISEMPTY_DIM_OBJ':
+        case 'ZEND_ISSET_ISEMPTY_PROP_OBJ':
+        case 'ZEND_ISSET_ISEMPTY_STATIC_PROP':
+        case 'ZEND_INSTANCEOF':
+        case 'ZEND_TYPE_CHECK':
+        case 'ZEND_DEFINED':
+        case 'ZEND_IN_ARRAY':
+        case 'ZEND_ARRAY_KEY_EXISTS':
+            return true;
+        default:
+            return false;
+    }
+}
+
 // Generates code for opcode handler or helper
 function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) {
     global $op1_type, $op2_type, $op1_get_zval_ptr, $op2_get_zval_ptr,
@@ -789,8 +815,11 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
         "/ZEND_OBSERVER_FCALL_END\(\s*([^,]*)\s*,\s*(.*)\s*\)/" => isset($extra_spec['OBSERVER']) ?
             ($extra_spec['OBSERVER'] == 0 ? "" : "zend_observer_fcall_end(\\1, \\2)")
             : "",
-        "/opline->extended_value/" => (function () use ($op1, $op2) {
+        "/opline->extended_value/" => (function () use ($name, $op1, $op2, $extra_spec) {
             $bits = 0;
+            if (is_smart_branch($name) && !isset($extra_spec['SMART_BRANCH'])) {
+                $bits += 2;
+            }
             if ($op1 === 'TMPVARCV') {
                 $bits += 1;
             } else if ($op1 === 'ANY') {
@@ -801,51 +830,68 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
             } else if ($op2 === 'ANY') {
                 $bits += 2;
             }
-            switch ($bits) {
-                // FIXME: The spaces are just there to avoid recursive replacement.
-                case 0: return 'opline ->extended_value';
-                case 1: return '(opline ->extended_value & ~0x8000)';
-                case 2: return '(opline ->extended_value & ~0xc000)';
-                case 3: return '(opline ->extended_value & ~0xe000)';
-                case 4: return '(opline ->extended_value & ~0xf000)';
-                default: throw new Error();
+
+            if ($bits === 0) {
+                return 'opline ->extended_value';
             }
+
+            $mask = ((1 << $bits) - 1) << (16 - $bits);
+            return sprintf('(opline ->extended_value & ~0x%x)', $mask);
         })(),
-        "/EX_WOP2->op1_type/" => (function () use ($op1, $op2, $helper) {
+        "/EX_WOP2->op1_type/" => (function () use ($name, $op1, $op2, $extra_spec, $helper) {
             if ($helper) {
                 return 'EX_WOP2 ->op1_type';
             }
-            if ($op1 === 'TMPVARCV') {
-                return 'get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15)';
-            } else if ($op1 === 'ANY') {
-                return 'get_any_type_from_sop_bits((opline ->extended_value & 0xc000) >> 14)';
+
+            $offset = 0;
+            if (is_smart_branch($name) && !array_key_exists('SMART_BRANCH', $extra_spec)) {
+                $offset += 2;
             }
-            return 'OP1_TYPE';
+
+            if ($op1 === 'TMPVARCV') {
+                $bits = 1;
+            } else if ($op1 === 'ANY') {
+                $bits = 2;
+            } else {
+                return 'OP1_TYPE';
+            }
+
+            $mask = ((1 << $bits) - 1) << (16 - $bits - $offset);
+            $value = sprintf('(opline ->extended_value & 0x%x) >> %d', $mask, 16 - $bits - $offset);
+
+            return $op1 === 'TMPVARCV'
+                ? "get_tmpvarcv_type_from_sop_bits($value)"
+                : "get_any_type_from_sop_bits($value)";
         })(),
-        "/EX_WOP2->op2_type/" => (function () use ($op1, $op2, $helper) {
+        "/EX_WOP2->op2_type/" => (function () use ($name, $op1, $op2, $extra_spec, $helper) {
             if ($helper) {
                 return 'EX_WOP2 ->op2_type';
             }
-            if ($op1 === 'TMPVARCV') {
-                if ($op2 === 'TMPVARCV') {
-                    return 'get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14)';
-                } else if ($op2 === 'ANY') {
-                    return 'get_any_type_from_sop_bits((opline ->extended_value & 0x6000) >> 13)';
-                }
-            } else if ($op1 === 'ANY') {
-                if ($op2 === 'TMPVARCV') {
-                    return 'get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13)';
-                } else if ($op2 === 'ANY') {
-                    return 'get_any_type_from_sop_bits((opline ->extended_value & 0x3000) >> 12)';
-                }
-            } else {
-                if ($op2 === 'TMPVARCV') {
-                    return 'get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15)';
-                } else if ($op2 === 'ANY') {
-                    return 'get_any_type_from_sop_bits((opline ->extended_value & 0xc000) >> 14)';
-                }
+
+            $offset = 0;
+            if (is_smart_branch($name) && !array_key_exists('SMART_BRANCH', $extra_spec)) {
+                $offset += 2;
             }
-            return 'OP2_TYPE';
+            if ($op1 === 'TMPVARCV') {
+                $offset += 1;
+            } else if ($op1 === 'ANY') {
+                $offset += 2;
+            }
+
+            if ($op2 === 'TMPVARCV') {
+                $bits = 1;
+            } else if ($op2 === 'ANY') {
+                $bits = 2;
+            } else {
+                return 'OP2_TYPE';
+            }
+
+            $mask = ((1 << $bits) - 1) << (16 - $bits - $offset);
+            $value = sprintf('(opline ->extended_value & 0x%x) >> %d', $mask, 16 - $bits - $offset);
+
+            return $op2 === 'TMPVARCV'
+                ? "get_tmpvarcv_type_from_sop_bits($value)"
+                : "get_any_type_from_sop_bits($value)";
         })(),
     );
 

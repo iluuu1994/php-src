@@ -5739,16 +5739,15 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	OPLINE = opline; \
 	ZEND_VM_CONTINUE()
 #define ZEND_VM_SMART_BRANCH(_result, _check) do { \
-		zend_op *wop = EX_WOP2; \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
 			OPLINE = EX(opline); \
-		} else if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR))) { \
+		} else if (EXPECTED((opline->extended_value & 0xc000) == 0x8000)) { \
 			if (_result) { \
 				ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 			} else { \
 				ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
 			} \
-		} else if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR))) { \
+		} else if (EXPECTED((opline->extended_value & 0xc000) == 0xc000)) { \
 			if (!(_result)) { \
 				ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 			} else { \
@@ -5786,10 +5785,9 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_VM_CONTINUE(); \
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_TRUE() do { \
-		zend_op *wop = EX_WOP2; \
-		if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR))) { \
+		if (EXPECTED((opline->extended_value & 0xc000) == 0xc000)) { \
 			ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
-		} else if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR))) { \
+		} else if (EXPECTED((opline->extended_value & 0xc000) == 0x8000)) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
 		} else { \
 			ZVAL_TRUE(EX_VAR(opline->result.var)); \
@@ -5810,10 +5808,9 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_VM_NEXT_OPCODE(); \
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_FALSE() do { \
-		zend_op *wop = EX_WOP2; \
-		if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR))) { \
+		if (EXPECTED((opline->extended_value & 0xc000) == 0xc000)) { \
 			ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
-		} else if (EXPECTED(wop->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR))) { \
+		} else if (EXPECTED((opline->extended_value & 0xc000) == 0x8000)) { \
 			ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
 		} else { \
 			ZVAL_FALSE(EX_VAR(opline->result.var)); \
