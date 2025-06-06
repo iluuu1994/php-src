@@ -820,7 +820,7 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
             } else if ($op1 === 'ANY') {
                 return 'get_any_type_from_sop_bits((opline ->extended_value & 0xc000) >> 14)';
             }
-            return '???';
+            return 'OP1_TYPE';
         })(),
         "/EX_WOP2->op2_type/" => (function () use ($op1, $op2, $helper) {
             if ($helper) {
@@ -845,7 +845,7 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
                     return 'get_any_type_from_sop_bits((opline ->extended_value & 0xc000) >> 14)';
                 }
             }
-            return '???';
+            return 'OP2_TYPE';
         })(),
     );
 

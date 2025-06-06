@@ -23,7 +23,7 @@
  * php zend_vm_gen.php
  */
 
-ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -35,10 +35,10 @@ ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	add_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -79,10 +79,12 @@ ZEND_VM_C_LABEL(add_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_add_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_add_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -94,10 +96,10 @@ ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	sub_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -138,10 +140,12 @@ ZEND_VM_C_LABEL(sub_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_sub_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_sub_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -153,10 +157,10 @@ ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	mul_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -200,7 +204,9 @@ ZEND_VM_C_LABEL(mul_double):
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_mul_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_mul_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(4, ZEND_DIV, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -227,7 +233,7 @@ ZEND_VM_COLD_HELPER(zend_mod_by_zero_helper, ANY, ANY)
 	HANDLE_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -239,10 +245,10 @@ ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	mod_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -272,10 +278,12 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(5, ZEND_MOD, CONST|TMPVARCV, CONST|TMPVARCV)
 		}
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_mod_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_mod_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -287,10 +295,10 @@ ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	shift_left_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -314,10 +322,12 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(6, ZEND_SL, CONST|TMPVARCV, CONST|TMPVARCV)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_left_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_left_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -329,10 +339,10 @@ ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	shift_right_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -354,7 +364,9 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(7, ZEND_SR, CONST|TMPVARCV, CONST|TMPVARCV)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_right_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_right_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(12, ZEND_POW, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -492,7 +504,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(17, ZEND_IS_NOT_IDENTICAL, CONST|TMP|VAR|CV, CON
 	ZEND_VM_SMART_BRANCH(result, 1);
 }
 
-ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -505,10 +517,10 @@ ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret == 0, 1);
@@ -569,10 +581,12 @@ ZEND_VM_C_LABEL(is_equal_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -585,10 +599,10 @@ ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret != 0, 1);
@@ -649,10 +663,12 @@ ZEND_VM_C_LABEL(is_not_equal_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_not_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_not_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -665,10 +681,10 @@ ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret < 0, 1);
@@ -714,10 +730,12 @@ ZEND_VM_C_LABEL(is_smaller_double):
 			ZEND_VM_C_GOTO(is_smaller_double);
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -730,10 +748,10 @@ ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret <= 0, 1);
@@ -783,7 +801,9 @@ ZEND_VM_C_LABEL(is_smaller_or_equal_double):
 			ZEND_VM_C_GOTO(is_smaller_or_equal_double);
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_or_equal_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_or_equal_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -800,7 +820,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPV
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -812,10 +832,10 @@ ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_or_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -836,10 +856,12 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(9, ZEND_BW_OR, CONST|TMPVARCV, CONST|TMPVARCV, 
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_or_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_or_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -851,10 +873,10 @@ ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_and_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -875,10 +897,12 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(10, ZEND_BW_AND, CONST|TMPVARCV, CONST|TMPVARCV
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_and_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_and_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
-ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op1_type, uint8_t op2_type)
 {
 	USE_OPLINE
 
@@ -890,10 +914,10 @@ ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	bitwise_xor_function(EX_VAR(opline->result.var), op_1, op_2);
-	if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_1);
 	}
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
@@ -914,7 +938,9 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(11, ZEND_BW_XOR, CONST|TMPVARCV, CONST|TMPVARCV
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_xor_helper, op_1, op1, op_2, op2);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_xor_helper, op_1, op1, op_2, op2, op1_type, op1_type, op2_type, op2_type);
 }
 
 ZEND_VM_COLD_CONSTCONST_HANDLER(15, ZEND_BOOL_XOR, CONST|TMPVAR|CV, CONST|TMPVAR|CV, SPEC(COMMUTATIVE))
@@ -931,7 +957,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(15, ZEND_BOOL_XOR, CONST|TMPVAR|CV, CONST|TMPVAR
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1)
+ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1, uint8_t op1_type)
 {
 	USE_OPLINE
 
@@ -940,7 +966,9 @@ ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1)
 		op_1 = ZVAL_UNDEFINED_OP1();
 	}
 	bitwise_not_function(EX_VAR(opline->result.var), op_1);
-	FREE_OP1();
+	if (op1_type & (IS_TMP_VAR|IS_VAR)) {
+		zval_ptr_dtor_nogc(op_1);
+	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
@@ -955,7 +983,8 @@ ZEND_VM_HOT_NOCONST_HANDLER(13, ZEND_BW_NOT, CONST|TMPVARCV, ANY)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_not_helper, op_1, op1);
+	uint8_t op1_type = EX_WOP2->op1_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_not_helper, op_1, op1, op1_type, op1_type);
 }
 
 ZEND_VM_COLD_CONST_HANDLER(14, ZEND_BOOL_NOT, CONST|TMPVAR|CV, ANY)
@@ -5865,7 +5894,7 @@ ZEND_VM_COLD_CONST_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2, uint8_t op2_type)
 {
 	int ret;
 	USE_OPLINE
@@ -5878,7 +5907,7 @@ ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2)
 		op_2 = ZVAL_UNDEFINED_OP2();
 	}
 	ret = zend_compare(op_1, op_2);
-	if (OP2_TYPE & (IS_TMP_VAR|IS_VAR)) {
+	if (op2_type & (IS_TMP_VAR|IS_VAR)) {
 		zval_ptr_dtor_nogc(op_2);
 	}
 	ZEND_VM_SMART_BRANCH(ret == 0, 1);
@@ -5932,7 +5961,8 @@ ZEND_VM_C_LABEL(case_double):
 			}
 		}
 	}
-	ZEND_VM_DISPATCH_TO_HELPER(zend_case_helper, op_1, op1, op_2, op2);
+	uint8_t op2_type = EX_WOP2->op2_type;
+	ZEND_VM_DISPATCH_TO_HELPER(zend_case_helper, op_1, op1, op_2, op2, op2_type, op2_type);
 }
 
 ZEND_VM_HANDLER(68, ZEND_NEW, UNUSED|CLASS_FETCH|CONST|VAR, UNUSED|CACHE_SLOT, NUM)
@@ -7017,8 +7047,9 @@ ZEND_VM_COLD_CONST_HANDLER(125, ZEND_FE_RESET_RW, CONST|TMP|VAR|CV, JMP_ADDR)
 	}
 }
 
-ZEND_VM_HELPER(zend_fe_fetch_object_helper, ANY, ANY)
+ZEND_VM_HELPER(zend_fe_fetch_object_helper, VAR, ANY)
 {
+	// FIXME: We can use sop op hints since the helper has the same signature as the handler.
 	USE_OPLINE
 	zval *array;
 	zval *value;
