@@ -7457,7 +7457,7 @@ is_smaller_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -7502,7 +7502,7 @@ is_smaller_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -7547,7 +7547,7 @@ is_smaller_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -7596,7 +7596,7 @@ is_smaller_or_equal_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -7645,7 +7645,7 @@ is_smaller_or_equal_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -7694,7 +7694,7 @@ is_smaller_or_equal_double:
 		}
 	}
 	uint8_t op1_type = IS_CONST;
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -12221,7 +12221,7 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -12266,7 +12266,7 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -12311,7 +12311,7 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -12360,7 +12360,7 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -12409,7 +12409,7 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -12458,7 +12458,7 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
 	uint8_t op2_type = IS_CONST;
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
@@ -13349,8 +13349,8 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -13394,8 +13394,8 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -13439,8 +13439,8 @@ is_smaller_double:
 			goto is_smaller_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -13488,8 +13488,8 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -13537,8 +13537,8 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 
@@ -13586,8 +13586,8 @@ is_smaller_or_equal_double:
 			goto is_smaller_or_equal_double;
 		}
 	}
-	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x8000) >> 15);
-	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x4000) >> 14);
+	uint8_t op1_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x2000) >> 13);
+	uint8_t op2_type = get_tmpvarcv_type_from_sop_bits((opline ->extended_value & 0x1000) >> 12);
 	ZEND_VM_TAIL_CALL(zend_is_smaller_or_equal_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX op1, op2, op1_type, op2_type));
 }
 

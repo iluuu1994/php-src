@@ -1084,11 +1084,10 @@ ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
 	uint8_t num_bits = 0;
 
 	if (zend_is_smart_branch(opline)) {
+		num_bits += 2;
 		if (opline->result_type & IS_SMART_BRANCH_JMPNZ) {
-			num_bits += 2;
 			added_bits |= 0xc000;
 		} else if (opline->result_type & IS_SMART_BRANCH_JMPZ) {
-			num_bits += 2;
 			added_bits |= 0x8000;
 		}
 	}

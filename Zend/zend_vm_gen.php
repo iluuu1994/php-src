@@ -844,7 +844,10 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
             }
 
             $offset = 0;
-            if (is_smart_branch($name) && !array_key_exists('SMART_BRANCH', $extra_spec)) {
+            /* FIXME: It would be nice to not reserve 2 bits for SMART_BRANCH
+             * specialized handlers. However, some handlers only have
+             * SMART_BRANCH specialization in specs, e.g. ZEND_IS_IDENTICAL. */
+            if (is_smart_branch($name) /* && !array_key_exists('SMART_BRANCH', $extra_spec) */) {
                 $offset += 2;
             }
 
@@ -869,7 +872,7 @@ function gen_code($f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec=null) 
             }
 
             $offset = 0;
-            if (is_smart_branch($name) && !array_key_exists('SMART_BRANCH', $extra_spec)) {
+            if (is_smart_branch($name) /* && !array_key_exists('SMART_BRANCH', $extra_spec) */) {
                 $offset += 2;
             }
             if ($op1 === 'TMPVARCV') {
