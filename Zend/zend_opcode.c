@@ -1094,7 +1094,7 @@ ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
 	}
 
 	uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
-	if (op1_flags & ZEND_VM_OP_TMPVARCV) {
+	if ((op1_flags & ZEND_VM_OP_TMPVARCV) && (opline->op1_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
 		num_bits += 1;
 		added_bits |= get_sop_tmpvarcv_type(opline->op1_type) << (16 - num_bits);
 	} else if (!op1_flags) {
@@ -1103,7 +1103,7 @@ ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
 	}
 
 	uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
-	if (op2_flags & ZEND_VM_OP_TMPVARCV) {
+	if ((op2_flags & ZEND_VM_OP_TMPVARCV) && (opline->op2_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
 		num_bits += 1;
 		added_bits |= get_sop_tmpvarcv_type(opline->op2_type) << (16 - num_bits);
 	} else if (!op2_flags) {
