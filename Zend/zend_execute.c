@@ -1693,7 +1693,7 @@ static zend_never_inline void zend_binary_assign_op_typed_ref(zend_reference *re
 	zval z_copy;
 
 	/* Make sure that in-place concatenation is used if the LHS is a string. */
-	if (opline->extended_value == ZEND_CONCAT && Z_TYPE(ref->val) == IS_STRING) {
+	if ((opline->extended_value & UINT8_MAX) == ZEND_CONCAT && Z_TYPE(ref->val) == IS_STRING) {
 		concat_function(&ref->val, &ref->val, value);
 		ZEND_ASSERT(Z_TYPE(ref->val) == IS_STRING && "Concat should return string");
 		return;
@@ -1713,7 +1713,7 @@ static zend_never_inline void zend_binary_assign_op_typed_prop(const zend_proper
 	zval z_copy;
 
 	/* Make sure that in-place concatenation is used if the LHS is a string. */
-	if (opline->extended_value == ZEND_CONCAT && Z_TYPE_P(zptr) == IS_STRING) {
+	if ((opline->extended_value & UINT8_MAX) == ZEND_CONCAT && Z_TYPE_P(zptr) == IS_STRING) {
 		concat_function(zptr, zptr, value);
 		ZEND_ASSERT(Z_TYPE_P(zptr) == IS_STRING && "Concat should return string");
 		return;
@@ -3587,15 +3587,14 @@ end:
 
 static zend_always_inline void zend_assign_to_property_reference(zval *container, uint32_t container_op_type, zval *prop_ptr, uint32_t prop_op_type, zval *value_ptr OPLINE_DC EXECUTE_DATA_DC)
 {
+	zend_op *wop = EX_WOP;
 	zval variable, *variable_ptr = &variable;
-	void **cache_addr = (prop_op_type == IS_CONST) ? CACHE_ADDR(opline->extended_value & ~ZEND_RETURNS_FUNCTION) : NULL;
+	void **cache_addr = (prop_op_type == IS_CONST) ? CACHE_ADDR(wop->extended_value & ~ZEND_RETURNS_FUNCTION) : NULL;
 	zend_refcounted *garbage = NULL;
 	zend_property_info *prop_info = NULL;
 
 	zend_fetch_property_address(variable_ptr, container, container_op_type, prop_ptr, prop_op_type,
 		cache_addr, BP_VAR_W, 0, &prop_info OPLINE_CC EXECUTE_DATA_CC);
-
-	zend_op *wop = EX_WOP;
 
 	if (EXPECTED(Z_TYPE_P(variable_ptr) == IS_INDIRECT)) {
 		variable_ptr = Z_INDIRECT_P(variable_ptr);
@@ -5355,7 +5354,7 @@ static zend_never_inline bool ZEND_FASTCALL zend_fe_reset_iterator(zval *array_p
 /* }}} */
 
 static zend_always_inline zend_result _zend_quick_get_constant(
-		const zval *key, uint32_t flags, bool check_defined_only OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
+		const zval *key, uint32_t flags, bool check_defined_only, uint32_t cache_slot OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
 {
 	zval *zv;
 	zend_constant *c = NULL;
@@ -5392,21 +5391,21 @@ static zend_always_inline zend_result _zend_quick_get_constant(
 		}
 	}
 
-	CACHE_PTR(opline->extended_value, c);
+	CACHE_PTR(cache_slot, c);
 	return SUCCESS;
 }
 /* }}} */
 
 static zend_never_inline void ZEND_FASTCALL zend_quick_get_constant(
-		const zval *key, uint32_t flags OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
+		const zval *key, uint32_t flags, uint32_t cache_slot OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
 {
-	_zend_quick_get_constant(key, flags, 0 OPLINE_CC EXECUTE_DATA_CC);
+	_zend_quick_get_constant(key, flags, 0, cache_slot OPLINE_CC EXECUTE_DATA_CC);
 } /* }}} */
 
 static zend_never_inline zend_result ZEND_FASTCALL zend_quick_check_constant(
-		const zval *key OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
+		const zval *key, uint32_t cache_slot OPLINE_DC EXECUTE_DATA_DC) /* {{{ */
 {
-	return _zend_quick_get_constant(key, 0, 1 OPLINE_CC EXECUTE_DATA_CC);
+	return _zend_quick_get_constant(key, 0, 1, cache_slot OPLINE_CC EXECUTE_DATA_CC);
 } /* }}} */
 
 static zend_always_inline uint32_t zend_get_arg_offset_by_name(

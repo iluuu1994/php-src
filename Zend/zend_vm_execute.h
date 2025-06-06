@@ -4894,7 +4894,7 @@ defined_false:
 			ZEND_VM_SMART_BRANCH_FALSE();
 		}
 	}
-	if (zend_quick_check_constant(RT_CONSTANT(opline, opline->op1) OPLINE_CC EXECUTE_DATA_CC) != SUCCESS) {
+	if (zend_quick_check_constant(RT_CONSTANT(opline, opline->op1), (opline ->extended_value & ~0xf000) OPLINE_CC EXECUTE_DATA_CC) != SUCCESS) {
 		CACHE_PTR((opline ->extended_value & ~0xf000), ENCODE_SPECIAL_CACHE_NUM(zend_hash_num_elements(EG(zend_constants))));
 		goto defined_false;
 	} else {
@@ -34440,7 +34440,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FETCH_CONSTANT_SPE
 	}
 
 	SAVE_OPLINE();
-	zend_quick_get_constant(RT_CONSTANT(opline, opline->op2) + 1, opline->op1.num OPLINE_CC EXECUTE_DATA_CC);
+	zend_quick_get_constant(RT_CONSTANT(opline, opline->op2) + 1, opline->op1.num, opline ->extended_value OPLINE_CC EXECUTE_DATA_CC);
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
