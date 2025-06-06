@@ -3729,16 +3729,15 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 }
 
 
-static zend_always_inline zval* zend_fetch_static_property_address(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type, int flags OPLINE_DC EXECUTE_DATA_DC) {
+static zend_always_inline zval* zend_fetch_static_property_address(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type, int flags, uint8_t op1_type, uint8_t op2_type OPLINE_DC EXECUTE_DATA_DC) {
 	zval *result;
 	zend_property_info *property_info;
-	zend_op *wop = EX_WOP;
 
-	if (wop->op1_type == IS_CONST
-	 && (wop->op2_type == IS_CONST
-	  || (wop->op2_type == IS_UNUSED
-	   && ((wop->op2.num & ZEND_FETCH_CLASS_MASK) == ZEND_FETCH_CLASS_SELF
-	    || (wop->op2.num & ZEND_FETCH_CLASS_MASK) == ZEND_FETCH_CLASS_PARENT)))
+	if (op1_type == IS_CONST
+	 && (op2_type == IS_CONST
+	  || (op2_type == IS_UNUSED
+	   && ((opline->op2.num & ZEND_FETCH_CLASS_MASK) == ZEND_FETCH_CLASS_SELF
+	    || (opline->op2.num & ZEND_FETCH_CLASS_MASK) == ZEND_FETCH_CLASS_PARENT)))
 	 && EXPECTED(CACHED_PTR(cache_slot + sizeof(void *)) != NULL)) {
 		result = CACHED_PTR(cache_slot + sizeof(void *));
 		property_info = CACHED_PTR(cache_slot + sizeof(void *) * 2);
