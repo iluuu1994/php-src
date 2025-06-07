@@ -1340,7 +1340,7 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 		slim_op->result = opline->result;
 		slim_op->extended_value = opline->extended_value;
 
-		zend_setup_sop_op_types(opline, slim_op);
+		zend_setup_quick_op_flags(opline, slim_op);
 
 		opline++;
 		slim_op++;
@@ -1471,7 +1471,7 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 		slim_op->result = opline->result;
 		slim_op->extended_value = opline->extended_value;
 
-		zend_setup_sop_op_types(opline, slim_op);
+		zend_setup_quick_op_flags(opline, slim_op);
 
 		opline++;
 		slim_op++;

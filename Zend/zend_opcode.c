@@ -1050,73 +1050,48 @@ ZEND_API void zend_recalc_live_ranges(
 	zend_calc_live_ranges(op_array, needs_live_range);
 }
 
-// FIXME: Proper naming
-static uint16_t get_sop_tmpvarcv_type(uint8_t op_type)
+ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op)
 {
-	return op_type == IS_CV ? 1 : 0;
-}
-
-static uint16_t get_sop_any_type(uint8_t op_type)
-{
-	switch (op_type) {
-		case IS_UNUSED: return 0;
-		case IS_CONST: return 1;
-		case IS_TMP_VAR:
-		case IS_VAR: return 2;
-		case IS_CV: return 3;
-		EMPTY_SWITCH_DEFAULT_CASE();
-	}
-}
-
-ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op)
-{
-	// FIXME: Support op-data
+	// FIXME: Needed?
 	if (opline->opcode == ZEND_OP_DATA) {
 		return;
 	}
 
-	// FIXME: Not super clean
-	if (slim_op->extended_value == (uint16_t)-1) {
-		slim_op->extended_value = 0;
+	uint64_t opcode_flags = zend_get_opcode_flags(opline->opcode);
+	uint64_t field = (opcode_flags & ZEND_VM_QUICK_OP_FLAGS_FIELD_MASK);
+	if (field == ZEND_VM_QUICK_OP_FLAGS_FIELD_NONE) {
+		return;
 	}
 
-	uint16_t added_bits = 0;
-	uint8_t num_bits = 0;
-
-	if (zend_is_smart_branch(opline)) {
-		num_bits += 2;
-		if (opline->result_type & IS_SMART_BRANCH_JMPNZ) {
-			added_bits |= 0xc000;
-		} else if (opline->result_type & IS_SMART_BRANCH_JMPZ) {
-			added_bits |= 0x8000;
-		}
+	uint16_t quick_flags = 0;
+	quick_flags |= (opline->op1_type << 0);
+	quick_flags |= (opline->op2_type << 4);
+	if ((opline+1)->opcode == ZEND_OP_DATA) {
+		quick_flags |= ((opline+1)->op1_type << 8);
+	}
+	if (opline->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR)) {
+		quick_flags |= 0x1000;
+	} else if (opline->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR)) {
+		quick_flags |= 0x3000;
 	}
 
-	uint32_t op1_flags = ZEND_VM_OP1_FLAGS(zend_get_opcode_flags(opline->opcode));
-	if ((op1_flags & ZEND_VM_OP_TMPVARCV) && (opline->op1_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
-		num_bits += 1;
-		added_bits |= get_sop_tmpvarcv_type(opline->op1_type) << (16 - num_bits);
-	} else if (!op1_flags) {
-		num_bits += 2;
-		added_bits |= get_sop_any_type(opline->op1_type) << (16 - num_bits);
+	switch (field) {
+		case ZEND_VM_QUICK_OP_FLAGS_FIELD_EXT_VALUE:
+			slim_op->extended_value = quick_flags;
+			break;
+		case ZEND_VM_QUICK_OP_FLAGS_FIELD_OP1:
+			slim_op->op1.num = quick_flags;
+			break;
+		case ZEND_VM_QUICK_OP_FLAGS_FIELD_OP2:
+			slim_op->op2.num = quick_flags;
+			break;
+		case ZEND_VM_QUICK_OP_FLAGS_FIELD_RESULT:
+			slim_op->result.num = quick_flags;
+			break;
+		case ZEND_VM_QUICK_OP_FLAGS_FIELD_OP_DATA_OP2:
+			(slim_op+1)->op2.num = quick_flags;
+			break;
 	}
-
-	uint32_t op2_flags = ZEND_VM_OP2_FLAGS(zend_get_opcode_flags(opline->opcode));
-	if ((op2_flags & ZEND_VM_OP_TMPVARCV) && (opline->op2_type & (IS_TMP_VAR|IS_VAR|IS_CV))) {
-		num_bits += 1;
-		added_bits |= get_sop_tmpvarcv_type(opline->op2_type) << (16 - num_bits);
-	} else if (!op2_flags) {
-		num_bits += 2;
-		added_bits |= get_sop_any_type(opline->op2_type) << (16 - num_bits);
-	}
-
-	uint16_t mask = ((1 << num_bits) - 1) << (16 - num_bits);
-	if (slim_op->extended_value & mask) {
-		printf("Overflow, needs to be wide op");
-		abort();
-	}
-
-	slim_op->extended_value |= added_bits;
 }
 
 ZEND_API void pass_two(zend_op_array *op_array)
@@ -1294,7 +1269,12 @@ ZEND_API void pass_two(zend_op_array *op_array)
 		slim_op->result = opline->result;
 		slim_op->extended_value = opline->extended_value;
 
-		zend_setup_sop_op_types(opline, slim_op);
+		zend_setup_quick_op_flags(opline, slim_op);
+
+		// FIXME: Ugly workaround, we break op_data->extended_value, repeat for previous opcode
+		if (opline->opcode == ZEND_OP_DATA) {
+			zend_setup_quick_op_flags(opline-1, slim_op-1);
+		}
 
 		opline++;
 		slim_op++;

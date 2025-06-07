@@ -982,7 +982,7 @@ ZEND_API void zend_initialize_class_data(zend_class_entry *ce, bool nullify_hand
 uint32_t zend_get_class_fetch_type(const zend_string *name);
 ZEND_API uint8_t zend_get_call_op(const zend_op *init_op, zend_function *fbc, bool result_used);
 ZEND_API bool zend_is_smart_branch(const zend_op *opline);
-ZEND_API void zend_setup_sop_op_types(zend_op *opline, zend_slim_op *slim_op);
+ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op);
 
 typedef bool (*zend_auto_global_callback)(zend_string *name);
 typedef struct _zend_auto_global {
