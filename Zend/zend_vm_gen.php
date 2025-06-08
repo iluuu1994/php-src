@@ -2486,12 +2486,28 @@ function gen_vm_opcodes_header(
     return $str;
 }
 
+const OP_HAS_OP_DATA = [
+    'ZEND_ASSIGN_DIM',
+    'ZEND_ASSIGN_DIM_OP',
+    'ZEND_ASSIGN_OBJ',
+    'ZEND_ASSIGN_OBJ_OP',
+    'ZEND_ASSIGN_OBJ_REF',
+    'ZEND_ASSIGN_STATIC_PROP',
+    'ZEND_ASSIGN_STATIC_PROP_OP',
+    'ZEND_ASSIGN_STATIC_PROP_REF',
+    'ZEND_DECLARE_ATTRIBUTED_CONST',
+    'ZEND_FRAMELESS_ICALL_3',
+];
+
 function needs_quick_op_flags($opcode) {
     if (isset($opcode['op1']['TMPVARCV'])
      || isset($opcode['op1']['ANY'])
      || isset($opcode['op2']['TMPVARCV'])
      || isset($opcode['op2']['ANY'])
-     || is_smart_branch($opcode['op'])) {
+     || is_smart_branch($opcode['op'])
+     /* Always set quick flags for ops with op_data, given that we know at least
+      * op_data->op2 will always be free. */
+     || in_array($opcode['op'], OP_HAS_OP_DATA)) {
         return true;
     }
     return false;
@@ -2522,19 +2538,6 @@ function get_quick_op_flags_field($opcode) {
         'ZEND_PRE_INC_STATIC_PROP',
     ];
 
-    $has_op_data = [
-        'ZEND_ASSIGN_DIM',
-        'ZEND_ASSIGN_DIM_OP',
-        'ZEND_ASSIGN_OBJ',
-        'ZEND_ASSIGN_OBJ_OP',
-        'ZEND_ASSIGN_OBJ_REF',
-        'ZEND_ASSIGN_STATIC_PROP',
-        'ZEND_ASSIGN_STATIC_PROP_OP',
-        'ZEND_ASSIGN_STATIC_PROP_REF',
-        'ZEND_DECLARE_ATTRIBUTED_CONST',
-        'ZEND_FRAMELESS_ICALL_3',
-    ];
-
     $has_free_result = [
         'ZEND_BIND_STATIC',
         'ZEND_JMP_FRAMELESS',
@@ -2557,7 +2560,7 @@ function get_quick_op_flags_field($opcode) {
     if (in_array($opcode['op'], $has_free_result)) {
         return 'opline->result.num';
     }
-    if (in_array($opcode['op'], $has_op_data)) {
+    if (in_array($opcode['op'], OP_HAS_OP_DATA)) {
         return '(opline+1)->op2.num';
     }
 

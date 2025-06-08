@@ -5550,7 +5550,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_DECLARE_ATTRIBUTED_CONST_SPEC_
 		ZEND_VM_NEXT_OPCODE_EX(1, 2);
 	}
 
-	HashTable *attributes = Z_PTR_P(get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1));
+	HashTable *attributes = Z_PTR_P(get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE(opline->extended_value), (opline+1)->op1));
 	zend_constant *registered = zend_get_constant_ptr(c.name);
 	ZEND_ASSERT(attributes != NULL);
 	ZEND_ASSERT(registered != NULL);
@@ -21688,7 +21688,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_CONST_H
 	property = RT_CONSTANT(opline, opline->op2);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_VAR != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -21755,7 +21755,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 	/* assign_obj has two opcodes! */
@@ -21796,7 +21796,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_CONST != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -21813,7 +21813,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -21852,7 +21852,7 @@ assign_dim_op_new_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -24679,7 +24679,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_TMPVAR_
 	property = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_VAR != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -24746,7 +24746,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
 	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 	/* assign_obj has two opcodes! */
@@ -24787,7 +24787,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if ((IS_TMP_VAR|IS_VAR) != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -24804,7 +24804,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -24843,7 +24843,7 @@ assign_dim_op_new_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -27258,7 +27258,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_UNUSED != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -27275,7 +27275,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -27314,7 +27314,7 @@ assign_dim_op_new_array:
 			dim = NULL;
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -29628,7 +29628,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_VAR_CV_HAND
 	property = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_VAR != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -29695,7 +29695,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 	zval_ptr_dtor_nogc(EX_VAR(opline->op1.var));
 	/* assign_obj has two opcodes! */
@@ -29736,7 +29736,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_CV != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -29753,7 +29753,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -29792,7 +29792,7 @@ assign_dim_op_new_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -32309,7 +32309,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_CONS
 	property = RT_CONSTANT(opline, opline->op2);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_UNUSED != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -32376,7 +32376,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 
 	/* assign_obj has two opcodes! */
@@ -34696,7 +34696,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_TMPV
 	property = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_UNUSED != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -34763,7 +34763,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
 
 	/* assign_obj has two opcodes! */
@@ -38560,7 +38560,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_UNUSED_CV_H
 	property = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_UNUSED != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -38627,7 +38627,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 
 	/* assign_obj has two opcodes! */
@@ -41843,7 +41843,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_CONST_HA
 	property = RT_CONSTANT(opline, opline->op2);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_CV != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -41910,7 +41910,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 
 	/* assign_obj has two opcodes! */
@@ -41951,7 +41951,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_CONST != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -41968,7 +41968,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -42007,7 +42007,7 @@ assign_dim_op_new_array:
 			dim = RT_CONSTANT(opline, opline->op2);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -45809,7 +45809,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_TMPVAR_H
 	property = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_CV != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -45876,7 +45876,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	zval_ptr_dtor_nogc(EX_VAR(opline->op2.var));
 
 	/* assign_obj has two opcodes! */
@@ -45917,7 +45917,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if ((IS_TMP_VAR|IS_VAR) != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -45934,7 +45934,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -45973,7 +45973,7 @@ assign_dim_op_new_array:
 			dim = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -49051,7 +49051,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_UNUSED != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -49068,7 +49068,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -49107,7 +49107,7 @@ assign_dim_op_new_array:
 			dim = NULL;
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
@@ -52218,7 +52218,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ASSIGN_OBJ_OP_SPEC_CV_CV_HANDL
 	property = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 
 	do {
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		if (IS_CV != IS_UNUSED && UNEXPECTED(Z_TYPE_P(object) != IS_OBJECT)) {
 			if (Z_ISREF_P(object) && Z_TYPE_P(Z_REFVAL_P(object)) == IS_OBJECT) {
@@ -52285,7 +52285,7 @@ assign_op_object:
 		}
 	} while (0);
 
-	FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+	FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 
 
 	/* assign_obj has two opcodes! */
@@ -52326,7 +52326,7 @@ assign_dim_op_new_array:
 			}
 		}
 
-		value = get_op_data_zval_ptr_r((EX_WOP2+1)->op1_type, (opline+1)->op1);
+		value = get_op_data_zval_ptr_r(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1);
 
 		do {
 			if (IS_CV != IS_UNUSED && UNEXPECTED(Z_ISREF_P(var_ptr))) {
@@ -52343,7 +52343,7 @@ assign_dim_op_new_array:
 		if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 			ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
 		}
-		FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 	} else {
 		if (EXPECTED(Z_ISREF_P(container))) {
 			container = Z_REFVAL_P(container);
@@ -52382,7 +52382,7 @@ assign_dim_op_new_array:
 			dim = _get_zval_ptr_cv_BP_VAR_R(opline->op2.var EXECUTE_DATA_CC);
 			zend_binary_assign_op_dim_slow(container, dim OPLINE_CC EXECUTE_DATA_CC);
 assign_dim_op_ret_null:
-			FREE_OP((EX_WOP2+1)->op1_type, (opline+1)->op1.var);
+			FREE_OP(QUICK_OP_FLAGS_OP_DATA_TYPE((opline+1)->op2.num), (opline+1)->op1.var);
 			if (UNEXPECTED((opline->result.var != (uint16_t)-1))) {
 				ZVAL_NULL(EX_VAR(opline->result.var));
 			}
