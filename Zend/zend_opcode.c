@@ -1052,7 +1052,6 @@ ZEND_API void zend_recalc_live_ranges(
 
 ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op)
 {
-	// FIXME: Needed?
 	if (opline->opcode == ZEND_OP_DATA) {
 		return;
 	}
@@ -1072,7 +1071,7 @@ ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op)
 	if (opline->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR)) {
 		quick_flags |= 0x1000;
 	} else if (opline->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR)) {
-		quick_flags |= 0x3000;
+		quick_flags |= 0x2000;
 	}
 
 	switch (field) {

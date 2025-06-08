@@ -783,7 +783,7 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $ext, $name, $ex
             ? $extra_spec['RETVAL']
             : "(opline->result.var != (uint16_t)-1)",
         "/arg_num <= MAX_ARG_FLAG_NUM/" => isset($extra_spec['QUICK_ARG']) ? $extra_spec['QUICK_ARG'] : "arg_num <= MAX_ARG_FLAG_NUM",
-        "/ZEND_VM_SMART_BRANCH\(\s*([^,)]*)\s*,\s*([^)]*)\s*\)/" => (function () use ($opcode) {
+        "/ZEND_VM_SMART_BRANCH\(\s*([^,)]*)\s*,\s*([^)]*)\s*\)/" => (function () use ($opcode, $extra_spec) {
             if (isset($extra_spec['SMART_BRANCH'])) {
                 if ($extra_spec['SMART_BRANCH'] == 1) {
                     return "ZEND_VM_SMART_BRANCH_JMPZ(\\1, \\2)";
@@ -801,7 +801,7 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $ext, $name, $ex
 
             return "ZEND_VM_SMART_BRANCH(\\1, \\2)";
         })(),
-        "/ZEND_VM_SMART_BRANCH_TRUE\(\s*\)/" => (function () use ($opcode) {
+        "/ZEND_VM_SMART_BRANCH_TRUE\(\s*\)/" => (function () use ($opcode, $extra_spec) {
             if (isset($extra_spec['SMART_BRANCH'])) {
                 if ($extra_spec['SMART_BRANCH'] == 1) {
                     return "ZEND_VM_SMART_BRANCH_TRUE_JMPZ()";
@@ -819,7 +819,7 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $ext, $name, $ex
 
             return "ZEND_VM_SMART_BRANCH_TRUE()";
         })(),
-        "/ZEND_VM_SMART_BRANCH_FALSE\(\s*\)/" => (function () use ($opcode) {
+        "/ZEND_VM_SMART_BRANCH_FALSE\(\s*\)/" => (function () use ($opcode, $extra_spec) {
             if (isset($extra_spec['SMART_BRANCH'])) {
                 if ($extra_spec['SMART_BRANCH'] == 1) {
                     return "ZEND_VM_SMART_BRANCH_FALSE_JMPZ()";
