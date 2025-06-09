@@ -778,7 +778,7 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_sp
         "/GET_OP_DATA_ZVAL_PTR_DEREF\(([^)]*)\)/" => $op_data_get_zval_ptr_deref[isset($extra_spec['OP_DATA']) ? $extra_spec['OP_DATA'] : "ANY"],
         "/GET_OP_DATA_ZVAL_PTR_PTR\(([^)]*)\)/" => $op_data_get_zval_ptr_ptr[isset($extra_spec['OP_DATA']) ? $extra_spec['OP_DATA'] : "ANY"],
         "/FREE_OP_DATA\(\)/" => $op_data_free_op[isset($extra_spec['OP_DATA']) ? $extra_spec['OP_DATA'] : "ANY"],
-        "/RETURN_VALUE_USED\(EX_WOP2\)/" => isset($extra_spec['RETVAL'])
+        "/RETURN_VALUE_USED\(opline\)/" => isset($extra_spec['RETVAL'])
             ? $extra_spec['RETVAL']
             : "(opline->result.var != (uint16_t)-1)",
         "/arg_num <= MAX_ARG_FLAG_NUM/" => isset($extra_spec['QUICK_ARG']) ? $extra_spec['QUICK_ARG'] : "arg_num <= MAX_ARG_FLAG_NUM",
