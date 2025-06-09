@@ -108,7 +108,7 @@ testTrim1:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_1(trim) CV0($value)
+0001 T1 = FRAMELESS_ICALL_1(trim) %d CV0($value)
 0002 ASSIGN CV0($value) T1
 0003 RETURN CV0($value)
 
@@ -117,7 +117,7 @@ testMin2First:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_2(min) CV0($value) int(100)
+0001 T1 = FRAMELESS_ICALL_2(min) %d CV0($value) int(100)
 0002 CV0($value) = QM_ASSIGN T1
 0003 VERIFY_RETURN_TYPE CV0($value)
 0004 RETURN CV0($value)
@@ -127,7 +127,7 @@ testMin2Second:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_2(min) int(100) CV0($value)
+0001 T1 = FRAMELESS_ICALL_2(min) %d int(100) CV0($value)
 0002 CV0($value) = QM_ASSIGN T1
 0003 VERIFY_RETURN_TYPE CV0($value)
 0004 RETURN CV0($value)
@@ -138,7 +138,7 @@ testMin2_TMP:
      ; %s
 0000 CV0($value) = RECV 1
 0001 T1 = ADD CV0($value) int(1)
-0002 CV0($value) = FRAMELESS_ICALL_2(min) T1 int(100)
+0002 CV0($value) = FRAMELESS_ICALL_2(min) %d T1 int(100)
 0003 VERIFY_RETURN_TYPE CV0($value)
 0004 RETURN CV0($value)
 
@@ -147,7 +147,7 @@ testStrstr3First:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_3(strstr) CV0($value) string("needle")
+0001 T1 = FRAMELESS_ICALL_3(strstr) %d CV0($value) string("needle")
 0002 OP_DATA bool(false)
 0003 ASSIGN CV0($value) T1
 0004 VERIFY_RETURN_TYPE CV0($value)
@@ -160,7 +160,7 @@ testStrstr3Second:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_3(strstr) string("needles") CV0($value)
+0001 T1 = FRAMELESS_ICALL_3(strstr) %d string("needles") CV0($value)
 0002 OP_DATA bool(false)
 0003 ASSIGN CV0($value) T1
 0004 VERIFY_RETURN_TYPE CV0($value)
@@ -173,7 +173,7 @@ testStrstr3Third:
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
-0001 T1 = FRAMELESS_ICALL_3(strstr) string("needles") string("needle")
+0001 T1 = FRAMELESS_ICALL_3(strstr) %d string("needles") string("needle")
 0002 OP_DATA CV0($value)
 0003 CV0($value) = QM_ASSIGN T1
 0004 VERIFY_RETURN_TYPE CV0($value)

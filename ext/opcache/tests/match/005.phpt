@@ -27,13 +27,13 @@ $_main:
      ; (after optimizer)
      ; %s
 0000 ASSIGN CV0($text) string("Bienvenue chez nous")
-0001 T2 = FRAMELESS_ICALL_2(preg_match) string("/Welcome/") CV0($text)
+0001 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Welcome/") CV0($text)
 0002 JMPNZ T2 0010
-0003 T2 = FRAMELESS_ICALL_2(preg_match) string("/Hello/") CV0($text)
+0003 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Hello/") CV0($text)
 0004 JMPNZ T2 0010
-0005 T2 = FRAMELESS_ICALL_2(preg_match) string("/Bienvenue/") CV0($text)
+0005 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bienvenue/") CV0($text)
 0006 JMPNZ T2 0012
-0007 T2 = FRAMELESS_ICALL_2(preg_match) string("/Bonjour/") CV0($text)
+0007 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bonjour/") CV0($text)
 0008 JMPNZ T2 0012
 0009 JMP 0014
 0010 T2 = QM_ASSIGN string("en")
