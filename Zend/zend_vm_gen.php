@@ -2517,6 +2517,7 @@ function get_quick_op_flags_field($opcode) {
 
     /* Full list of ops we cannot optimize. Warn when we encounter new ones. */
     $unfree = [
+        'ZEND_BIND_INIT_STATIC_OR_JMP',
         'ZEND_CAST',
         'ZEND_CATCH',
         'ZEND_DECLARE_ANON_CLASS',
@@ -2540,6 +2541,7 @@ function get_quick_op_flags_field($opcode) {
         'ZEND_ISSET_ISEMPTY_DIM_OBJ',
         'ZEND_ISSET_ISEMPTY_PROP_OBJ',
         'ZEND_ISSET_ISEMPTY_STATIC_PROP',
+        'ZEND_JMP_NULL',
         'ZEND_POST_DEC_STATIC_PROP',
         'ZEND_POST_INC_STATIC_PROP',
         'ZEND_PRE_DEC_STATIC_PROP',
