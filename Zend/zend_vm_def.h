@@ -23,7 +23,7 @@
  * php zend_vm_gen.php
  */
 
-ZEND_VM_HELPER(zend_add_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_add_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -82,7 +82,7 @@ ZEND_VM_C_LABEL(add_double):
 	ZEND_VM_DISPATCH_TO_HELPER(zend_add_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_sub_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -141,7 +141,7 @@ ZEND_VM_C_LABEL(sub_double):
 	ZEND_VM_DISPATCH_TO_HELPER(zend_sub_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mul_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -227,7 +227,7 @@ ZEND_VM_COLD_HELPER(zend_mod_by_zero_helper, ANY, ANY)
 	HANDLE_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_mod_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -275,7 +275,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(5, ZEND_MOD, CONST|TMPVARCV, CONST|TMPVARCV)
 	ZEND_VM_DISPATCH_TO_HELPER(zend_mod_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_left_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -317,7 +317,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(6, ZEND_SL, CONST|TMPVARCV, CONST|TMPVARCV)
 	ZEND_VM_DISPATCH_TO_HELPER(zend_shift_left_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_shift_right_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -492,7 +492,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(17, ZEND_IS_NOT_IDENTICAL, CONST|TMP|VAR|CV, CON
 	ZEND_VM_SMART_BRANCH(result, 1);
 }
 
-ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_equal_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	int ret;
 	USE_OPLINE
@@ -572,7 +572,7 @@ ZEND_VM_C_LABEL(is_equal_double):
 	ZEND_VM_DISPATCH_TO_HELPER(zend_is_equal_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_not_equal_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	int ret;
 	USE_OPLINE
@@ -652,7 +652,7 @@ ZEND_VM_C_LABEL(is_not_equal_double):
 	ZEND_VM_DISPATCH_TO_HELPER(zend_is_not_equal_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	int ret;
 	USE_OPLINE
@@ -717,7 +717,7 @@ ZEND_VM_C_LABEL(is_smaller_double):
 	ZEND_VM_DISPATCH_TO_HELPER(zend_is_smaller_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_is_smaller_or_equal_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	int ret;
 	USE_OPLINE
@@ -800,7 +800,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPV
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_or_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -839,7 +839,7 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(9, ZEND_BW_OR, CONST|TMPVARCV, CONST|TMPVARCV, 
 	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_or_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_and_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -878,7 +878,7 @@ ZEND_VM_HOT_NOCONSTCONST_HANDLER(10, ZEND_BW_AND, CONST|TMPVARCV, CONST|TMPVARCV
 	ZEND_VM_DISPATCH_TO_HELPER(zend_bw_and_helper, op_1, op1, op_2, op2);
 }
 
-ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_bw_xor_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	USE_OPLINE
 
@@ -931,7 +931,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(15, ZEND_BOOL_XOR, CONST|TMPVAR|CV, CONST|TMPVAR
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
-ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, zval *op_1)
+ZEND_VM_HELPER(zend_bw_not_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1)
 {
 	USE_OPLINE
 
@@ -1491,7 +1491,7 @@ ZEND_VM_HANDLER(41, ZEND_POST_DEC_STATIC_PROP, ANY, ANY, CACHE_SLOT)
 	ZEND_VM_DISPATCH_TO_HANDLER(ZEND_POST_INC_STATIC_PROP);
 }
 
-ZEND_VM_HELPER(zend_pre_inc_helper, VAR|CV, ANY)
+ZEND_VM_HELPER(zend_pre_inc_helper, VAR|CV, ANY, OPTIONS(quick_op_flags_field=opline->extended_value))
 {
 	USE_OPLINE
 	zval *var_ptr;
@@ -1542,7 +1542,7 @@ ZEND_VM_HOT_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY, SPEC(RETVAL))
 	ZEND_VM_DISPATCH_TO_HELPER(zend_pre_inc_helper);
 }
 
-ZEND_VM_HELPER(zend_pre_dec_helper, VAR|CV, ANY)
+ZEND_VM_HELPER(zend_pre_dec_helper, VAR|CV, ANY, OPTIONS(quick_op_flags_field=opline->extended_value))
 {
 	USE_OPLINE
 	zval *var_ptr;
@@ -1594,7 +1594,7 @@ ZEND_VM_HOT_HANDLER(35, ZEND_PRE_DEC, VAR|CV, ANY, SPEC(RETVAL))
 	ZEND_VM_DISPATCH_TO_HELPER(zend_pre_dec_helper);
 }
 
-ZEND_VM_HELPER(zend_post_inc_helper, VAR|CV, ANY)
+ZEND_VM_HELPER(zend_post_inc_helper, VAR|CV, ANY, OPTIONS(quick_op_flags_field=opline->extended_value))
 {
 	USE_OPLINE
 	zval *var_ptr;
@@ -1642,7 +1642,7 @@ ZEND_VM_HOT_HANDLER(36, ZEND_POST_INC, VAR|CV, ANY)
 	ZEND_VM_DISPATCH_TO_HELPER(zend_post_inc_helper);
 }
 
-ZEND_VM_HELPER(zend_post_dec_helper, VAR|CV, ANY)
+ZEND_VM_HELPER(zend_post_dec_helper, VAR|CV, ANY, OPTIONS(quick_op_flags_field=opline->extended_value))
 {
 	USE_OPLINE
 	zval *var_ptr;
@@ -5865,7 +5865,7 @@ ZEND_VM_COLD_CONST_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HELPER(zend_case_helper, ANY, ANY, zval *op_1, zval *op_2)
+ZEND_VM_HELPER(zend_case_helper, ANY, ANY, OPTIONS(quick_op_flags_field=opline->extended_value), zval *op_1, zval *op_2)
 {
 	int ret;
 	USE_OPLINE

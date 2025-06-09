@@ -929,7 +929,9 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_sp
                     "/ZEND_VM_DISPATCH_TO_HANDLER\(\s*([A-Z_]*)\s*\)/m",
                     "/ZEND_VM_DISPATCH_TO_HELPER\(\s*([A-Za-z_]*)\s*(,[^)]*)?\)/m",
                 ),
-                function($matches) use ($spec, $prefix, $op1, $op2, $extra_spec, $name) {
+                function($matches) use ($spec, $prefix, $op1, $op2, $extra_spec, $name, $opcode) {
+                    global $helpers;
+
                     if (strncasecmp($matches[0], "EXECUTE_DATA", strlen("EXECUTE_DATA")) == 0) {
                         return "execute_data";
                     } else if (strncasecmp($matches[0], "ZEND_VM_DISPATCH_TO_HANDLER", strlen("ZEND_VM_DISPATCH_TO_HANDLER")) == 0) {
@@ -946,6 +948,15 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_sp
                         return "ZEND_VM_TAIL_CALL(" . opcode_name($handler, $spec, $op1, $op2, $extra_spec) . $inline . "_HANDLER(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU))";
                     } else {
                         // ZEND_VM_DISPATCH_TO_HELPER
+
+                        /* Validate quick_op_flags_field compatibility. */
+                        if (isset($helpers[$matches[1]])) {
+                            $helper = $helpers[$matches[1]];
+                            if (isset($helper['quick_op_flags_field'])
+                             && $helper['quick_op_flags_field'] !== ($opcode['quick_op_flags_field'] ?? null)) {
+                                die("ERROR: quick_op_flags_field of opcode {$opcode['op']} ({$opcode['quick_op_flags_field']}) is not compatible with {$matches[1]} ({$helper['quick_op_flags_field']}).\n");
+                            }
+                        }
                         if (isset($matches[2])) {
                             // extra args
                             $args = substr(preg_replace("/,\s*[A-Za-z0-9_]*\s*,\s*([^,)\s]*)\s*/", ", $1", $matches[2]), 2);
@@ -1223,7 +1234,7 @@ function gen_handler($f, $spec, $kind, $name, $op1, $op2, $use, $code, $lineno, 
 
 // Generates helper
 function gen_helper($f, $spec, $kind, $name, $op1, $op2, $param, $code, $lineno, $inline, $cold = false, $hot = false, $extra_spec = null) {
-    global $definition_file, $prefix;
+    global $definition_file, $prefix, $helpers;
 
     if ($kind == ZEND_VM_KIND_HYBRID && !$hot) {
         return;
@@ -1232,6 +1243,8 @@ function gen_helper($f, $spec, $kind, $name, $op1, $op2, $param, $code, $lineno,
     if ($spec && skip_extra_spec_function($op1, $op2, $extra_spec)) {
         return;
     }
+
+    $helper = $helpers[$name];
 
     if (ZEND_VM_LINES) {
         out($f, "#line $lineno \"$definition_file\"\n");
@@ -1273,7 +1286,7 @@ function gen_helper($f, $spec, $kind, $name, $op1, $op2, $param, $code, $lineno,
     }
 
     // Generate helper's code
-    gen_code(null, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec);
+    gen_code($helper, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_spec);
 }
 
 
@@ -2787,6 +2800,7 @@ function gen_vm($def, $skel) {
                             \s*([A-Z_|]+)\s*,
                             \s*([A-Z_|]+)\s*
                             (?:,\s*SPEC\(([A-Z_|=,]+)\)\s*)?
+                            (?:,\s*OPTIONS\(([^\)]+)\)\s*)?
                             (?:,\s*([^)]*)\s*)?
                         \)
                     $/x",
@@ -2800,9 +2814,23 @@ function gen_vm($def, $skel) {
             $helper = $m[2];
             $op1    = parse_operand_spec($def, $lineno, $m[3], $flags1);
             $op2    = parse_operand_spec($def, $lineno, $m[4], $flags2);
-            $param  = isset($m[6]) ? $m[6] : null;
+            $options  = isset($m[6]) ? $m[6] : null;
+            $param  = isset($m[7]) ? $m[7] : null;
             if (isset($helpers[$helper])) {
                 die("ERROR ($def:$lineno): Helper with name '$helper' is already defined.\n");
+            }
+
+            $quick_op_flags_field = null;
+            if ($options) {
+                $options = explode(',', $options);
+                foreach ($options as $option) {
+                    [$option_name, $option_value] = explode('=', $option);
+                    if ($option_name === 'quick_op_flags_field') {
+                        $quick_op_flags_field = $option_value;
+                    } else {
+                        die("ERROR ($def:$lineno): Unknown helper option '$option_name'.\n");
+                    }
+                }
             }
 
             // Store parameters
@@ -2818,7 +2846,7 @@ function gen_vm($def, $skel) {
                 }
             }
 
-            $helpers[$helper] = array("op1"=>$op1,"op2"=>$op2,"param"=>$param,"code"=>"","inline"=>$inline,"cold"=>$cold,"hot"=>$hot);
+            $helpers[$helper] = array("op1"=>$op1,"op2"=>$op2,"param"=>$param,"code"=>"","inline"=>$inline,"cold"=>$cold,"hot"=>$hot,"quick_op_flags_field"=>$quick_op_flags_field);
 
             if (!empty($m[5])) {
                 $helpers[$helper]["spec"] = parse_spec_rules($def, $lineno, $m[5]);
