@@ -1342,6 +1342,11 @@ static void zend_redo_pass_two(zend_op_array *op_array)
 
 		zend_setup_quick_op_flags(opline, slim_op);
 
+		// FIXME: Ugly workaround, we break op_data->extended_value, repeat for previous opcode
+		if (opline->opcode == ZEND_OP_DATA) {
+			zend_setup_quick_op_flags(opline-1, slim_op-1);
+		}
+
 		opline++;
 		slim_op++;
 	}
@@ -1472,6 +1477,11 @@ static void zend_redo_pass_two_ex(zend_op_array *op_array, zend_ssa *ssa)
 		slim_op->extended_value = opline->extended_value;
 
 		zend_setup_quick_op_flags(opline, slim_op);
+
+		// FIXME: Ugly workaround, we break op_data->extended_value, repeat for previous opcode
+		if (opline->opcode == ZEND_OP_DATA) {
+			zend_setup_quick_op_flags(opline-1, slim_op-1);
+		}
 
 		opline++;
 		slim_op++;
