@@ -113,34 +113,41 @@ testTrim1:
 0003 RETURN CV0($value)
 
 testMin2First:
-     ; (lines=5, args=1, vars=1, tmps=%d)
+     ; (lines=6, args=1, vars=1, tmps=%d)
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
 0001 T1 = FRAMELESS_ICALL_2(min) %d CV0($value) int(100)
-0002 CV0($value) = QM_ASSIGN T1
-0003 VERIFY_RETURN_TYPE CV0($value)
-0004 RETURN CV0($value)
+0002 OP_DATA
+0003 CV0($value) = QM_ASSIGN T1
+0004 VERIFY_RETURN_TYPE CV0($value)
+0005 RETURN CV0($value)
+LIVE RANGES:
+     1: 0002 - 0003 (tmp/var)
 
 testMin2Second:
-     ; (lines=5, args=1, vars=1, tmps=%d)
+     ; (lines=6, args=1, vars=1, tmps=%d)
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
 0001 T1 = FRAMELESS_ICALL_2(min) %d int(100) CV0($value)
-0002 CV0($value) = QM_ASSIGN T1
-0003 VERIFY_RETURN_TYPE CV0($value)
-0004 RETURN CV0($value)
+0002 OP_DATA
+0003 CV0($value) = QM_ASSIGN T1
+0004 VERIFY_RETURN_TYPE CV0($value)
+0005 RETURN CV0($value)
+LIVE RANGES:
+     1: 0002 - 0003 (tmp/var)
 
 testMin2_TMP:
-     ; (lines=5, args=1, vars=1, tmps=%d)
+     ; (lines=6, args=1, vars=1, tmps=%d)
      ; (after optimizer)
      ; %s
 0000 CV0($value) = RECV 1
 0001 T1 = ADD CV0($value) int(1)
 0002 CV0($value) = FRAMELESS_ICALL_2(min) %d T1 int(100)
-0003 VERIFY_RETURN_TYPE CV0($value)
-0004 RETURN CV0($value)
+0003 OP_DATA
+0004 VERIFY_RETURN_TYPE CV0($value)
+0005 RETURN CV0($value)
 
 testStrstr3First:
      ; (lines=6, args=1, vars=1, tmps=%d)

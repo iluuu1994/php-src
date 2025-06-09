@@ -4690,9 +4690,15 @@ static uint32_t zend_compile_frameless_icall_ex(znode *result, zend_ast_list *ar
 	}
 	if (num_args >= 2) {
 		SET_NODE(opline->op2, &arg_zvs[1]);
-	}
-	if (num_args >= 3) {
-		zend_emit_op_data(&arg_zvs[2]);
+		if (num_args >= 3) {
+			zend_emit_op_data(&arg_zvs[2]);
+		} else {
+			/* We emit a dummy op_data for FRAMELESS_ICALL2 to allocate space for quick op flags. */
+			znode dummy;
+			dummy.op_type = IS_UNUSED;
+			dummy.u.op.var = (uint16_t)-1;
+			zend_emit_op_data(&dummy);
+		}
 	}
 	return opnum;
 }

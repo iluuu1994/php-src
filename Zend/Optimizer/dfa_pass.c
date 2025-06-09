@@ -415,10 +415,10 @@ int zend_dfa_optimize_calls(zend_op_array *op_array, zend_ssa *ssa)
 			 && zend_string_equals_literal_ci(call_info->callee_func->common.function_name, "in_array")) {
 
 				bool strict = 0;
-				bool has_opdata = op->opcode == ZEND_FRAMELESS_ICALL_3;
+				bool has_opdata = op->opcode == ZEND_FRAMELESS_ICALL_2 || op->opcode == ZEND_FRAMELESS_ICALL_3;
 				ZEND_ASSERT(!call_info->is_prototype);
 
-				if (has_opdata) {
+				if (has_opdata && (op + 1)->op1_type == IS_CONST) {
 					if (zend_is_true(CT_CONSTANT_EX(op_array, (op + 1)->op1.constant))) {
 						strict = 1;
 					}

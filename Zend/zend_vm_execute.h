@@ -3821,11 +3821,11 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_2_SPEC_HANDLER
 
 	zval *result = EX_VAR(opline->result.var);
 	ZVAL_NULL(result);
-	zval *arg1 = get_zval_ptr_deref(EX_WOP2->op1_type, opline->op1, BP_VAR_R);
-	zval *arg2 = get_zval_ptr_deref(EX_WOP2->op2_type, opline->op2, BP_VAR_R);
+	zval *arg1 = get_zval_ptr_deref(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1, BP_VAR_R);
+	zval *arg2 = get_zval_ptr_deref(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2, BP_VAR_R);
 	if (EG(exception)) {
-		FREE_OP(EX_WOP2->op1_type, opline->op1.var);
-		FREE_OP(EX_WOP2->op2_type, opline->op2.var);
+		FREE_OP(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var);
 		HANDLE_EXCEPTION();
 	}
 
@@ -3839,13 +3839,13 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_2_SPEC_HANDLER
 		function(result, arg1, arg2);
 	}
 
-	FREE_OP(EX_WOP2->op1_type, opline->op1.var);
-	/* Set OP1 to UNDEF in case FREE_OP(EX_WOP2->op2_type, opline->op2.var) throws. */
-	if (EX_WOP2->op1_type & (IS_VAR|IS_TMP_VAR)) {
+	FREE_OP(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1.var);
+	/* Set OP1 to UNDEF in case FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var) throws. */
+	if (QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num) & (IS_VAR|IS_TMP_VAR)) {
 		ZVAL_UNDEF(EX_VAR(opline->op1.var));
 	}
-	FREE_OP(EX_WOP2->op2_type, opline->op2.var);
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var);
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_2_SPEC_OBSERVER_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -3855,11 +3855,11 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_2_SPEC_OBSERVE
 
 	zval *result = EX_VAR(opline->result.var);
 	ZVAL_NULL(result);
-	zval *arg1 = get_zval_ptr_deref(EX_WOP2->op1_type, opline->op1, BP_VAR_R);
-	zval *arg2 = get_zval_ptr_deref(EX_WOP2->op2_type, opline->op2, BP_VAR_R);
+	zval *arg1 = get_zval_ptr_deref(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1, BP_VAR_R);
+	zval *arg2 = get_zval_ptr_deref(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2, BP_VAR_R);
 	if (EG(exception)) {
-		FREE_OP(EX_WOP2->op1_type, opline->op1.var);
-		FREE_OP(EX_WOP2->op2_type, opline->op2.var);
+		FREE_OP(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1.var);
+		FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var);
 		HANDLE_EXCEPTION();
 	}
 
@@ -3873,13 +3873,13 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_2_SPEC_OBSERVE
 		function(result, arg1, arg2);
 	}
 
-	FREE_OP(EX_WOP2->op1_type, opline->op1.var);
-	/* Set OP1 to UNDEF in case FREE_OP(EX_WOP2->op2_type, opline->op2.var) throws. */
-	if (EX_WOP2->op1_type & (IS_VAR|IS_TMP_VAR)) {
+	FREE_OP(QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num), opline->op1.var);
+	/* Set OP1 to UNDEF in case FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var) throws. */
+	if (QUICK_OP_FLAGS_OP1_TYPE((opline+1)->op2.num) & (IS_VAR|IS_TMP_VAR)) {
 		ZVAL_UNDEF(EX_VAR(opline->op1.var));
 	}
-	FREE_OP(EX_WOP2->op2_type, opline->op2.var);
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	FREE_OP(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num), opline->op2.var);
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FRAMELESS_ICALL_3_SPEC_HANDLER(ZEND_OPCODE_HANDLER_ARGS)

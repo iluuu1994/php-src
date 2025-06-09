@@ -23,27 +23,31 @@ var_dump($result);
 ?>
 --EXPECTF--
 $_main:
-     ; (lines=20, args=0, vars=2, tmps=1)
+     ; (lines=24, args=0, vars=2, tmps=%d)
      ; (after optimizer)
      ; %s
 0000 ASSIGN CV0($text) string("Bienvenue chez nous")
 0001 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Welcome/") CV0($text)
-0002 JMPNZ T2 0010
-0003 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Hello/") CV0($text)
-0004 JMPNZ T2 0010
-0005 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bienvenue/") CV0($text)
-0006 JMPNZ T2 0012
-0007 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bonjour/") CV0($text)
-0008 JMPNZ T2 0012
-0009 JMP 0014
-0010 T2 = QM_ASSIGN string("en")
-0011 JMP 0015
-0012 T2 = QM_ASSIGN string("fr")
-0013 JMP 0015
-0014 T2 = QM_ASSIGN string("other")
-0015 ASSIGN CV1($result) T2
-0016 INIT_FCALL 1 %d string("var_dump")
-0017 SEND_VAR CV1($result) 1
-0018 DO_ICALL
-0019 RETURN int(1)
+0002 OP_DATA
+0003 JMPNZ T2 0014
+0004 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Hello/") CV0($text)
+0005 OP_DATA
+0006 JMPNZ T2 0014
+0007 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bienvenue/") CV0($text)
+0008 OP_DATA
+0009 JMPNZ T2 0016
+0010 T2 = FRAMELESS_ICALL_2(preg_match) %d string("/Bonjour/") CV0($text)
+0011 OP_DATA
+0012 JMPNZ T2 0016
+0013 JMP 0018
+0014 T2 = QM_ASSIGN string("en")
+0015 JMP 0019
+0016 T2 = QM_ASSIGN string("fr")
+0017 JMP 0019
+0018 T2 = QM_ASSIGN string("other")
+0019 ASSIGN CV1($result) T2
+0020 INIT_FCALL 1 96 string("var_dump")
+0021 SEND_VAR CV1($result) 1
+0022 DO_ICALL
+0023 RETURN int(1)
 string(2) "fr"

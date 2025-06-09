@@ -2495,6 +2495,7 @@ const OP_HAS_OP_DATA = [
     'ZEND_ASSIGN_STATIC_PROP_OP',
     'ZEND_ASSIGN_STATIC_PROP_REF',
     'ZEND_DECLARE_ATTRIBUTED_CONST',
+    'ZEND_FRAMELESS_ICALL_2',
     'ZEND_FRAMELESS_ICALL_3',
 ];
 
@@ -2530,7 +2531,6 @@ function get_quick_op_flags_field($opcode) {
         'ZEND_FETCH_STATIC_PROP_W',
         'ZEND_FE_FETCH_R',
         'ZEND_FE_FETCH_RW',
-        'ZEND_FRAMELESS_ICALL_2',
         'ZEND_INCLUDE_OR_EVAL',
         'ZEND_INIT_DYNAMIC_CALL',
         'ZEND_INIT_FCALL',

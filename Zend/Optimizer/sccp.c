@@ -2206,7 +2206,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 					if (opline->opcode == ZEND_DO_ICALL) {
 						removed_ops = remove_call(ctx, opline, ssa_op) - 1;
 					} else {
-						bool has_op_data = opline->opcode == ZEND_FRAMELESS_ICALL_3;
+						bool has_op_data = opline->opcode == ZEND_FRAMELESS_ICALL_2 || opline->opcode == ZEND_FRAMELESS_ICALL_3;
 						zend_ssa_remove_instr(ssa, opline, ssa_op);
 						removed_ops++;
 						if (has_op_data) {
@@ -2248,7 +2248,7 @@ static int try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *var, 
 				if (opline->opcode == ZEND_DO_ICALL) {
 					removed_ops = remove_call(ctx, opline, ssa_op);
 				} else {
-					bool has_op_data = opline->opcode == ZEND_FRAMELESS_ICALL_3;
+					bool has_op_data = opline->opcode == ZEND_FRAMELESS_ICALL_2 || opline->opcode == ZEND_FRAMELESS_ICALL_3;
 					zend_ssa_remove_instr(ssa, opline, ssa_op);
 					removed_ops++;
 					if (has_op_data) {
