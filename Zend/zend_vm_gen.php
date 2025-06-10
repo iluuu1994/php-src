@@ -2528,6 +2528,8 @@ const OP_HAS_OP_DATA = [
     'ZEND_FETCH_STATIC_PROP_W',
     'ZEND_FE_FETCH_R',
     'ZEND_FE_FETCH_RW',
+    'ZEND_ISSET_ISEMPTY_DIM_OBJ',
+    'ZEND_ISSET_ISEMPTY_PROP_OBJ',
     'ZEND_ISSET_ISEMPTY_STATIC_PROP',
     'ZEND_POST_DEC_STATIC_PROP',
     'ZEND_POST_INC_STATIC_PROP',
@@ -2571,8 +2573,6 @@ function get_quick_op_flags_field($opcode) {
         // Trying to improve
         'ZEND_INSTANCEOF',
         'ZEND_IN_ARRAY',
-        'ZEND_ISSET_ISEMPTY_DIM_OBJ',
-        'ZEND_ISSET_ISEMPTY_PROP_OBJ',
     ];
 
     $has_free_result = [

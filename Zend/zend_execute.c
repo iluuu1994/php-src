@@ -2265,13 +2265,10 @@ static void zend_incdec_typed_prop(zend_property_info *prop_info, zval *var_ptr,
 	}
 }
 
-static void zend_pre_incdec_property_zval(zval *prop, zend_property_info *prop_info OPLINE_DC EXECUTE_DATA_DC)
+static void zend_pre_incdec_property_zval(zval *prop, zend_property_info *prop_info, bool is_inc, uint32_t result OPLINE_DC EXECUTE_DATA_DC)
 {
-	// FIXME: If this may be inlined, fetch wop only if needed.
-	zend_op *wop = EX_WOP;
-
 	if (EXPECTED(Z_TYPE_P(prop) == IS_LONG)) {
-		if (ZEND_IS_INCREMENT(wop->opcode)) {
+		if (is_inc) {
 			fast_long_increment_function(prop);
 		} else {
 			fast_long_decrement_function(prop);
@@ -2294,26 +2291,24 @@ static void zend_pre_incdec_property_zval(zval *prop, zend_property_info *prop_i
 
 			if (prop_info) {
 				zend_incdec_typed_prop(prop_info, prop, NULL OPLINE_CC EXECUTE_DATA_CC);
-			} else if (ZEND_IS_INCREMENT(wop->opcode)) {
+			} else if (is_inc) {
 				increment_function(prop);
 			} else {
 				decrement_function(prop);
 			}
 		} while (0);
 	}
-	if (UNEXPECTED(RETURN_VALUE_USED(wop))) {
-		ZVAL_COPY(EX_VAR(wop->result.var), prop);
+	// FIXME: How do we promote -1 to 32-bit?
+	if (UNEXPECTED(result != (uint16_t)-1)) {
+		ZVAL_COPY(EX_VAR(result), prop);
 	}
 }
 
-static void zend_post_incdec_property_zval(zval *prop, zend_property_info *prop_info OPLINE_DC EXECUTE_DATA_DC)
+static void zend_post_incdec_property_zval(zval *prop, zend_property_info *prop_info, bool is_inc, uint32_t result OPLINE_DC EXECUTE_DATA_DC)
 {
-	// FIXME: If this may be inlined, fetch wop only if needed.
-	zend_op *wop = EX_WOP;
-
 	if (EXPECTED(Z_TYPE_P(prop) == IS_LONG)) {
-		ZVAL_LONG(EX_VAR(wop->result.var), Z_LVAL_P(prop));
-		if (ZEND_IS_INCREMENT(wop->opcode)) {
+		ZVAL_LONG(EX_VAR(result), Z_LVAL_P(prop));
+		if (is_inc) {
 			fast_long_increment_function(prop);
 		} else {
 			fast_long_decrement_function(prop);
@@ -2328,16 +2323,16 @@ static void zend_post_incdec_property_zval(zval *prop, zend_property_info *prop_
 			zend_reference *ref = Z_REF_P(prop);
 			prop = Z_REFVAL_P(prop);
 			if (ZEND_REF_HAS_TYPE_SOURCES(ref)) {
-				zend_incdec_typed_ref(ref, EX_VAR(wop->result.var) OPLINE_CC EXECUTE_DATA_CC);
+				zend_incdec_typed_ref(ref, EX_VAR(result) OPLINE_CC EXECUTE_DATA_CC);
 				return;
 			}
 		}
 
 		if (prop_info) {
-			zend_incdec_typed_prop(prop_info, prop, EX_VAR(wop->result.var) OPLINE_CC EXECUTE_DATA_CC);
+			zend_incdec_typed_prop(prop_info, prop, EX_VAR(result) OPLINE_CC EXECUTE_DATA_CC);
 		} else {
-			ZVAL_COPY(EX_VAR(wop->result.var), prop);
-			if (ZEND_IS_INCREMENT(wop->opcode)) {
+			ZVAL_COPY(EX_VAR(result), prop);
+			if (is_inc) {
 				increment_function(prop);
 			} else {
 				decrement_function(prop);
