@@ -800,6 +800,15 @@ function gen_code($opcode, $f, $spec, $kind, $code, $op1, $op2, $name, $extra_sp
 
             return "ZEND_VM_SMART_BRANCH(\\1, \\2)";
         })(),
+        "/ZEND_VM_SMART_BRANCH_OFFSET\(\s*([^,)]*)\s*,\s*([^)]*)\s*\,\s*([^)]*)\s*\)/" => (function () use ($opcode, $extra_spec) {
+            /* Currently not used for any SMART_BRANCH specialized handlers. */
+            $field = $opcode['quick_op_flags_field'] ?? null;
+            if ($field) {
+                return "ZEND_VM_SMART_BRANCH_EX_OFFSET(\\1, \\2, QUICK_OP_FLAGS_SMART_BRANCH_JMPZ($field), QUICK_OP_FLAGS_SMART_BRANCH_JMPNZ($field), \\3)";
+            }
+
+            return "ZEND_VM_SMART_BRANCH_OFFSET(\\1, \\2, \\3)";
+        })(),
         "/ZEND_VM_SMART_BRANCH_TRUE\(\s*\)/" => (function () use ($opcode, $extra_spec) {
             if (isset($extra_spec['SMART_BRANCH'])) {
                 if ($extra_spec['SMART_BRANCH'] == 1) {
@@ -2510,6 +2519,18 @@ const OP_HAS_OP_DATA = [
     'ZEND_DECLARE_ATTRIBUTED_CONST',
     'ZEND_FRAMELESS_ICALL_2',
     'ZEND_FRAMELESS_ICALL_3',
+
+    'ZEND_FETCH_STATIC_PROP_FUNC_ARG',
+    'ZEND_FETCH_STATIC_PROP_IS',
+    'ZEND_FETCH_STATIC_PROP_R',
+    'ZEND_FETCH_STATIC_PROP_RW',
+    'ZEND_FETCH_STATIC_PROP_UNSET',
+    'ZEND_FETCH_STATIC_PROP_W',
+    'ZEND_ISSET_ISEMPTY_STATIC_PROP',
+    'ZEND_POST_DEC_STATIC_PROP',
+    'ZEND_POST_INC_STATIC_PROP',
+    'ZEND_PRE_DEC_STATIC_PROP',
+    'ZEND_PRE_INC_STATIC_PROP',
 ];
 
 function needs_quick_op_flags($opcode) {
@@ -2536,12 +2557,6 @@ function get_quick_op_flags_field($opcode) {
         'ZEND_CATCH',
         'ZEND_DECLARE_ANON_CLASS',
         'ZEND_FETCH_CLASS_CONSTANT',
-        'ZEND_FETCH_STATIC_PROP_FUNC_ARG',
-        'ZEND_FETCH_STATIC_PROP_IS',
-        'ZEND_FETCH_STATIC_PROP_R',
-        'ZEND_FETCH_STATIC_PROP_RW',
-        'ZEND_FETCH_STATIC_PROP_UNSET',
-        'ZEND_FETCH_STATIC_PROP_W',
         'ZEND_FE_FETCH_R',
         'ZEND_FE_FETCH_RW',
         'ZEND_INCLUDE_OR_EVAL',
@@ -2549,18 +2564,15 @@ function get_quick_op_flags_field($opcode) {
         'ZEND_INIT_FCALL',
         'ZEND_INIT_FCALL_BY_NAME',
         'ZEND_INIT_NS_FCALL_BY_NAME',
+        'ZEND_JMP_NULL',
+        'ZEND_RETURN_BY_REF',
+        'ZEND_TICKS',
+
+        // Trying to improve
         'ZEND_INSTANCEOF',
         'ZEND_IN_ARRAY',
         'ZEND_ISSET_ISEMPTY_DIM_OBJ',
         'ZEND_ISSET_ISEMPTY_PROP_OBJ',
-        'ZEND_ISSET_ISEMPTY_STATIC_PROP',
-        'ZEND_JMP_NULL',
-        'ZEND_POST_DEC_STATIC_PROP',
-        'ZEND_POST_INC_STATIC_PROP',
-        'ZEND_PRE_DEC_STATIC_PROP',
-        'ZEND_PRE_INC_STATIC_PROP',
-        'ZEND_RETURN_BY_REF',
-        'ZEND_TICKS',
     ];
 
     $has_free_result = [
@@ -2826,6 +2838,10 @@ function gen_vm($def, $skel) {
                 foreach ($options as $option) {
                     [$option_name, $option_value] = explode('=', $option);
                     if ($option_name === 'quick_op_flags_field') {
+                        // FIXME: Can't set this through OPTIONS() because it contains a ).
+                        if ($option_value === 'op_data') {
+                            $option_value = '(opline+1)->op2.num';
+                        }
                         $quick_op_flags_field = $option_value;
                     } else {
                         die("ERROR ($def:$lineno): Unknown helper option '$option_name'.\n");

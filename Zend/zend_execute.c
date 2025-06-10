@@ -3629,14 +3629,11 @@ static zend_never_inline void zend_assign_to_property_reference_var_var(zval *co
 		OPLINE_CC EXECUTE_DATA_CC);
 }
 
-static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type OPLINE_DC EXECUTE_DATA_DC) {
+static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type, uint8_t op1_type, uint32_t op1, uint8_t op2_type, uint32_t op2 OPLINE_DC EXECUTE_DATA_DC) {
 	zval *result;
 	zend_string *name;
 	zend_class_entry *ce;
 	zend_property_info *property_info;
-
-	zend_op *wop = EX_WOP;
-	uint8_t op1_type = wop->op1_type, op2_type = wop->op2_type;
 
 	if (EXPECTED(op2_type & IS_CONST)) {
 		zval *class_name = RT_CONSTANT(opline, opline->op2);
@@ -3646,7 +3643,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 		if (EXPECTED((ce = CACHED_PTR(cache_slot)) == NULL)) {
 			ce = zend_fetch_class_by_name(Z_STR_P(class_name), Z_STR_P(class_name + 1), ZEND_FETCH_CLASS_DEFAULT | ZEND_FETCH_CLASS_EXCEPTION);
 			if (UNEXPECTED(ce == NULL)) {
-				FREE_OP(op1_type, wop->op1.var);
+				FREE_OP(op1_type, op1);
 				return NULL;
 			}
 			if (UNEXPECTED(op1_type != IS_CONST)) {
@@ -3655,13 +3652,13 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 		}
 	} else {
 		if (EXPECTED(op2_type == IS_UNUSED)) {
-			ce = zend_fetch_class(NULL, wop->op2.num);
+			ce = zend_fetch_class(NULL, op2);
 			if (UNEXPECTED(ce == NULL)) {
-				FREE_OP(op1_type, wop->op1.var);
+				FREE_OP(op1_type, op1);
 				return NULL;
 			}
 		} else {
-			ce = Z_CE_P(EX_VAR(wop->op2.var));
+			ce = Z_CE_P(EX_VAR(op2));
 		}
 		if (EXPECTED(op1_type & IS_CONST) && EXPECTED(CACHED_PTR(cache_slot) == ce)) {
 			result = CACHED_PTR(cache_slot + sizeof(void *));
@@ -3675,13 +3672,15 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 		result = zend_std_get_static_property_with_info(ce, name, fetch_type, &property_info);
 	} else {
 		zend_string *tmp_name;
-		zval *varname = get_zval_ptr_undef(wop->op1_type, wop->op1, BP_VAR_R);
+		znode_op op1_znode;
+		op1_znode.var = op1;
+		zval *varname = get_zval_ptr_undef(op1_type, op1_znode, BP_VAR_R);
 		if (EXPECTED(Z_TYPE_P(varname) == IS_STRING)) {
 			name = Z_STR_P(varname);
 			tmp_name = NULL;
 		} else {
 			if ((op1_type & IS_CV) && UNEXPECTED(Z_TYPE_P(varname) == IS_UNDEF)) {
-				zval_undefined_cv(wop->op1.var EXECUTE_DATA_CC);
+				zval_undefined_cv(op1 EXECUTE_DATA_CC);
 			}
 			name = zval_get_tmp_string(varname, &tmp_name);
 		}
@@ -3689,7 +3688,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 
 		zend_tmp_string_release(tmp_name);
 
-		FREE_OP(op1_type, wop->op1.var);
+		FREE_OP(op1_type, op1);
 	}
 
 	if (UNEXPECTED(result == NULL)) {
@@ -3708,7 +3707,7 @@ static zend_never_inline zval* zend_fetch_static_property_address_ex(zend_proper
 }
 
 
-static zend_always_inline zval* zend_fetch_static_property_address(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type, int flags, uint8_t op1_type, uint8_t op2_type OPLINE_DC EXECUTE_DATA_DC) {
+static zend_always_inline zval* zend_fetch_static_property_address(zend_property_info **prop_info, uint32_t cache_slot, int fetch_type, int flags, uint8_t op1_type, uint32_t op1, uint8_t op2_type, uint32_t op2 OPLINE_DC EXECUTE_DATA_DC) {
 	zval *result;
 	zend_property_info *property_info;
 
@@ -3730,7 +3729,7 @@ static zend_always_inline zval* zend_fetch_static_property_address(zend_property
 			return NULL;
 		}
 	} else {
-		result = zend_fetch_static_property_address_ex(&property_info, cache_slot, fetch_type OPLINE_CC EXECUTE_DATA_CC);
+		result = zend_fetch_static_property_address_ex(&property_info, cache_slot, fetch_type, op1_type, op1, op2_type, op2 OPLINE_CC EXECUTE_DATA_CC);
 		if (UNEXPECTED(!result)) {
 			return NULL;
 		}
@@ -3771,7 +3770,7 @@ ZEND_API zval* ZEND_FASTCALL zend_fetch_static_property(zend_execute_data *ex, i
 	if (fetch_type == BP_VAR_W) {
 		flags = wop->extended_value & ZEND_FETCH_OBJ_FLAGS;
 	}
-	result = zend_fetch_static_property_address_ex(&property_info, cache_slot, fetch_type OPLINE_CC EXECUTE_DATA_CC);
+	result = zend_fetch_static_property_address_ex(&property_info, cache_slot, fetch_type, wop->op1_type, wop->op1.var, wop->op2_type, wop->op2.var OPLINE_CC EXECUTE_DATA_CC);
 	if (EXPECTED(result)) {
 		if (flags && ZEND_TYPE_IS_SET(property_info->type)) {
 			zend_handle_fetch_obj_flags(NULL, result, NULL, property_info, flags);
@@ -5717,30 +5716,35 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	} while (UNEXPECTED(prev_handler == opline->handler)); \
 	OPLINE = opline; \
 	ZEND_VM_CONTINUE()
-#define ZEND_VM_SMART_BRANCH_EX(_result, _check, _check_jmpz, _check_jmpnz) do { \
+#define ZEND_VM_SMART_BRANCH_EX_OFFSET(_result, _check, _check_jmpz, _check_jmpnz, _offset) do { \
 		if ((_check) && UNEXPECTED(EG(exception))) { \
 			OPLINE = EX(opline); \
 		} else if (EXPECTED(_check_jmpz)) { \
 			if (_result) { \
-				ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
+				ZEND_VM_SET_NEXT_OPCODE(opline + _offset + 1); \
 			} else { \
-				ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
+				ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + _offset, (opline+_offset)->op2)); \
 			} \
 		} else if (EXPECTED(_check_jmpnz)) { \
 			if (!(_result)) { \
-				ZEND_VM_SET_NEXT_OPCODE(opline + 2); \
+				ZEND_VM_SET_NEXT_OPCODE(opline + _offset + 1); \
 			} else { \
-				ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + 1, (opline+1)->op2)); \
+				ZEND_VM_SET_OPCODE(OP_JMP_ADDR(opline + _offset, (opline+_offset)->op2)); \
 			} \
 		} else { \
 			ZVAL_BOOL(EX_VAR(opline->result.var), _result); \
-			ZEND_VM_SET_NEXT_OPCODE(opline + 1); \
+			ZEND_VM_SET_NEXT_OPCODE(opline + _offset); \
 		} \
 		ZEND_VM_CONTINUE(); \
 	} while (0)
+#define ZEND_VM_SMART_BRANCH_EX(_result, _check, _check_jmpz, _check_jmpnz) ZEND_VM_SMART_BRANCH_EX_OFFSET(_result, _check, _check_jmpz, _check_jmpnz, 1)
 #define ZEND_VM_SMART_BRANCH(_result, _check) do { \
 		zend_op *wop = EX_WOP2; \
 		ZEND_VM_SMART_BRANCH_EX(_result, _check, wop->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR), wop->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR)); \
+	} while (0)
+#define ZEND_VM_SMART_BRANCH_OFFSET(_result, _check, _offset) do { \
+		zend_op *wop = EX_WOP2; \
+		ZEND_VM_SMART_BRANCH_EX_OFFSET(_result, _check, wop->result_type == (IS_SMART_BRANCH_JMPZ|IS_TMP_VAR), wop->result_type == (IS_SMART_BRANCH_JMPNZ|IS_TMP_VAR), _offset); \
 	} while (0)
 #define ZEND_VM_SMART_BRANCH_JMPZ(_result, _check) do { \
 		if ((_check) && UNEXPECTED(EG(exception))) { \

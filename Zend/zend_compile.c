@@ -2483,6 +2483,11 @@ static zend_op *zend_delayed_compile_end(uint32_t offset) /* {{{ */
 	}
 
 	CG(delayed_oplines_stack).top = offset;
+
+	if (opline && opline->opcode == ZEND_OP_DATA) {
+		opline--;
+	}
+
 	return opline;
 }
 /* }}} */
@@ -3199,11 +3204,21 @@ static zend_op *zend_compile_static_prop(znode *result, zend_ast *ast, uint32_t 
 
 	zend_compile_expr(&prop_node, prop_ast);
 
+	znode unused_node;
+	unused_node.op_type = IS_UNUSED;
+	unused_node.u.op.num = (uint16_t)-1;
+
+	uint32_t opnum = get_next_op_number();
 	if (delayed) {
 		opline = zend_delayed_emit_op(result, ZEND_FETCH_STATIC_PROP_R, &prop_node, NULL);
+		zend_delayed_emit_op(NULL, ZEND_OP_DATA, &unused_node, NULL);
+		opline = (zend_op*)zend_stack_top(&CG(delayed_oplines_stack)) - 1;
 	} else {
 		opline = zend_emit_op(result, ZEND_FETCH_STATIC_PROP_R, &prop_node, NULL);
+		zend_emit_op_data(&unused_node);
+		opline = CG(active_op_array)->opcodes + opnum;
 	}
+
 	if (opline->op1_type == IS_CONST) {
 		convert_to_string(CT_CONSTANT(opline->op1));
 		opline->extended_value = zend_alloc_cache_slots(3);
@@ -3224,6 +3239,9 @@ static zend_op *zend_compile_static_prop(znode *result, zend_ast *ast, uint32_t 
 	}
 
 	zend_adjust_for_fetch_type(opline, result, type);
+
+
+
 	return opline;
 }
 /* }}} */
@@ -3466,7 +3484,7 @@ static void zend_compile_assign(znode *result, zend_ast *ast) /* {{{ */
 			opline->result_type = IS_TMP_VAR;
 			result->op_type = IS_TMP_VAR;
 
-			zend_emit_op_data(&expr_node);
+			SET_NODE((opline+1)->op1, &expr_node);
 			return;
 		case ZEND_AST_DIM:
 			offset = zend_delayed_compile_begin();
@@ -3581,7 +3599,7 @@ static void zend_compile_assign_ref(znode *result, zend_ast *ast) /* {{{ */
 		opline->opcode = ZEND_ASSIGN_STATIC_PROP_REF;
 		opline->extended_value &= ~ZEND_FETCH_REF;
 		opline->extended_value |= flags;
-		zend_emit_op_data(&source_node);
+		SET_NODE((opline+1)->op1, &source_node);
 		*result = target_node;
 	} else {
 		opline = zend_emit_op(result, ZEND_ASSIGN_REF, &target_node, &source_node);
@@ -3635,8 +3653,8 @@ static void zend_compile_compound_assign(znode *result, zend_ast *ast) /* {{{ */
 			opline->result_type = IS_TMP_VAR;
 			result->op_type = IS_TMP_VAR;
 
-			opline = zend_emit_op_data(&expr_node);
-			opline->extended_value = cache_slot;
+			SET_NODE((opline+1)->op1, &expr_node);
+			(opline+1)->extended_value = cache_slot;
 			return;
 		case ZEND_AST_DIM:
 			offset = zend_delayed_compile_begin();
@@ -10495,10 +10513,11 @@ static void zend_compile_assign_coalesce(znode *result, zend_ast *ast) /* {{{ */
 			zend_emit_op_tmp(&assign_node, ZEND_ASSIGN, &var_node_w, &default_node);
 			break;
 		case ZEND_AST_STATIC_PROP:
+			opline--;
 			opline->opcode = ZEND_ASSIGN_STATIC_PROP;
 			opline->result_type = IS_TMP_VAR;
 			var_node_w.op_type = IS_TMP_VAR;
-			zend_emit_op_data(&default_node);
+			SET_NODE((opline+1)->op1, &default_node);
 			assign_node = var_node_w;
 			break;
 		case ZEND_AST_DIM:
