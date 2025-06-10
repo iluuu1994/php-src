@@ -6123,12 +6123,14 @@ static void zend_compile_foreach(zend_ast *ast) /* {{{ */
 	}
 
 	opnum_reset = get_next_op_number();
-	opline = zend_emit_op(&reset_node, by_ref ? ZEND_FE_RESET_RW : ZEND_FE_RESET_R, &expr_node, NULL);
+	zend_emit_op(&reset_node, by_ref ? ZEND_FE_RESET_RW : ZEND_FE_RESET_R, &expr_node, NULL);
 
 	zend_begin_loop(ZEND_FE_FREE, &reset_node, 0);
 
 	opnum_fetch = get_next_op_number();
-	opline = zend_emit_op(NULL, by_ref ? ZEND_FE_FETCH_RW : ZEND_FE_FETCH_R, &reset_node, NULL);
+	zend_emit_op(NULL, by_ref ? ZEND_FE_FETCH_RW : ZEND_FE_FETCH_R, &reset_node, NULL);
+	zend_emit_op_data(NULL);
+	opline = CG(active_op_array)->opcodes + opnum_fetch;
 
 	if (is_this_fetch(value_ast)) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Cannot re-assign $this");

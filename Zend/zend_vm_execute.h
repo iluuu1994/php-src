@@ -3075,7 +3075,7 @@ fe_fetch_r_exit:
 		value_type = Z_TYPE_INFO_P(value);
 	}
 
-	if (EXPECTED(EX_WOP2->op2_type == IS_CV)) {
+	if (EXPECTED(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num) == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
 		zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
 	} else {
@@ -3087,7 +3087,7 @@ fe_fetch_r_exit:
 			GC_ADDREF(gc);
 		}
 	}
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_ISSET_ISEMPTY_STATIC_PROP_SPEC_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -23160,11 +23160,11 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SPEC_VA
 			}
 		}
 	}
-	if (EXPECTED(EX_WOP2->op2_type == IS_CV)) {
+	if (EXPECTED(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num) == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
 		SAVE_OPLINE();
 		zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
-		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+		ZEND_VM_NEXT_OPCODE_EX(1, 2);
 	} else {
 		zval *res = EX_VAR(opline->op2.var);
 		zend_refcounted *gc = Z_COUNTED_P(value);
@@ -23173,7 +23173,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SPEC_VA
 		if (Z_TYPE_INFO_REFCOUNTED(value_type)) {
 			GC_ADDREF(gc);
 		}
-		ZEND_VM_NEXT_OPCODE();
+		ZEND_VM_NEXT_OPCODE_EX(0, 2);
 	}
 }
 
@@ -23362,7 +23362,7 @@ fe_fetch_w_exit:
 		ref = Z_REFVAL_P(value);
 		ZVAL_COPY_VALUE_EX(ref, value, gc, value_type);
 	}
-	if (EXPECTED(EX_WOP2->op2_type == IS_CV)) {
+	if (EXPECTED(QUICK_OP_FLAGS_OP2_TYPE((opline+1)->op2.num) == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
 		if (EXPECTED(variable_ptr != value)) {
 			zend_reference *ref;
@@ -23376,7 +23376,7 @@ fe_fetch_w_exit:
 		Z_ADDREF_P(value);
 		ZVAL_REF(EX_VAR(opline->op2.var), Z_REF_P(value));
 	}
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_JMP_SET_SPEC_VAR_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -33443,7 +33443,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SIMPLE_
 
 	variable_ptr = EX_VAR(opline->op2.var);
 	zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 
@@ -33511,7 +33511,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_FE_FETCH_R_SIMPLE_
 
 	variable_ptr = EX_VAR(opline->op2.var);
 	zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
-	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
+	ZEND_VM_NEXT_OPCODE_EX(1, 2);
 }
 
 
