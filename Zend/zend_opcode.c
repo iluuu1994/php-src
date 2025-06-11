@@ -1074,6 +1074,10 @@ ZEND_API void zend_setup_quick_op_flags(zend_op *opline, zend_slim_op *slim_op)
 		quick_flags |= 0x2000;
 	}
 
+	if (opline->opcode == ZEND_NEW && opline->extended_value == 0) {
+		(slim_op+1)->op1.num = opline->opcode;
+	}
+
 	switch (field) {
 		case ZEND_VM_QUICK_OP_FLAGS_FIELD_EXT_VALUE:
 			slim_op->extended_value = quick_flags;

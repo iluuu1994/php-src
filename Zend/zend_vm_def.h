@@ -5985,8 +5985,9 @@ ZEND_VM_HANDLER(68, ZEND_NEW, UNUSED|CLASS_FETCH|CONST|VAR, UNUSED|CACHE_SLOT, N
 	constructor = Z_OBJ_HT_P(result)->get_constructor(Z_OBJ_P(result));
 	if (constructor == NULL) {
 		/* If there are no arguments, skip over the DO_FCALL opcode. We check if the next
-		 * opcode is DO_FCALL in case EXT instructions are used. */
-		if (EXPECTED(opline->extended_value == 0 && Z_WOP_FROM_OP(opline+1)->opcode == ZEND_DO_FCALL)) {
+		 * opcode is DO_FCALL in case EXT instructions are used. We store this info in op1
+		 * of slim_op for DO_FCALL and DO_FCALL_BY_NAME. */
+		if (EXPECTED(opline->extended_value == 0 && (opline+1)->op1.num == ZEND_DO_FCALL)) {
 			ZEND_VM_NEXT_OPCODE_EX(1, 2);
 		}
 
