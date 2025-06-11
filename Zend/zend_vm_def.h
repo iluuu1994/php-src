@@ -8059,7 +8059,7 @@ ZEND_VM_C_LABEL(try_instanceof):
 		result = 0;
 	}
 	FREE_OP1();
-	ZEND_VM_SMART_BRANCH(result, 1);
+	ZEND_VM_SMART_BRANCH_OFFSET(result, 1, 2);
 }
 
 ZEND_VM_HOT_HANDLER(104, ZEND_EXT_NOP, ANY, ANY)

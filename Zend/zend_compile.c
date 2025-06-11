@@ -10669,6 +10669,8 @@ static void zend_compile_instanceof(znode *result, zend_ast *ast) /* {{{ */
 	} else {
 		SET_NODE(opline->op2, &class_node);
 	}
+
+	zend_emit_op_data(NULL);
 }
 /* }}} */
 
