@@ -10747,13 +10747,13 @@ static void zend_compile_isset_or_empty(znode *result, zend_ast *ast) /* {{{ */
 		case ZEND_AST_DIM:
 			opline = zend_compile_dim(result, var_ast, BP_VAR_IS, /* by_ref */ false);
 			opline->opcode = ZEND_ISSET_ISEMPTY_DIM_OBJ;
-			zend_emit_op_data(NULL);
+			opline = zend_emit_op_data(NULL) - 1;
 			break;
 		case ZEND_AST_PROP:
 		case ZEND_AST_NULLSAFE_PROP:
 			opline = zend_compile_prop(result, var_ast, BP_VAR_IS, 0);
 			opline->opcode = ZEND_ISSET_ISEMPTY_PROP_OBJ;
-			zend_emit_op_data(NULL);
+			opline = zend_emit_op_data(NULL) - 1;
 			break;
 		case ZEND_AST_STATIC_PROP:
 			opline = zend_compile_static_prop(result, var_ast, BP_VAR_IS, 0, 0);
