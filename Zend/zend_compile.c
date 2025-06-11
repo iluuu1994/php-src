@@ -4490,6 +4490,7 @@ static zend_result zend_compile_func_in_array(znode *result, zend_ast_list *args
 
 	opline = zend_emit_op_tmp(result, ZEND_IN_ARRAY, &needly, &array);
 	opline->extended_value = strict;
+	zend_emit_op_data(NULL);
 
 	return SUCCESS;
 }

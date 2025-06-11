@@ -9410,13 +9410,13 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(189, ZEND_IN_ARRAY, CONST|TMP|VAR|CV, CONST, NUM
 		if (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) {
 			zval_ptr_dtor_str(op1);
 		}
-		ZEND_VM_SMART_BRANCH(result, 0);
+		ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 	}
 
 	if (opline->extended_value) {
 		if (EXPECTED(Z_TYPE_P(op1) == IS_LONG)) {
 			result = zend_hash_index_find(ht, Z_LVAL_P(op1));
-			ZEND_VM_SMART_BRANCH(result, 0);
+			ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 		}
 		SAVE_OPLINE();
 		if ((OP1_TYPE & (IS_VAR|IS_CV)) && Z_TYPE_P(op1) == IS_REFERENCE) {
@@ -9424,11 +9424,11 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(189, ZEND_IN_ARRAY, CONST|TMP|VAR|CV, CONST, NUM
 			if (EXPECTED(Z_TYPE_P(op1) == IS_STRING)) {
 				result = zend_hash_find(ht, Z_STR_P(op1));
 				FREE_OP1();
-				ZEND_VM_SMART_BRANCH(result, 0);
+				ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 			} else if (EXPECTED(Z_TYPE_P(op1) == IS_LONG)) {
 				result = zend_hash_index_find(ht, Z_LVAL_P(op1));
 				FREE_OP1();
-				ZEND_VM_SMART_BRANCH(result, 0);
+				ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 			}
 		} else if (OP1_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(op1) == IS_UNDEF)) {
 			ZVAL_UNDEFINED_OP1();
@@ -9442,7 +9442,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(189, ZEND_IN_ARRAY, CONST|TMP|VAR|CV, CONST, NUM
 			}
 		}
 		result = zend_hash_find_known_hash(ht, ZSTR_EMPTY_ALLOC());
-		ZEND_VM_SMART_BRANCH(result, 0);
+		ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 	} else {
 		zend_string *key;
 		zval key_tmp;
@@ -9452,7 +9452,7 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(189, ZEND_IN_ARRAY, CONST|TMP|VAR|CV, CONST, NUM
 			if (EXPECTED(Z_TYPE_P(op1) == IS_STRING)) {
 				result = zend_hash_find(ht, Z_STR_P(op1));
 				FREE_OP1();
-				ZEND_VM_SMART_BRANCH(result, 0);
+				ZEND_VM_SMART_BRANCH_OFFSET(result, 0, 2);
 			}
 		}
 
@@ -9461,12 +9461,12 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(189, ZEND_IN_ARRAY, CONST|TMP|VAR|CV, CONST, NUM
 			ZVAL_STR(&key_tmp, key);
 			if (zend_compare(op1, &key_tmp) == 0) {
 				FREE_OP1();
-				ZEND_VM_SMART_BRANCH(1, 1);
+				ZEND_VM_SMART_BRANCH_OFFSET(1, 1, 2);
 			}
 		} ZEND_HASH_FOREACH_END();
 	}
 	FREE_OP1();
-	ZEND_VM_SMART_BRANCH(0, 1);
+	ZEND_VM_SMART_BRANCH_OFFSET(0, 1, 2);
 }
 
 ZEND_VM_COLD_CONST_HANDLER(190, ZEND_COUNT, CONST|TMPVAR|CV, UNUSED)
