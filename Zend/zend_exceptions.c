@@ -176,7 +176,7 @@ static zend_always_inline bool is_handle_exception_set(void) {
 	return !execute_data
 		|| !EX(func)
 		|| !ZEND_USER_CODE(EX(func)->common.type)
-		|| EX_WOP->opcode == ZEND_HANDLE_EXCEPTION;
+		|| EX(opline) == EG(exception_slim_op);
 }
 
 ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /* {{{ */

@@ -52,7 +52,7 @@
 #define USED_RET() \
 	(!EX(prev_execute_data) || \
 	 !ZEND_USER_CODE(EX(prev_execute_data)->func->common.type) || \
-	 (Z_WOP_FROM_EX(EX(prev_execute_data))->result_type != IS_UNUSED))
+	 (Z_WOP_FROM_EX(EX(prev_execute_data))->result.var != (uint16_t)-1))
 
 #ifdef ZEND_ENABLE_STATIC_TSRMLS_CACHE
 #define ZEND_TSRMG TSRMG_STATIC
