@@ -274,6 +274,8 @@ jobs:
       # and other operations, so we disable it during benchmarking.
       - name: Disable ASLR
         run: echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+      - name: Relax perf_event_paranoid
+        run: echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
       - name: apt
         run: |
           set -x
