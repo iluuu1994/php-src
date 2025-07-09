@@ -2,11 +2,11 @@
 
 require_once __DIR__ . '/shared.php';
 
-foreach (array("mbstring", "sockets", "mysqli", "openssl", "gmp") as $ext) {
-    if (!extension_loaded($ext)) {
-        throw new LogicException("Extension $ext is required.");
-    }
-}
+// foreach (array("mbstring", "sockets", "mysqli", "openssl", "gmp") as $ext) {
+//     if (!extension_loaded($ext)) {
+//         throw new LogicException("Extension $ext is required.");
+//     }
+// }
 
 $storeResult = ($argv[1] ?? 'false') === 'true';
 $phpCgi = $argv[2] ?? dirname(PHP_BINARY) . '/php-cgi';
@@ -18,6 +18,9 @@ if (!file_exists($phpCgi)) {
 function main() {
     global $storeResult;
 
+    $dir = __DIR__ . '/repos/php-benchmark-diff';
+    cloneRepo($dir, 'https://github.com/iluuu1994/php-benchmark-diff.git', branch: 'json');
+
     $profilesDir = __DIR__ . '/profiles';
     if (!is_dir($profilesDir)) {
         mkdir($profilesDir, 0755, true);
@@ -28,11 +31,11 @@ function main() {
         $data['branch'] = $branch;
     }
     $data['Zend/bench.php'] = runBench(false);
-    $data['Zend/bench.php JIT'] = runBench(true);
-    $data['Symfony Demo 2.2.3'] = runSymfonyDemo(false);
-    $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
-    $data['Wordpress 6.2'] = runWordpress(false);
-    $data['Wordpress 6.2 JIT'] = runWordpress(true);
+    // $data['Zend/bench.php JIT'] = runBench(true);
+    // $data['Symfony Demo 2.2.3'] = runSymfonyDemo(false);
+    // $data['Symfony Demo 2.2.3 JIT'] = runSymfonyDemo(true);
+    // $data['Wordpress 6.2'] = runWordpress(false);
+    // $data['Wordpress 6.2 JIT'] = runWordpress(true);
     $result = json_encode($data, JSON_PRETTY_PRINT) . "\n";
 
     fwrite(STDOUT, $result);
@@ -115,25 +118,24 @@ function runValgrindPhpCgiCommand(
     }
 
     $process = runCommand([
-        'valgrind',
-        '--tool=callgrind',
-        '--dump-instr=yes',
-        "--callgrind-out-file=$profileOut",
-        '--',
-        $phpCgi,
-        '-T' . ($warmup ? $warmup . ',' : '') . $repeat,
-        '-d max_execution_time=0',
-        '-d opcache.enable=1',
-        '-d opcache.jit=' . ($jit ? 'tracing' : 'disable'),
-        '-d opcache.jit_buffer_size=128M',
-        '-d opcache.validate_timestamps=0',
-        ...$args,
+        PHP_BINARY,
+        __DIR__ . '/repos/php-benchmark-diff/b',
+        '--output=json',
+        '--mode=cycles',
+        '--time=120',
+        implode(' ', [
+            $phpCgi,
+            '-T' . ($warmup ? $warmup . ',' : '') . $repeat,
+            '-d max_execution_time=0',
+            '-d opcache.enable=1',
+            '-d opcache.jit=' . ($jit ? 'tracing' : 'disable'),
+            '-d opcache.jit_buffer_size=128M',
+            '-d opcache.validate_timestamps=0',
+            ...$args,
+        ]),
     ]);
-    $instructions = extractInstructionsFromValgrindOutput($process->stderr);
-    if ($repeat > 1) {
-        $instructions = gmp_strval(gmp_div_q($instructions, $repeat));
-    }
-    return ['instructions' => $instructions];
+    $json = json_decode($process->stdout, true);
+    return $json[0];
 }
 
 function extractInstructionsFromValgrindOutput(string $output): string {

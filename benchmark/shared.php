@@ -61,7 +61,7 @@ function runCommand(array $args, ?string $cwd = null, bool $printCommand = true)
     return $result;
 }
 
-function cloneRepo(string $path, string $url) {
+function cloneRepo(string $path, string $url, ?string $branch = null) {
     if (is_dir($path)) {
         return;
     }
@@ -70,5 +70,11 @@ function cloneRepo(string $path, string $url) {
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
-    runCommand(['git', 'clone', '-q', '--end-of-options', $url, $repo], dirname($path));
+
+    $args = ['git', 'clone', '-q'];
+    if ($branch !== null) {
+        $args = array_merge($args, ['-b', $branch]);
+    }
+    $args = array_merge($args, ['--end-of-options', $url, $repo]);
+    runCommand($args, dirname($path));
 }
