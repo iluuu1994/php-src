@@ -7683,6 +7683,8 @@ static void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32
 		uint32_t property_flags = param_ast->attr & (ZEND_ACC_PPP_MASK | ZEND_ACC_PPP_SET_MASK | ZEND_ACC_READONLY | ZEND_ACC_FINAL);
 		bool is_promoted = property_flags || hooks_ast;
 
+		CG(zend_lineno) = param_ast->lineno;
+
 		znode var_node, default_node;
 		uint8_t opcode;
 		zend_op *opline;
@@ -10086,6 +10088,8 @@ static void zend_compile_binary_op(znode *result, zend_ast *ast) /* {{{ */
 	zend_compile_expr(&left_node, left_ast);
 	zend_compile_expr(&right_node, right_ast);
 
+	CG(zend_lineno) = ast->lineno;
+
 	if (left_node.op_type == IS_CONST && right_node.op_type == IS_CONST) {
 		if (zend_try_ct_eval_binary_op(&result->u.constant, opcode,
 				&left_node.u.constant, &right_node.u.constant)
@@ -11685,9 +11689,6 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 
 static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 {
-	/* CG(zend_lineno) = ast->lineno; */
-	CG(zend_lineno) = zend_ast_get_lineno(ast);
-
 	if (CG(memoize_mode) != ZEND_MEMOIZE_NONE) {
 		zend_compile_memoized_expr(result, ast);
 		return;
@@ -11829,15 +11830,18 @@ static void zend_compile_expr(znode *result, zend_ast *ast)
 {
 	zend_check_stack_limit();
 
+	uint32_t prev_lineno = CG(zend_lineno);
+	CG(zend_lineno) = zend_ast_get_lineno(ast);
+
 	uint32_t checkpoint = zend_short_circuiting_checkpoint();
 	zend_compile_expr_inner(result, ast);
 	zend_short_circuiting_commit(checkpoint, result, ast);
+
+	CG(zend_lineno) = prev_lineno;
 }
 
 static zend_op *zend_compile_var_inner(znode *result, zend_ast *ast, uint32_t type, bool by_ref)
 {
-	CG(zend_lineno) = zend_ast_get_lineno(ast);
-
 	if (CG(memoize_mode) != ZEND_MEMOIZE_NONE) {
 		switch (ast->kind) {
 			case ZEND_AST_CALL:
@@ -11891,9 +11895,15 @@ static zend_op *zend_compile_var(znode *result, zend_ast *ast, uint32_t type, bo
 {
 	zend_check_stack_limit();
 
+	uint32_t prev_lineno = CG(zend_lineno);
+	CG(zend_lineno) = zend_ast_get_lineno(ast);
+
 	uint32_t checkpoint = zend_short_circuiting_checkpoint();
 	zend_op *opcode = zend_compile_var_inner(result, ast, type, by_ref);
 	zend_short_circuiting_commit(checkpoint, result, ast);
+
+	CG(zend_lineno) = prev_lineno;
+
 	return opcode;
 }
 
