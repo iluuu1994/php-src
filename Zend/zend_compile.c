@@ -10728,6 +10728,8 @@ static void zend_compile_binary_op(znode *result, zend_ast *ast) /* {{{ */
 	zend_compile_expr(&left_node, left_ast);
 	zend_compile_expr(&right_node, right_ast);
 
+	CG(zend_lineno) = ast->lineno;
+
 	if (left_node.op_type == IS_CONST && right_node.op_type == IS_CONST) {
 		if (zend_try_ct_eval_binary_op(&result->u.constant, opcode,
 				&left_node.u.constant, &right_node.u.constant)
@@ -12327,9 +12329,6 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 
 static void zend_compile_expr_inner(znode *result, zend_ast *ast) /* {{{ */
 {
-	/* CG(zend_lineno) = ast->lineno; */
-	CG(zend_lineno) = zend_ast_get_lineno(ast);
-
 	if (CG(memoize_mode) != ZEND_MEMOIZE_NONE) {
 		zend_compile_memoized_expr(result, ast, BP_VAR_R);
 		return;
@@ -12468,6 +12467,9 @@ static void zend_compile_expr(znode *result, zend_ast *ast)
 {
 	zend_check_stack_limit();
 
+	uint32_t prev_lineno = CG(zend_lineno);
+	CG(zend_lineno) = zend_ast_get_lineno(ast);
+
 	uint32_t checkpoint = zend_short_circuiting_checkpoint();
 	zend_compile_expr_inner(result, ast);
 	zend_short_circuiting_commit(checkpoint, result, ast);
@@ -12477,12 +12479,12 @@ static void zend_compile_expr(znode *result, zend_ast *ast)
 		ZEND_ASSERT(result->op_type != IS_VAR);
 	}
 #endif
+
+	CG(zend_lineno) = prev_lineno;
 }
 
 static zend_op *zend_compile_var_inner(znode *result, zend_ast *ast, uint32_t type, bool by_ref)
 {
-	CG(zend_lineno) = zend_ast_get_lineno(ast);
-
 	if (CG(memoize_mode) != ZEND_MEMOIZE_NONE) {
 		switch (ast->kind) {
 			case ZEND_AST_CALL:
@@ -12543,6 +12545,9 @@ static zend_op *zend_compile_var(znode *result, zend_ast *ast, uint32_t type, bo
 {
 	zend_check_stack_limit();
 
+	uint32_t prev_lineno = CG(zend_lineno);
+	CG(zend_lineno) = zend_ast_get_lineno(ast);
+
 	uint32_t checkpoint = zend_short_circuiting_checkpoint();
 	zend_op *opcode = zend_compile_var_inner(result, ast, type, by_ref);
 	zend_short_circuiting_commit(checkpoint, result, ast);
@@ -12556,6 +12561,9 @@ static zend_op *zend_compile_var(znode *result, zend_ast *ast, uint32_t type, bo
 		ZEND_ASSERT(result->op_type != IS_VAR);
 	}
 #endif
+
+	CG(zend_lineno) = prev_lineno;
+
 	return opcode;
 }
 
