@@ -24,4 +24,6 @@ runs:
           --offline \
           --show-diff \
           --show-slow 1000 \
-          --set-timeout 120
+          --set-timeout 120 \
+          Zend/tests/arginfo_zpp_mismatch.phpt \
+          Zend/tests/arginfo_zpp_mismatch_strict.phpt
