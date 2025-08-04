@@ -59,6 +59,8 @@ runs:
           --enable-bcmath \
           --enable-calendar \
           --enable-ftp \
+          --with-pspell="$BREW_OPT"/aspell \
+          --with-kerberos \
           --enable-sysvmsg \
           --with-ffi \
           --enable-zend-test \
