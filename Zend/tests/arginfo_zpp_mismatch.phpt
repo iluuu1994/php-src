@@ -15,7 +15,6 @@ function test($function) {
         return;
     }
 
-    ob_start();
     if (is_string($function)) {
         echo "Testing $function\n";
     } else {
@@ -57,7 +56,6 @@ function test($function) {
         @$function(null, null, null, null, null, null, null, null);
     } catch (Throwable) {
     }
-    ob_end_clean();
 }
 
 foreach (get_defined_functions()["internal"] as $function) {
