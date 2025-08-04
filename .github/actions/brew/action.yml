@@ -18,6 +18,8 @@ runs:
           bison \
           re2c
         brew install \
+          aspell \
+          krb5 \
           bzip2 \
           enchant \
           libffi \
