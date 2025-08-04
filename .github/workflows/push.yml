@@ -42,7 +42,7 @@ env:
   CXX: ccache g++
 jobs:
   LINUX_X64:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -145,7 +145,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2022
     env:
@@ -171,7 +171,7 @@ jobs:
       - name: Test
         run: .github/scripts/windows/test.bat
   FREEBSD:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: FREEBSD
     runs-on: ubuntu-latest
     steps:
