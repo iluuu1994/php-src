@@ -6464,6 +6464,13 @@ static void zend_compile_pipe(znode *result, zend_ast *ast)
 	zend_ast *operand_ast = ast->child[0];
 	zend_ast *callable_ast = ast->child[1];
 
+	/* We can't encounter ZEND_AST_PARENTHESIZED_EXPR anywhere else. */
+	if (callable_ast->kind == ZEND_AST_PARENTHESIZED_EXPR) {
+		callable_ast = callable_ast->child[0];
+	} else if (callable_ast->kind == ZEND_AST_ARROW_FUNC) {
+		zend_error_noreturn(E_COMPILE_ERROR, "Arrow functions on the right hand side of |> must be parenthesized");
+	}
+
 	/* Compile the left hand side down to a value first. */
 	znode operand_result;
 	zend_compile_expr(&operand_result, operand_ast);

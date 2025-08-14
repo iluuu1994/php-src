@@ -2855,6 +2855,11 @@ simple_list:
 			zend_ast_export_indent(str, indent);
 			smart_str_appendc(str, '}');
 			break;
+		case ZEND_AST_PARENTHESIZED_EXPR:
+			smart_str_appendc(str, '(');
+			zend_ast_export_ex(str, ast->child[0], priority, indent);
+			smart_str_appendc(str, ')');
+			break;
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 	return;
