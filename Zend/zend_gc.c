@@ -28,11 +28,11 @@
  * GREY   (GC_GREY)    - Possible member of cycle.
  * WHITE  (GC_WHITE)   - Member of garbage cycle.
  * PURPLE (GC_PURPLE)  - Possible root of cycle.
+ * GREEN  (GC_GREEN)   - Acyclic. Used for values found on the stack before running the GC.
  *
  * Colors described in the paper but not used
  * ------------------------------------------
  *
- * GREEN - Acyclic
  * RED   - Candidate cycle undergoing
  * ORANGE - Candidate cycle awaiting epoch boundary.
  *
@@ -87,12 +87,13 @@
 
 /* GC_INFO layout */
 #define GC_ADDRESS  0x0fffffu
-#define GC_COLOR    0x300000u
+#define GC_COLOR    0x700000ul
 
-#define GC_BLACK    0x000000u /* must be zero */
-#define GC_WHITE    0x100000u
-#define GC_GREY     0x200000u
-#define GC_PURPLE   0x300000u
+#define GC_BLACK    0x000000ul /* must be zero */
+#define GC_WHITE    0x100000ul
+#define GC_GREY     0x200000ul
+#define GC_PURPLE   0x300000ul
+#define GC_GREEN    0x400000ul
 
 /* Debug tracing */
 #if ZEND_GC_DEBUG > 1
@@ -863,7 +864,7 @@ tail_call:
 					zval *entry = (zval*) Z_PTR_P(zv);
 					zval *weakmap = zv+1;
 					ZEND_ASSERT(Z_REFCOUNTED_P(weakmap));
-					if (Z_OPT_COLLECTABLE_P(entry)) {
+					if (Z_OPT_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_UNSET_FROM_WEAKMAP_KEY(entry);
 						if (GC_REF_CHECK_COLOR(Z_COUNTED_P(weakmap), GC_GREY)) {
 							/* Weakmap was scanned in gc_mark_roots, we must
@@ -900,7 +901,7 @@ tail_call:
 					ZEND_ASSERT(Z_TYPE_P(zv+1) == IS_PTR);
 					zval *key = zv;
 					zval *entry = (zval*) Z_PTR_P(zv+1);
-					if (Z_OPT_COLLECTABLE_P(entry)) {
+					if (Z_OPT_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_UNSET_FROM_WEAKMAP(entry);
 						if (GC_REF_CHECK_COLOR(Z_COUNTED_P(key), GC_GREY)) {
 							/* Key was scanned in gc_mark_roots, we must
@@ -938,7 +939,7 @@ tail_call:
 				if (!GC_REF_CHECK_COLOR(ht, GC_BLACK)) {
 					GC_REF_SET_BLACK(ht);
 					for (; n != 0; n--) {
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							ref = Z_COUNTED_P(zv);
 							GC_ADDREF(ref);
 							if (!GC_REF_CHECK_COLOR(ref, GC_BLACK)) {
@@ -954,14 +955,14 @@ tail_call:
 
 handle_zvals:
 			for (; n != 0; n--) {
-				if (Z_COLLECTABLE_P(zv)) {
+				if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 					ref = Z_COUNTED_P(zv);
 					GC_ADDREF(ref);
 					if (!GC_REF_CHECK_COLOR(ref, GC_BLACK)) {
 						GC_REF_SET_BLACK(ref);
 						zv++;
 						while (--n) {
-							if (Z_COLLECTABLE_P(zv)) {
+							if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 								zend_refcounted *ref = Z_COUNTED_P(zv);
 								GC_ADDREF(ref);
 								if (!GC_REF_CHECK_COLOR(ref, GC_BLACK)) {
@@ -993,7 +994,7 @@ handle_ht:
 			if (Z_TYPE_P(zv) == IS_INDIRECT) {
 				zv = Z_INDIRECT_P(zv);
 			}
-			if (Z_COLLECTABLE_P(zv)) {
+			if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 				ref = Z_COUNTED_P(zv);
 				GC_ADDREF(ref);
 				if (!GC_REF_CHECK_COLOR(ref, GC_BLACK)) {
@@ -1004,7 +1005,7 @@ handle_ht:
 						if (Z_TYPE_P(zv) == IS_INDIRECT) {
 							zv = Z_INDIRECT_P(zv);
 						}
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							zend_refcounted *ref = Z_COUNTED_P(zv);
 							GC_ADDREF(ref);
 							if (!GC_REF_CHECK_COLOR(ref, GC_BLACK)) {
@@ -1066,7 +1067,7 @@ tail_call:
 					zval *entry = (zval*) Z_PTR_P(zv);
 					zval *weakmap = zv+1;
 					ZEND_ASSERT(Z_REFCOUNTED_P(weakmap));
-					if (Z_COLLECTABLE_P(entry)) {
+					if (Z_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_SET_FROM_WEAKMAP_KEY(entry);
 						ref = Z_COUNTED_P(entry);
 						/* Only DELREF if the contribution from the weakmap has
@@ -1090,7 +1091,7 @@ tail_call:
 				for (; n != 0; n--) {
 					ZEND_ASSERT(Z_TYPE_P(zv) == IS_PTR);
 					zval *entry = (zval*) Z_PTR_P(zv);
-					if (Z_COLLECTABLE_P(entry)) {
+					if (Z_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_SET_FROM_WEAKMAP(entry);
 						ref = Z_COUNTED_P(entry);
 						/* Only DELREF if the contribution from the weakmap key
@@ -1116,7 +1117,7 @@ tail_call:
 				if (!GC_REF_CHECK_COLOR(ht, GC_GREY)) {
 					GC_REF_SET_COLOR(ht, GC_GREY);
 					for (; n != 0; n--) {
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							ref = Z_COUNTED_P(zv);
 							GC_DELREF(ref);
 							if (!GC_REF_CHECK_COLOR(ref, GC_GREY)) {
@@ -1131,14 +1132,14 @@ tail_call:
 			}
 handle_zvals:
 			for (; n != 0; n--) {
-				if (Z_COLLECTABLE_P(zv)) {
+				if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 					ref = Z_COUNTED_P(zv);
 					GC_DELREF(ref);
 					if (!GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 						GC_REF_SET_COLOR(ref, GC_GREY);
 						zv++;
 						while (--n) {
-							if (Z_COLLECTABLE_P(zv)) {
+							if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 								zend_refcounted *ref = Z_COUNTED_P(zv);
 								GC_DELREF(ref);
 								if (!GC_REF_CHECK_COLOR(ref, GC_GREY)) {
@@ -1170,7 +1171,7 @@ handle_ht:
 			if (Z_TYPE_P(zv) == IS_INDIRECT) {
 				zv = Z_INDIRECT_P(zv);
 			}
-			if (Z_COLLECTABLE_P(zv)) {
+			if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 				ref = Z_COUNTED_P(zv);
 				GC_DELREF(ref);
 				if (!GC_REF_CHECK_COLOR(ref, GC_GREY)) {
@@ -1181,7 +1182,7 @@ handle_ht:
 						if (Z_TYPE_P(zv) == IS_INDIRECT) {
 							zv = Z_INDIRECT_P(zv);
 						}
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							zend_refcounted *ref = Z_COUNTED_P(zv);
 							GC_DELREF(ref);
 							if (!GC_REF_CHECK_COLOR(ref, GC_GREY)) {
@@ -1317,7 +1318,7 @@ tail_call:
 				for (; n != 0; n--) {
 					ZEND_ASSERT(Z_TYPE_P(zv) == IS_PTR);
 					zval *entry = (zval*) Z_PTR_P(zv);
-					if (Z_OPT_COLLECTABLE_P(entry)) {
+					if (Z_OPT_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						ref = Z_COUNTED_P(entry);
 						if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 							GC_REF_SET_COLOR(ref, GC_WHITE);
@@ -1336,7 +1337,7 @@ tail_call:
 					GC_REF_SET_COLOR(ht, GC_WHITE);
 					GC_STACK_PUSH((zend_refcounted *) ht);
 					for (; n != 0; n--) {
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							ref = Z_COUNTED_P(zv);
 							if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 								GC_REF_SET_COLOR(ref, GC_WHITE);
@@ -1351,13 +1352,13 @@ tail_call:
 
 handle_zvals:
 			for (; n != 0; n--) {
-				if (Z_COLLECTABLE_P(zv)) {
+				if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 					ref = Z_COUNTED_P(zv);
 					if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 						GC_REF_SET_COLOR(ref, GC_WHITE);
 						zv++;
 						while (--n) {
-							if (Z_COLLECTABLE_P(zv)) {
+							if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 								zend_refcounted *ref = Z_COUNTED_P(zv);
 								if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 									GC_REF_SET_COLOR(ref, GC_WHITE);
@@ -1389,7 +1390,7 @@ handle_ht:
 			if (Z_TYPE_P(zv) == IS_INDIRECT) {
 				zv = Z_INDIRECT_P(zv);
 			}
-			if (Z_COLLECTABLE_P(zv)) {
+			if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 				ref = Z_COUNTED_P(zv);
 				if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 					GC_REF_SET_COLOR(ref, GC_WHITE);
@@ -1399,7 +1400,7 @@ handle_ht:
 						if (Z_TYPE_P(zv) == IS_INDIRECT) {
 							zv = Z_INDIRECT_P(zv);
 						}
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							zend_refcounted *ref = Z_COUNTED_P(zv);
 							if (GC_REF_CHECK_COLOR(ref, GC_GREY)) {
 								GC_REF_SET_COLOR(ref, GC_WHITE);
@@ -1531,7 +1532,7 @@ tail_call:
 				for (; n != 0; n--) {
 					ZEND_ASSERT(Z_TYPE_P(zv) == IS_PTR);
 					zval *entry = (zval*) Z_PTR_P(zv);
-					if (Z_COLLECTABLE_P(entry) && GC_FROM_WEAKMAP_KEY(entry)) {
+					if (Z_COLLECTABLE_P(entry) && GC_FROM_WEAKMAP_KEY(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_UNSET_FROM_WEAKMAP_KEY(entry);
 						GC_UNSET_FROM_WEAKMAP(entry);
 						ref = Z_COUNTED_P(entry);
@@ -1552,7 +1553,7 @@ tail_call:
 				for (; n != 0; n--) {
 					ZEND_ASSERT(Z_TYPE_P(zv) == IS_PTR);
 					zval *entry = (zval*) Z_PTR_P(zv);
-					if (Z_COLLECTABLE_P(entry) && GC_FROM_WEAKMAP(entry)) {
+					if (Z_COLLECTABLE_P(entry) && GC_FROM_WEAKMAP(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						GC_UNSET_FROM_WEAKMAP_KEY(entry);
 						GC_UNSET_FROM_WEAKMAP(entry);
 						ref = Z_COUNTED_P(entry);
@@ -1575,7 +1576,7 @@ tail_call:
 				if (GC_REF_CHECK_COLOR(ht, GC_WHITE)) {
 					GC_REF_SET_BLACK(ht);
 					for (; n != 0; n--) {
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							ref = Z_COUNTED_P(zv);
 							GC_ADDREF(ref);
 							if (GC_REF_CHECK_COLOR(ref, GC_WHITE)) {
@@ -1591,14 +1592,14 @@ tail_call:
 
 handle_zvals:
 			for (; n != 0; n--) {
-				if (Z_COLLECTABLE_P(zv)) {
+				if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 					ref = Z_COUNTED_P(zv);
 					GC_ADDREF(ref);
 					if (GC_REF_CHECK_COLOR(ref, GC_WHITE)) {
 						GC_REF_SET_BLACK(ref);
 						zv++;
 						while (--n) {
-							if (Z_COLLECTABLE_P(zv)) {
+							if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 								zend_refcounted *ref = Z_COUNTED_P(zv);
 								GC_ADDREF(ref);
 								if (GC_REF_CHECK_COLOR(ref, GC_WHITE)) {
@@ -1634,7 +1635,7 @@ handle_ht:
 			if (Z_TYPE_P(zv) == IS_INDIRECT) {
 				zv = Z_INDIRECT_P(zv);
 			}
-			if (Z_COLLECTABLE_P(zv)) {
+			if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 				ref = Z_COUNTED_P(zv);
 				GC_ADDREF(ref);
 				if (GC_REF_CHECK_COLOR(ref, GC_WHITE)) {
@@ -1645,7 +1646,7 @@ handle_ht:
 						if (Z_TYPE_P(zv) == IS_INDIRECT) {
 							zv = Z_INDIRECT_P(zv);
 						}
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							zend_refcounted *ref = Z_COUNTED_P(zv);
 							GC_ADDREF(ref);
 							if (GC_REF_CHECK_COLOR(ref, GC_WHITE)) {
@@ -1763,7 +1764,7 @@ tail_call:
 				for (; n != 0; n--) {
 					ZEND_ASSERT(Z_TYPE_P(zv) == IS_PTR);
 					zval *entry = (zval*) Z_PTR_P(zv);
-					if (Z_OPT_COLLECTABLE_P(entry)) {
+					if (Z_OPT_COLLECTABLE_P(entry) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(entry), GC_GREEN)) {
 						ref = Z_COUNTED_P(entry);
 						GC_STACK_PUSH(ref);
 					}
@@ -1776,7 +1777,7 @@ tail_call:
 			zv = table;
 			if (UNEXPECTED(ht)) {
 				for (; n != 0; n--) {
-					if (Z_COLLECTABLE_P(zv)) {
+					if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 						ref = Z_COUNTED_P(zv);
 						GC_STACK_PUSH(ref);
 					}
@@ -1791,11 +1792,11 @@ tail_call:
 
 handle_zvals:
 			for (; n != 0; n--) {
-				if (Z_COLLECTABLE_P(zv)) {
+				if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 					ref = Z_COUNTED_P(zv);
 					zv++;
 					while (--n) {
-						if (Z_COLLECTABLE_P(zv)) {
+						if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 							zend_refcounted *ref = Z_COUNTED_P(zv);
 							GC_STACK_PUSH(ref);
 						}
@@ -1822,7 +1823,7 @@ handle_ht:
 			if (Z_TYPE_P(zv) == IS_INDIRECT) {
 				zv = Z_INDIRECT_P(zv);
 			}
-			if (Z_COLLECTABLE_P(zv)) {
+			if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 				ref = Z_COUNTED_P(zv);
 				p++;
 				while (--n) {
@@ -1830,7 +1831,7 @@ handle_ht:
 					if (Z_TYPE_P(zv) == IS_INDIRECT) {
 						zv = Z_INDIRECT_P(zv);
 					}
-					if (Z_COLLECTABLE_P(zv)) {
+					if (Z_COLLECTABLE_P(zv) && !GC_REF_CHECK_COLOR(Z_COUNTED_P(zv), GC_GREEN)) {
 						zend_refcounted *ref = Z_COUNTED_P(zv);
 						GC_STACK_PUSH(ref);
 					}
@@ -2222,6 +2223,13 @@ static void zend_gc_check_root_tmpvars(void) {
 			continue;
 		}
 
+		for (uint32_t var_num = 0; var_num < func->op_array.last_var; var_num++) {
+			zval *var = ZEND_CALL_VAR_NUM(ex, var_num);
+			if (Z_COLLECTABLE_P(var)) {
+				GC_TRACE_SET_COLOR(var, GC_BLACK);
+			}
+		}
+
 		uint32_t op_num = ex->opline - ex->func->op_array.opcodes;
 		for (uint32_t i = 0; i < func->op_array.last_live_range; i++) {
 			const zend_live_range *range = &func->op_array.live_range[i];
@@ -2238,6 +2246,7 @@ static void zend_gc_check_root_tmpvars(void) {
 				zval *var = ZEND_CALL_VAR(ex, var_num);
 				if (Z_COLLECTABLE_P(var)) {
 					gc_check_possible_root(Z_COUNTED_P(var));
+					GC_TRACE_SET_COLOR(var, GC_BLACK);
 				}
 			}
 		}
@@ -2268,7 +2277,16 @@ static void zend_gc_remove_root_tmpvars(void) {
 				zval *var = ZEND_CALL_VAR(ex, var_num);
 				if (Z_COLLECTABLE_P(var)) {
 					GC_REMOVE_FROM_BUFFER(Z_COUNTED_P(var));
+					GC_TRACE_SET_COLOR(var, GC_GREEN);
 				}
+			}
+		}
+
+		for (uint32_t var_num = 0; var_num < func->op_array.last_var; var_num++) {
+			zval *var = ZEND_CALL_VAR_NUM(ex, var_num);
+			if (Z_COLLECTABLE_P(var)) {
+				GC_REMOVE_FROM_BUFFER(Z_COUNTED_P(var));
+				GC_TRACE_SET_COLOR(var, GC_GREEN);
 			}
 		}
 	}
