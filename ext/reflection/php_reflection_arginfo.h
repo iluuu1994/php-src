@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 73baffebd5b9abd91c8f12a92af7c9336c5d69e9 */
+ * Stub hash: 5162d88b07b6b89137958c540697289503fc85f9 */
 
 ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(arginfo_class_Reflection_getModifierNames, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, modifiers, IS_LONG, 0)
@@ -473,13 +473,11 @@ ZEND_END_ARG_INFO()
 #define arginfo_class_ReflectionProperty_isFinal arginfo_class_ReflectionFunctionAbstract_hasTentativeReturnType
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_ReflectionProperty_isReadable, 0, 0, _IS_BOOL, 0)
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, object, IS_OBJECT, 1, "null")
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, scope, IS_STRING, 1, "\'static\'")
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_ReflectionProperty_isWritable, 0, 1, _IS_BOOL, 0)
-	ZEND_ARG_TYPE_INFO(0, object, IS_OBJECT, 0)
-	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, scope, IS_STRING, 1, "\'static\'")
-ZEND_END_ARG_INFO()
+#define arginfo_class_ReflectionProperty_isWritable arginfo_class_ReflectionProperty_isReadable
 
 #define arginfo_class_ReflectionClassConstant___clone arginfo_class_ReflectionFunctionAbstract___clone
 
