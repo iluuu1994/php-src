@@ -163,7 +163,7 @@ static PHP_INI_MH(OnUpdateZendTestMMCustomHandlersEnabled)
 	} else {
 		zend_test_mm_custom_handlers_shutdown();
 	}
-	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 PHP_INI_BEGIN()

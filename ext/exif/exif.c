@@ -117,7 +117,7 @@ ZEND_INI_MH(OnUpdateEncode)
 		}
 		pefree((void *) return_list, 0);
 	}
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 ZEND_INI_MH(OnUpdateDecode)
@@ -132,7 +132,7 @@ ZEND_INI_MH(OnUpdateDecode)
 		}
 		pefree((void *) return_list, 0);
 	}
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 PHP_INI_BEGIN()

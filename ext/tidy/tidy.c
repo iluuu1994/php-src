@@ -894,7 +894,7 @@ static PHP_INI_MH(php_tidy_set_clean_output)
 		}
 	}
 
-	status = OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	status = OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 
 	if (stage == PHP_INI_STAGE_RUNTIME && value) {
 		if (!php_output_handler_started(ZEND_STRL("ob_tidyhandler"))) {

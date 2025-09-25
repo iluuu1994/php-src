@@ -174,7 +174,7 @@ static PHP_INI_MH(OnUpdateInputEncoding)
 	if (stage & (PHP_INI_STAGE_ACTIVATE | PHP_INI_STAGE_RUNTIME)) {
 		php_error_docref("ref.iconv", E_DEPRECATED, "Use of iconv.input_encoding is deprecated");
 	}
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	return SUCCESS;
 }
 
@@ -187,7 +187,7 @@ static PHP_INI_MH(OnUpdateOutputEncoding)
 	if (stage & (PHP_INI_STAGE_ACTIVATE | PHP_INI_STAGE_RUNTIME)) {
 		php_error_docref("ref.iconv", E_DEPRECATED, "Use of iconv.output_encoding is deprecated");
 	}
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	return SUCCESS;
 }
 
@@ -200,7 +200,7 @@ static PHP_INI_MH(OnUpdateInternalEncoding)
 	if (stage & (PHP_INI_STAGE_ACTIVATE | PHP_INI_STAGE_RUNTIME)) {
 		php_error_docref("ref.iconv", E_DEPRECATED, "Use of iconv.internal_encoding is deprecated");
 	}
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	return SUCCESS;
 }
 

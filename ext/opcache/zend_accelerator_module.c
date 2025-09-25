@@ -157,7 +157,7 @@ static ZEND_INI_MH(OnEnable)
 	if (stage == ZEND_INI_STAGE_STARTUP ||
 	    stage == ZEND_INI_STAGE_SHUTDOWN ||
 	    stage == ZEND_INI_STAGE_DEACTIVATE) {
-		return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+		return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	} else {
 		/* It may be only temporarily disabled */
 		bool *p = (bool *) ZEND_INI_GET_ADDR();
@@ -192,7 +192,7 @@ static ZEND_INI_MH(OnUpdateFileCache)
 			new_value = NULL;
 		}
 	}
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	return SUCCESS;
 }
 
@@ -200,7 +200,7 @@ static ZEND_INI_MH(OnUpdateFileCache)
 static ZEND_INI_MH(OnUpdateJit)
 {
 	if (zend_jit_config(new_value, stage) == SUCCESS) {
-		return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+		return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	}
 	return FAILURE;
 }

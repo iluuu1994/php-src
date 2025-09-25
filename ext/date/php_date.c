@@ -541,7 +541,7 @@ static PHP_INI_MH(OnUpdate_date_timezone)
 		return FAILURE;
 	}
 
-	if (OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage) == FAILURE) {
+	if (OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified) == FAILURE) {
 		return FAILURE;
 	}
 

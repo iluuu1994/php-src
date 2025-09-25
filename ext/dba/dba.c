@@ -363,7 +363,7 @@ static ZEND_INI_MH(OnUpdateDefaultHandler)
 
 	if (!ZSTR_LEN(new_value)) {
 		DBA_G(default_hptr) = NULL;
-		return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+		return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	}
 
 	for (hptr = handler; hptr->name && strcasecmp(hptr->name, ZSTR_VAL(new_value)); hptr++);
@@ -373,7 +373,7 @@ static ZEND_INI_MH(OnUpdateDefaultHandler)
 		return FAILURE;
 	}
 	DBA_G(default_hptr) = hptr;
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 PHP_INI_BEGIN()

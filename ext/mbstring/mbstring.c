@@ -825,7 +825,7 @@ static PHP_INI_MH(OnUpdate_mbstring_internal_encoding)
 		php_error_docref("ref.mbstring", E_DEPRECATED, "Use of mbstring.internal_encoding is deprecated");
 	}
 
-	if (OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage) == FAILURE) {
+	if (OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -884,7 +884,7 @@ static PHP_INI_MH(OnUpdate_mbstring_encoding_translation)
 		return FAILURE;
 	}
 
-	OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 
 	if (MBSTRG(encoding_translation)) {
 		sapi_unregister_post_entry(php_post_entries);

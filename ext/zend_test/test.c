@@ -911,7 +911,7 @@ static PHP_INI_MH(OnUpdateZendTestObserveOplineInZendMM)
 	} else {
 		zend_test_reset_heap(ZEND_MODULE_GLOBALS_BULK(zend_test));
 	}
-	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 static ZEND_FUNCTION(zend_test_fill_packed_array)

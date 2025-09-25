@@ -348,6 +348,9 @@ static PHP_INI_MH(OnChangeMemoryLimit)
 		zend_ini_entry *max_mem_limit_ini = zend_hash_str_find_ptr(EG(ini_directives), ZEND_STRL("max_memory_limit"));
 		entry->value = zend_string_copy(max_mem_limit_ini->value);
 		PG(memory_limit) = PG(max_memory_limit);
+		if (modified) {
+			*modified = true;
+		}
 
 		return SUCCESS;
 	}
@@ -607,7 +610,7 @@ static PHP_INI_MH(OnUpdateDefaultCharset)
 		|| strpbrk(ZSTR_VAL(new_value), "\r\n")) {
 		return FAILURE;
 	}
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	if (php_internal_encoding_changed) {
 		php_internal_encoding_changed();
 	}
@@ -627,14 +630,14 @@ static PHP_INI_MH(OnUpdateDefaultMimeTye)
 		|| strpbrk(ZSTR_VAL(new_value), "\r\n")) {
 		return FAILURE;
 	}
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 /* }}} */
 
 /* {{{ PHP_INI_MH */
 static PHP_INI_MH(OnUpdateInternalEncoding)
 {
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	if (php_internal_encoding_changed) {
 		php_internal_encoding_changed();
 	}
@@ -650,7 +653,7 @@ static PHP_INI_MH(OnUpdateInternalEncoding)
 /* {{{ PHP_INI_MH */
 static PHP_INI_MH(OnUpdateInputEncoding)
 {
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	if (php_internal_encoding_changed) {
 		php_internal_encoding_changed();
 	}
@@ -679,7 +682,7 @@ static PHP_INI_MH(OnUpdateReportMemleaks)
 /* {{{ PHP_INI_MH */
 static PHP_INI_MH(OnUpdateOutputEncoding)
 {
-	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	if (php_internal_encoding_changed) {
 		php_internal_encoding_changed();
 	}
@@ -747,7 +750,7 @@ static PHP_INI_MH(OnUpdateMailCrLfMode)
 			return FAILURE;
 		}
 	}
-	OnUpdateStr(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	OnUpdateStr(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 	return SUCCESS;
 }
 /* }}} */

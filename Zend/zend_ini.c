@@ -58,7 +58,7 @@ static zend_result zend_restore_ini_entry_cb(zend_ini_entry *ini_entry, int stag
 			/* even if on_modify bails out, we have to continue on with restoring,
 				since there can be allocated variables that would be freed on MM shutdown
 				and would lead to memory corruption later ini entry is modified again */
-				result = ini_entry->on_modify(ini_entry, ini_entry->orig_value, ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage);
+				result = ini_entry->on_modify(ini_entry, ini_entry->orig_value, ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage, NULL);
 			} zend_end_try();
 		}
 		if (stage == ZEND_INI_STAGE_RUNTIME && result == FAILURE) {
@@ -249,13 +249,12 @@ ZEND_API zend_result zend_register_ini_entries_ex(const zend_ini_entry_def *ini_
 			return FAILURE;
 		}
 
-		zend_string *prev_value = p->value;
-
+		bool modified = false;
 		if (((default_value = zend_get_configuration_directive(p->name)) != NULL) &&
-		    (!p->on_modify || p->on_modify(p, Z_STR_P(default_value), p->mh_arg1, p->mh_arg2, p->mh_arg3, ZEND_INI_STAGE_STARTUP) == SUCCESS)) {
+		    (!p->on_modify || p->on_modify(p, Z_STR_P(default_value), p->mh_arg1, p->mh_arg2, p->mh_arg3, ZEND_INI_STAGE_STARTUP, &modified) == SUCCESS)) {
 
 			/* Skip assigning the value if the handler has already done so. */
-			if (p->value == prev_value) {
+			if (!modified) {
 				p->value = zend_new_interned_string(zend_string_copy(Z_STR_P(default_value)));
 			}
 		} else {
@@ -263,7 +262,7 @@ ZEND_API zend_result zend_register_ini_entries_ex(const zend_ini_entry_def *ini_
 				zend_string_init_interned(ini_entry->value, ini_entry->value_length, 1) : NULL;
 
 			if (p->on_modify) {
-				p->on_modify(p, p->value, p->mh_arg1, p->mh_arg2, p->mh_arg3, ZEND_INI_STAGE_STARTUP);
+				p->on_modify(p, p->value, p->mh_arg1, p->mh_arg2, p->mh_arg3, ZEND_INI_STAGE_STARTUP, NULL);
 			}
 		}
 		ini_entry++;
@@ -398,13 +397,14 @@ ZEND_API zend_result zend_alter_ini_entry_ex(zend_string *name, zend_string *new
 	zend_string *prev_value = ini_entry->value;
 	duplicate = zend_string_copy(new_value);
 
+	bool changed_by_on_modify = false;
 	if (!ini_entry->on_modify
-		|| ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage) == SUCCESS) {
+		|| ini_entry->on_modify(ini_entry, duplicate, ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage, &changed_by_on_modify) == SUCCESS) {
 		if (modified && ini_entry->orig_value != prev_value) { /* we already changed the value, free the changed value */
 			zend_string_release(prev_value);
 		}
 		/* Skip assigning the value if the handler has already done so. */
-		if (ini_entry->value == prev_value) {
+		if (!changed_by_on_modify) {
 			ini_entry->value = duplicate;
 		} else {
 			zend_string_release(duplicate);

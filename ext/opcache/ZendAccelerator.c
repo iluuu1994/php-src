@@ -264,7 +264,7 @@ void zend_accel_schedule_restart_if_necessary(zend_accel_restart_reason reason)
  */
 static ZEND_INI_MH(accel_include_path_on_modify)
 {
-	int ret = orig_include_path_on_modify(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	int ret = orig_include_path_on_modify(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 
 	if (ret == SUCCESS) {
 		ZCG(include_path) = new_value;

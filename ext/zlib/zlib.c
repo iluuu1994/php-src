@@ -1315,7 +1315,7 @@ static PHP_INI_MH(OnUpdate_zlib_output_handler)
 		return FAILURE;
 	}
 
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 /* }}} */
 

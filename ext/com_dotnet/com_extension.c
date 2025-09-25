@@ -145,7 +145,7 @@ static ZEND_INI_MH(OnAutoregisterCasesensitive)
 		php_error_docref("com.configuration", E_WARNING, "Declaration of case-insensitive constants is no longer supported");
 		return FAILURE;
 	}
-	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 PHP_INI_BEGIN()

@@ -737,7 +737,7 @@ static PHP_INI_MH(OnUpdateSessionLong)
 {
 	SESSION_CHECK_ACTIVE_STATE;
 	SESSION_CHECK_OUTPUT_STATE;
-	return OnUpdateLong(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateLong(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 static PHP_INI_MH(OnUpdateSessionStr)
@@ -752,7 +752,7 @@ static PHP_INI_MH(OnUpdateSessionBool)
 {
 	SESSION_CHECK_ACTIVE_STATE;
 	SESSION_CHECK_OUTPUT_STATE;
-	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateBool(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 
@@ -886,7 +886,7 @@ static PHP_INI_MH(OnUpdateRefererCheck)
 	if (ZSTR_LEN(new_value) != 0) {
 		php_error_docref("session.configuration", E_DEPRECATED, "Usage of session.referer_check INI setting is deprecated");
 	}
-	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage);
+	return OnUpdateString(entry, new_value, mh_arg1, mh_arg2, mh_arg3, stage, modified);
 }
 
 PHP_INI_BEGIN()
@@ -1527,7 +1527,7 @@ static bool php_can_change_session_setting(const char *setting_name, bool check_
 
 		return false;
 	}
-	
+
 	if (SG(headers_sent) && (!check_cookies || PS(use_cookies))) {
 		char error_msg[256];
 		snprintf(error_msg, sizeof(error_msg), "Session %s cannot be changed after headers have already been sent", setting_name);
@@ -1535,7 +1535,7 @@ static bool php_can_change_session_setting(const char *setting_name, bool check_
 
 		return false;
 	}
-	
+
 	return true;
 }
 
