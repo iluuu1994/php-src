@@ -379,6 +379,8 @@ function main(): void
         $argc = count($argv);
     }
 
+    $excluded_files = [];
+
     for ($i = 1; $i < $argc; $i++) {
         $is_switch = false;
         $switch = substr($argv[$i], 1, 1);
@@ -617,29 +619,49 @@ function main(): void
 
         if (!$is_switch) {
             $selected_tests = true;
-            $testfile = realpath($argv[$i]);
+            $arg = $argv[$i];
+            $excluded = null;
+            if ($arg[0] === '!' && strlen($arg) >= 2) {
+                $excluded = [];
+                $arg = substr($arg, 1);
+            }
+            $testfile = realpath($arg);
 
-            if (!$testfile && strpos($argv[$i], '*') !== false && function_exists('glob')) {
-                if (substr($argv[$i], -5) == '.phpt') {
-                    $pattern_match = glob($argv[$i]);
-                } elseif (preg_match("/\*$/", $argv[$i])) {
-                    $pattern_match = glob($argv[$i] . '.phpt');
+            if (!$testfile && strpos($arg, '*') !== false && function_exists('glob')) {
+                if (substr($arg, -5) == '.phpt') {
+                    $pattern_match = glob($arg);
+                } elseif (preg_match("/\*$/", $arg)) {
+                    $pattern_match = glob($arg . '.phpt');
                 } else {
-                    die('Cannot find test file "' . $argv[$i] . '".' . PHP_EOL);
+                    die('Cannot find test file "' . $arg . '".' . PHP_EOL);
                 }
 
                 if (is_array($pattern_match)) {
-                    $test_files = array_merge($test_files, $pattern_match);
+                    if ($excluded === null) {
+                        $test_files = array_merge($test_files, $pattern_match);
+                    } else {
+                        $excluded = array_merge($excluded, $pattern_match);
+                    }
                 }
             } elseif (is_dir($testfile)) {
-                find_files($testfile);
+                find_files($testfile, false, false, $excluded);
             } elseif (substr($testfile, -5) == '.phpt') {
-                $test_files[] = $testfile;
+                if ($excluded === null) {
+                    $test_files[] = $testfile;
+                } else {
+                    $excluded[] = $testfile;
+                }
             } else {
-                die('Cannot find test file "' . $argv[$i] . '".' . PHP_EOL);
+                die('Cannot find test file "' . $arg . '".' . PHP_EOL);
+            }
+
+            if ($excluded) {
+                $excluded_files = array_merge($excluded_files, $excluded);
             }
         }
     }
+
+    $test_files = array_diff($test_files, $excluded_files);
 
     if ($online === null && !isset($environment['SKIP_ONLINE_TESTS'])) {
         $online = false;
@@ -1024,7 +1046,7 @@ function get_binary(string $php, string $sapi, string $sapi_path): ?string
     return null;
 }
 
-function find_files(string $dir, bool $is_ext_dir = false, bool $ignore = false): void
+function find_files(string $dir, bool $is_ext_dir = false, bool $ignore = false, ?array &$collect_into = null): void
 {
     global $test_files, $exts_to_test, $ignored_by_ext, $exts_skipped;
 
@@ -1036,7 +1058,7 @@ function find_files(string $dir, bool $is_ext_dir = false, bool $ignore = false)
             if ($skip_ext) {
                 $exts_skipped[] = $name;
             }
-            find_files("{$dir}/{$name}", false, $ignore || $skip_ext);
+            find_files("{$dir}/{$name}", false, $ignore || $skip_ext, $collect_into);
         }
 
         // Cleanup any left-over tmp files from last run.
@@ -1050,7 +1072,9 @@ function find_files(string $dir, bool $is_ext_dir = false, bool $ignore = false)
         // many platforms)
         if (substr($name, -5) == '.phpt' && substr($name, 0, 1) !== '.') {
             $testfile = realpath("{$dir}/{$name}");
-            if ($ignore) {
+            if ($collect_into) {
+                $collect_into[] = $testfile;
+            } elseif ($ignore) {
                 $ignored_by_ext[] = $testfile;
             } else {
                 $test_files[] = $testfile;
