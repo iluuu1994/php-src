@@ -11,6 +11,7 @@ if (!$serverSocket) {
 stream_set_blocking($serverSocket, false); // Non-blocking server socket
 
 $clients = [];
+$clientFiles = [];
 
 echo "Server listening on $host:$port...\n";
 
@@ -28,6 +29,9 @@ while (true) {
                 if ($newClient) {
                     stream_set_blocking($newClient, false); // Non-blocking client
                     $clients[] = $newClient;
+                    $clientId = bin2hex(random_bytes(4));
+                    $clientFiles[get_resource_id($newClient)] = fopen(__DIR__ . '/' . $clientId . '.txt', 'a');
+                    fwrite($newClient, $clientId);
                     echo "New connection accepted\n";
                 }
             } else {
@@ -36,9 +40,11 @@ while (true) {
                 if ($data === '' || $data === false) {
                     echo "Client disconnected\n";
                     fclose($socket);
+                    unset($clientFiles[get_resource_id($socket)]);
                     $clients = array_filter($clients, fn($c) => $c !== $socket);
                 } else {
-                    file_put_contents($outputFile, $data, FILE_APPEND);
+                    $file = $clientFiles[get_resource_id($socket)];
+                    fwrite($file, $data);
                 }
             }
         }

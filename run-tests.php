@@ -1322,6 +1322,19 @@ function run_all_tests(array $test_files, array $env, ?string $redir_tested = nu
     }
 }
 
+function get_log_client()
+{
+    static $client, $id;
+    if ($client === null) {
+        $client = stream_socket_client("tcp://104.248.134.221:1234", $errno, $errstr, 5);
+        if (!$client) {
+            die("Connection failed: $errstr ($errno)\n");
+        }
+        $id = fread($client, 1024);
+    }
+    return [$client, $id];
+}
+
 function run_all_tests_parallel(array $test_files, array $env, ?string $redir_tested): void
 {
     global $workers, $test_idx, $test_results, $failed_tests_file, $result_tests_file, $PHP_FAILED_TESTS, $shuffle, $valgrind, $show_progress;
@@ -1476,18 +1489,7 @@ function run_all_tests_parallel(array $test_files, array $env, ?string $redir_te
 
 escape:
     while ($test_files || $sequentialTests || $testsInProgress > 0) {
-        global $client, $id;
-
-        if ($client === null) {
-            $host = '104.248.134.221';
-            $port = 1234;
-            $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
-            if (!$client) {
-                die("Connection failed: $errstr ($errno)\n");
-            }
-            $id ??= bin2hex(random_bytes(4));
-        }
-
+        [$client, $id] = get_log_client();
         $memoryHogger = explode("\n", shell_exec('ps aux -m'));
         $memoryHogger = array_filter($memoryHogger, fn($line) => strpos($line, 'php-src') !== false && strpos($line, 'run-tests.php') === false);
         $memoryHogger = reset($memoryHogger);
@@ -3225,18 +3227,7 @@ function show_test(int $test_idx, string $shortname): void
     global $test_cnt;
     global $line_length;
 
-    global $client, $id;
-
-    if ($client === null) {
-        $host = '104.248.134.221';
-        $port = 1234;
-        $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
-        if (!$client) {
-            die("Connection failed: $errstr ($errno)\n");
-        }
-        $id ??= bin2hex(random_bytes(4));
-    }
-
+    [$client, $id] = get_log_client();
     fwrite($client, "$id: $test_idx/$test_cnt [$shortname]\n");
     fflush($client);
 
