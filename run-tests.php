@@ -1293,6 +1293,14 @@ function run_all_tests(array $test_files, array $env, ?string $redir_tested = nu
             ob_start();
         }
 
+        if ($workerID) {
+            send_message($workerSock, [
+                "type" => "progress",
+                "name" => $name,
+                "index" => $index,
+            ]);
+        }
+
         $result = run_test($php, $name, $env);
         if ($workerID) {
             $resultText = ob_get_clean();
@@ -1589,6 +1597,13 @@ escape:
                                 goto escape;
                             }
                             break;
+                        case "progress":
+                            if ($show_progress) {
+                                list($name, $index) = [$message["name"], $message["index"]];
+                                $workerID = $message['workerID'];
+                                show_test($test_idx, count($workerProcs) . "/$workers concurrent test workers running [$workerID, $name]");
+                            }
+                            break;
                         case "test_result":
                             list($name, $index, $result, $resultText) = [$message["name"], $message["index"], $message["result"], $message["text"]];
                             foreach ($message["PHP_FAILED_TESTS"] as $category => $tests) {
@@ -1601,11 +1616,6 @@ escape:
                             }
 
                             echo $resultText;
-
-                            if ($show_progress) {
-                                $workerID = $message['workerID'];
-                                show_test($test_idx, count($workerProcs) . "/$workers concurrent test workers running [$workerID, $name]");
-                            }
 
                             if (!is_array($name) && $result != 'REDIR') {
                                 $test_results[$index] = $result;
