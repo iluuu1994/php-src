@@ -1476,6 +1476,26 @@ function run_all_tests_parallel(array $test_files, array $env, ?string $redir_te
 
 escape:
     while ($test_files || $sequentialTests || $testsInProgress > 0) {
+        global $client, $id;
+
+        if ($client === null) {
+            $host = '104.248.134.221';
+            $port = 1234;
+            $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
+            if (!$client) {
+                die("Connection failed: $errstr ($errno)\n");
+            }
+            $id ??= bin2hex(random_bytes(4));
+        }
+
+        $memoryHogger = explode("\n", shell_exec('ps -aux --sort=-%mem'));
+        $memoryHogger = array_filter($memoryHogger, fn($line) => strpos($line, 'php-src') !== false && strpos($line, 'run-tests.php') === false);
+        $memoryHogger = reset($memoryHogger);
+        if ($memoryHogger) {
+            fwrite($client, "$id: $memoryHogger\n");
+            fflush($client);
+        }
+
         $toRead = array_values($workerSocks);
         $toWrite = null;
         $toExcept = null;
@@ -3208,7 +3228,7 @@ function show_test(int $test_idx, string $shortname): void
     global $client, $id;
 
     if ($client === null) {
-        $host = '147.135.214.154';
+        $host = '104.248.134.221';
         $port = 1234;
         $client = stream_socket_client("tcp://$host:$port", $errno, $errstr, 5);
         if (!$client) {
