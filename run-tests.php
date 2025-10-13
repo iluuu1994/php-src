@@ -1488,7 +1488,7 @@ escape:
             $id ??= bin2hex(random_bytes(4));
         }
 
-        $memoryHogger = explode("\n", shell_exec('ps aux --sort=-%mem'));
+        $memoryHogger = explode("\n", shell_exec('ps aux -m'));
         $memoryHogger = array_filter($memoryHogger, fn($line) => strpos($line, 'php-src') !== false && strpos($line, 'run-tests.php') === false);
         $memoryHogger = reset($memoryHogger);
         if ($memoryHogger) {
