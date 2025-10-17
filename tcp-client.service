@@ -1,0 +1,16 @@
+[Unit]
+Description=Simple PHP TCP Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/tcp-server
+ExecStart=/usr/bin/php /root/tcp-server/server.php
+Restart=always
+RestartSec=5
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
