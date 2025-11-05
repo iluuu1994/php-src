@@ -598,6 +598,9 @@ ZEND_API void destroy_op_array(zend_op_array *op_array)
 		zval *end = literal + op_array->last_literal;
 	 	while (literal < end) {
 			zval_ptr_dtor_nogc(literal);
+			if (UNEXPECTED(Z_TYPE_P(literal) == IS_TYPE)) {
+				zend_type_release(*(zend_type*)Z_PTR_P(literal), 1);
+			}
 			literal++;
 		}
 		if (ZEND_USE_ABS_CONST_ADDR

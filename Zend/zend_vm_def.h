@@ -9424,6 +9424,22 @@ ZEND_VM_HANDLER(211, ZEND_IS, ANY, TMPVAR, JMP_ADDR)
 	}
 }
 
+// FIXME: Smart branch?
+ZEND_VM_HANDLER(212, ZEND_HAS_TYPE, ANY, CONST)
+{
+	USE_OPLINE
+	SAVE_OPLINE();
+
+	zval *expr = GET_OP1_ZVAL_PTR(BP_VAR_R);
+	const zend_type *type = Z_PTR_P(GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R));
+
+	// FIXME: Abusing internal/return type flags to achieve strict type check
+	bool result = zend_check_type(type, expr, NULL, 1, 1);
+
+	ZVAL_BOOL(EX_VAR(opline->result.var), result);
+	ZEND_VM_NEXT_OPCODE();
+}
+
 ZEND_VM_COLD_CONST_HANDLER(197, ZEND_MATCH_ERROR, CONST|TMPVARCV, UNUSED)
 {
 	USE_OPLINE
