@@ -7003,10 +7003,16 @@ static zend_type zend_compile_single_typename(zend_ast *ast);
 
 static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t false_opnum)
 {
-	switch ((*ast_ptr)->kind) {
+	zend_ast *ast = *ast_ptr;
+
+	switch (ast->kind) {
+		case ZEND_AST_WILDCARD_PATTERN: {
+			/* Nothing to do. */
+			break;
+		}
 		case ZEND_AST_ZVAL: {
 			znode result, value;
-			zend_compile_expr(&value, *ast_ptr);
+			zend_compile_expr(&value, ast);
 			ZEND_ASSERT(value.op_type == IS_CONST);
 			zend_emit_op_tmp(&result, (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) ? ZEND_CASE_STRICT : ZEND_IS_IDENTICAL, expr_node, &value);
 			zend_emit_cond_jump(ZEND_JMPZ, &result, false_opnum);
@@ -7016,21 +7022,20 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			uint32_t jmp_test_lhs = zend_emit_jump(0);
 			uint32_t jmp_test_rhs = zend_emit_jump(0);
 			zend_update_jump_target_to_next(jmp_test_lhs);
-			zend_compile_pattern(&(*ast_ptr)->child[0], expr_node, jmp_test_rhs);
+			zend_compile_pattern(&ast->child[0], expr_node, jmp_test_rhs);
 			uint32_t jmp_end = zend_emit_jump(0);
 			zend_update_jump_target_to_next(jmp_test_rhs);
-			zend_compile_pattern(&(*ast_ptr)->child[1], expr_node, false_opnum);
+			zend_compile_pattern(&ast->child[1], expr_node, false_opnum);
 			zend_update_jump_target_to_next(jmp_end);
 			break;
 		}
 		case ZEND_AST_AND_PATTERN: {
-			zend_compile_pattern(&(*ast_ptr)->child[0], expr_node, false_opnum);
-			zend_compile_pattern(&(*ast_ptr)->child[1], expr_node, false_opnum);
+			zend_compile_pattern(&ast->child[0], expr_node, false_opnum);
+			zend_compile_pattern(&ast->child[1], expr_node, false_opnum);
 			break;
 		}
 		case ZEND_AST_TYPE_PATTERN: {
-			zend_ast *type_pattern_ast = *ast_ptr;
-			zend_ast *type_ast = type_pattern_ast->child[0];
+			zend_ast *type_ast = ast->child[0];
 			bool nullable = type_ast->attr & ZEND_TYPE_NULLABLE;
 			type_ast->attr &= ~ZEND_TYPE_NULLABLE;
 
@@ -7049,7 +7054,139 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			znode result;
 			zend_emit_op(&result, ZEND_HAS_TYPE, expr_node, &type_node);
 			zend_emit_cond_jump(ZEND_JMPZ, &result, false_opnum);
+			break;
 		}
+		case ZEND_AST_ARRAY_PATTERN: {
+			// FIXME: These copies are annoying...
+			znode expr_copy_node;
+
+			/* Make sure the value is actually an array. */
+			if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+				zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+			} else {
+				expr_copy_node = *expr_node;
+			}
+			znode is_array_node;
+			zend_op *is_array_op = zend_emit_op(&is_array_node, ZEND_TYPE_CHECK, &expr_copy_node, NULL);
+			is_array_op->extended_value = MAY_BE_ARRAY;
+			zend_emit_cond_jump(ZEND_JMPZ, &is_array_node, false_opnum);
+
+			/* Make sure the array has the right size. */
+			if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+				zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+			} else {
+				expr_copy_node = *expr_node;
+				if (expr_node->op_type == IS_CONST) {
+					Z_TRY_ADDREF(expr_copy_node.u.constant);
+				}
+			}
+			znode count_node;
+			zend_emit_op(&count_node, ZEND_COUNT, &expr_copy_node, NULL);
+
+			zend_ast_list *element_list = zend_ast_get_list(ast->child[0]);
+			znode count_target_node;
+			count_target_node.op_type = IS_CONST;
+			ZVAL_LONG(&count_target_node.u.constant, element_list->children);
+
+			znode count_ok_node;
+			zend_emit_op(&count_ok_node,
+				(ast->attr & ZEND_ARRAY_PATTERN_NON_EXHAUSTIVE) ? ZEND_IS_SMALLER_OR_EQUAL : ZEND_IS_EQUAL,
+				&count_target_node, &count_node);
+			zend_emit_cond_jump(ZEND_JMPZ, &count_ok_node, false_opnum);
+
+			/* Check array elements. */
+			for (uint32_t i = 0; i < element_list->children; i++) {
+				zend_ast *element_ast = element_list->child[i];
+				zend_ast *element_key_ast = element_ast->child[0];
+				zend_ast *element_value_ast = element_ast->child[1];
+
+				/* Fetch element. */
+				if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+					zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+				} else {
+					expr_copy_node = *expr_node;
+					if (expr_node->op_type == IS_CONST) {
+						Z_TRY_ADDREF(expr_copy_node.u.constant);
+					}
+				}
+				znode element_value_node, element_key_node;
+				element_key_node.op_type = IS_CONST;
+				if (element_key_ast) {
+					ZVAL_COPY(&element_key_node.u.constant, zend_ast_get_zval(element_key_ast));
+				} else {
+					ZVAL_LONG(&element_key_node.u.constant, i);
+				}
+				zend_emit_op_tmp(&element_value_node, ZEND_FETCH_DIM_IS, &expr_copy_node, &element_key_node);
+
+				/* Compile false branch, which frees the element. */
+				uint32_t jmp_test = zend_emit_jump(0);
+				uint32_t false_element_opnum = get_next_op_number();
+				zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
+				zend_emit_jump(false_opnum);
+				zend_update_jump_target_to_next(jmp_test);
+
+				/* Compile element check. */
+				zend_compile_pattern(&element_value_ast, &element_value_node, false_element_opnum);
+				zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
+			}
+			break;
+		}
+		case ZEND_AST_OBJECT_PATTERN: {
+			// FIXME: These copies are annoying...
+			znode expr_copy_node;
+
+			/* Make sure the value is actually an object. */
+			if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+				zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+			} else {
+				expr_copy_node = *expr_node;
+			}
+			znode is_object_node;
+			zend_op *is_array_op = zend_emit_op(&is_object_node, ZEND_TYPE_CHECK, &expr_copy_node, NULL);
+			is_array_op->extended_value = MAY_BE_OBJECT;
+			zend_emit_cond_jump(ZEND_JMPZ, &is_object_node, false_opnum);
+
+			/* Check properties. */
+			zend_ast_list *property_list = zend_ast_get_list(ast->child[0]);
+			for (uint32_t i = 0; i < property_list->children; i++) {
+				zend_ast *property_ast = property_list->child[i];
+				zend_ast *property_name_ast = property_ast->child[0];
+				zend_ast *property_value_ast = property_ast->child[1];
+
+				/* Fetch property. */
+				if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+					zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+				} else {
+					expr_copy_node = *expr_node;
+					if (expr_node->op_type == IS_CONST) {
+						Z_TRY_ADDREF(expr_copy_node.u.constant);
+					}
+				}
+				znode property_value_node, property_name_node;
+				property_name_node.op_type = IS_CONST;
+				ZVAL_COPY(&property_name_node.u.constant, zend_ast_get_zval(property_name_ast));
+				zend_op *fetch_prop_op = zend_emit_op_tmp(&property_value_node, ZEND_FETCH_OBJ_R, &expr_copy_node, &property_name_node);
+				convert_to_string(CT_CONSTANT(fetch_prop_op->op2));
+				zend_string_hash_val(Z_STR_P(CT_CONSTANT(fetch_prop_op->op2)));
+				fetch_prop_op->extended_value = zend_alloc_cache_slots(3);
+
+				/* Compile false branch, which frees the property. */
+				uint32_t jmp_test = zend_emit_jump(0);
+				uint32_t false_property_opnum = get_next_op_number();
+				zend_emit_op(NULL, ZEND_FREE, &property_value_node, NULL);
+				zend_emit_jump(false_opnum);
+				zend_update_jump_target_to_next(jmp_test);
+
+				/* Compile property check. */
+				zend_compile_pattern(&property_value_ast, &property_value_node, false_property_opnum);
+				zend_emit_op(NULL, ZEND_FREE, &property_value_node, NULL);
+			}
+			break;
+		}
+		// ZEND_AST_BINDING_PATTERN
+		// ZEND_AST_RANGE_PATTERN
+		// ZEND_AST_CLASS_CONST_PATTERN
+		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
 
