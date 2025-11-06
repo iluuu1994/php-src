@@ -1518,7 +1518,7 @@ array_pattern_element:
 
 class_const_pattern:
 		class_name T_PAAMAYIM_NEKUDOTAYIM identifier
-			{ $$ = zend_ast_create(ZEND_AST_CLASS_CONST_PATTERN, $1, $3); }
+			{ $$ = zend_ast_create_class_const_or_name($1, $3); }
 ;
 
 inline_function:

@@ -7010,10 +7010,11 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			/* Nothing to do. */
 			break;
 		}
-		case ZEND_AST_ZVAL: {
+		case ZEND_AST_ZVAL:
+		case ZEND_AST_CLASS_CONST:
+		case ZEND_AST_CLASS_NAME: {
 			znode result, value;
 			zend_compile_expr(&value, ast);
-			ZEND_ASSERT(value.op_type == IS_CONST);
 			zend_emit_op_tmp(&result, (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) ? ZEND_CASE_STRICT : ZEND_IS_IDENTICAL, expr_node, &value);
 			zend_emit_cond_jump(ZEND_JMPZ, &result, false_opnum);
 			break;
@@ -7185,7 +7186,6 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 		}
 		// ZEND_AST_BINDING_PATTERN
 		// ZEND_AST_RANGE_PATTERN
-		// ZEND_AST_CLASS_CONST_PATTERN
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
