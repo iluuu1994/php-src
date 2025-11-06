@@ -1105,6 +1105,7 @@ static zend_always_inline bool zend_value_instanceof_static(const zval *zv) {
 
 	zend_class_entry *called_scope = zend_get_called_scope(EG(current_execute_data));
 	if (!called_scope) {
+		zend_throw_error(NULL, "Cannot access \"static\" when no class scope is active");
 		return 0;
 	}
 	return instanceof_function(Z_OBJCE_P(zv), called_scope);
@@ -1126,7 +1127,7 @@ static zend_always_inline zend_class_entry *zend_fetch_ce_from_type(
 		}
 	} else {
 		ce = zend_fetch_class(name,
-			ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD | ZEND_FETCH_CLASS_SILENT);
+			ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD | ZEND_FETCH_CLASS_SILENT | ZEND_FETCH_CLASS_EXCEPTION);
 		if (UNEXPECTED(!ce)) {
 			return NULL;
 		}

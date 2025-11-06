@@ -4485,7 +4485,9 @@ ZEND_VM_COLD_CONST_HANDLER(124, ZEND_VERIFY_RETURN_TYPE, CONST|TMP|VAR|UNUSED|CV
 
 		SAVE_OPLINE();
 		if (UNEXPECTED(!zend_check_type_slow(&ret_info->type, retval_ptr, ref, 1, 0))) {
-			zend_verify_return_error(EX(func), retval_ptr);
+			if (!EG(exception)) {
+				zend_verify_return_error(EX(func), retval_ptr);
+			}
 			HANDLE_EXCEPTION();
 		}
 		ZEND_VM_NEXT_OPCODE();
@@ -9437,7 +9439,7 @@ ZEND_VM_HANDLER(212, ZEND_HAS_TYPE, ANY, CONST)
 	bool result = zend_check_type(type, expr, NULL, 1, 1);
 
 	ZVAL_BOOL(EX_VAR(opline->result.var), result);
-	ZEND_VM_NEXT_OPCODE();
+	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
 
 ZEND_VM_COLD_CONST_HANDLER(197, ZEND_MATCH_ERROR, CONST|TMPVARCV, UNUSED)

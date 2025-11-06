@@ -6641,7 +6641,7 @@ static void zend_compile_pipe(znode *result, zend_ast *ast)
 	zend_compile_expr(result, fcall_ast);
 }
 
-static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr);
+static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr);
 
 typedef struct {
 	bool inside_or_pattern;
@@ -6721,9 +6721,7 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 					}
 				} else {
 					zend_ast **pattern_ast_ptr = &cond_ast->child[1];
-					uint32_t is_opnum = zend_emit_is(NULL, &expr_node, pattern_ast_ptr);
-					zend_op *is_opline = &CG(active_op_array)->opcodes[is_opnum];
-					SET_NODE(is_opline->result, &case_node);
+					zend_emit_is(&case_node, &expr_node, pattern_ast_ptr);
 				}
 
 				jmpnz_opnums[cond_count] = zend_emit_cond_jump(ZEND_JMPNZ, &case_node, 0);
@@ -6937,26 +6935,16 @@ static zend_type zend_compile_single_typename(zend_ast *ast);
 // 	}
 // }
 
-// static void verify_parenthesized_compound_pattern(zend_ast **ast_ptr, zend_ast_kind kind)
-// {
-// 	zend_ast *ast = *ast_ptr;
-// 	zend_ast *lhs = ast->child[0];
-// 	zend_ast *rhs = ast->child[1];
-// 	if ((lhs->kind == kind && !(lhs->attr & ZEND_PARENTHESIZED_PATTERN))
-// 	 || (rhs->kind == kind && !(rhs->attr & ZEND_PARENTHESIZED_PATTERN))) {
-// 		zend_throw_exception(zend_ce_compile_error, "Nested compound pattern must be parenthesized", 0);
-// 	}
-// }
-
-// static void zend_compile_or_pattern(zend_ast **ast_ptr)
-// {
-// 	verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_AND_PATTERN);
-// }
-
-// static void zend_compile_and_pattern(zend_ast **ast_ptr)
-// {
-// 	verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_OR_PATTERN);
-// }
+static void verify_parenthesized_compound_pattern(zend_ast **ast_ptr, zend_ast_kind kind)
+{
+	zend_ast *ast = *ast_ptr;
+	zend_ast *lhs = ast->child[0];
+	zend_ast *rhs = ast->child[1];
+	if ((lhs->kind == kind && !(lhs->attr & ZEND_PARENTHESIZED_PATTERN))
+	 || (rhs->kind == kind && !(rhs->attr & ZEND_PARENTHESIZED_PATTERN))) {
+		zend_throw_exception(zend_ce_compile_error, "Nested compound pattern must be parenthesized", 0);
+	}
+}
 
 // static void zend_compile_pattern(zend_ast **ast_ptr, void *context)
 // {
@@ -7020,6 +7008,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			break;
 		}
 		case ZEND_AST_OR_PATTERN: {
+			verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_AND_PATTERN);
 			uint32_t jmp_test_lhs = zend_emit_jump(0);
 			uint32_t jmp_test_rhs = zend_emit_jump(0);
 			zend_update_jump_target_to_next(jmp_test_lhs);
@@ -7031,6 +7020,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			break;
 		}
 		case ZEND_AST_AND_PATTERN: {
+			verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_OR_PATTERN);
 			zend_compile_pattern(&ast->child[0], expr_node, false_opnum);
 			zend_compile_pattern(&ast->child[1], expr_node, false_opnum);
 			break;
@@ -7184,13 +7174,27 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			}
 			break;
 		}
+		case ZEND_AST_BINDING_PATTERN: {
+			znode var_node;
+			var_node.op_type = IS_CV;
+			var_node.u.op.var = lookup_cv(zend_ast_get_str(ast->child[0]));
+
+			znode expr_copy_node;
+			if (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) {
+				zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
+			} else {
+				expr_copy_node = *expr_node;
+			}
+			zend_emit_op_tmp(NULL, ZEND_ASSIGN, &var_node, &expr_copy_node);
+			break;
+		}
 		// ZEND_AST_BINDING_PATTERN
 		// ZEND_AST_RANGE_PATTERN
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
 }
 
-static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr)
+static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast_ptr)
 {
 	// FIXME: Do we need a copy of expr_node? We may observe side-effects, e.g.
 	// through hooks. Do we care?
@@ -7201,7 +7205,13 @@ static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern
 	znode false_node;
 	false_node.op_type = IS_CONST;
 	ZVAL_FALSE(&false_node.u.constant);
-	zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
+	
+	if (result->op_type == IS_UNUSED) {
+		zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
+	} else {
+		zend_op *opline_qm_assign = zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
+		SET_NODE(opline_qm_assign->result, result);
+	}
 
 	uint32_t jmp_end = zend_emit_jump(0);
 
@@ -7216,8 +7226,6 @@ static uint32_t zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern
 	SET_NODE(opline_qm_assign->result, result);
 
 	zend_update_jump_target_to_next(jmp_end);
-
-	return 0;
 }
 
 static void zend_compile_is(znode *result, zend_ast *ast)
@@ -7228,6 +7236,7 @@ static void zend_compile_is(znode *result, zend_ast *ast)
 	znode expr_node;
 	zend_compile_expr(&expr_node, expr_ast);
 
+	result->op_type = IS_UNUSED;
 	zend_emit_is(result, &expr_node, pattern_ast_ptr);
 
 	if (expr_node.op_type & (IS_VAR|IS_TMP_VAR)) {

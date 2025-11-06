@@ -1424,7 +1424,7 @@ atomic_pattern:
 	|	'(' pattern ')' {
 			$$ = $2;
 			if ($$->kind == ZEND_AST_OR_PATTERN || $$->kind == ZEND_AST_AND_PATTERN) {
-				$$->attr = ZEND_PARENTHESIZED_CONDITIONAL;
+				$$->attr = ZEND_PARENTHESIZED_PATTERN;
 			}
 		}
 ;
