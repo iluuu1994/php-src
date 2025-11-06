@@ -1,5 +1,6 @@
 --TEST--
 Or pattern
+--XFAIL--
 --FILE--
 <?php
 

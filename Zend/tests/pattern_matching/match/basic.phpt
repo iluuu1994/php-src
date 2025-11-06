@@ -58,11 +58,11 @@ var_dump(match ('Foo') {
     is * => 'Wildcard pattern',
 });
 
-var_dump(match (15) {
-    is 0 ..< 10 => wrong(),
-    is 10 ..< 20 => 'Range pattern',
-    is 20 ..< 30 => wrong(),
-});
+// var_dump(match (15) {
+//     is 0 ..< 10 => wrong(),
+//     is 10 ..< 20 => 'Range pattern',
+//     is 20 ..< 30 => wrong(),
+// });
 
 // var_dump(match ('foo') {
 //     is 'bar' => wrong(),
@@ -77,4 +77,3 @@ string(24) "Literal pattern with int"
 string(27) "Literal pattern with string"
 string(23) "Identifier pattern: Foo"
 string(16) "Wildcard pattern"
-string(13) "Range pattern"

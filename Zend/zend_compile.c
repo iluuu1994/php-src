@@ -6989,8 +6989,14 @@ static void verify_parenthesized_compound_pattern(zend_ast **ast_ptr, zend_ast_k
 // 	pattern_context->inside_or_pattern = prev_inside_or_pattern;
 // }
 
-static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t false_opnum)
+static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t false_opnum, zend_compile_pattern_context *context)
 {
+	zend_compile_pattern_context *pattern_context = context;
+	zend_compile_pattern_context tmp_context = {0};
+	if (!pattern_context) {
+		pattern_context = &tmp_context;
+	}
+
 	zend_ast *ast = *ast_ptr;
 
 	switch (ast->kind) {
@@ -7009,20 +7015,25 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 		}
 		case ZEND_AST_OR_PATTERN: {
 			verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_AND_PATTERN);
+
+			pattern_context->inside_or_pattern = true;
+
 			uint32_t jmp_test_lhs = zend_emit_jump(0);
 			uint32_t jmp_test_rhs = zend_emit_jump(0);
 			zend_update_jump_target_to_next(jmp_test_lhs);
-			zend_compile_pattern(&ast->child[0], expr_node, jmp_test_rhs);
+			zend_compile_pattern(&ast->child[0], expr_node, jmp_test_rhs, pattern_context);
 			uint32_t jmp_end = zend_emit_jump(0);
 			zend_update_jump_target_to_next(jmp_test_rhs);
-			zend_compile_pattern(&ast->child[1], expr_node, false_opnum);
+			zend_compile_pattern(&ast->child[1], expr_node, false_opnum, pattern_context);
 			zend_update_jump_target_to_next(jmp_end);
+
+			pattern_context->inside_or_pattern = false;
 			break;
 		}
 		case ZEND_AST_AND_PATTERN: {
 			verify_parenthesized_compound_pattern(ast_ptr, ZEND_AST_OR_PATTERN);
-			zend_compile_pattern(&ast->child[0], expr_node, false_opnum);
-			zend_compile_pattern(&ast->child[1], expr_node, false_opnum);
+			zend_compile_pattern(&ast->child[0], expr_node, false_opnum, pattern_context);
+			zend_compile_pattern(&ast->child[1], expr_node, false_opnum, pattern_context);
 			break;
 		}
 		case ZEND_AST_TYPE_PATTERN: {
@@ -7067,9 +7078,6 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 				zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
 			} else {
 				expr_copy_node = *expr_node;
-				if (expr_node->op_type == IS_CONST) {
-					Z_TRY_ADDREF(expr_copy_node.u.constant);
-				}
 			}
 			znode count_node;
 			zend_emit_op(&count_node, ZEND_COUNT, &expr_copy_node, NULL);
@@ -7086,6 +7094,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			zend_emit_cond_jump(ZEND_JMPZ, &count_ok_node, false_opnum);
 
 			/* Check array elements. */
+			bool has_implicit = false, has_explicit = false;
 			for (uint32_t i = 0; i < element_list->children; i++) {
 				zend_ast *element_ast = element_list->child[i];
 				zend_ast *element_key_ast = element_ast->child[0];
@@ -7096,15 +7105,14 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 					zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
 				} else {
 					expr_copy_node = *expr_node;
-					if (expr_node->op_type == IS_CONST) {
-						Z_TRY_ADDREF(expr_copy_node.u.constant);
-					}
 				}
 				znode element_value_node, element_key_node;
 				element_key_node.op_type = IS_CONST;
 				if (element_key_ast) {
+					has_explicit = true;
 					ZVAL_COPY(&element_key_node.u.constant, zend_ast_get_zval(element_key_ast));
 				} else {
+					has_implicit = true;
 					ZVAL_LONG(&element_key_node.u.constant, i);
 				}
 				zend_emit_op_tmp(&element_value_node, ZEND_FETCH_DIM_IS, &expr_copy_node, &element_key_node);
@@ -7117,8 +7125,11 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 				zend_update_jump_target_to_next(jmp_test);
 
 				/* Compile element check. */
-				zend_compile_pattern(&element_value_ast, &element_value_node, false_element_opnum);
+				zend_compile_pattern(&element_value_ast, &element_value_node, false_element_opnum, pattern_context);
 				zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
+			}
+			if (has_implicit && has_explicit) {
+				zend_throw_exception(zend_ce_compile_error, "Must not mix implicit and explicit array keys in array pattern", 0);
 			}
 			break;
 		}
@@ -7149,9 +7160,6 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 					zend_emit_op(&expr_copy_node, ZEND_COPY_TMP, expr_node, NULL);
 				} else {
 					expr_copy_node = *expr_node;
-					if (expr_node->op_type == IS_CONST) {
-						Z_TRY_ADDREF(expr_copy_node.u.constant);
-					}
 				}
 				znode property_value_node, property_name_node;
 				property_name_node.op_type = IS_CONST;
@@ -7169,12 +7177,16 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 				zend_update_jump_target_to_next(jmp_test);
 
 				/* Compile property check. */
-				zend_compile_pattern(&property_value_ast, &property_value_node, false_property_opnum);
+				zend_compile_pattern(&property_value_ast, &property_value_node, false_property_opnum, pattern_context);
 				zend_emit_op(NULL, ZEND_FREE, &property_value_node, NULL);
 			}
 			break;
 		}
 		case ZEND_AST_BINDING_PATTERN: {
+			if (pattern_context->inside_or_pattern) {
+				zend_throw_exception(zend_ce_compile_error, "Must not bind to variables inside | pattern", 0);
+			}
+
 			znode var_node;
 			var_node.op_type = IS_CV;
 			var_node.u.op.var = lookup_cv(zend_ast_get_str(ast->child[0]));
@@ -7188,7 +7200,6 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 			zend_emit_op_tmp(NULL, ZEND_ASSIGN, &var_node, &expr_copy_node);
 			break;
 		}
-		// ZEND_AST_BINDING_PATTERN
 		// ZEND_AST_RANGE_PATTERN
 		EMPTY_SWITCH_DEFAULT_CASE();
 	}
@@ -7198,6 +7209,14 @@ static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast
 {
 	// FIXME: Do we need a copy of expr_node? We may observe side-effects, e.g.
 	// through hooks. Do we care?
+
+	/* When expr is a CONST, create a copy to avoid inserting multiple literals. */
+	znode expr_copy_node;
+	if (expr_node->op_type == IS_CONST) {
+		zend_emit_op(&expr_copy_node, ZEND_QM_ASSIGN, expr_node, NULL);
+	} else {
+		expr_copy_node = *expr_node;
+	}
 
 	uint32_t jmp_test = zend_emit_jump(0);
 
@@ -7217,7 +7236,7 @@ static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast
 
 	zend_update_jump_target_to_next(jmp_test);
 
-	zend_compile_pattern(pattern_ast_ptr, expr_node, false_opnum);
+	zend_compile_pattern(pattern_ast_ptr, &expr_copy_node, false_opnum, NULL);
 
 	znode true_node;
 	true_node.op_type = IS_CONST;
@@ -7226,6 +7245,10 @@ static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast
 	SET_NODE(opline_qm_assign->result, result);
 
 	zend_update_jump_target_to_next(jmp_end);
+
+	if (expr_node->op_type == IS_CONST) {
+		zend_emit_op(NULL, ZEND_FREE, &expr_copy_node, NULL);
+	}
 }
 
 static void zend_compile_is(znode *result, zend_ast *ast)
