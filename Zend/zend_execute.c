@@ -1234,6 +1234,11 @@ static zend_always_inline bool zend_check_type(
 	return zend_check_type_slow(type, arg, ref, is_return_type, is_internal);
 }
 
+ZEND_API bool zend_check_type_ex(const zend_type *type, zval *arg, zend_class_entry *scope, bool is_return_type, bool is_internal)
+{
+	return zend_check_type(type, arg, scope, is_return_type, is_internal);
+}
+
 ZEND_API bool zend_check_user_type_slow(
 		const zend_type *type, zval *arg, const zend_reference *ref, bool is_return_type)
 {
