@@ -6989,6 +6989,32 @@ static void verify_parenthesized_compound_pattern(zend_ast **ast_ptr, zend_ast_k
 // 	pattern_context->inside_or_pattern = prev_inside_or_pattern;
 // }
 
+static void pattern_matching_patch_jumps(uint32_t start_opnum, uint32_t target_opnum)
+{
+	zend_op_array *op_array = CG(active_op_array);
+	zend_op *opline = &op_array->opcodes[start_opnum];
+	zend_op *end_opline = &op_array->opcodes[op_array->last];
+
+	while (opline < end_opline) {
+		switch (opline->opcode) {
+			case ZEND_JMP:
+				if (opline->op1.opline_num == (uint32_t)-1) {
+					opline->op1.opline_num = target_opnum;
+				}
+				break;
+			case ZEND_JMPZ:
+				if (opline->op2.opline_num == (uint32_t)-1) {
+					opline->op2.opline_num = target_opnum;
+				}
+				break;
+			case ZEND_QM_ASSIGN:
+				target_opnum++;
+				break;
+		}
+		opline++;
+	}
+}
+
 static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t false_opnum, zend_compile_pattern_context *context)
 {
 	zend_compile_pattern_context *pattern_context = context;
@@ -7218,30 +7244,30 @@ static void zend_emit_is(znode *result, znode *expr_node, zend_ast **pattern_ast
 		expr_copy_node = *expr_node;
 	}
 
-	uint32_t jmp_test = zend_emit_jump(0);
+	uint32_t pattern_opnum = get_next_op_number();
+	zend_compile_pattern(pattern_ast_ptr, &expr_copy_node, (uint32_t)-1, NULL);
 
-	uint32_t false_opnum = get_next_op_number();
-	znode false_node;
-	false_node.op_type = IS_CONST;
-	ZVAL_FALSE(&false_node.u.constant);
-	
-	if (result->op_type == IS_UNUSED) {
-		zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
-	} else {
-		zend_op *opline_qm_assign = zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &false_node, NULL);
-		SET_NODE(opline_qm_assign->result, result);
-	}
-
-	uint32_t jmp_end = zend_emit_jump(0);
-
-	zend_update_jump_target_to_next(jmp_test);
-
-	zend_compile_pattern(pattern_ast_ptr, &expr_copy_node, false_opnum, NULL);
+	// TODO: Emit assignments.
 
 	znode true_node;
 	true_node.op_type = IS_CONST;
 	ZVAL_TRUE(&true_node.u.constant);
-	zend_op *opline_qm_assign = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &true_node, NULL);
+	if (result->op_type == IS_UNUSED) {
+		zend_emit_op_tmp(result, ZEND_QM_ASSIGN, &true_node, NULL);
+	} else {
+		zend_op *opline_qm_assign = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &true_node, NULL);
+		SET_NODE(opline_qm_assign->result, result);
+	}
+
+	uint32_t jmp_end = zend_emit_jump(0);
+	pattern_matching_patch_jumps(pattern_opnum, get_next_op_number());
+
+	// TODO: Emit frees
+
+	znode false_node;
+	false_node.op_type = IS_CONST;
+	ZVAL_FALSE(&false_node.u.constant);
+	zend_op *opline_qm_assign = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &false_node, NULL);
 	SET_NODE(opline_qm_assign->result, result);
 
 	zend_update_jump_target_to_next(jmp_end);
