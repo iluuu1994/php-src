@@ -7149,7 +7149,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 				zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
 			}
 			if (has_implicit && has_explicit) {
-				zend_throw_exception(zend_ce_compile_error, "Must not mix implicit and explicit array keys in array pattern", 0);
+				zend_error_noreturn(E_COMPILE_ERROR, "Must not mix implicit and explicit array keys in array pattern");
 			}
 			break;
 		}
@@ -7204,7 +7204,7 @@ static void zend_compile_pattern(zend_ast **ast_ptr, znode *expr_node, uint32_t 
 		}
 		case ZEND_AST_BINDING_PATTERN: {
 			if (context->inside_or_pattern) {
-				zend_throw_exception(zend_ce_compile_error, "Must not bind to variables inside | pattern", 0);
+				zend_error_noreturn(E_COMPILE_ERROR, "Must not bind to variables inside | pattern");
 			}
 
 			znode var_node;
