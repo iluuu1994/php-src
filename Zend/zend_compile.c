@@ -6942,7 +6942,7 @@ static void verify_parenthesized_compound_pattern(zend_ast **ast_ptr, zend_ast_k
 	zend_ast *rhs = ast->child[1];
 	if ((lhs->kind == kind && !(lhs->attr & ZEND_PARENTHESIZED_PATTERN))
 	 || (rhs->kind == kind && !(rhs->attr & ZEND_PARENTHESIZED_PATTERN))) {
-		zend_throw_exception(zend_ce_compile_error, "Nested compound pattern must be parenthesized", 0);
+		zend_error_noreturn(E_COMPILE_ERROR, "Nested compound pattern must be parenthesized");
 	}
 }
 
