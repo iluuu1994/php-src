@@ -6721,6 +6721,9 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 					}
 				} else {
 					zend_ast **pattern_ast_ptr = &cond_ast->child[1];
+					if (expr_node.op_type == IS_CONST) {
+						Z_TRY_ADDREF(expr_node.u.constant);
+					}
 					zend_emit_is(&case_node, &expr_node, pattern_ast_ptr);
 				}
 
