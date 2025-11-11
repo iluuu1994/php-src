@@ -6720,9 +6720,9 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 						Z_TRY_ADDREF_P(CT_CONSTANT(opline->op1));
 					}
 				} else {
-					if (expr_node.op_type == IS_CONST) {
-						Z_TRY_ADDREF(expr_node.u.constant);
-					}
+					// if (expr_node.op_type == IS_CONST) {
+					// 	Z_TRY_ADDREF(expr_node.u.constant);
+					// }
 					zend_ast *pattern_ast = cond_ast->child[1];
 					zend_emit_is(&case_node, &expr_node, pattern_ast);
 				}
@@ -6846,6 +6846,35 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 static void zend_compile_pattern(zend_ast *ast, znode *expr_node, uint32_t false_opnum, zend_compile_pattern_context *context);
 static zend_type zend_compile_single_typename(zend_ast *ast);
 
+// FIXME: This is currently O(n^2). We can improve by creating a map of jump
+// target placeholders and real targets and updating them all at once in a final
+// pass.
+static void pattern_matching_patch_jumps(uint32_t start_opnum, uint32_t target_opnum)
+{
+	zend_op_array *op_array = CG(active_op_array);
+	zend_op *opline = &op_array->opcodes[start_opnum];
+	zend_op *end_opline = &op_array->opcodes[op_array->last];
+
+	while (opline < end_opline) {
+		switch (opline->opcode) {
+			case ZEND_JMP:
+				if (opline->op1.opline_num == (uint32_t)-1) {
+					opline->op1.opline_num = target_opnum;
+				}
+				break;
+			case ZEND_JMPZ:
+				if (opline->op2.opline_num == (uint32_t)-1) {
+					opline->op2.opline_num = target_opnum;
+				}
+				break;
+			case ZEND_QM_ASSIGN:
+				target_opnum--;
+				break;
+		}
+		opline++;
+	}
+}
+
 static void zend_compile_expr_like_pattern(zend_ast *ast, znode *expr_node, uint32_t false_opnum)
 {
 	znode result, value;
@@ -6870,12 +6899,11 @@ static void zend_compile_or_pattern(zend_ast *ast, znode *expr_node, uint32_t fa
 
 	context->inside_or_pattern = true;
 
-	uint32_t jmp_test_lhs = zend_emit_jump(0);
-	uint32_t jmp_test_rhs = zend_emit_jump(0);
-	zend_update_jump_target_to_next(jmp_test_lhs);
-	zend_compile_pattern(ast->child[0], expr_node, jmp_test_rhs, context);
+	uint32_t start_opnum = get_next_op_number();
+	zend_compile_pattern(ast->child[0], expr_node, -1, context);
 	uint32_t jmp_end = zend_emit_jump(0);
-	zend_update_jump_target_to_next(jmp_test_rhs);
+	pattern_matching_patch_jumps(start_opnum, get_next_op_number());
+
 	zend_compile_pattern(ast->child[1], expr_node, false_opnum, context);
 	zend_update_jump_target_to_next(jmp_end);
 
@@ -6993,15 +7021,17 @@ static void zend_compile_array_pattern(zend_ast *ast, znode *expr_node, uint32_t
 		}
 		zend_emit_op_tmp(&element_value_node, ZEND_FETCH_DIM_IS, &expr_copy_node, &element_key_node);
 
+		/* Compile element check. */
+		uint32_t start_opnum = get_next_op_number();
+		zend_compile_pattern(element_value_ast, &element_value_node, -1, context);
+		uint32_t jmp_end = zend_emit_jump(0);
+		pattern_matching_patch_jumps(start_opnum, get_next_op_number());
+
 		/* Compile false branch, which frees the element. */
-		uint32_t jmp_test = zend_emit_jump(0);
-		uint32_t false_element_opnum = get_next_op_number();
 		zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
 		zend_emit_jump(false_opnum);
-		zend_update_jump_target_to_next(jmp_test);
 
-		/* Compile element check. */
-		zend_compile_pattern(element_value_ast, &element_value_node, false_element_opnum, context);
+		zend_update_jump_target_to_next(jmp_end);
 		zend_emit_op(NULL, ZEND_FREE, &element_value_node, NULL);
 	}
 	if (has_implicit && has_explicit) {
@@ -7046,42 +7076,18 @@ static void zend_compile_object_pattern(zend_ast *ast, znode *expr_node, uint32_
 		zend_string_hash_val(Z_STR_P(CT_CONSTANT(fetch_prop_op->op2)));
 		fetch_prop_op->extended_value = zend_alloc_cache_slots(3);
 
+		/* Compile property check. */
+		uint32_t start_opnum = get_next_op_number();
+		zend_compile_pattern(property_value_ast, &property_value_node, -1, context);
+		uint32_t jmp_end = zend_emit_jump(0);
+		pattern_matching_patch_jumps(start_opnum, get_next_op_number());
+
 		/* Compile false branch, which frees the property. */
-		uint32_t jmp_test = zend_emit_jump(0);
-		uint32_t false_property_opnum = get_next_op_number();
 		zend_emit_op(NULL, ZEND_FREE, &property_value_node, NULL);
 		zend_emit_jump(false_opnum);
-		zend_update_jump_target_to_next(jmp_test);
 
-		/* Compile property check. */
-		zend_compile_pattern(property_value_ast, &property_value_node, false_property_opnum, context);
+		zend_update_jump_target_to_next(jmp_end);
 		zend_emit_op(NULL, ZEND_FREE, &property_value_node, NULL);
-	}
-}
-
-static void pattern_matching_patch_jumps(uint32_t start_opnum, uint32_t target_opnum)
-{
-	zend_op_array *op_array = CG(active_op_array);
-	zend_op *opline = &op_array->opcodes[start_opnum];
-	zend_op *end_opline = &op_array->opcodes[op_array->last];
-
-	while (opline < end_opline) {
-		switch (opline->opcode) {
-			case ZEND_JMP:
-				if (opline->op1.opline_num == (uint32_t)-1) {
-					opline->op1.opline_num = target_opnum;
-				}
-				break;
-			case ZEND_JMPZ:
-				if (opline->op2.opline_num == (uint32_t)-1) {
-					opline->op2.opline_num = target_opnum;
-				}
-				break;
-			case ZEND_QM_ASSIGN:
-				target_opnum--;
-				break;
-		}
-		opline++;
 	}
 }
 
