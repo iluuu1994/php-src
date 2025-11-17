@@ -1413,19 +1413,17 @@ pattern:
 ;
 
 atomic_pattern:
-		scalar_pattern { $$ = $1; }
+		scalar_pattern { $$ = zend_ast_create(ZEND_AST_EXPR_LIKE_PATTERN, $1); }
 	|	type_pattern { $$ = $1; }
 	|	object_pattern { $$ = $1; }
 	|	range_pattern { $$ = $1; }
 	|	array_pattern { $$ = $1; }
 	|	binding_pattern { $$ = $1; }
-	|	class_const_pattern { $$ = $1; }
+	|	class_const_pattern { $$ = zend_ast_create(ZEND_AST_EXPR_LIKE_PATTERN, $1); }
 	|	'*' { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
 	|	'(' pattern ')' {
 			$$ = $2;
-			if ($$->kind == ZEND_AST_OR_PATTERN || $$->kind == ZEND_AST_AND_PATTERN) {
-				$$->attr = ZEND_PARENTHESIZED_PATTERN;
-			}
+			$$->attr = ZEND_PARENTHESIZED_PATTERN;
 		}
 ;
 
@@ -1473,12 +1471,12 @@ object_pattern_element:
 ;
 
 or_pattern:
-		pattern '|' pattern { $$ = zend_ast_create(ZEND_AST_OR_PATTERN, $1, $3); }
+		pattern '|' pattern { $$ = zend_ast_merge_lists(ZEND_AST_OR_PATTERN, $1, $3); }
 ;
 
 and_pattern:
-		pattern T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_create(ZEND_AST_AND_PATTERN, $1, $3); }
-	|	pattern T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_create(ZEND_AST_AND_PATTERN, $1, $3); }
+		pattern T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_merge_lists(ZEND_AST_AND_PATTERN, $1, $3); }
+	|	pattern T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_merge_lists(ZEND_AST_AND_PATTERN, $1, $3); }
 ;
 
 range_pattern:

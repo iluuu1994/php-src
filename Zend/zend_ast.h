@@ -72,6 +72,8 @@ enum _zend_ast_kind {
 	ZEND_AST_MODIFIER_LIST,
 	ZEND_AST_OBJECT_PATTERN_ELEMENT_LIST,
 	ZEND_AST_ARRAY_PATTERN_ELEMENT_LIST,
+	ZEND_AST_OR_PATTERN,
+	ZEND_AST_AND_PATTERN,
 
 	/* 0 child nodes */
 	ZEND_AST_MAGIC_CONST = 0 << ZEND_AST_NUM_CHILDREN_SHIFT,
@@ -118,6 +120,7 @@ enum _zend_ast_kind {
 	ZEND_AST_ARRAY_PATTERN,
 	ZEND_AST_BINDING_PATTERN,
 	ZEND_AST_OBJECT_PATTERN,
+	ZEND_AST_EXPR_LIKE_PATTERN,
 
 	/* 2 child nodes */
 	ZEND_AST_DIM = 2 << ZEND_AST_NUM_CHILDREN_SHIFT,
@@ -162,8 +165,6 @@ enum _zend_ast_kind {
 	ZEND_AST_PARENT_PROPERTY_HOOK_CALL,
 	ZEND_AST_PIPE,
 	ZEND_AST_IS,
-	ZEND_AST_OR_PATTERN,
-	ZEND_AST_AND_PATTERN,
 	ZEND_AST_OBJECT_PATTERN_ELEMENT,
 	ZEND_AST_RANGE_PATTERN,
 	ZEND_AST_ARRAY_PATTERN_ELEMENT,
@@ -438,5 +439,6 @@ static zend_always_inline zend_ast *zend_ast_list_rtrim(zend_ast *ast) {
 }
 
 zend_ast * ZEND_FASTCALL zend_ast_with_attributes(zend_ast *ast, zend_ast *attr);
+zend_ast *zend_ast_merge_lists(zend_ast_kind kind, zend_ast *lhs, zend_ast *rhs);
 
 #endif

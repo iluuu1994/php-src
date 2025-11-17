@@ -6878,18 +6878,20 @@ static void pattern_matching_patch_jumps(uint32_t start_opnum, uint32_t target_o
 static void zend_compile_expr_like_pattern(zend_ast *ast, znode *expr_node, uint32_t false_opnum)
 {
 	znode result, value;
-	zend_compile_expr(&value, ast);
+	zend_compile_expr(&value, ast->child[0]);
 	zend_emit_op_tmp(&result, (expr_node->op_type & (IS_VAR|IS_TMP_VAR)) ? ZEND_CASE_STRICT : ZEND_IS_IDENTICAL, expr_node, &value);
 	zend_emit_cond_jump(ZEND_JMPZ, &result, false_opnum);
 }
 
 static void verify_parenthesized_compound_pattern(zend_ast *ast, zend_ast_kind kind)
 {
-	zend_ast *lhs = ast->child[0];
-	zend_ast *rhs = ast->child[1];
-	if ((lhs->kind == kind && !(lhs->attr & ZEND_PARENTHESIZED_PATTERN))
-	 || (rhs->kind == kind && !(rhs->attr & ZEND_PARENTHESIZED_PATTERN))) {
-		zend_error_noreturn(E_COMPILE_ERROR, "Nested compound pattern must be parenthesized");
+	zend_ast_list *ast_list = zend_ast_get_list(ast);
+
+	for (uint32_t i = 0; i < ast_list->children; i++) {
+		zend_ast *element_ast = ast_list->child[i];
+		if (element_ast->kind == kind && !(element_ast->attr & ZEND_PARENTHESIZED_PATTERN)) {
+			zend_error_noreturn(E_COMPILE_ERROR, "Nested compound pattern must be parenthesized");
+		}
 	}
 }
 
@@ -6899,22 +6901,38 @@ static void zend_compile_or_pattern(zend_ast *ast, znode *expr_node, uint32_t fa
 
 	context->inside_or_pattern = true;
 
+	zend_ast_list *ast_list = zend_ast_get_list(ast);
 	uint32_t start_opnum = get_next_op_number();
-	zend_compile_pattern(ast->child[0], expr_node, -1, context);
-	uint32_t jmp_end = zend_emit_jump(0);
-	pattern_matching_patch_jumps(start_opnum, get_next_op_number());
+	zend_stack end_opnums;
+	zend_stack_init(&end_opnums, sizeof(uint32_t));
 
-	zend_compile_pattern(ast->child[1], expr_node, false_opnum, context);
-	zend_update_jump_target_to_next(jmp_end);
+	for (uint32_t i = 0; i < ast_list->children - 1; i++) {
+		zend_compile_pattern(ast_list->child[i], expr_node, -1, context);
+		uint32_t jmp_end = zend_emit_jump(0);
+		zend_stack_push(&end_opnums, &jmp_end);
+		pattern_matching_patch_jumps(start_opnum, get_next_op_number());
+	}
 
+	zend_compile_pattern(ast_list->child[ast_list->children - 1], expr_node, false_opnum, context);
+	uint32_t *end_opnum = zend_stack_base(&end_opnums);
+	uint32_t *end_opnum_end = zend_stack_top(&end_opnums);
+	while (end_opnum <= end_opnum_end) {
+		zend_update_jump_target_to_next(*end_opnum);
+		end_opnum++;
+	}
+
+	zend_stack_destroy(&end_opnums);
 	context->inside_or_pattern = false;
 }
 
 static void zend_compile_and_pattern(zend_ast *ast, znode *expr_node, uint32_t false_opnum, zend_compile_pattern_context *context)
 {
 	verify_parenthesized_compound_pattern(ast, ZEND_AST_OR_PATTERN);
-	zend_compile_pattern(ast->child[0], expr_node, false_opnum, context);
-	zend_compile_pattern(ast->child[1], expr_node, false_opnum, context);
+
+	zend_ast_list *ast_list = zend_ast_get_list(ast);
+	for (uint32_t i = 0; i < ast_list->children; i++) {
+		zend_compile_pattern(ast_list->child[i], expr_node, false_opnum, context);
+	}
 }
 
 static void zend_compile_type_pattern(zend_ast *ast, znode *expr_node, uint32_t false_opnum)
@@ -7097,9 +7115,7 @@ static void zend_compile_pattern(zend_ast *ast, znode *expr_node, uint32_t false
 		case ZEND_AST_WILDCARD_PATTERN:
 			/* Nothing to do. */
 			break;
-		case ZEND_AST_ZVAL:
-		case ZEND_AST_CLASS_CONST:
-		case ZEND_AST_CLASS_NAME:
+		case ZEND_AST_EXPR_LIKE_PATTERN:
 			zend_compile_expr_like_pattern(ast, expr_node, false_opnum);
 			break;
 		case ZEND_AST_OR_PATTERN:
