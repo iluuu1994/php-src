@@ -1002,7 +1002,6 @@ optimize_const_unary_op:
 				if (opline->op1_type & (IS_TMP_VAR|IS_VAR)) {
 					/* Variable will be deleted later by FREE, so we can't optimize it */
 					Tsource[VAR_NUM(opline->op1.var)] = NULL;
-					break;
 				}
 				break;
 		}

@@ -6643,10 +6643,15 @@ static void zend_compile_pipe(znode *result, zend_ast *ast)
 
 typedef struct {
 	bool inside_or_pattern;
-	uint32_t num_bindings;
-	uint32_t first_binding_tmp;
 	zend_stack labels;
+	uint32_t num_bindings;
+	zend_stack bindings;
 } zend_pm_context;
+
+typedef struct {
+	uint32_t cv;
+	znode value;
+} zend_pm_binding;
 
 static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context);
 static zend_type zend_compile_single_typename(zend_ast *ast);
@@ -6657,11 +6662,14 @@ static void zend_pm_context_init(zend_pm_context *context)
 	/* Avoid offset 0. */
 	uint32_t dummy = 0;
 	zend_stack_push(&context->labels, &dummy);
+
+	zend_stack_init(&context->bindings, sizeof(zend_pm_binding));
 }
 
 static void zend_pm_context_free(zend_pm_context *context)
 {
 	zend_stack_destroy(&context->labels);
+	zend_stack_destroy(&context->bindings);
 }
 
 static uint32_t zend_pm_label_create(zend_pm_context *context)
@@ -6823,15 +6831,18 @@ static void zend_pm_compile_binding(zend_ast *ast, znode *expr_node, bool consum
 		zend_error_noreturn(E_COMPILE_ERROR, "Must not bind to variables inside | pattern");
 	}
 
-	znode var_node;
-	var_node.op_type = IS_TMP_VAR;
-	var_node.u.op.var = context->first_binding_tmp + context->num_bindings++;
+	zend_pm_binding binding = {0};
+	binding.cv = lookup_cv(zend_ast_get_str(ast->child[0]));
 
-	znode expr_copy_node;
-	zend_pm_copy_tmp(&expr_copy_node, expr_node, consume_expr);
+	if (consume_expr && (expr_node->op_type & (IS_VAR|IS_TMP_VAR))) {
+		binding.value = *expr_node;
+	} else {
+		znode expr_copy_node;
+		zend_pm_copy_tmp(&expr_copy_node, expr_node, consume_expr);
+		zend_emit_op_tmp(&binding.value, ZEND_QM_ASSIGN, &expr_copy_node, NULL);
+	}
 
-	zend_op *op = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &expr_copy_node, NULL);
-	SET_NODE(op->result, &var_node);
+	zend_stack_push(&context->bindings, &binding);
 }
 
 static void zend_pm_compile_container(
@@ -6959,30 +6970,6 @@ static void zend_pm_count_bindings(zend_ast **ast_ptr, void *context)
 	zend_ast_apply(ast, zend_pm_count_bindings, context);
 }
 
-static void zend_pm_emit_assigns(zend_ast **ast_ptr, void *context)
-{
-	zend_ast *ast = *ast_ptr;
-	if (ast == NULL || ast->kind == ZEND_AST_ZVAL) {
-		return;
-	}
-
-	if (ast->kind == ZEND_AST_BINDING_PATTERN) {
-		zend_pm_context *pattern_context = context;
-
-		znode var_node;
-		var_node.op_type = IS_CV;
-		var_node.u.op.var = lookup_cv(zend_ast_get_str(ast->child[0]));
-
-		znode value_node;
-		value_node.op_type = IS_TMP_VAR;
-		value_node.u.op.var = pattern_context->first_binding_tmp + pattern_context->num_bindings++;
-
-		zend_emit_op(NULL, ZEND_ASSIGN, &var_node, &value_node);
-	}
-
-	zend_ast_apply(ast, zend_pm_emit_assigns, context);
-}
-
 static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zend_ast *pattern_ast)
 {
 	/* When expr is a CONST, create a copy to avoid inserting multiple literals.
@@ -7000,28 +6987,36 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 	zend_pm_context context = {0};
 	zend_pm_context_init(&context);
 	zend_pm_count_bindings(&pattern_ast, &context);
-	context.first_binding_tmp = CG(active_op_array)->T;
-	CG(active_op_array)->T += context.num_bindings;
 
-	/* Initialize temporaries used for assignment */
+	/* Initialize binding values. If the pattern fails midway, we need to be able
+	 * to free temporaries that may not have been initialized yet. */
+	uint32_t first_binding_init_opnum = get_next_op_number();
 	for (uint32_t i = 0; i < context.num_bindings; i++) {
-		znode var_node;
-		var_node.op_type = IS_TMP_VAR;
-		var_node.u.op.var = context.first_binding_tmp + i;
 		znode null_node;
 		null_node.op_type = IS_CONST;
 		ZVAL_NULL(&null_node.u.constant);
-		zend_op *op = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &null_node, NULL);
-		SET_NODE(op->result, &var_node);
+		zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &null_node, NULL);
 	}
 
 	uint32_t start_opnum = get_next_op_number();
 	uint32_t false_label = zend_pm_label_create(&context);
-	context.num_bindings = 0;
 	zend_compile_pattern(pattern_ast, &expr_copy_node, consume_expr, false_label, &context);
 
-	context.num_bindings = 0;
-	zend_pm_emit_assigns(&pattern_ast, &context);
+	if (context.num_bindings) {
+		zend_pm_binding *binding = zend_stack_base(&context.bindings);
+		zend_pm_binding *binding_end = zend_stack_top(&context.bindings);
+		zend_op *binding_init_op = &CG(active_op_array)->opcodes[first_binding_init_opnum];
+		while (binding <= binding_end) {
+			znode var_node;
+			var_node.op_type = IS_CV;
+			var_node.u.op.var = binding->cv;
+			zend_emit_op(NULL, ZEND_ASSIGN, &var_node, &binding->value);
+			binding_init_op->result_type = binding->value.op_type;
+			binding_init_op->result.var = binding->value.u.op.var;
+			binding++;
+			binding_init_op++;
+		}
+	}
 
 	znode true_node;
 	true_node.op_type = IS_CONST;
@@ -7036,11 +7031,13 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 
 	zend_pm_label_set_next(&context, false_label);
 
-	for (uint32_t i = 0; i < context.num_bindings; i++) {
-		znode var_node;
-		var_node.op_type = IS_TMP_VAR;
-		var_node.u.op.var = context.first_binding_tmp + i;
-		zend_emit_op(NULL, ZEND_FREE, &var_node, NULL);
+	if (context.num_bindings) {
+		zend_pm_binding *binding = zend_stack_base(&context.bindings);
+		zend_pm_binding *binding_end = zend_stack_top(&context.bindings);
+		while (binding <= binding_end) {
+			zend_emit_op(NULL, ZEND_FREE, &binding->value, NULL);
+			binding++;
+		}
 	}
 
 	znode false_node;
