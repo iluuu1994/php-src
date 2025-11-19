@@ -6834,7 +6834,7 @@ static void zend_pm_compile_binding(zend_ast *ast, znode *expr_node, bool consum
 	zend_pm_binding binding = {0};
 	binding.cv = lookup_cv(zend_ast_get_str(ast->child[0]));
 
-	if (consume_expr && (expr_node->op_type & (IS_VAR|IS_TMP_VAR))) {
+	if (consume_expr) {
 		binding.value = *expr_node;
 	} else {
 		znode expr_copy_node;
