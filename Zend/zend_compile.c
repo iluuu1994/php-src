@@ -6984,6 +6984,8 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 		expr_copy_node = *expr_node;
 	}
 
+	uint32_t num_tmps_before_pm = CG(active_op_array)->T;
+
 	zend_pm_context context = {0};
 	zend_pm_context_init(&context);
 	zend_pm_count_bindings(&pattern_ast, &context);
@@ -7011,8 +7013,16 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 			var_node.op_type = IS_CV;
 			var_node.u.op.var = binding->cv;
 			zend_emit_op(NULL, ZEND_ASSIGN, &var_node, &binding->value);
-			binding_init_op->result_type = binding->value.op_type;
-			binding_init_op->result.var = binding->value.u.op.var;
+
+			/* Only TMPs that are produced during pattern matching may be
+			 * uninitialized. Don't override existing vars. */
+			if (binding->value.u.op.var >= num_tmps_before_pm) {
+				binding_init_op->result_type = binding->value.op_type;
+				binding_init_op->result.var = binding->value.u.op.var;
+			} else {
+				MAKE_NOP(binding_init_op);
+			}
+
 			binding++;
 			binding_init_op++;
 		}
