@@ -39,7 +39,6 @@
 #include "zend_observer.h"
 #include "zend_call_stack.h"
 #include "zend_frameless_function.h"
-#include "zend_pattern_matching.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif

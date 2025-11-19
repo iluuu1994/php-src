@@ -9400,34 +9400,8 @@ ZEND_VM_C_LABEL(default_branch):
 	}
 }
 
-ZEND_VM_HANDLER(211, ZEND_IS, ANY, TMPVAR, JMP_ADDR)
-{
-	// , SPEC(OP_DATA=CONST)
-	USE_OPLINE
-	SAVE_OPLINE();
-	zval *expr = GET_OP1_ZVAL_PTR(BP_VAR_R);
-	zend_array *bindings = NULL;
-	if ((opline+1)->extended_value) {
-		bindings = zend_new_array((opline+1)->extended_value);
-		zend_hash_real_init_packed(bindings);
-		ZVAL_ARR(EX_VAR(opline->op2.var), bindings);
-	}
-	zval *pattern = GET_OP_DATA_ZVAL_PTR(BP_VAR_R);
-	bool result = zend_pattern_match(expr, Z_ASTVAL_P(pattern), bindings);
-	ZVAL_BOOL(EX_VAR(opline->result.var), result);
-	if (result) {
-		ZEND_VM_NEXT_OPCODE_EX(1, 2);
-	} else {
-		if (UNEXPECTED(EG(exception))) {
-			HANDLE_EXCEPTION();
-		}
-		ZEND_VM_SET_RELATIVE_OPCODE(opline, opline->extended_value);
-		ZEND_VM_CONTINUE();
-	}
-}
-
 // FIXME: Smart branch?
-ZEND_VM_HANDLER(212, ZEND_HAS_TYPE, ANY, CONST)
+ZEND_VM_HANDLER(211, ZEND_HAS_TYPE, ANY, CONST)
 {
 	USE_OPLINE
 	SAVE_OPLINE();

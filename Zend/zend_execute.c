@@ -44,7 +44,6 @@
 #include "zend_system_id.h"
 #include "zend_call_stack.h"
 #include "zend_attributes.h"
-#include "zend_pattern_matching.h"
 #include "Optimizer/zend_func_info.h"
 
 /* Virtual current working directory support */
