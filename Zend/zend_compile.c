@@ -7223,6 +7223,17 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 	context.first_tmp = CG(active_op_array)->T;
 	CG(active_op_array)->T += context.num_bindings;
 
+	for (uint32_t i = 0; i < context.num_bindings; i++) {
+		znode var_node;
+		var_node.op_type = IS_TMP_VAR;
+		var_node.u.op.var = context.first_tmp + i;
+		znode null_node;
+		null_node.op_type = IS_CONST;
+		ZVAL_NULL(&null_node.u.constant);
+		zend_op *op = zend_emit_op_tmp(NULL, ZEND_QM_ASSIGN, &null_node, NULL);
+		SET_NODE(op->result, &var_node);
+	}
+
 	uint32_t start_opnum = get_next_op_number();
 	uint32_t false_label = zend_pm_label_create(&context);
 	context.num_bindings = 0;
@@ -7243,15 +7254,14 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 
 	uint32_t jmp_end = zend_emit_jump(0);
 
-	for (uint32_t i = context.num_bindings; i > 0; i--) {
-		uint32_t var = i - 1;
+	zend_pm_label_set_next(&context, false_label);
+
+	for (uint32_t i = 0; i < context.num_bindings; i++) {
 		znode var_node;
 		var_node.op_type = IS_TMP_VAR;
-		var_node.u.op.var = context.first_tmp + var;
+		var_node.u.op.var = context.first_tmp + i;
 		zend_emit_op(NULL, ZEND_FREE, &var_node, NULL);
 	}
-
-	zend_pm_label_set_next(&context, false_label);
 
 	znode false_node;
 	false_node.op_type = IS_CONST;
