@@ -51,23 +51,10 @@ var_dump(match ('Foo') {
     is 6 => wrong(),
 });
 
-var_dump(match ('Foo') {
-    is 1 => wrong(),
-    is 2 => wrong(),
-    is 3 => wrong(),
-    is * => 'Wildcard pattern',
+var_dump(match ('foo') {
+    is 'bar' => wrong(),
+    is Foo::FOO => 'Class constant literal',
 });
-
-// var_dump(match (15) {
-//     is 0 ..< 10 => wrong(),
-//     is 10 ..< 20 => 'Range pattern',
-//     is 20 ..< 30 => wrong(),
-// });
-
-// var_dump(match ('foo') {
-//     is 'bar' => wrong(),
-//     is Foo::FOO => 'Class constant literal',
-// });
 
 ?>
 --EXPECT--
@@ -76,4 +63,4 @@ string(25) "Literal pattern with bool"
 string(24) "Literal pattern with int"
 string(27) "Literal pattern with string"
 string(23) "Identifier pattern: Foo"
-string(16) "Wildcard pattern"
+string(22) "Class constant literal"

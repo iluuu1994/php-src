@@ -1419,7 +1419,6 @@ atomic_pattern:
 	|	array_pattern { $$ = $1; }
 	|	binding_pattern { $$ = $1; }
 	|	class_const_pattern { $$ = zend_ast_create(ZEND_AST_EXPR_LIKE_PATTERN, $1); }
-	|	'*' { $$ = zend_ast_create(ZEND_AST_WILDCARD_PATTERN); }
 	|	'(' pattern ')' {
 			$$ = $2;
 			$$->attr = ZEND_PARENTHESIZED_PATTERN;

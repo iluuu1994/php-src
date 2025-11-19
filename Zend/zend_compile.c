@@ -6919,11 +6919,6 @@ static void zend_pm_compile_container(
 static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context)
 {
 	switch (ast->kind) {
-		case ZEND_AST_WILDCARD_PATTERN:
-			if (consume_expr && (expr_node->op_type & (IS_VAR|IS_TMP_VAR))) {
-				zend_emit_op(NULL, ZEND_FREE, expr_node, NULL);
-			}
-			break;
 		case ZEND_AST_EXPR_LIKE_PATTERN:
 			zend_pm_compile_expr_like(ast, expr_node, consume_expr, false_opnum);
 			break;
