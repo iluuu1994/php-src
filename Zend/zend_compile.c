@@ -6752,8 +6752,8 @@ static void zend_pm_compile_or(zend_ast *ast, znode *expr_node, bool consume_exp
 
 	zend_compile_pattern(ast_list->child[ast_list->children - 1], expr_node, false, false_label, context);
 
+	zend_pm_label_set_next(context, true_label);
 	if (consume_expr) {
-		zend_pm_label_set_next(context, true_label);
 		zend_emit_op(NULL, ZEND_FREE, expr_node, NULL);
 		uint32_t end_label = zend_emit_jump(0);
 
