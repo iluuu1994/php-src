@@ -294,7 +294,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> optional_parameter_list clone_argument_list non_empty_clone_argument_list
 %type <ast> pattern atomic_pattern compound_pattern type_pattern scalar_pattern or_pattern and_pattern class_const_pattern
 %type <ast> object_pattern object_pattern_element_list non_empty_object_pattern_element_list
-%type <ast> object_pattern_element range_pattern binding_pattern
+%type <ast> object_pattern_element binding_pattern
 %type <ast> array_pattern array_pattern_element_list array_pattern_element
 
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
@@ -1416,7 +1416,6 @@ atomic_pattern:
 		scalar_pattern { $$ = zend_ast_create(ZEND_AST_EXPR_LIKE_PATTERN, $1); }
 	|	type_pattern { $$ = $1; }
 	|	object_pattern { $$ = $1; }
-	|	range_pattern { $$ = $1; }
 	|	array_pattern { $$ = $1; }
 	|	binding_pattern { $$ = $1; }
 	|	class_const_pattern { $$ = zend_ast_create(ZEND_AST_EXPR_LIKE_PATTERN, $1); }
@@ -1477,12 +1476,6 @@ or_pattern:
 and_pattern:
 		pattern T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_merge_lists(ZEND_AST_AND_PATTERN, $1, $3); }
 	|	pattern T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG pattern { $$ = zend_ast_merge_lists(ZEND_AST_AND_PATTERN, $1, $3); }
-;
-
-range_pattern:
-		scalar_pattern T_RANGE_EXCLUSIVE_END scalar_pattern { $$ = zend_ast_create(ZEND_AST_RANGE_PATTERN, $1, $3); }
-	|	scalar_pattern T_RANGE_INCLUSIVE_END scalar_pattern
-			{ $$ = zend_ast_create(ZEND_AST_RANGE_PATTERN, $1, $3); $$->attr = ZEND_AST_RANGE_INCLUSIVE_END; }
 ;
 
 binding_pattern:
