@@ -6648,9 +6648,9 @@ typedef struct {
 	uint32_t num_bindings;
 	uint32_t first_tmp;
 	zend_stack labels;
-} zend_compile_pattern_context;
+} zend_pm_context;
 
-static void zend_pm_context_init(zend_compile_pattern_context *context)
+static void zend_pm_context_init(zend_pm_context *context)
 {
 	zend_stack_init(&context->labels, sizeof(uint32_t));
 	/* Avoid offset 0. */
@@ -6658,25 +6658,25 @@ static void zend_pm_context_init(zend_compile_pattern_context *context)
 	zend_stack_push(&context->labels, &dummy);
 }
 
-static void zend_pm_context_free(zend_compile_pattern_context *context)
+static void zend_pm_context_free(zend_pm_context *context)
 {
 	zend_stack_destroy(&context->labels);
 }
 
-static uint32_t zend_pm_label_create(zend_compile_pattern_context *context)
+static uint32_t zend_pm_label_create(zend_pm_context *context)
 {
 	uint32_t dummy = 0;
 	return -zend_stack_push(&context->labels, &dummy);
 }
 
-static void zend_pm_label_set_next(zend_compile_pattern_context *context, uint32_t label_offset)
+static void zend_pm_label_set_next(zend_pm_context *context, uint32_t label_offset)
 {
 	uint32_t *labels = zend_stack_base(&context->labels);
 	uint32_t *label = &labels[-label_offset];
 	*label = get_next_op_number();
 }
 
-static void zend_pm_labels_replace(zend_compile_pattern_context *context, uint32_t start_opnum)
+static void zend_pm_labels_replace(zend_pm_context *context, uint32_t start_opnum)
 {
 	uint32_t *labels = zend_stack_base(&context->labels);
 	if (!labels) {
@@ -6899,7 +6899,7 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 	efree(jmp_end_opnums);
 }
 
-static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_compile_pattern_context *context);
+static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context);
 static zend_type zend_compile_single_typename(zend_ast *ast);
 
 static void zend_compile_expr_like_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum)
@@ -6922,7 +6922,7 @@ static void verify_parenthesized_compound_pattern(zend_ast *ast, zend_ast_kind k
 	}
 }
 
-static void zend_compile_or_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_compile_pattern_context *context)
+static void zend_compile_or_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context)
 {
 	verify_parenthesized_compound_pattern(ast, ZEND_AST_AND_PATTERN);
 
@@ -6963,7 +6963,7 @@ static void zend_compile_or_pattern(zend_ast *ast, znode *expr_node, bool consum
 	context->inside_or_pattern = false;
 }
 
-static void zend_compile_and_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_compile_pattern_context *context)
+static void zend_compile_and_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context)
 {
 	verify_parenthesized_compound_pattern(ast, ZEND_AST_OR_PATTERN);
 
@@ -7014,7 +7014,7 @@ static void zend_compile_type_pattern(zend_ast *ast, znode *expr_node, bool cons
 	zend_emit_cond_jump(ZEND_JMPZ, &result, false_opnum);
 }
 
-static void zend_compile_binding_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_compile_pattern_context *context)
+static void zend_compile_binding_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context)
 {
 	if (context->inside_or_pattern) {
 		zend_error_noreturn(E_COMPILE_ERROR, "Must not bind to variables inside | pattern");
@@ -7049,7 +7049,7 @@ static void zend_compile_container_pattern(
 	znode *expr_node,
 	bool consume_expr,
 	uint32_t false_opnum,
-	zend_compile_pattern_context *context,
+	zend_pm_context *context,
 	bool is_array
 ) {
 	// FIXME: These copies are annoying...
@@ -7130,7 +7130,7 @@ static void zend_compile_container_pattern(
 	}
 }
 
-static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_compile_pattern_context *context)
+static void zend_compile_pattern(zend_ast *ast, znode *expr_node, bool consume_expr, uint32_t false_opnum, zend_pm_context *context)
 {
 	switch (ast->kind) {
 		case ZEND_AST_WILDCARD_PATTERN:
@@ -7172,7 +7172,7 @@ static void pattern_matching_count_bindings(zend_ast **ast_ptr, void *context)
 	}
 
 	if (ast->kind == ZEND_AST_BINDING_PATTERN) {
-		zend_compile_pattern_context *pattern_context = context;
+		zend_pm_context *pattern_context = context;
 		pattern_context->num_bindings++;
 	}
 
@@ -7187,7 +7187,7 @@ static void pattern_matching_emit_assigns(zend_ast **ast_ptr, void *context)
 	}
 
 	if (ast->kind == ZEND_AST_BINDING_PATTERN) {
-		zend_compile_pattern_context *pattern_context = context;
+		zend_pm_context *pattern_context = context;
 
 		znode var_node;
 		var_node.op_type = IS_CV;
@@ -7217,7 +7217,7 @@ static void zend_emit_is(znode *result, znode *expr_node, bool consume_expr, zen
 		expr_copy_node = *expr_node;
 	}
 
-	zend_compile_pattern_context context = {0};
+	zend_pm_context context = {0};
 	zend_pm_context_init(&context);
 	pattern_matching_count_bindings(&pattern_ast, &context);
 	context.first_tmp = CG(active_op_array)->T;
