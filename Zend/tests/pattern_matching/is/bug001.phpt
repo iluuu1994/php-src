@@ -7,7 +7,11 @@ function test($a) {
     $a is 42|43;
 }
 
-test(42);
+function test2($a) {
+    $a === 42 || $a === 43;
+}
+
+var_dump(test(42));
 
 ?>
 ===DONE===
