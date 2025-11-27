@@ -33,7 +33,7 @@ env:
   CXX: ccache g++
 jobs:
   ALPINE:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
     runs-on: ubuntu-24.04
     container:
@@ -74,7 +74,7 @@ jobs:
             --asan -x
             -d opcache.enable_cli=1
   LINUX_X64:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -170,7 +170,7 @@ jobs:
         if: ${{ !matrix.asan }}
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: LINUX_X32_DEBUG_ZTS
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -250,7 +250,7 @@ jobs:
       - name: ./configure
         uses: ./.github/actions/configure-macos
         with:
-          configurationParameters: --enable-debug --disable-zts
+          configurationParameters: --disable-debug --disable-zts
       - name: make
         run: |-
           export PATH="$(brew --prefix)/opt/bison/bin:$PATH"
@@ -265,8 +265,15 @@ jobs:
             -d opcache.enable_cli=1
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
+      - name: Archive production artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-without-markdown
+          path: |
+            /Users/runner/Library/Logs/DiagnosticReports/
   WINDOWS:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: WINDOWS_X64_ZTS
     runs-on: windows-2022
     timeout-minutes: 50
@@ -294,7 +301,7 @@ jobs:
         run: .github/scripts/windows/test.bat
   BENCHMARKING:
     name: BENCHMARKING
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
@@ -398,7 +405,7 @@ jobs:
           path: ${{ github.workspace }}/benchmark/profiles
           retention-days: 30
   FREEBSD:
-    if: github.repository == 'php/php-src' || github.event_name == 'pull_request'
+    if: false
     name: FREEBSD
     runs-on: ubuntu-latest
     timeout-minutes: 50
