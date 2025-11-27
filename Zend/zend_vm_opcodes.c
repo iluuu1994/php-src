@@ -22,7 +22,7 @@
 #include <zend.h>
 #include <zend_vm_opcodes.h>
 
-static const char *zend_vm_opcodes_names[211] = {
+static const char *zend_vm_opcodes_names[212] = {
 	"ZEND_NOP",
 	"ZEND_ADD",
 	"ZEND_SUB",
@@ -234,9 +234,10 @@ static const char *zend_vm_opcodes_names[211] = {
 	"ZEND_JMP_FRAMELESS",
 	"ZEND_INIT_PARENT_PROPERTY_HOOK_CALL",
 	"ZEND_DECLARE_ATTRIBUTED_CONST",
+	"ZEND_DEREF",
 };
 
-static uint32_t zend_vm_opcodes_flags[211] = {
+static uint32_t zend_vm_opcodes_flags[212] = {
 	0x00000000,
 	0x00000b0b,
 	0x00000b0b,
@@ -330,8 +331,8 @@ static uint32_t zend_vm_opcodes_flags[211] = {
 	0x00000707,
 	0x00040757,
 	0x00010107,
-	0x00006703,
-	0x00240753,
+	0x00006303,
+	0x00240353,
 	0x00010107,
 	0x00000701,
 	0x00040751,
@@ -397,7 +398,7 @@ static uint32_t zend_vm_opcodes_flags[211] = {
 	0x00000075,
 	0x00000000,
 	0x00000000,
-	0x0b000703,
+	0x0b000303,
 	0x00000003,
 	0x00000020,
 	0x00003000,
@@ -448,6 +449,7 @@ static uint32_t zend_vm_opcodes_flags[211] = {
 	0x01042003,
 	0x01001103,
 	0x00000303,
+	0x00000101,
 };
 
 ZEND_API const char* ZEND_FASTCALL zend_get_opcode_name(uint8_t opcode) {
