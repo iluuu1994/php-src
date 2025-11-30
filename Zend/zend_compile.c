@@ -798,6 +798,7 @@ static void zend_do_free(znode *op1) /* {{{ */
 				case ZEND_DO_UCALL:
 				case ZEND_DO_FCALL_BY_NAME:
 				case ZEND_YIELD:
+				case ZEND_YIELD_FROM:
 					SET_UNUSED(opline->result);
 					return;
 			}
@@ -3392,6 +3393,7 @@ static void zend_compile_list_assign(
 
 	if (result) {
 		if ((type == BP_VAR_R || type == BP_VAR_IS)  && expr_node->op_type == IS_VAR) {
+			// FIXME: [&$a] = ...; currently emits ZEND_DEREF, avoidable?
 			zend_emit_op_tmp(result, ZEND_DEREF, expr_node, NULL);
 		} else {
 			*result = *expr_node;
@@ -3640,11 +3642,9 @@ static void zend_compile_assign_ref(znode *result, zend_ast *ast, uint32_t type)
 
 static inline void zend_emit_assign_ref_znode(zend_ast *var_ast, const znode *value_node) /* {{{ */
 {
-	znode dummy_node;
 	zend_ast *assign_ast = zend_ast_create(ZEND_AST_ASSIGN_REF, var_ast,
 		zend_ast_create_znode(value_node));
-	zend_compile_expr(&dummy_node, assign_ast);
-	zend_do_free(&dummy_node);
+	zend_compile_stmt(assign_ast);
 }
 /* }}} */
 
