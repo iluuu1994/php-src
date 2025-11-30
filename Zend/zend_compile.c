@@ -3610,22 +3610,22 @@ static void zend_compile_assign_ref(znode *result, zend_ast *ast, uint32_t type)
 		opline->opcode = ZEND_ASSIGN_OBJ_REF;
 		opline->extended_value &= ~ZEND_FETCH_REF;
 		opline->extended_value |= flags;
-		zend_emit_op_data(&source_node);
 		if (result) {
 			*result = target_node;
 		} else {
 			SET_UNUSED(opline->result);
 		}
+		zend_emit_op_data(&source_node);
 	} else if (opline && opline->opcode == ZEND_FETCH_STATIC_PROP_W) {
 		opline->opcode = ZEND_ASSIGN_STATIC_PROP_REF;
 		opline->extended_value &= ~ZEND_FETCH_REF;
 		opline->extended_value |= flags;
-		zend_emit_op_data(&source_node);
 		if (result) {
 			*result = target_node;
 		} else {
 			SET_UNUSED(opline->result);
 		}
+		zend_emit_op_data(&source_node);
 	} else {
 		opline = zend_emit_op(result, ZEND_ASSIGN_REF, &target_node, &source_node);
 		opline->extended_value = flags;
