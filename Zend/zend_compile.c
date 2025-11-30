@@ -3611,19 +3611,27 @@ static void zend_compile_assign_ref(znode *result, zend_ast *ast, uint32_t type)
 		opline->extended_value &= ~ZEND_FETCH_REF;
 		opline->extended_value |= flags;
 		zend_emit_op_data(&source_node);
-		*result = target_node;
+		if (result) {
+			*result = target_node;
+		} else {
+			SET_UNUSED(opline->result);
+		}
 	} else if (opline && opline->opcode == ZEND_FETCH_STATIC_PROP_W) {
 		opline->opcode = ZEND_ASSIGN_STATIC_PROP_REF;
 		opline->extended_value &= ~ZEND_FETCH_REF;
 		opline->extended_value |= flags;
 		zend_emit_op_data(&source_node);
-		*result = target_node;
+		if (result) {
+			*result = target_node;
+		} else {
+			SET_UNUSED(opline->result);
+		}
 	} else {
 		opline = zend_emit_op(result, ZEND_ASSIGN_REF, &target_node, &source_node);
 		opline->extended_value = flags;
 	}
 
-	if (type == BP_VAR_R || type == BP_VAR_IS) {
+	if (result && (type == BP_VAR_R || type == BP_VAR_IS)) {
 		znode tmp_result = *result;
 		zend_emit_op_tmp(result, ZEND_DEREF, &tmp_result, NULL);
 	}
@@ -11934,6 +11942,9 @@ static void zend_compile_stmt(zend_ast *ast) /* {{{ */
 		case ZEND_AST_CAST_VOID:
 			zend_compile_void_cast(NULL, ast);
 			break;
+		case ZEND_AST_ASSIGN_REF:
+			zend_compile_assign_ref(NULL, ast, BP_VAR_R);
+			return;
 		default:
 		{
 			znode result;
