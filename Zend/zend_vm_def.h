@@ -1935,13 +1935,17 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(81, ZEND_FETCH_DIM_R, CONST|TMPVAR|CV, CONST|TMP
 
 	SAVE_OPLINE();
 	container = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if (OP1_TYPE & (IS_VAR|IS_TMP_VAR)) {
+		/* Handler accepts VAR only for FUNC_ARG, which will unwrap before dispatching. */
+		ZEND_ASSERT(Z_TYPE_P(container) != IS_REFERENCE);
+	}
 	dim = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 	if (OP1_TYPE != IS_CONST) {
 		if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 ZEND_VM_C_LABEL(fetch_dim_r_array):
 			value = zend_fetch_dimension_address_inner(Z_ARRVAL_P(container), dim, OP2_TYPE, BP_VAR_R EXECUTE_DATA_CC);
 			ZVAL_COPY_DEREF(EX_VAR(opline->result.var), value);
-		} else if (EXPECTED(Z_TYPE_P(container) == IS_REFERENCE)) {
+		} else if (OP1_TYPE == IS_CV && EXPECTED(Z_TYPE_P(container) == IS_REFERENCE)) {
 			container = Z_REFVAL_P(container);
 			if (EXPECTED(Z_TYPE_P(container) == IS_ARRAY)) {
 				ZEND_VM_C_GOTO(fetch_dim_r_array);
@@ -2000,6 +2004,8 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(90, ZEND_FETCH_DIM_IS, CONST|TMPVAR|CV, CONST|TM
 
 	SAVE_OPLINE();
 	container = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_IS);
+	/* Unlike FETCH_DIM_R, this may receive references through return-by-ref
+	 * calls using ??=, i.e. foo()['bar'] ??= baz. */
 	zend_fetch_dimension_address_read_IS(container, GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R), OP2_TYPE OPLINE_CC EXECUTE_DATA_CC);
 	FREE_OP2();
 	FREE_OP1();
@@ -2045,6 +2051,18 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(93, ZEND_FETCH_DIM_FUNC_ARG, CONST|TMP|VAR|CV, C
 		if (OP2_TYPE == IS_UNUSED) {
 			ZEND_VM_DISPATCH_TO_HELPER(zend_use_undef_in_read_context_helper);
 		}
+		if (OP1_TYPE & IS_VAR) {
+			zval *op1 = EX_VAR(opline->op1.var);
+			if (Z_TYPE_P(op1) == IS_REFERENCE) {
+				zend_reference *ref = Z_REF_P(op1);
+				ZVAL_COPY_VALUE(op1, &ref->val);
+				if (GC_DELREF(ref) == 0) {
+					efree_size(ref, sizeof(zend_reference));
+				} else {
+					Z_TRY_ADDREF_P(op1);
+				}
+			}
+		}
 		ZEND_VM_DISPATCH_TO_HANDLER(ZEND_FETCH_DIM_R);
 	}
 }
@@ -2072,11 +2090,15 @@ ZEND_VM_HOT_OBJ_HANDLER(82, ZEND_FETCH_OBJ_R, CONST|TMPVAR|UNUSED|THIS|CV, CONST
 
 	SAVE_OPLINE();
 	container = GET_OP1_OBJ_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if (OP1_TYPE & (IS_VAR|IS_TMP_VAR)) {
+		/* Handler accepts VAR only for FUNC_ARG, which will unwrap before dispatching. */
+		ZEND_ASSERT(Z_TYPE_P(container) != IS_REFERENCE);
+	}
 
 	if (OP1_TYPE == IS_CONST ||
 	    (OP1_TYPE != IS_UNUSED && UNEXPECTED(Z_TYPE_P(container) != IS_OBJECT))) {
 		do {
-			if ((OP1_TYPE & (IS_VAR|IS_CV)) && Z_ISREF_P(container)) {
+			if ((OP1_TYPE & IS_CV) && Z_ISREF_P(container)) {
 				container = Z_REFVAL_P(container);
 				if (EXPECTED(Z_TYPE_P(container) == IS_OBJECT)) {
 					break;
@@ -2279,6 +2301,8 @@ ZEND_VM_COLD_CONST_HANDLER(91, ZEND_FETCH_OBJ_IS, CONST|TMPVAR|UNUSED|THIS|CV, C
 
 	SAVE_OPLINE();
 	container = GET_OP1_OBJ_ZVAL_PTR(BP_VAR_IS);
+	/* Unlike FETCH_OBJ_R, this may receive references through return-by-ref
+	 * calls using ??=, i.e. foo()->bar ??= baz. */
 
 	if (OP1_TYPE == IS_CONST ||
 	    (OP1_TYPE != IS_UNUSED && UNEXPECTED(Z_TYPE_P(container) != IS_OBJECT))) {
@@ -2405,6 +2429,18 @@ ZEND_VM_COLD_CONST_HANDLER(94, ZEND_FETCH_OBJ_FUNC_ARG, CONST|TMP|VAR|UNUSED|THI
 		}
 		ZEND_VM_DISPATCH_TO_HANDLER(ZEND_FETCH_OBJ_W);
 	} else {
+		if (OP1_TYPE == IS_VAR) {
+			zval *op1 = EX_VAR(opline->op1.var);
+			if (Z_TYPE_P(op1) == IS_REFERENCE) {
+				zend_reference *ref = Z_REF_P(op1);
+				ZVAL_COPY_VALUE(op1, &ref->val);
+				if (GC_DELREF(ref) == 0) {
+					efree_size(ref, sizeof(zend_reference));
+				} else {
+					Z_TRY_ADDREF_P(op1);
+				}
+			}
+		}
 		ZEND_VM_DISPATCH_TO_HANDLER(ZEND_FETCH_OBJ_R);
 	}
 }
