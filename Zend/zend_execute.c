@@ -2819,8 +2819,10 @@ num_undef:
 					zend_undefined_offset(hval);
 					ZEND_FALLTHROUGH;
 				case BP_VAR_UNSET:
-				case BP_VAR_IS:
 					retval = &EG(uninitialized_zval);
+					break;
+				case BP_VAR_IS:
+					retval = &EG(undef_zval);
 					break;
 				case BP_VAR_RW:
 					retval = zend_undefined_offset_write(ht, hval);
@@ -2845,8 +2847,10 @@ str_index:
 						zend_undefined_index(offset_key);
 						ZEND_FALLTHROUGH;
 					case BP_VAR_UNSET:
-					case BP_VAR_IS:
 						retval = &EG(uninitialized_zval);
+						break;
+					case BP_VAR_IS:
+						retval = &EG(undef_zval);
 						break;
 					case BP_VAR_RW:
 						retval = zend_undefined_index_write(ht, offset_key);
