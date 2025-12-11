@@ -6,7 +6,7 @@ Test ReflectionProperty::isReadable()
 class A {}
 
 class B extends A {
-    public $a;
+    public int $a;
     protected $b;
     private $c;
     public protected(set) int $d;
@@ -14,13 +14,17 @@ class B extends A {
     public $f { set {} }
 }
 
-class C extends B {}
+class C extends B {
+    public function __get($name) {}
+}
 
 $test = static function ($scope) {
     $rc = new ReflectionClass(B::class);
     foreach ($rc->getProperties() as $rp) {
         echo $rp->getName() . ' from ' . ($scope ?? 'global') . ': ';
         var_dump($rp->isReadable(null, $scope));
+        echo $rp->getName() . ' from ' . ($scope ?? 'global') . ' (instance): ';
+        var_dump($rp->isReadable(new B(), $scope));
     }
 };
 
@@ -31,6 +35,25 @@ foreach (['A', 'B', 'C'] as $scope) {
 
 $test(null);
 $test->bindTo(null, null)('static');
+
+$rp = new ReflectionProperty('B', 'a');
+$b = new B();
+echo $rp->getName() . ' from global (uninitialized): ';
+var_dump($rp->isReadable($b));
+$b->a = 42;
+echo $rp->getName() . ' from global (initialized): ';
+var_dump($rp->isReadable($b));
+unset($b->a);
+echo $rp->getName() . ' from global (unset): ';
+var_dump($rp->isReadable($b));
+
+$rp = new ReflectionProperty('C', 'a');
+$c = new C();
+echo $rp->getName() . ' from global (uninitialized): ';
+var_dump($rp->isReadable($c));
+unset($c->a);
+echo $rp->getName() . ' from global (unset): ';
+var_dump($rp->isReadable($c));
 
 ?>
 --EXPECT--
@@ -82,3 +105,8 @@ c from static: bool(false)
 d from static: bool(true)
 e from static: bool(true)
 f from static: bool(false)
+a from global (uninitialized): bool(false)
+a from global (initialized): bool(true)
+a from global (unset): bool(false)
+a from global (uninitialized): bool(false)
+a from global (unset): bool(true)

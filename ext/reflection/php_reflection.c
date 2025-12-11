@@ -6752,7 +6752,8 @@ ZEND_METHOD(ReflectionProperty, isReadable)
 
 	if (obj) {
 		zval *prop_val = OBJ_PROP(obj, prop->offset);
-		if (Z_TYPE_P(prop_val) != IS_UNDEF && !(Z_PROP_FLAG_P(prop_val) & IS_PROP_REINITABLE)) {
+		if (Z_TYPE_P(prop_val) == IS_UNDEF
+		 && ((Z_PROP_FLAG_P(prop_val) & IS_PROP_UNINIT) || !obj->ce->__get)) {
 			RETURN_FALSE;
 		}
 	}
