@@ -9245,7 +9245,12 @@ static size_t mb_eucjp2004_to_wchar(unsigned char **in, size_t *in_len, uint32_t
 			}
 
 			/* Conversion for CJK Unified Ideographs ext.B (U+2XXXX) */
-			mbfl_test(&w, w1);
+			if (!w) {
+				int k = mbfl_bisec_srch2(w1, jisx0213_jis_u5_key, jisx0213_u5_tbl_len);
+				if (k >= 0) {
+					w = jisx0213_jis_u5_tbl[k] + 0x20000;
+				}
+			}
 
 			*out++ = w ? w : MBFL_BAD_INPUT;
 		} else if (c == 0x8E && p < e) {
