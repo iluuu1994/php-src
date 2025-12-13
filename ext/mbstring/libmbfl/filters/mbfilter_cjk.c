@@ -2101,7 +2101,7 @@ static int mbfl_filt_conv_wchar_jis2004_flush(mbfl_convert_filter *filter)
 #define JISX0213_PLANE1 2
 #define JISX0213_PLANE2 3
 
-static zend_never_inline __attribute__((optnone)) void mbfl_test(uint32_t *w, unsigned int w1)
+static zend_never_inline void mbfl_test(uint32_t *w, unsigned int w1)
 {
 	/* Conversion for CJK Unified Ideographs ext.B (U+2XXXX) */
 	if (!*w) {
