@@ -2101,7 +2101,7 @@ static int mbfl_filt_conv_wchar_jis2004_flush(mbfl_convert_filter *filter)
 #define JISX0213_PLANE1 2
 #define JISX0213_PLANE2 3
 
-static zend_never_inline void mbfl_test(uint32_t *w, unsigned int w1)
+static void mbfl_test(uint32_t *w, unsigned int w1)
 {
 	/* Conversion for CJK Unified Ideographs ext.B (U+2XXXX) */
 	if (!*w) {
@@ -9245,12 +9245,7 @@ static size_t mb_eucjp2004_to_wchar(unsigned char **in, size_t *in_len, uint32_t
 			}
 
 			/* Conversion for CJK Unified Ideographs ext.B (U+2XXXX) */
-			if (!w) {
-				int k = mbfl_bisec_srch2(w1, jisx0213_jis_u5_key, jisx0213_u5_tbl_len);
-				if (k >= 0) {
-					w = jisx0213_jis_u5_tbl[k] + 0x20000;
-				}
-			}
+			mbfl_test(&w, w1);
 
 			*out++ = w ? w : MBFL_BAD_INPUT;
 		} else if (c == 0x8E && p < e) {
