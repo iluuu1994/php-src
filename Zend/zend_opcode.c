@@ -903,7 +903,8 @@ static bool keeps_op1_alive(zend_op *opline) {
 	 || opline->opcode == ZEND_FETCH_LIST_R
 	 || opline->opcode == ZEND_FETCH_LIST_W
 	 || opline->opcode == ZEND_COPY_TMP
-	 || opline->opcode == ZEND_EXT_STMT) {
+	 || opline->opcode == ZEND_EXT_STMT
+	 || opline->opcode == ZEND_IS) {
 		return true;
 	}
 	ZEND_ASSERT(opline->opcode != ZEND_FE_FETCH_R
@@ -991,7 +992,8 @@ static void zend_calc_live_ranges(
 		if (opline->op2_type & (IS_TMP_VAR|IS_VAR)) {
 			uint32_t var_num = EX_VAR_TO_NUM(opline->op2.var) - var_offset;
 			if (UNEXPECTED(opline->opcode == ZEND_FE_FETCH_R
-					|| opline->opcode == ZEND_FE_FETCH_RW)) {
+					|| opline->opcode == ZEND_FE_FETCH_RW
+					|| opline->opcode == ZEND_IS)) {
 				/* OP2 of FE_FETCH is actually a def, not a use. */
 				if (last_use[var_num] != (uint32_t) -1) {
 					if (opnum + 1 != last_use[var_num]) {
@@ -1196,6 +1198,9 @@ ZEND_API void pass_two(zend_op_array *op_array)
 				opline->extended_value = ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, opline->extended_value);
 				break;
 			}
+			case ZEND_IS:
+				opline->extended_value = ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, opline->extended_value);
+				break;
 		}
 		if (opline->op1_type == IS_CONST) {
 			ZEND_PASS_TWO_UPDATE_CONSTANT(op_array, opline, opline->op1);
