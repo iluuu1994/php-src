@@ -115,6 +115,8 @@
 static pid_t	 php_cli_server_master;
 static pid_t	*php_cli_server_workers;
 static zend_long php_cli_server_workers_max;
+/* This pipe is used in children to check whether the parent has died. */
+static int       php_cli_server_pipe[2];
 #endif
 
 static zend_string* cli_concat_persistent_zstr_with_char(zend_string *old_str, const char *at, size_t length);
@@ -2476,24 +2478,6 @@ static char *php_cli_server_parse_addr(const char *addr, int *pport) {
 	return pestrndup(addr, end - addr, 1);
 }
 
-#if defined(HAVE_PRCTL) || defined(HAVE_PROCCTL)
-static void php_cli_server_worker_install_pdeathsig(void)
-{
-	// Ignore failure to register PDEATHSIG, it's not available on all platforms anyway
-#if defined(HAVE_PRCTL)
-	prctl(PR_SET_PDEATHSIG, SIGTERM);
-#elif defined(HAVE_PROCCTL)
-	int signal = SIGTERM;
-	procctl(P_PID, 0, PROC_PDEATHSIG_CTL, &signal);
-#endif
-
-	// Check if parent has exited just after the fork
-	if (getppid() != php_cli_server_master) {
-		exit(1);
-	}
-}
-#endif
-
 static void php_cli_server_startup_workers(void) {
 	char *workers = getenv("PHP_CLI_SERVER_WORKERS");
 	if (!workers) {
@@ -2501,6 +2485,10 @@ static void php_cli_server_startup_workers(void) {
 	}
 
 #ifdef HAVE_FORK
+	pipe(php_cli_server_pipe);
+	int flags = fcntl(php_cli_server_pipe[0], F_GETFL);
+	fcntl(php_cli_server_pipe[0], F_SETFL, flags | O_NONBLOCK);
+
 	php_cli_server_workers_max = ZEND_ATOL(workers);
 	if (php_cli_server_workers_max > 1) {
 		zend_long php_cli_server_worker;
@@ -2519,17 +2507,16 @@ static void php_cli_server_startup_workers(void) {
 				/* no more forks allowed, work with what we have ... */
 				php_cli_server_workers_max =
 					php_cli_server_worker + 1;
-				return;
+				break;
 			} else if (pid == 0) {
-#if defined(HAVE_PRCTL) || defined(HAVE_PROCCTL)
-				php_cli_server_worker_install_pdeathsig();
-#endif
 				php_child_init();
+				close(php_cli_server_pipe[1]);
 				return;
 			} else {
 				php_cli_server_workers[php_cli_server_worker] = pid;
 			}
 		}
+		close(php_cli_server_pipe[0]);
 	} else {
 		fprintf(stderr, "number of workers must be larger than 1\n");
 	}
@@ -2765,6 +2752,10 @@ static zend_result php_cli_server_do_event_loop(php_cli_server *server) /* {{{ *
 {
 	zend_result retval = SUCCESS;
 	while (server->is_running) {
+		char buf[1];
+		if (php_cli_server_workers_max && read(php_cli_server_pipe[0], buf, 1) == 0) {
+			goto out;
+		}
 		struct timeval tv = { 1, 0 };
 		int n = php_cli_server_poller_poll(&server->poller, &tv);
 		if (n > 0) {
