@@ -915,7 +915,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ccache \
             libmemcached-dev \
-            imagemagick-dev \
+            imagemagick \
+            libmagickwand-dev \
             bison \
             re2c \
       - name: ccache
