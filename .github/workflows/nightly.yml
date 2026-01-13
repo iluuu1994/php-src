@@ -915,8 +915,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ccache \
             libmemcached-dev \
+            imagemagick-dev \
             bison \
-            re2c
+            re2c \
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
