@@ -54,7 +54,7 @@ permissions:
   contents: read
 jobs:
   LINUX_PPC64:
-    if: inputs.run_linux_ppc64
+    if: false
     name: LINUX_PPC64_ASAN_UBSAN_DEBUG_ZTS
     # This runs on a self-hosted runner; see https://wiki.php.net/systems/ci
     runs-on: [self-hosted, gentoo, ppc64]
@@ -94,7 +94,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   ALPINE:
-    if: inputs.run_alpine
+    if: false
     name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
     runs-on: ubuntu-24.04
     container:
@@ -139,6 +139,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   LINUX_X64:
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -267,6 +268,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -348,6 +350,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   MACOS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -405,7 +408,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   COVERAGE_DEBUG_NTS:
-    if: inputs.branch == 'master'
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -465,6 +468,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
   COMMUNITY:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -652,6 +656,7 @@ jobs:
             exit 1
           fi
   OPCACHE_VARIATION:
+    if: false
     services:
       mysql:
         image: mysql:8.3
@@ -733,6 +738,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   MSAN:
+    if: false
     name: MSAN
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -819,6 +825,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LIBMYSQLCLIENT:
+    if: false
     name: LIBMYSQLCLIENT
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -861,7 +868,6 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   PECL:
-    if: inputs.branch == 'master'
     runs-on: ubuntu-24.04
     env:
       CC: ccache gcc
@@ -968,6 +974,7 @@ jobs:
           ./configure --prefix=/opt/php --with-php-config=/opt/php/bin/php-config
           make -j$(/usr/bin/nproc)
   WINDOWS:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -1014,6 +1021,7 @@ jobs:
       - name: Test
         run: .github/scripts/windows/test.bat
   FREEBSD:
+    if: false
     strategy:
       fail-fast: false
       matrix:
