@@ -990,6 +990,8 @@ optimize_const_unary_op:
 					src = VAR_SOURCE(opline->op1);
 					if (src &&
 						src->opcode != ZEND_COPY_TMP &&
+						/* See gh20628.phpt, breaks live-range calculation. */
+						src->opcode != ZEND_NEW &&
 						src->opcode != ZEND_ADD_ARRAY_ELEMENT &&
 						src->opcode != ZEND_ADD_ARRAY_UNPACK &&
 						(src->opcode != ZEND_DECLARE_LAMBDA_FUNCTION ||
