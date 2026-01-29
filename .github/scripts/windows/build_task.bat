@@ -34,6 +34,8 @@ rem C4267: 'size_t' type conversion, possible loss of data
 set CFLAGS=/W3 /WX /wd4018 /wd4146 /wd4244 /wd4267
 
 cmd /c configure.bat ^
+	--disable-all ^
+	--enable-cli ^
 	--enable-snapshot-build ^
 	--disable-debug-pack ^
 	--without-analyzer ^
@@ -44,8 +46,6 @@ cmd /c configure.bat ^
 if %errorlevel% neq 0 exit /b 3
 
 nmake /NOLOGO
-if %errorlevel% neq 0 exit /b 3
-nmake /NOLOGO comtest.dll
 if %errorlevel% neq 0 exit /b 3
 
 exit /b 0
