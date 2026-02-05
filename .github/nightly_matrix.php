@@ -46,6 +46,64 @@ function get_current_version(): array {
     return [$major, $minor];
 }
 
+function select_jobs($labels) {
+    $labels = array_column($labels, 'name');
+    $disable_all = in_array('CI: Disable all', $labels, true);
+    $enable_all = in_array('CI: Enable all', $labels, true);
+    $test_alpine = in_array('CI: Alpine', $labels, true);
+    $test_benchmarking = in_array('CI: Benchmarking', $labels, true);
+    $test_community = in_array('CI: Community', $labels, true);
+    $test_freebsd = in_array('CI: FreeBSD', $labels, true);
+    $test_libmysqlclient = in_array('CI: libmysqlclient', $labels, true);
+    $test_linux_ppc64 = in_array('CI: Linux PPC64', $labels, true);
+    $test_linux_x32 = in_array('CI: Linux X32', $labels, true);
+    $test_linux_x64 = in_array('CI: Linux X64', $labels, true);
+    $test_macos = in_array('CI: macOS', $labels, true);
+    $test_minimal = in_array('CI: Minimal', $labels, true);
+    $test_msan = in_array('CI: MSAN', $labels, true);
+    $test_opcache_variation = in_array('CI: Opcache Variation', $labels, true);
+    $test_windows = in_array('CI: Windows', $labels, true);
+
+    $jobs = [];
+    if ($enable_all || !$disable_all || $test_alpine) {
+        $jobs[] = 'ALPINE';
+    }
+    if ($enable_all || $test_community) {
+        $jobs[] = 'COMMUNITY';
+    }
+    if ($enable_all || $test_libmysqlclient) {
+        $jobs[] = 'LIBMYSQLCLIENT';
+    }
+    if ($enable_all || $test_linux_ppc64) {
+        $jobs[] = 'LINUX_PPC64';
+    }
+    if ($enable_all || !$disable_all || $test_linux_x64) {
+        $jobs[] = 'LINUX_X64';
+    }
+    if ($enable_all || !$disable_all || $test_linux_x32) {
+        $jobs[] = 'LINUX_X32';
+    }
+    if ($enable_all || !$disable_all || $test_macos) {
+        $jobs[] = 'MACOS';
+    }
+    if ($enable_all || $test_msan) {
+        $jobs[] = 'MSAN';
+    }
+    if ($enable_all || $test_opcache_variation) {
+        $jobs[] = 'OPCACHE_VARIATION';
+    }
+    if ($enable_all || !$disable_all || $test_windows) {
+        $jobs[] = 'WINDOWS';
+    }
+    if ($enable_all || !$disable_all || $test_benchmarking) {
+        $jobs[] = 'BENCHMARKING';
+    }
+    if ($enable_all || !$disable_all || $test_freebsd) {
+        $jobs[] = 'FREEBSD';
+    }
+    return $jobs;
+}
+
 $trigger = $argv[1] ?? 'schedule';
 $attempt = (int) ($argv[2] ?? 1);
 $sunday = date('w', time()) === '0';
@@ -60,6 +118,13 @@ $branches = $branch === 'master'
     ? get_branches()
     : [['ref' => $branch, 'version' => get_current_version()]];
 
+$labels = json_decode($argv[4] ?? '[]', true);
+$jobs = select_jobs($labels);
+
+echo json_encode($branches, JSON_UNESCAPED_SLASHES), "\n\n";
+echo json_encode($jobs, JSON_UNESCAPED_SLASHES), "\n\n";
+
 $f = fopen(getenv('GITHUB_OUTPUT'), 'a');
 fwrite($f, 'branches=' . json_encode($branches, JSON_UNESCAPED_SLASHES) . "\n");
+fwrite($f, 'jobs=' . json_encode($jobs, JSON_UNESCAPED_SLASHES) . "\n");
 fclose($f);

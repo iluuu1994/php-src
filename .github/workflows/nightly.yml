@@ -35,23 +35,20 @@ on:
       vs_crt_version:
         required: true
         type: string
-      skip_laravel:
-        required: true
-        type: boolean
       symfony_version:
         required: true
         type: string
-      skip_wordpress:
-        required: true
-        type: boolean
       variation_enable_zend_max_execution_timers:
         required: true
         type: boolean
+      jobs:
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
   LINUX_PPC64:
-    if: inputs.run_linux_ppc64
+    if: contains(fromJson(inputs.jobs), 'LINUX_PPC64') && inputs.run_linux_ppc64
     name: LINUX_PPC64_ASAN_UBSAN_DEBUG_ZTS
     # This runs on a self-hosted runner; see https://wiki.php.net/systems/ci
     runs-on: [self-hosted, gentoo, ppc64]
@@ -91,7 +88,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   ALPINE:
-    if: inputs.run_alpine
+    if: contains(fromJson(inputs.jobs), 'ALPINE') && inputs.run_alpine
     name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
     runs-on: ubuntu-24.04
     container:
@@ -136,6 +133,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   LINUX_X64:
+    if: contains(fromJson(inputs.jobs), 'LINUX_X64')
     services:
       mysql:
         image: mysql:8.3
@@ -264,6 +262,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LINUX_X32:
+    if: contains(fromJson(inputs.jobs), 'LINUX_X32')
     strategy:
       fail-fast: false
       matrix:
@@ -345,6 +344,7 @@ jobs:
       - name: Extra tests
         uses: ./.github/actions/extra-tests
   MACOS:
+    if: contains(fromJson(inputs.jobs), 'MACOS')
     strategy:
       fail-fast: false
       matrix:
@@ -463,6 +463,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
   COMMUNITY:
+    if: contains(fromJson(inputs.jobs), 'COMMUNITY')
     strategy:
       fail-fast: false
       matrix:
@@ -545,7 +546,7 @@ jobs:
           done
           exit $X
       - name: Test Laravel
-        if: ${{ !cancelled() && !inputs.skip_laravel }}
+        if: ${{ !cancelled() }}
         run: |
           git clone https://github.com/laravel/framework.git --depth=1
           cd framework
@@ -635,7 +636,7 @@ jobs:
           sed -i 's/PHP_SAPI/"cli-server"/g' var/cache/dev/App_KernelDevDebugContainer.preload.php
           php -d opcache.preload=var/cache/dev/App_KernelDevDebugContainer.preload.php public/index.php
       - name: Test Wordpress
-        if: ${{ !cancelled() && !inputs.skip_wordpress }}
+        if: ${{ !cancelled() }}
         run: |
           git clone https://github.com/WordPress/wordpress-develop.git wordpress --depth=1
           cd wordpress
@@ -650,6 +651,7 @@ jobs:
             exit 1
           fi
   OPCACHE_VARIATION:
+    if: contains(fromJson(inputs.jobs), 'OPCACHE_VARIATION')
     services:
       mysql:
         image: mysql:8.3
@@ -731,6 +733,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   MSAN:
+    if: contains(fromJson(inputs.jobs), 'MSAN')
     name: MSAN
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -817,6 +820,7 @@ jobs:
       - name: Verify generated files are up to date
         uses: ./.github/actions/verify-generated-files
   LIBMYSQLCLIENT:
+    if: contains(fromJson(inputs.jobs), 'LIBMYSQLCLIENT')
     name: LIBMYSQLCLIENT
     runs-on: ubuntu-${{ inputs.ubuntu_version }}
     steps:
@@ -960,6 +964,7 @@ jobs:
           ./configure --prefix=/opt/php --with-php-config=/opt/php/bin/php-config
           make -j$(/usr/bin/nproc)
   WINDOWS:
+    if: contains(fromJson(inputs.jobs), 'WINDOWS')
     strategy:
       fail-fast: false
       matrix:
@@ -1006,6 +1011,7 @@ jobs:
       - name: Test
         run: .github/scripts/windows/test.bat
   FREEBSD:
+    if: contains(fromJson(inputs.jobs), 'FREEBSD')
     strategy:
       fail-fast: false
       matrix:
