@@ -52,7 +52,7 @@ permissions:
 jobs:
   LINUX_PPC64:
     if: fromJson(inputs.jobs)['LINUX_PPC64'] && inputs.run_linux_ppc64
-    name: LINUX_PPC64_ASAN_UBSAN_DEBUG_ZTS
+    name: LINUX_PPC64_ASAN_DEBUG_ZTS
     # This runs on a self-hosted runner; see https://wiki.php.net/systems/ci
     runs-on: [self-hosted, gentoo, ppc64]
     steps:
@@ -92,7 +92,7 @@ jobs:
         uses: ./.github/actions/extra-tests
   ALPINE:
     if: fromJson(inputs.jobs)['ALPINE'] && inputs.run_alpine
-    name: ALPINE_X64_ASAN_UBSAN_DEBUG_ZTS
+    name: ALPINE_X64_ASAN_DEBUG_ZTS
     runs-on: ubuntu-24.04
     container:
       image: 'alpine:3.22'
@@ -194,6 +194,7 @@ jobs:
             --${{ matrix.debug && 'enable' || 'disable' }}-debug
             --${{ matrix.zts && 'enable' || 'disable' }}-zts
           asan: ${{ matrix.asan && 'true' || 'false' }}
+          skipSlow: ${{ (matrix.asan && !matrix.comprehensive) && 'true' || 'false' }}
       - name: make
         run: make -j$(/usr/bin/nproc) >/dev/null
       - name: make install
@@ -201,6 +202,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup-x64
       - name: Test
+        if: ${{ inputs.comprehensive || !matrix.asan }}
         uses: ./.github/actions/test-linux
         with:
           runTestsParameters: >-

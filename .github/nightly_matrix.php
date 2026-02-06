@@ -85,15 +85,15 @@ function select_jobs($labels, $comprehensive) {
                 'variation' => [false],
                 'zts' => [true, false],
                 'include' => [
-                    ['name' => '_ASAN_UBSAN', 'asan' => true, 'debug' => true, 'repeat' => false, 'variation' => false, 'zts' => true],
+                    ['name' => '_ASAN', 'asan' => true, 'debug' => true, 'repeat' => false, 'variation' => false, 'zts' => true],
                     ['name' => '_REPEAT', 'asan' => false, 'debug' => true, 'repeat' => true, 'variation' => false, 'zts' => false],
                     ['name' => '_VARIATION', 'asan' => false, 'debug' => true, 'repeat' => false, 'variation' => true, 'zts' => true],
                 ],
             ]
             : ['include' => [
-                ['debug' => false, 'zts' => false, 'asan' => false],
-                ['debug' => true, 'zts' => true, 'asan' => true]]
-            ];
+                ['name' => '', 'asan' => false, 'debug' => false, 'repeat' => false, 'variation' => false, 'zts' => false],
+                ['name' => '_ASAN', 'asan' => true, 'debug' => true, 'repeat' => false, 'variation' => false, 'zts' => true],
+            ]];
     }
     if ($enable_all || !$disable_all || $test_linux_x32) {
         $jobs['LINUX_X32'] = true;
