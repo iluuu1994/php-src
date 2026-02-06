@@ -46,8 +46,7 @@ function get_current_version(): array {
     return [$major, $minor];
 }
 
-function select_jobs($labels) {
-    $labels = array_column($labels, 'name');
+function select_jobs($labels, $comprehensive) {
     $disable_all = in_array('CI: Disable all', $labels, true);
     $enable_all = in_array('CI: Enable all', $labels, true);
     $test_alpine = in_array('CI: Alpine', $labels, true);
@@ -59,47 +58,63 @@ function select_jobs($labels) {
     $test_linux_x32 = in_array('CI: Linux X32', $labels, true);
     $test_linux_x64 = in_array('CI: Linux X64', $labels, true);
     $test_macos = in_array('CI: macOS', $labels, true);
-    $test_minimal = in_array('CI: Minimal', $labels, true);
     $test_msan = in_array('CI: MSAN', $labels, true);
     $test_opcache_variation = in_array('CI: Opcache Variation', $labels, true);
     $test_windows = in_array('CI: Windows', $labels, true);
 
     $jobs = [];
     if ($enable_all || !$disable_all || $test_alpine) {
-        $jobs[] = 'ALPINE';
+        $jobs['ALPINE'] = true;
     }
     if ($enable_all || $test_community) {
-        $jobs[] = 'COMMUNITY';
+        $jobs['COMMUNITY'] = true;
     }
     if ($enable_all || $test_libmysqlclient) {
-        $jobs[] = 'LIBMYSQLCLIENT';
+        $jobs['LIBMYSQLCLIENT'] = true;
     }
     if ($enable_all || $test_linux_ppc64) {
-        $jobs[] = 'LINUX_PPC64';
+        $jobs['LINUX_PPC64'] = true;
     }
     if ($enable_all || !$disable_all || $test_linux_x64) {
-        $jobs[] = 'LINUX_X64';
+        $jobs['LINUX_X64'] = $comprehensive
+            ? [
+                'name' => [''],
+                'asan' => [false],
+                'debug' => [true, false],
+                'repeat' => [false],
+                'variation' => [false],
+                'zts' => [true, false],
+                'include' => [
+                    ['name' => '_ASAN_UBSAN', 'asan' => true, 'debug' => true, 'repeat' => false, 'variation' => false, 'zts' => true],
+                    ['name' => '_REPEAT', 'asan' => false, 'debug' => true, 'repeat' => true, 'variation' => false, 'zts' => false],
+                    ['name' => '_VARIATION', 'asan' => false, 'debug' => true, 'repeat' => false, 'variation' => true, 'zts' => true],
+                ],
+            ]
+            : ['include' => [
+                ['debug' => false, 'zts' => false, 'asan' => false],
+                ['debug' => true, 'zts' => true, 'asan' => true]]
+            ];
     }
     if ($enable_all || !$disable_all || $test_linux_x32) {
-        $jobs[] = 'LINUX_X32';
+        $jobs['LINUX_X32'] = true;
     }
     if ($enable_all || !$disable_all || $test_macos) {
-        $jobs[] = 'MACOS';
+        $jobs['MACOS'] = true;
     }
     if ($enable_all || $test_msan) {
-        $jobs[] = 'MSAN';
+        $jobs['MSAN'] = true;
     }
     if ($enable_all || $test_opcache_variation) {
-        $jobs[] = 'OPCACHE_VARIATION';
+        $jobs['OPCACHE_VARIATION'] = true;
     }
     if ($enable_all || !$disable_all || $test_windows) {
-        $jobs[] = 'WINDOWS';
+        $jobs['WINDOWS'] = true;
     }
     if ($enable_all || !$disable_all || $test_benchmarking) {
-        $jobs[] = 'BENCHMARKING';
+        $jobs['BENCHMARKING'] = true;
     }
     if ($enable_all || !$disable_all || $test_freebsd) {
-        $jobs[] = 'FREEBSD';
+        $jobs['FREEBSD'] = true;
     }
     return $jobs;
 }
@@ -119,7 +134,9 @@ $branches = $branch === 'master'
     : [['ref' => $branch, 'version' => get_current_version()]];
 
 $labels = json_decode($argv[4] ?? '[]', true);
-$jobs = select_jobs($labels);
+$labels = array_column($labels, 'name');
+$comprehensive = $trigger === 'schedule' || $trigger === 'workflow_dispatch' || in_array('CI: Comprehensive', $labels, true);
+$jobs = select_jobs($labels, $comprehensive);
 
 echo json_encode($branches, JSON_UNESCAPED_SLASHES), "\n\n";
 echo json_encode($jobs, JSON_UNESCAPED_SLASHES), "\n\n";
