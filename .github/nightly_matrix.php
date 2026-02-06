@@ -143,5 +143,6 @@ echo json_encode($jobs, JSON_UNESCAPED_SLASHES), "\n\n";
 
 $f = fopen(getenv('GITHUB_OUTPUT'), 'a');
 fwrite($f, 'branches=' . json_encode($branches, JSON_UNESCAPED_SLASHES) . "\n");
+fwrite($f, 'comprehensive=' . json_encode($comprehensive, JSON_UNESCAPED_SLASHES) . "\n");
 fwrite($f, 'jobs=' . json_encode($jobs, JSON_UNESCAPED_SLASHES) . "\n");
 fclose($f);

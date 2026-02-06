@@ -143,6 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       branches: ${{ steps.set-matrix.outputs.branches }}
+      comprehensive: ${{ steps.set-matrix.outputs.comprehensive }}
       jobs: ${{ steps.set-matrix.outputs.jobs }}
     steps:
       - uses: actions/checkout@v6
@@ -176,4 +177,5 @@ jobs:
       symfony_version: ${{ (((matrix.branch.version[0] == 8 && matrix.branch.version[1] >= 4) || matrix.branch.version[0] >= 9) && '8.1') || '7.4' }}
       variation_enable_zend_max_execution_timers: ${{ (matrix.branch.version[0] == 8 && matrix.branch.version[1] >= 3) || matrix.branch.version[0] >= 9 }}
       jobs: ${{ needs.GENERATE_MATRIX.outputs.jobs }}
+      comprehensive: ${{ needs.GENERATE_MATRIX.outputs.comprehensive == 'true' && true || false }}
     secrets: inherit

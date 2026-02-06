@@ -11,6 +11,9 @@ on:
       community_verify_type_inference:
         required: true
         type: boolean
+      comprehensive:
+        required: true
+        type: boolean
       macos_arm64_version:
         required: true
         type: string
@@ -215,6 +218,7 @@ jobs:
             ${{ matrix.variation && '-d zend_test.observer.enabled=1 -d zend_test.observer.show_output=0' || '' }}
             -d opcache.enable_cli=1
       - name: Test OpCache
+        if: ${{ inputs.comprehensive }}
         uses: ./.github/actions/test-linux
         with:
           runTestsParameters: >-
@@ -225,7 +229,7 @@ jobs:
       - name: Test Function JIT
         # ASAN frequently timeouts. Each test run takes ~90 minutes, we can
         # avoid running into the 6 hour timeout by skipping the function JIT.
-        if: ${{ !matrix.asan }}
+        if: ${{ inputs.comprehensive && !matrix.asan }}
         uses: ./.github/actions/test-linux
         with:
           jitType: function
