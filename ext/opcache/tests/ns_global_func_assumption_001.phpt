@@ -25,10 +25,10 @@ $_main:
      ; (lines=6, args=0, vars=0, tmps=%d)
      ; (after optimizer)
      ; %sns_global_func_assumption_001.php:%s
-0000 INIT_FCALL 0 96 string("ns\\test")
+0000 INIT_FCALL 0 %d string("ns\\test")
 0001 DO_UCALL
 0002 INCLUDE_OR_EVAL (require) string("%sns_global_func_assumption_001.inc")
-0003 INIT_FCALL 0 96 string("ns\\test")
+0003 INIT_FCALL 0 %d string("ns\\test")
 0004 DO_UCALL
 0005 RETURN int(1)
 

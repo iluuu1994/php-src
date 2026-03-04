@@ -5515,7 +5515,7 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 				 && !ns_func_exists
 				 && !ZEND_USER_CODE(global_fbc->type)
 				 && !zend_string_equals_literal(lc_orig_name, "call_user_func")
-				 && !zend_string_equals_literal(lc_orig_name, "in_array")
+				 && !zend_string_equals_literal(lc_orig_name, "call_user_func_array")
 				 && !zend_compile_ignore_function(global_fbc, CG(active_op_array)->filename)) {
 					/* Assume the unqualified call resolves to the global function.
 					 * Replace NS-qualified name with unqualified name and fall
