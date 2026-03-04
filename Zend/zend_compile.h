@@ -413,10 +413,12 @@ typedef struct _zend_oparray_context {
 /* op_array uses strict mode types                        |     |     |     */
 #define ZEND_ACC_STRICT_TYPES            (1U << 31) /*    |  X  |     |     */
 /*                                                        |     |     |     */
-/* Function Flags 2 (fn_flags2) (unused: 0-31)            |     |     |     */
+/* Function Flags 2 (fn_flags2) (unused: 1-31)            |     |     |     */
 /* ============================                           |     |     |     */
 /*                                                        |     |     |     */
-/* #define ZEND_ACC2_EXAMPLE             (1 << 0)         |  X  |     |     */
+/* op_array was compiled assuming unqualified calls       |     |     |     */
+/* to global functions resolve globally                   |     |     |     */
+#define ZEND_ACC2_NS_GLOBAL_ASSUMED     (1 << 0) /*       |  X  |     |     */
 
 #define ZEND_ACC_PPP_MASK  (ZEND_ACC_PUBLIC | ZEND_ACC_PROTECTED | ZEND_ACC_PRIVATE)
 #define ZEND_ACC_PPP_SET_MASK  (ZEND_ACC_PUBLIC_SET | ZEND_ACC_PROTECTED_SET | ZEND_ACC_PRIVATE_SET)
@@ -964,6 +966,7 @@ ZEND_API zend_result zend_execute_script(int type, zval *retval, zend_file_handl
 ZEND_API zend_result open_file_for_scanning(zend_file_handle *file_handle);
 ZEND_API void init_op_array(zend_op_array *op_array, zend_function_type type, int initial_ops_size);
 ZEND_API void destroy_op_array(zend_op_array *op_array);
+ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func);
 ZEND_API void zend_destroy_static_vars(zend_op_array *op_array);
 ZEND_API void zend_destroy_file_handle(zend_file_handle *file_handle);
 ZEND_API void zend_cleanup_mutable_class_data(zend_class_entry *ce);
@@ -1310,6 +1313,9 @@ END_EXTERN_C()
 
 /* ignore observer notifications, e.g. to manually notify afterwards in a post-processing step after compilation */
 #define ZEND_COMPILE_IGNORE_OBSERVER			(1<<18)
+
+/* Disable NS global function assumption optimization (used during deopt recompilation) */
+#define ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION	(1<<19)
 
 /* The default value for CG(compiler_options) */
 #define ZEND_COMPILE_DEFAULT					ZEND_COMPILE_HANDLE_OP_ARRAY

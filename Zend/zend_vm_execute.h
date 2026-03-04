@@ -4027,6 +4027,17 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_I
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+		}
+	}
+
 	call = _zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
@@ -4142,8 +4153,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_I
 		CACHE_PTR(opline->result.num, fbc);
 	}
 
+	uint32_t used_stack = opline->op1.num;
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+			used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+		}
+	}
+
 	call = _zend_vm_stack_push_call_frame_ex(
-		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
+		used_stack, ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
@@ -4161,8 +4185,20 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_I
 		fbc = Z_PTR(EG(function_table)->arData[Z_EXTRA_P(RT_CONSTANT(opline, opline->op2))].val);
 		CACHE_PTR(opline->result.num, fbc);
 	}
+	uint32_t used_stack = opline->op1.num;
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+			used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+		}
+	}
 	call = _zend_vm_stack_push_call_frame_ex(
-		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
+		used_stack, ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
@@ -56631,6 +56667,17 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_INIT_F
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+		}
+	}
+
 	call = _zend_vm_stack_push_call_frame(ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
@@ -56746,8 +56793,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_INIT_F
 		CACHE_PTR(opline->result.num, fbc);
 	}
 
+	uint32_t used_stack = opline->op1.num;
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+			used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+		}
+	}
+
 	call = _zend_vm_stack_push_call_frame_ex(
-		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
+		used_stack, ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
@@ -56765,8 +56825,20 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_INIT_F
 		fbc = Z_PTR(EG(function_table)->arData[Z_EXTRA_P(RT_CONSTANT(opline, opline->op2))].val);
 		CACHE_PTR(opline->result.num, fbc);
 	}
+	uint32_t used_stack = opline->op1.num;
+	if (UNEXPECTED(EG(ns_global_func_generation) > 0
+			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+		zend_function *deopt = zend_get_deoptimized_function(fbc);
+		if (deopt) {
+			fbc = deopt;
+			if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+				init_func_run_time_cache(&fbc->op_array);
+			}
+			used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+		}
+	}
 	call = _zend_vm_stack_push_call_frame_ex(
-		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
+		used_stack, ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;

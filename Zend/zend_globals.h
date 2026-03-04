@@ -321,6 +321,13 @@ struct _zend_executor_globals {
 
 	HashTable callable_convert_cache;
 
+	/* Bumped when a namespaced function shadowing a global function is declared.
+	 * Used to invalidate NS global function assumptions made during compilation. */
+	uint32_t ns_global_func_generation;
+
+	/* Cache of deoptimized op_arrays, keyed by original op_array pointer (uintptr_t). */
+	HashTable ns_deoptimized_functions;
+
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
 

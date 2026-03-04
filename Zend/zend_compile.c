@@ -1280,6 +1280,101 @@ ZEND_API void function_add_ref(zend_function *function) /* {{{ */
 }
 /* }}} */
 
+/* Check if a namespaced function shadows a global function.
+ * If so, bump the generation counter to invalidate NS global assumptions. */
+static void zend_check_ns_function_shadow(const zend_string *lcname)
+{
+	const char *backslash = zend_memrchr(ZSTR_VAL(lcname), '\\', ZSTR_LEN(lcname));
+	if (!backslash) {
+		return;
+	}
+	const char *unqualified = backslash + 1;
+	size_t unqualified_len = ZSTR_LEN(lcname) - (unqualified - ZSTR_VAL(lcname));
+	zend_string *global_name = zend_string_init(unqualified, unqualified_len, 0);
+	if (zend_hash_exists(CG(function_table), global_name)) {
+		EG(ns_global_func_generation)++;
+	}
+	zend_string_release(global_name);
+}
+
+/* Recompile a function without NS global assumptions.
+ * Returns the deoptimized function or NULL on failure.
+ * The result is cached in EG(ns_deoptimized_functions). */
+ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
+{
+	ZEND_ASSERT(func->type == ZEND_USER_FUNCTION);
+
+	/* Check cache first. */
+	uintptr_t cache_key = (uintptr_t)func;
+	zend_function *deopt = zend_hash_index_find_ptr(&EG(ns_deoptimized_functions), cache_key);
+	if (deopt) {
+		return deopt;
+	}
+
+	/* Temporarily remove user functions from the same file to avoid
+	 * redeclaration errors during recompilation. */
+	HashTable saved_functions;
+	zend_hash_init(&saved_functions, 8, NULL, NULL, 0);
+
+	const zend_string *filename = func->op_array.filename;
+	zend_string *key;
+	zval *zv;
+	ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(EG(function_table), key, zv) {
+		zend_function *f = Z_PTR_P(zv);
+		if (f->type == ZEND_USER_FUNCTION && f->op_array.filename == filename) {
+			zend_hash_add_new_ptr(&saved_functions, key, f);
+		}
+	} ZEND_HASH_FOREACH_END();
+
+	dtor_func_t orig_dtor = EG(function_table)->pDestructor;
+	EG(function_table)->pDestructor = NULL;
+	ZEND_HASH_MAP_FOREACH_STR_KEY(&saved_functions, key) {
+		zend_hash_del(EG(function_table), key);
+	} ZEND_HASH_FOREACH_END();
+	EG(function_table)->pDestructor = orig_dtor;
+
+	/* Compile the file without NS global assumptions. */
+	uint32_t orig_compiler_options = CG(compiler_options);
+	CG(compiler_options) |= ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION;
+	CG(compiler_options) |= ZEND_COMPILE_IGNORE_OTHER_FILES;
+	CG(compiler_options) |= ZEND_COMPILE_DELAYED_BINDING;
+
+	zend_file_handle file_handle;
+	zend_stream_init_filename_ex(&file_handle, func->op_array.filename);
+	zend_op_array *main_op_array = compile_file(&file_handle, ZEND_INCLUDE);
+	zend_destroy_file_handle(&file_handle);
+
+	CG(compiler_options) = orig_compiler_options;
+
+	/* Find the deoptimized function by name. */
+	deopt = NULL;
+	if (main_op_array && func->op_array.function_name) {
+		zend_string *lc_name = zend_string_tolower(func->op_array.function_name);
+		deopt = zend_hash_find_ptr(EG(function_table), lc_name);
+		zend_string_release(lc_name);
+	}
+
+	/* Remove newly compiled functions and restore originals. */
+	EG(function_table)->pDestructor = NULL;
+	ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(&saved_functions, key, zv) {
+		zend_hash_update_ptr(EG(function_table), key, Z_PTR_P(zv));
+	} ZEND_HASH_FOREACH_END();
+	EG(function_table)->pDestructor = orig_dtor;
+	zend_hash_destroy(&saved_functions);
+
+	if (main_op_array) {
+		destroy_op_array(main_op_array);
+		efree(main_op_array);
+	}
+
+	/* Cache the result. */
+	if (deopt) {
+		zend_hash_index_add_new_ptr(&EG(ns_deoptimized_functions), cache_key, deopt);
+	}
+
+	return deopt;
+}
+
 static zend_never_inline ZEND_COLD ZEND_NORETURN void do_bind_function_error(const zend_string *lcname, const zend_op_array *op_array, bool compile_time) /* {{{ */
 {
 	const zval *zv = zend_hash_find_known_hash(compile_time ? CG(function_table) : EG(function_table), lcname);
@@ -1315,6 +1410,7 @@ ZEND_API zend_result do_bind_function(zend_function *func, const zval *lcname) /
 		zend_string_addref(func->common.function_name);
 	}
 	zend_observer_function_declared_notify(&func->op_array, Z_STR_P(lcname));
+	zend_check_ns_function_shadow(Z_STR_P(lcname));
 	return SUCCESS;
 }
 /* }}} */
@@ -5424,13 +5520,45 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 			if (zend_string_equals_literal_ci(zend_ast_get_str(name_ast), "assert")
 					&& !is_callable_convert) {
 				zend_compile_assert(result, zend_ast_get_list(args_ast), Z_STR(name_node.u.constant), NULL, ast->lineno, type);
-			} else {
-				zend_compile_ns_call(result, &name_node, args_ast, ast->lineno, type);
+				return;
 			}
+
+			if (!is_callable_convert && !(CG(compiler_options) & ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION)) {
+				/* Check if the unqualified name matches a known global function
+				 * that is not shadowed by a NS-local function at compile time. */
+				zend_string *orig_name = zend_ast_get_str(name_ast);
+				zend_string *lc_orig_name = zend_string_tolower(orig_name);
+				zend_string *lc_ns_name = zend_string_tolower(Z_STR(name_node.u.constant));
+				const zend_function *global_fbc = zend_hash_find_ptr(CG(function_table), lc_orig_name);
+				bool ns_func_exists = zend_hash_exists(CG(function_table), lc_ns_name)
+					|| zend_have_seen_symbol(lc_ns_name, ZEND_SYMBOL_FUNCTION);
+				zend_string_release(lc_ns_name);
+
+				if (global_fbc
+				 && !ns_func_exists
+				 && !ZEND_USER_CODE(global_fbc->type)
+				 && !zend_string_equals_literal(lc_orig_name, "call_user_func")
+				 && !zend_string_equals_literal(lc_orig_name, "in_array")
+				 && !zend_compile_ignore_function(global_fbc, CG(active_op_array)->filename)) {
+					/* Assume the unqualified call resolves to the global function.
+					 * Replace NS-qualified name with unqualified name and fall
+					 * through to the fully-qualified compilation path. */
+					zval_ptr_dtor(&name_node.u.constant);
+					ZVAL_STR_COPY(&name_node.u.constant, orig_name);
+					zend_string_release(lc_orig_name);
+					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_NS_GLOBAL_ASSUMED;
+					goto resolve_as_global;
+				}
+
+				zend_string_release(lc_orig_name);
+			}
+
+			zend_compile_ns_call(result, &name_node, args_ast, ast->lineno, type);
 			return;
 		}
 	}
 
+resolve_as_global:;
 	{
 		const zval *name = &name_node.u.constant;
 		zend_string *lcname = zend_string_tolower(Z_STR_P(name));
@@ -8898,6 +9026,7 @@ static zend_op_array *zend_compile_func_decl_ex(
 			CG(zend_lineno) = decl->start_lineno;
 			do_bind_function_error(lcname, op_array, true);
 		}
+		zend_check_ns_function_shadow(lcname);
 	}
 
 	/* put the implicit return on the really last line */
