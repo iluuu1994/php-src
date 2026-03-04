@@ -207,7 +207,6 @@ typedef struct _zend_oparray_context {
 	HashTable *labels;
 	zend_string *active_property_info_name;
 	zend_property_hook_kind active_property_hook_kind;
-	bool       in_jmp_frameless_branch;
 	bool has_assigned_to_http_response_header;
 } zend_oparray_context;
 

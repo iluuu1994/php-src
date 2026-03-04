@@ -343,7 +343,6 @@ void zend_oparray_context_begin(zend_oparray_context *prev_context, zend_op_arra
 	CG(context).has_assigned_to_http_response_header = false;
 	CG(context).brk_cont_array = NULL;
 	CG(context).labels = NULL;
-	CG(context).in_jmp_frameless_branch = false;
 	CG(context).active_property_info_name = NULL;
 	CG(context).active_property_hook_kind = (zend_property_hook_kind)-1;
 }
@@ -4913,28 +4912,25 @@ static void zend_compile_ns_call(znode *result, const znode *name_node, zend_ast
 {
 	int name_constants = zend_add_ns_func_name_literal(Z_STR(name_node->u.constant));
 
-	/* Find frameless function with same name. */
-	const zend_function *frameless_function = NULL;
-	if (args_ast->kind != ZEND_AST_CALLABLE_CONVERT
-	 && !zend_args_contain_unpack_or_named(zend_ast_get_list(args_ast))
-	 /* Avoid blowing up op count with nested frameless branches. */
-	 && !CG(context).in_jmp_frameless_branch) {
+	/* When compiling without the deoptimization flag, use frameless calls
+	 * directly. If a shadow is later declared, the function will be
+	 * deoptimized and recompiled without frameless. */
+	if (!(CG(compiler_options) & ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION)
+	 && args_ast->kind != ZEND_AST_CALLABLE_CONVERT
+	 && !zend_args_contain_unpack_or_named(zend_ast_get_list(args_ast))) {
+		zend_string *lc_ns_name = Z_STR_P(CT_CONSTANT_EX(CG(active_op_array), name_constants + 1));
 		zend_string *lc_func_name = Z_STR_P(CT_CONSTANT_EX(CG(active_op_array), name_constants + 2));
-		frameless_function = zend_hash_find_ptr(CG(function_table), lc_func_name);
-	}
-
-	/* Check whether any frameless handler may actually be used. */
-	uint32_t jmp_fl_opnum = 0;
-	const zend_frameless_function_info *frameless_function_info = NULL;
-	if (frameless_function) {
-		frameless_function_info = find_frameless_function_info(zend_ast_get_list(args_ast), frameless_function, type);
-		if (frameless_function_info) {
-			CG(context).in_jmp_frameless_branch = true;
-			znode op1;
-			op1.op_type = IS_CONST;
-			ZVAL_COPY(&op1.u.constant, CT_CONSTANT_EX(CG(active_op_array), name_constants + 1));
-			jmp_fl_opnum = get_next_op_number();
-			zend_emit_op(NULL, ZEND_JMP_FRAMELESS, &op1, NULL);
+		if (!zend_hash_exists(CG(function_table), lc_ns_name)
+		 && !zend_have_seen_symbol(lc_ns_name, ZEND_SYMBOL_FUNCTION)) {
+			const zend_function *frameless_function = zend_hash_find_ptr(CG(function_table), lc_func_name);
+			if (frameless_function) {
+				const zend_frameless_function_info *info = find_frameless_function_info(zend_ast_get_list(args_ast), frameless_function, type);
+				if (info) {
+					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_NS_GLOBAL_ASSUMED;
+					zend_compile_frameless_icall_ex(result, zend_ast_get_list(args_ast), frameless_function, info, type);
+					return;
+				}
+			}
 		}
 	}
 
@@ -4945,25 +4941,6 @@ static void zend_compile_ns_call(znode *result, const znode *name_node, zend_ast
 	opline->op2.constant = name_constants;
 	opline->result.num = zend_alloc_cache_slot();
 	zend_compile_call_common(result, args_ast, NULL, lineno, type);
-
-	/* Compile frameless call. */
-	if (frameless_function_info) {
-		CG(zend_lineno) = lineno;
-
-		uint32_t jmp_end_opnum = zend_emit_jump(0);
-		uint32_t jmp_fl_target = get_next_op_number();
-
-		uint32_t flf_icall_opnum = zend_compile_frameless_icall_ex(NULL, zend_ast_get_list(args_ast), frameless_function, frameless_function_info, type);
-
-		zend_op *jmp_fl = &CG(active_op_array)->opcodes[jmp_fl_opnum];
-		jmp_fl->op2.opline_num = jmp_fl_target;
-		jmp_fl->extended_value = zend_alloc_cache_slot();
-		zend_op *flf_icall = &CG(active_op_array)->opcodes[flf_icall_opnum];
-		SET_NODE(flf_icall->result, result);
-		zend_update_jump_target_to_next(jmp_end_opnum);
-
-		CG(context).in_jmp_frameless_branch = false;
-	}
 }
 /* }}} */
 
