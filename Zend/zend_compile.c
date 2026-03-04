@@ -1291,21 +1291,20 @@ static void zend_check_ns_function_shadow(const zend_string *lcname)
 	size_t unqualified_len = ZSTR_LEN(lcname) - (unqualified - ZSTR_VAL(lcname));
 	zend_string *global_name = zend_string_init(unqualified, unqualified_len, 0);
 	if (zend_hash_exists(CG(function_table), global_name)) {
-		EG(ns_global_func_generation)++;
+		EG(num_shadowed_global_funcs)++;
 	}
 	zend_string_release(global_name);
 }
 
 /* Recompile a function without NS global assumptions.
  * Returns the deoptimized function or NULL on failure.
- * The result is cached in EG(ns_deoptimized_functions). */
+ * The result is cached in EG(deoptimized_funcs). */
 ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 {
 	ZEND_ASSERT(func->type == ZEND_USER_FUNCTION);
 
 	/* Check cache first. */
-	uintptr_t cache_key = (uintptr_t)func;
-	zend_function *deopt = zend_hash_index_find_ptr(&EG(ns_deoptimized_functions), cache_key);
+	zend_function *deopt = zend_hash_find_ptr(&EG(deoptimized_funcs), func->common.function_name);
 	if (deopt) {
 		return deopt;
 	}
@@ -1334,7 +1333,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 
 	/* Compile the file without NS global assumptions. */
 	uint32_t orig_compiler_options = CG(compiler_options);
-	CG(compiler_options) |= ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION;
+	CG(compiler_options) |= ZEND_COMPILE_DEOPTIMIZED;
 	CG(compiler_options) |= ZEND_COMPILE_IGNORE_OTHER_FILES;
 	CG(compiler_options) |= ZEND_COMPILE_DELAYED_BINDING;
 
@@ -1368,7 +1367,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 
 	/* Cache the result. */
 	if (deopt) {
-		zend_hash_index_add_new_ptr(&EG(ns_deoptimized_functions), cache_key, deopt);
+		zend_hash_add_new_ptr(&EG(deoptimized_funcs), deopt->common.function_name, deopt);
 	}
 
 	return deopt;
@@ -4915,7 +4914,7 @@ static void zend_compile_ns_call(znode *result, const znode *name_node, zend_ast
 	/* When compiling without the deoptimization flag, use frameless calls
 	 * directly. If a shadow is later declared, the function will be
 	 * deoptimized and recompiled without frameless. */
-	if (!(CG(compiler_options) & ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION)
+	if (!(CG(compiler_options) & ZEND_COMPILE_DEOPTIMIZED)
 	 && args_ast->kind != ZEND_AST_CALLABLE_CONVERT
 	 && !zend_args_contain_unpack_or_named(zend_ast_get_list(args_ast))) {
 		zend_string *lc_ns_name = Z_STR_P(CT_CONSTANT_EX(CG(active_op_array), name_constants + 1));
@@ -4926,7 +4925,7 @@ static void zend_compile_ns_call(znode *result, const znode *name_node, zend_ast
 			if (frameless_function) {
 				const zend_frameless_function_info *info = find_frameless_function_info(zend_ast_get_list(args_ast), frameless_function, type);
 				if (info) {
-					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_NS_GLOBAL_ASSUMED;
+					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_ASSUMPTIONS;
 					zend_compile_frameless_icall_ex(result, zend_ast_get_list(args_ast), frameless_function, info, type);
 					return;
 				}
@@ -5500,7 +5499,7 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 				return;
 			}
 
-			if (!is_callable_convert && !(CG(compiler_options) & ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION)) {
+			if (!is_callable_convert && !(CG(compiler_options) & ZEND_COMPILE_DEOPTIMIZED)) {
 				/* Check if the unqualified name matches a known global function
 				 * that is not shadowed by a NS-local function at compile time. */
 				zend_string *orig_name = zend_ast_get_str(name_ast);
@@ -5523,7 +5522,7 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 					zval_ptr_dtor(&name_node.u.constant);
 					ZVAL_STR_COPY(&name_node.u.constant, orig_name);
 					zend_string_release(lc_orig_name);
-					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_NS_GLOBAL_ASSUMED;
+					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_ASSUMPTIONS;
 					goto resolve_as_global;
 				}
 

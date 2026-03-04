@@ -415,9 +415,9 @@ typedef struct _zend_oparray_context {
 /* Function Flags 2 (fn_flags2) (unused: 1-31)            |     |     |     */
 /* ============================                           |     |     |     */
 /*                                                        |     |     |     */
-/* op_array was compiled assuming unqualified calls       |     |     |     */
-/* to global functions resolve globally                   |     |     |     */
-#define ZEND_ACC2_NS_GLOBAL_ASSUMED     (1 << 0) /*       |  X  |     |     */
+/* op_array was compiled assuming possibly global calls   |     |     |     */
+/* are necessarily global                                 |     |     |     */
+#define ZEND_ACC2_ASSUMPTIONS            (1 << 0) /*      |  X  |     |     */
 
 #define ZEND_ACC_PPP_MASK  (ZEND_ACC_PUBLIC | ZEND_ACC_PROTECTED | ZEND_ACC_PRIVATE)
 #define ZEND_ACC_PPP_SET_MASK  (ZEND_ACC_PUBLIC_SET | ZEND_ACC_PROTECTED_SET | ZEND_ACC_PRIVATE_SET)
@@ -1313,8 +1313,8 @@ END_EXTERN_C()
 /* ignore observer notifications, e.g. to manually notify afterwards in a post-processing step after compilation */
 #define ZEND_COMPILE_IGNORE_OBSERVER			(1<<18)
 
-/* Disable NS global function assumption optimization (used during deopt recompilation) */
-#define ZEND_COMPILE_NO_NS_GLOBAL_ASSUMPTION	(1<<19)
+/* Disable assumption that any possible global function call is global */
+#define ZEND_COMPILE_DEOPTIMIZED				(1<<19)
 
 /* The default value for CG(compiler_options) */
 #define ZEND_COMPILE_DEFAULT					ZEND_COMPILE_HANDLE_OP_ARRAY

@@ -323,10 +323,10 @@ struct _zend_executor_globals {
 
 	/* Bumped when a namespaced function shadowing a global function is declared.
 	 * Used to invalidate NS global function assumptions made during compilation. */
-	uint32_t ns_global_func_generation;
+	uint32_t num_shadowed_global_funcs;
 
-	/* Cache of deoptimized op_arrays, keyed by original op_array pointer (uintptr_t). */
-	HashTable ns_deoptimized_functions;
+	/* Cache of deoptimized op_arrays, keyed by function name. */
+	HashTable deoptimized_funcs;
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };

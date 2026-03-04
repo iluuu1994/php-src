@@ -204,8 +204,8 @@ void init_executor(void) /* {{{ */
 
 	zend_hash_init(&EG(callable_convert_cache), 8, NULL, ZVAL_PTR_DTOR, 0);
 
-	EG(ns_global_func_generation) = 0;
-	zend_hash_init(&EG(ns_deoptimized_functions), 0, NULL, ZEND_FUNCTION_DTOR, 0);
+	EG(num_shadowed_global_funcs) = 0;
+	zend_hash_init(&EG(deoptimized_funcs), 0, NULL, ZEND_FUNCTION_DTOR, 0);
 
 	EG(active) = 1;
 }
@@ -519,7 +519,7 @@ void shutdown_executor(void) /* {{{ */
 		}
 
 		zend_hash_destroy(&EG(callable_convert_cache));
-		zend_hash_destroy(&EG(ns_deoptimized_functions));
+		zend_hash_destroy(&EG(deoptimized_funcs));
 	}
 
 #if ZEND_DEBUG

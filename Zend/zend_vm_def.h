@@ -3912,8 +3912,7 @@ ZEND_VM_HOT_HANDLER(59, ZEND_INIT_FCALL_BY_NAME, ANY, CONST, NUM|CACHE_SLOT)
 		}
 		CACHE_PTR(opline->result.num, fbc);
 	}
-	if (UNEXPECTED(EG(ns_global_func_generation) > 0
-			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+	if (UNEXPECTED(EG(num_shadowed_global_funcs) > 0) && (fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
 		zend_function *deopt = zend_get_deoptimized_function(fbc);
 		if (deopt) {
 			fbc = deopt;
@@ -4110,8 +4109,7 @@ ZEND_VM_HOT_HANDLER(61, ZEND_INIT_FCALL, NUM, CONST, NUM|CACHE_SLOT)
 	}
 
 	uint32_t used_stack = opline->op1.num;
-	if (UNEXPECTED(EG(ns_global_func_generation) > 0
-			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+	if (UNEXPECTED(EG(num_shadowed_global_funcs) > 0) && (fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
 		zend_function *deopt = zend_get_deoptimized_function(fbc);
 		if (deopt) {
 			fbc = deopt;
@@ -4142,8 +4140,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_INIT_FCALL, Z_EXTRA_P(RT_CONSTANT(op, op->op2
 		CACHE_PTR(opline->result.num, fbc);
 	}
 	uint32_t used_stack = opline->op1.num;
-	if (UNEXPECTED(EG(ns_global_func_generation) > 0
-			&& (fbc->common.fn_flags2 & ZEND_ACC2_NS_GLOBAL_ASSUMED))) {
+	if (UNEXPECTED(EG(num_shadowed_global_funcs) > 0) && (fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
 		zend_function *deopt = zend_get_deoptimized_function(fbc);
 		if (deopt) {
 			fbc = deopt;
