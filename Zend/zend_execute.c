@@ -5897,6 +5897,27 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 /* This callback disables optimization of "vm_stack_data" variable in VM */
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
 
+static zend_never_inline ZEND_COLD void zend_fetch_deoptimized_func(zend_function **fbc_ptr, uint32_t *used_stack OPLINE_DC)
+{
+	zend_function *fbc = *fbc_ptr;
+	if (!(fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
+		return;
+	}
+
+	zend_function *deopt = zend_get_deoptimized_function(fbc);
+	if (!deopt) {
+		return;
+	}
+
+	*fbc_ptr = fbc = deopt;
+	if (UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
+		init_func_run_time_cache(&fbc->op_array);
+	}
+	if (used_stack) {
+		*used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+	}
+}
+
 #include "zend_vm_execute.h"
 
 ZEND_API zend_result zend_set_user_opcode_handler(zend_uchar opcode, user_opcode_handler_t handler)
