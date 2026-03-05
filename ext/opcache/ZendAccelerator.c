@@ -1611,25 +1611,27 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 	/* Check if we still need to put the file into the cache (may be it was
 	 * already stored by another process. This final check is done under
 	 * exclusive lock) */
-	bucket = zend_accel_hash_find_entry(&ZCSG(hash), new_persistent_script->script.filename);
-	if (bucket) {
-		zend_persistent_script *existing_persistent_script = (zend_persistent_script *)bucket->data;
+	if (!(CG(compiler_options) & ZEND_COMPILE_DEOPTIMIZED)) {
+		bucket = zend_accel_hash_find_entry(&ZCSG(hash), new_persistent_script->script.filename);
+		if (bucket) {
+			zend_persistent_script *existing_persistent_script = (zend_persistent_script *)bucket->data;
 
-		if (!existing_persistent_script->corrupted) {
-			if (key &&
-			    (!ZCG(accel_directives).validate_timestamps ||
-			     (new_persistent_script->timestamp == existing_persistent_script->timestamp))) {
-				zend_accel_add_key(key, bucket);
-			}
-			zend_shared_alloc_unlock();
+			if (!existing_persistent_script->corrupted) {
+				if (key &&
+					(!ZCG(accel_directives).validate_timestamps ||
+					(new_persistent_script->timestamp == existing_persistent_script->timestamp))) {
+					zend_accel_add_key(key, bucket);
+				}
+				zend_shared_alloc_unlock();
 #if 1
-			/* prefer the script already stored in SHM */
-			free_persistent_script(new_persistent_script, 1);
-			*from_shared_memory = true;
-			return existing_persistent_script;
+				/* prefer the script already stored in SHM */
+				free_persistent_script(new_persistent_script, 1);
+				*from_shared_memory = true;
+				return existing_persistent_script;
 #else
-			return new_persistent_script;
+				return new_persistent_script;
 #endif
+			}
 		}
 	}
 
@@ -1686,26 +1688,28 @@ static zend_persistent_script *cache_script_in_shared_memory(zend_persistent_scr
 	}
 
 	/* store script structure in the hash table */
-	bucket = zend_accel_hash_update(&ZCSG(hash), new_persistent_script->script.filename, 0, new_persistent_script);
-	if (bucket) {
-		zend_accel_error(ACCEL_LOG_INFO, "Cached script '%s'", ZSTR_VAL(new_persistent_script->script.filename));
-		if (key &&
-		    /* key may contain non-persistent PHAR aliases (see issues #115 and #149) */
-		    !zend_string_starts_with_literal(key, "phar://") &&
-		    !zend_string_equals(new_persistent_script->script.filename, key)) {
-			/* link key to the same persistent script in hash table */
-			zend_string *new_key = accel_new_interned_key(key);
+	if (!(CG(compiler_options) & ZEND_COMPILE_DEOPTIMIZED)) {
+		bucket = zend_accel_hash_update(&ZCSG(hash), new_persistent_script->script.filename, 0, new_persistent_script);
+		if (bucket) {
+			zend_accel_error(ACCEL_LOG_INFO, "Cached script '%s'", ZSTR_VAL(new_persistent_script->script.filename));
+			if (key &&
+				/* key may contain non-persistent PHAR aliases (see issues #115 and #149) */
+				!zend_string_starts_with_literal(key, "phar://") &&
+				!zend_string_equals(new_persistent_script->script.filename, key)) {
+				/* link key to the same persistent script in hash table */
+				zend_string *new_key = accel_new_interned_key(key);
 
-			if (new_key) {
-				if (zend_accel_hash_update(&ZCSG(hash), new_key, 1, bucket)) {
-					zend_accel_error(ACCEL_LOG_INFO, "Added key '%s'", ZSTR_VAL(key));
+				if (new_key) {
+					if (zend_accel_hash_update(&ZCSG(hash), new_key, 1, bucket)) {
+						zend_accel_error(ACCEL_LOG_INFO, "Added key '%s'", ZSTR_VAL(key));
+					} else {
+						zend_accel_error(ACCEL_LOG_DEBUG, "No more entries in hash table!");
+						ZSMMG(memory_exhausted) = true;
+						zend_accel_schedule_restart_if_necessary(ACCEL_RESTART_HASH);
+					}
 				} else {
-					zend_accel_error(ACCEL_LOG_DEBUG, "No more entries in hash table!");
-					ZSMMG(memory_exhausted) = true;
-					zend_accel_schedule_restart_if_necessary(ACCEL_RESTART_HASH);
+					zend_accel_schedule_restart_if_necessary(ACCEL_RESTART_OOM);
 				}
-			} else {
-				zend_accel_schedule_restart_if_necessary(ACCEL_RESTART_OOM);
 			}
 		}
 	}
@@ -1837,6 +1841,7 @@ static zend_persistent_script *opcache_compile_file(zend_file_handle *file_handl
 		CG(compiler_options) |= ZEND_COMPILE_NO_CONSTANT_SUBSTITUTION;
 		CG(compiler_options) |= ZEND_COMPILE_IGNORE_OTHER_FILES;
 		CG(compiler_options) |= ZEND_COMPILE_IGNORE_OBSERVER;
+		CG(compiler_options) |= (orig_compiler_options & ZEND_COMPILE_DEOPTIMIZED);
 #ifdef ZEND_WIN32
 		/* On Windows, don't compile with internal classes. Shm may be attached from different
 		 * processes with internal classes living in different addresses. */
@@ -2021,6 +2026,12 @@ zend_op_array *persistent_compile_file(zend_file_handle *file_handle, int type)
 	zend_string *key = NULL;
 	bool from_shared_memory; /* if the script we've got is stored in SHM */
 
+	if (CG(compiler_options) & ZEND_COMPILE_DEOPTIMIZED) {
+		HANDLE_BLOCK_INTERRUPTIONS();
+		SHM_UNPROTECT();
+		goto skip_caching;
+	}
+
 	if (!file_handle->filename || !ZCG(accelerator_enabled)) {
 		/* The Accelerator is disabled, act as if without the Accelerator */
 		ZCG(cache_opline) = NULL;
@@ -2169,6 +2180,8 @@ zend_op_array *persistent_compile_file(zend_file_handle *file_handle, int type)
 
 	/* If script was not found or invalidated by validate_timestamps */
 	if (!persistent_script) {
+		// FIXME: Skip miss counter?
+skip_caching:;
 		uint32_t old_const_num = zend_hash_next_free_element(EG(zend_constants));
 		zend_op_array *op_array;
 

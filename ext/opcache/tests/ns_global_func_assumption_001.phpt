@@ -56,4 +56,27 @@ Ns\strlen:
 0001 T2 = STRLEN CV0($string)
 0002 T1 = ADD T2 T2
 0003 RETURN T1
+
+$_main:
+     ; (lines=6, args=0, vars=0, tmps=%d)
+     ; (after optimizer)
+     ; %sns_global_func_assumption_001.php:%s
+0000 INIT_FCALL 0 %d string("ns\\test")
+0001 DO_UCALL
+0002 INCLUDE_OR_EVAL (require) string("%sns_global_func_assumption_001.inc")
+0003 INIT_FCALL 0 %d string("ns\\test")
+0004 DO_UCALL
+0005 RETURN int(1)
+
+Ns\test:
+     ; (lines=7, args=0, vars=0, tmps=%d)
+     ; (after optimizer)
+     ; %sns_global_func_assumption_001.php:%s
+0000 INIT_NS_FCALL_BY_NAME 1 string("Ns\\var_dump")
+0001 INIT_NS_FCALL_BY_NAME 1 string("Ns\\strlen")
+0002 SEND_VAL_EX string("Hello world") 1
+0003 V0 = DO_FCALL_BY_NAME
+0004 SEND_VAR_NO_REF_EX V0 1
+0005 DO_FCALL_BY_NAME
+0006 RETURN null
 int(22)
