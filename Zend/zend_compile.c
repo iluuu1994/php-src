@@ -1307,8 +1307,8 @@ static void zend_clear_op_array_runtime_cache(zend_op_array *op_array, void *con
 
 static void zend_clear_all_runtime_caches(void)
 {
-	zend_foreach_op_array(NULL, EG(function_table), EG(class_table),
-		zend_clear_op_array_runtime_cache, NULL);
+	// FIXME: Skip internal functions and classes?
+	zend_foreach_op_array_ex(NULL, EG(function_table), EG(class_table), zend_clear_op_array_runtime_cache, NULL);
 }
 
 /* Check if a namespaced function shadows a global function.

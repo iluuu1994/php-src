@@ -1526,6 +1526,10 @@ static bool needs_live_range(const zend_op_array *op_array, const zend_op *def_o
 	return (type & (MAY_BE_STRING|MAY_BE_ARRAY|MAY_BE_OBJECT|MAY_BE_RESOURCE|MAY_BE_REF)) != 0;
 }
 
+void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void *context)
+{
+	zend_foreach_op_array_ex(&script->main_op_array, &script->function_table, &script->class_table, func, context);
+}
 
 static void step_optimize_op_array(zend_op_array *op_array, void *context) {
 	zend_optimize_op_array(op_array, (zend_optimizer_ctx *) context);
@@ -1666,10 +1670,10 @@ ZEND_API void zend_optimize_script(zend_script *script, zend_long optimization_l
 			ZEND_SET_FUNC_INFO(call_graph.op_arrays[i], NULL);
 		}
 	} else {
-		zend_foreach_op_array(&script->main_op_array, &script->function_table, &script->class_table, step_optimize_op_array, &ctx);
+		zend_foreach_op_array(script, step_optimize_op_array, &ctx);
 
 		if (ZEND_OPTIMIZER_PASS_12 & optimization_level) {
-			zend_foreach_op_array(&script->main_op_array, &script->function_table, &script->class_table, step_adjust_fcall_stack_size, &ctx);
+			zend_foreach_op_array(script, step_adjust_fcall_stack_size, &ctx);
 		}
 	}
 
@@ -1704,7 +1708,7 @@ ZEND_API void zend_optimize_script(zend_script *script, zend_long optimization_l
 
 	if ((debug_level & ZEND_DUMP_AFTER_OPTIMIZER) &&
 			(ZEND_OPTIMIZER_PASS_7 & optimization_level)) {
-		zend_foreach_op_array(&script->main_op_array, &script->function_table, &script->class_table, step_dump_after_optimizer, NULL);
+		zend_foreach_op_array(script, step_dump_after_optimizer, NULL);
 	}
 
 	if (ctx.constants) {

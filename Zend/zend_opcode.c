@@ -1340,29 +1340,25 @@ static void zend_foreach_op_array_helper(
 	}
 }
 
-void zend_foreach_op_array(
-		zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table,
-		zend_op_array_func_t func, void *context)
+void zend_foreach_op_array_ex(zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table, zend_op_array_func_t func, void *context)
 {
 	if (main_op_array) {
 		zend_foreach_op_array_helper(main_op_array, func, context);
 	}
 
-	zval *zv;
-	zend_op_array *op_array;
-
-	ZEND_HASH_MAP_FOREACH_PTR(function_table, op_array) {
+	ZEND_HASH_MAP_FOREACH_PTR(function_table, zend_op_array *op_array) {
 		if (op_array->type == ZEND_USER_FUNCTION) {
 			zend_foreach_op_array_helper(op_array, func, context);
 		}
 	} ZEND_HASH_FOREACH_END();
 
-	ZEND_HASH_MAP_FOREACH_VAL(class_table, zv) {
+	ZEND_HASH_MAP_FOREACH_VAL(class_table, zval *zv) {
 		if (Z_TYPE_P(zv) == IS_ALIAS_PTR) {
 			continue;
 		}
+
 		const zend_class_entry *ce = Z_CE_P(zv);
-		ZEND_HASH_MAP_FOREACH_PTR(&ce->function_table, op_array) {
+		ZEND_HASH_MAP_FOREACH_PTR(&ce->function_table, zend_op_array *op_array) {
 			if (op_array->scope == ce
 					&& op_array->type == ZEND_USER_FUNCTION
 					&& !(op_array->fn_flags & ZEND_ACC_ABSTRACT)

@@ -1334,8 +1334,6 @@ bool zend_try_ct_eval_cast(zval *result, uint32_t type, zval *op1);
 bool zend_op_may_elide_result(uint8_t opcode);
 
 typedef void (*zend_op_array_func_t)(zend_op_array *, void *context);
-void zend_foreach_op_array(
-	zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table,
-	zend_op_array_func_t func, void *context);
+void zend_foreach_op_array_ex(zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table, zend_op_array_func_t func, void *context);
 
 #endif /* ZEND_COMPILE_H */
