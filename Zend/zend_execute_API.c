@@ -205,8 +205,8 @@ void init_executor(void) /* {{{ */
 
 	zend_hash_init(&EG(callable_convert_cache), 8, NULL, ZVAL_PTR_DTOR, 0);
 
-	EG(shadowed_global_funcs_len) = zend_bitset_len(CG(num_global_internal_funcs));
-	EG(shadowed_global_funcs) = ecalloc(EG(shadowed_global_funcs_len), sizeof(zend_ulong));
+	EG(shadowed_global_funcs_len) = 0;
+	EG(shadowed_global_funcs) = NULL;
 
 	EG(active) = 1;
 }
@@ -520,7 +520,10 @@ void shutdown_executor(void) /* {{{ */
 		}
 
 		zend_hash_destroy(&EG(callable_convert_cache));
-		efree(EG(shadowed_global_funcs));
+
+		if (EG(shadowed_global_funcs)) {
+			efree(EG(shadowed_global_funcs));
+		}
 	}
 
 #if ZEND_DEBUG

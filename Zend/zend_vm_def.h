@@ -3910,7 +3910,7 @@ ZEND_VM_HOT_HANDLER(59, ZEND_INIT_FCALL_BY_NAME, ANY, CONST, NUM|CACHE_SLOT)
 		if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) && UNEXPECTED(!RUN_TIME_CACHE(&fbc->op_array))) {
 			init_func_run_time_cache(&fbc->op_array);
 		}
-		if (UNEXPECTED(fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
+		if (UNEXPECTED(EG(shadowed_global_funcs)) && fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS) {
 			zend_maybe_deoptimize_func(&fbc, NULL OPLINE_CC);
 		}
 		CACHE_PTR(opline->result.num, fbc);
@@ -4103,7 +4103,7 @@ ZEND_VM_HOT_HANDLER(61, ZEND_INIT_FCALL, NUM, CONST, NUM|CACHE_SLOT)
 	}
 
 	uint32_t used_stack = opline->op1.num;
-	if (UNEXPECTED(fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
+	if (UNEXPECTED(EG(shadowed_global_funcs)) && fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS) {
 		zend_maybe_deoptimize_func(&fbc, &used_stack OPLINE_CC);
 	}
 
@@ -4127,7 +4127,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_INIT_FCALL, Z_EXTRA_P(RT_CONSTANT(op, op->op2
 		CACHE_PTR(opline->result.num, fbc);
 	}
 	uint32_t used_stack = opline->op1.num;
-	if (UNEXPECTED(fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS)) {
+	if (UNEXPECTED(EG(shadowed_global_funcs)) && fbc->common.fn_flags2 & ZEND_ACC2_ASSUMPTIONS) {
 		zend_maybe_deoptimize_func(&fbc, &used_stack OPLINE_CC);
 	}
 	call = _zend_vm_stack_push_call_frame_ex(

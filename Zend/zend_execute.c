@@ -155,7 +155,6 @@ ZEND_API const zend_internal_function zend_pass_function = {
 	0,                      /* T                 */
 	0,                      /* fn_flags2         */
 	NULL,                   /* prop_info */
-	NULL,                   /* global_func_assumptions */
 	ZEND_FN(pass),          /* handler           */
 	NULL,                   /* module            */
 	NULL,                   /* frameless_function_infos */
@@ -5903,8 +5902,8 @@ static zend_never_inline ZEND_COLD void zend_maybe_deoptimize_func(zend_function
 {
 	zend_function *fbc = *fbc_ptr;
 	zend_bitset assumptions = fbc->op_array.global_func_assumptions;
-	if (!assumptions || !zend_bitset_has_intersection(
-			assumptions, EG(shadowed_global_funcs), EG(shadowed_global_funcs_len))) {
+	ZEND_ASSERT(assumptions && EG(shadowed_global_funcs));
+	if (!zend_bitset_has_intersection(assumptions, EG(shadowed_global_funcs), EG(shadowed_global_funcs_len))) {
 		return;
 	}
 

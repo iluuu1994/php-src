@@ -546,7 +546,6 @@ struct _zend_op_array {
 	uint32_t T;         /* number of temporary variables */
 	uint32_t fn_flags2;
 	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
-	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	/* END of common elements */
 
 	uint32_t cache_size; /* number of run_time_cache_slots * sizeof(void*) */
@@ -577,6 +576,7 @@ struct _zend_op_array {
 	 * referenced by index from opcodes. */
 	zend_op_array **dynamic_func_defs;
 
+	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	struct _zend_op_array *deoptimized; /* recompiled version without NS global assumptions */
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
@@ -609,7 +609,6 @@ typedef struct _zend_internal_function {
 	uint32_t T;         /* number of temporary variables */
 	uint32_t fn_flags2;
 	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
-	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	/* END of common elements */
 
 	zif_handler handler;
@@ -640,7 +639,6 @@ union _zend_function {
 		uint32_t T;         /* number of temporary variables */
 		uint32_t fn_flags2;
 		const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
-		zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	} common;
 
 	zend_op_array op_array;

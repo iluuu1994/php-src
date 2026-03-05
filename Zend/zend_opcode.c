@@ -668,7 +668,7 @@ ZEND_API void destroy_op_array(zend_op_array *op_array)
 	}
 	if (op_array->deoptimized) {
 		destroy_op_array(op_array->deoptimized);
-		efree(op_array->deoptimized);
+		/* op_array->deoptimized is allocated on CG(arena), not individually emalloc'd */
 	}
 }
 

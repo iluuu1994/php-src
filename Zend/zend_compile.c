@@ -1329,6 +1329,11 @@ static void zend_check_ns_function_shadow(const zend_string *lcname)
 			const Bucket *bucket = (const Bucket *)((uintptr_t)global_fbc_zv - XtOffsetOf(Bucket, val));
 			uint32_t ardata_index = bucket - EG(function_table)->arData;
 			if (ardata_index < CG(num_global_internal_funcs)) {
+				if (!EG(shadowed_global_funcs)) {
+					EG(shadowed_global_funcs_len) = zend_bitset_len(CG(num_global_internal_funcs));
+					// FIXME: Arena allocation sufficient?
+					EG(shadowed_global_funcs) = ecalloc(EG(shadowed_global_funcs_len), sizeof(zend_ulong));
+				}
 				zend_bitset_incl(EG(shadowed_global_funcs), ardata_index);
 				zend_clear_all_runtime_caches();
 			}
@@ -5549,7 +5554,7 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 				zend_string *lc_orig_name = zend_string_tolower(orig_name);
 				zend_string *lc_ns_name = zend_string_tolower(Z_STR(name_node.u.constant));
 				const zval *global_fbc_zv = zend_hash_find(CG(function_table), lc_orig_name);
-			const zend_function *global_fbc = global_fbc_zv ? Z_PTR_P(global_fbc_zv) : NULL;
+				const zend_function *global_fbc = global_fbc_zv ? Z_PTR_P(global_fbc_zv) : NULL;
 				bool ns_func_exists = zend_hash_exists(CG(function_table), lc_ns_name)
 					|| zend_have_seen_symbol(lc_ns_name, ZEND_SYMBOL_FUNCTION);
 				zend_string_release(lc_ns_name);
