@@ -1412,7 +1412,11 @@ ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func)
 
 	/* Cache the result on the original op_array. */
 	if (deopt) {
-		func->op_array.deoptimized = &deopt->op_array;
+		if (!zend_store_deoptimized_op_array) {
+			func->op_array.deoptimized = &deopt->op_array;
+		} else {
+			zend_store_deoptimized_op_array(&func->op_array, &deopt->op_array);
+		}
 	}
 
 	return deopt;

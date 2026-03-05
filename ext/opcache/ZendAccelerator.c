@@ -3249,6 +3249,13 @@ static int accel_startup(zend_extension *extension)
 	return SUCCESS;
 }
 
+static void store_deoptimized_op_array(zend_op_array *optimized, zend_op_array *deoptimized)
+{
+	SHM_UNPROTECT();
+	optimized->deoptimized = deoptimized;
+	SHM_PROTECT();
+}
+
 static zend_result accel_post_startup(void)
 {
 	zend_function *func;
@@ -3424,6 +3431,7 @@ file_cache_fallback:
 	/* Override compiler */
 	accelerator_orig_compile_file = zend_compile_file;
 	zend_compile_file = persistent_compile_file;
+	zend_store_deoptimized_op_array = store_deoptimized_op_array;
 
 	/* Override stream opener function (to eliminate open() call caused by
 	 * include/require statements ) */

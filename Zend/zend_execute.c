@@ -5913,7 +5913,6 @@ static zend_never_inline ZEND_COLD void zend_maybe_deoptimize_func(zend_function
 		if (!deopt) {
 			return;
 		}
-		fbc->op_array.deoptimized = deopt;
 	}
 
 	*fbc_ptr = fbc = (zend_function *)deopt;
