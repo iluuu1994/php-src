@@ -1345,7 +1345,7 @@ static void zend_check_ns_function_shadow(const zend_string *lcname)
 /* Recompile a function without NS global assumptions.
  * Returns the deoptimized op_array or NULL on failure.
  * The result is cached on func->op_array.deoptimized. */
-ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
+ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func)
 {
 	ZEND_ASSERT(func->type == ZEND_USER_FUNCTION);
 
@@ -1412,7 +1412,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 
 	/* Cache the result on the original op_array. */
 	if (deopt) {
-		((zend_function *)func)->op_array.deoptimized = &deopt->op_array;
+		func->op_array.deoptimized = &deopt->op_array;
 	}
 
 	return deopt;

@@ -968,7 +968,7 @@ ZEND_API zend_result zend_execute_script(int type, zval *retval, zend_file_handl
 ZEND_API zend_result open_file_for_scanning(zend_file_handle *file_handle);
 ZEND_API void init_op_array(zend_op_array *op_array, zend_function_type type, int initial_ops_size);
 ZEND_API void destroy_op_array(zend_op_array *op_array);
-ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func);
+ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func);
 ZEND_API void zend_destroy_static_vars(zend_op_array *op_array);
 ZEND_API void zend_destroy_file_handle(zend_file_handle *file_handle);
 ZEND_API void zend_cleanup_mutable_class_data(zend_class_entry *ce);
