@@ -546,6 +546,7 @@ struct _zend_op_array {
 	uint32_t T;         /* number of temporary variables */
 	uint32_t fn_flags2;
 	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
+	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	/* END of common elements */
 
 	uint32_t cache_size; /* number of run_time_cache_slots * sizeof(void*) */
@@ -575,6 +576,8 @@ struct _zend_op_array {
 	/* Functions that are declared dynamically are stored here and
 	 * referenced by index from opcodes. */
 	zend_op_array **dynamic_func_defs;
+
+	struct _zend_op_array *deoptimized; /* recompiled version without NS global assumptions */
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
@@ -606,6 +609,7 @@ typedef struct _zend_internal_function {
 	uint32_t T;         /* number of temporary variables */
 	uint32_t fn_flags2;
 	const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
+	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	/* END of common elements */
 
 	zif_handler handler;
@@ -636,6 +640,7 @@ union _zend_function {
 		uint32_t T;         /* number of temporary variables */
 		uint32_t fn_flags2;
 		const zend_property_info *prop_info; /* The corresponding prop_info if this is a hook. */
+		zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
 	} common;
 
 	zend_op_array op_array;
@@ -1329,5 +1334,10 @@ ZEND_API bool zend_unary_op_produces_error(uint32_t opcode, const zval *op);
 bool zend_try_ct_eval_cast(zval *result, uint32_t type, zval *op1);
 
 bool zend_op_may_elide_result(uint8_t opcode);
+
+typedef void (*zend_op_array_func_t)(zend_op_array *, void *context);
+void zend_foreach_op_array(
+	zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table,
+	zend_op_array_func_t func, void *context);
 
 #endif /* ZEND_COMPILE_H */

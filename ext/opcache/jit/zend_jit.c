@@ -3973,7 +3973,7 @@ static void zend_jit_restart_preloaded_op_array(zend_op_array *op_array, void *c
 
 static void zend_jit_restart_preloaded_script(zend_persistent_script *script)
 {
-	zend_foreach_op_array(&script->script, zend_jit_restart_preloaded_op_array, NULL);
+	zend_foreach_op_array(&script->script.main_op_array, &script->script.function_table, &script->script.class_table, zend_jit_restart_preloaded_op_array, NULL);
 }
 
 void zend_jit_restart(void)

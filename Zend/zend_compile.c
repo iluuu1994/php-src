@@ -39,6 +39,7 @@
 #include "zend_call_stack.h"
 #include "zend_frameless_function.h"
 #include "zend_property_hooks.h"
+#include "zend_bitset.h"
 
 #define SET_NODE(target, src) do { \
 		target ## _type = (src)->op_type; \
@@ -1279,8 +1280,39 @@ ZEND_API void function_add_ref(zend_function *function) /* {{{ */
 }
 /* }}} */
 
+/* Record that the active op_array assumes the internal function at the given
+ * arData index is the global (non-shadowed) version. */
+static void zend_record_global_func_assumption(uint32_t ardata_index)
+{
+	zend_op_array *op_array = CG(active_op_array);
+	uint32_t len = zend_bitset_len(CG(num_global_internal_funcs));
+	if (!op_array->global_func_assumptions) {
+		op_array->global_func_assumptions = emalloc(len * sizeof(zend_ulong));
+		memset(op_array->global_func_assumptions, 0, len * sizeof(zend_ulong));
+	}
+	zend_bitset_incl(op_array->global_func_assumptions, ardata_index);
+	op_array->fn_flags2 |= ZEND_ACC2_ASSUMPTIONS;
+}
+
+/* Clear all runtime caches so that function lookups are re-evaluated.
+ * Called when a new namespace shadow is declared. */
+static void zend_clear_op_array_runtime_cache(zend_op_array *op_array, void *context)
+{
+	(void)context;
+	void **cache = ZEND_MAP_PTR_GET(op_array->run_time_cache);
+	if (cache) {
+		memset(cache, 0, op_array->cache_size);
+	}
+}
+
+static void zend_clear_all_runtime_caches(void)
+{
+	zend_foreach_op_array(NULL, EG(function_table), EG(class_table),
+		zend_clear_op_array_runtime_cache, NULL);
+}
+
 /* Check if a namespaced function shadows a global function.
- * If so, bump the generation counter to invalidate NS global assumptions. */
+ * If so, set the corresponding bit in the global shadow bitmap. */
 static void zend_check_ns_function_shadow(const zend_string *lcname)
 {
 	const char *backslash = zend_memrchr(ZSTR_VAL(lcname), '\\', ZSTR_LEN(lcname));
@@ -1290,23 +1322,31 @@ static void zend_check_ns_function_shadow(const zend_string *lcname)
 	const char *unqualified = backslash + 1;
 	size_t unqualified_len = ZSTR_LEN(lcname) - (unqualified - ZSTR_VAL(lcname));
 	zend_string *global_name = zend_string_init(unqualified, unqualified_len, 0);
-	if (zend_hash_exists(CG(function_table), global_name)) {
-		EG(num_shadowed_global_funcs)++;
+	const zval *global_fbc_zv = zend_hash_find(EG(function_table), global_name);
+	if (global_fbc_zv) {
+		const zend_function *global_fbc = Z_PTR_P(global_fbc_zv);
+		if (!ZEND_USER_CODE(global_fbc->type)) {
+			const Bucket *bucket = (const Bucket *)((uintptr_t)global_fbc_zv - XtOffsetOf(Bucket, val));
+			uint32_t ardata_index = bucket - EG(function_table)->arData;
+			if (ardata_index < CG(num_global_internal_funcs)) {
+				zend_bitset_incl(EG(shadowed_global_funcs), ardata_index);
+				zend_clear_all_runtime_caches();
+			}
+		}
 	}
 	zend_string_release(global_name);
 }
 
 /* Recompile a function without NS global assumptions.
- * Returns the deoptimized function or NULL on failure.
- * The result is cached in EG(deoptimized_funcs). */
+ * Returns the deoptimized op_array or NULL on failure.
+ * The result is cached on func->op_array.deoptimized. */
 ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 {
 	ZEND_ASSERT(func->type == ZEND_USER_FUNCTION);
 
 	/* Check cache first. */
-	zend_function *deopt = zend_hash_find_ptr(&EG(deoptimized_funcs), func->common.function_name);
-	if (deopt) {
-		return deopt;
+	if (func->op_array.deoptimized) {
+		return (zend_function *)func->op_array.deoptimized;
 	}
 
 	/* Temporarily remove user functions from the same file to avoid
@@ -1345,7 +1385,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 	CG(compiler_options) = orig_compiler_options;
 
 	/* Find the deoptimized function by name. */
-	deopt = NULL;
+	zend_function *deopt = NULL;
 	if (main_op_array && func->op_array.function_name) {
 		zend_string *lc_name = zend_string_tolower(func->op_array.function_name);
 		deopt = zend_hash_find_ptr(EG(function_table), lc_name);
@@ -1365,9 +1405,9 @@ ZEND_API zend_function *zend_get_deoptimized_function(const zend_function *func)
 		efree(main_op_array);
 	}
 
-	/* Cache the result. */
+	/* Cache the result on the original op_array. */
 	if (deopt) {
-		zend_hash_add_new_ptr(&EG(deoptimized_funcs), deopt->common.function_name, deopt);
+		((zend_function *)func)->op_array.deoptimized = &deopt->op_array;
 	}
 
 	return deopt;
@@ -4921,11 +4961,14 @@ static void zend_compile_ns_call(znode *result, const znode *name_node, zend_ast
 		zend_string *lc_func_name = Z_STR_P(CT_CONSTANT_EX(CG(active_op_array), name_constants + 2));
 		if (!zend_hash_exists(CG(function_table), lc_ns_name)
 		 && !zend_have_seen_symbol(lc_ns_name, ZEND_SYMBOL_FUNCTION)) {
-			const zend_function *frameless_function = zend_hash_find_ptr(CG(function_table), lc_func_name);
-			if (frameless_function) {
+			const zval *frameless_fbc_zv = zend_hash_find(CG(function_table), lc_func_name);
+			if (frameless_fbc_zv) {
+				const zend_function *frameless_function = Z_PTR_P(frameless_fbc_zv);
 				const zend_frameless_function_info *info = find_frameless_function_info(zend_ast_get_list(args_ast), frameless_function, type);
 				if (info) {
-					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_ASSUMPTIONS;
+					const Bucket *fbc_bucket = (const Bucket *)((uintptr_t)frameless_fbc_zv - XtOffsetOf(Bucket, val));
+					uint32_t ardata_index = fbc_bucket - CG(function_table)->arData;
+					zend_record_global_func_assumption(ardata_index);
 					zend_compile_frameless_icall_ex(result, zend_ast_get_list(args_ast), frameless_function, info, type);
 					return;
 				}
@@ -5505,7 +5548,8 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 				zend_string *orig_name = zend_ast_get_str(name_ast);
 				zend_string *lc_orig_name = zend_string_tolower(orig_name);
 				zend_string *lc_ns_name = zend_string_tolower(Z_STR(name_node.u.constant));
-				const zend_function *global_fbc = zend_hash_find_ptr(CG(function_table), lc_orig_name);
+				const zval *global_fbc_zv = zend_hash_find(CG(function_table), lc_orig_name);
+			const zend_function *global_fbc = global_fbc_zv ? Z_PTR_P(global_fbc_zv) : NULL;
 				bool ns_func_exists = zend_hash_exists(CG(function_table), lc_ns_name)
 					|| zend_have_seen_symbol(lc_ns_name, ZEND_SYMBOL_FUNCTION);
 				zend_string_release(lc_ns_name);
@@ -5519,10 +5563,12 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 					/* Assume the unqualified call resolves to the global function.
 					 * Replace NS-qualified name with unqualified name and fall
 					 * through to the fully-qualified compilation path. */
+					const Bucket *fbc_bucket = (const Bucket *)((uintptr_t)global_fbc_zv - XtOffsetOf(Bucket, val));
+					uint32_t ardata_index = fbc_bucket - CG(function_table)->arData;
 					zval_ptr_dtor(&name_node.u.constant);
 					ZVAL_STR_COPY(&name_node.u.constant, orig_name);
 					zend_string_release(lc_orig_name);
-					CG(active_op_array)->fn_flags2 |= ZEND_ACC2_ASSUMPTIONS;
+					zend_record_global_func_assumption(ardata_index);
 					goto resolve_as_global;
 				}
 

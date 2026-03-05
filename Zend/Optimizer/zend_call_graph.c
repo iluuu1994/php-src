@@ -238,12 +238,12 @@ static void zend_sort_op_arrays(zend_call_graph *call_graph)
 ZEND_API void zend_build_call_graph(zend_arena **arena, zend_script *script, zend_call_graph *call_graph) /* {{{ */
 {
 	call_graph->op_arrays_count = 0;
-	zend_foreach_op_array(script, zend_op_array_calc, call_graph);
+	zend_foreach_op_array(&script->main_op_array, &script->function_table, &script->class_table, zend_op_array_calc, call_graph);
 
 	call_graph->op_arrays = (zend_op_array**)zend_arena_calloc(arena, call_graph->op_arrays_count, sizeof(zend_op_array*));
 	call_graph->func_infos = (zend_func_info*)zend_arena_calloc(arena, call_graph->op_arrays_count, sizeof(zend_func_info));
 	call_graph->op_arrays_count = 0;
-	zend_foreach_op_array(script, zend_op_array_collect, call_graph);
+	zend_foreach_op_array(&script->main_op_array, &script->function_table, &script->class_table, zend_op_array_collect, call_graph);
 }
 /* }}} */
 

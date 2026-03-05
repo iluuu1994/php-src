@@ -2373,6 +2373,9 @@ zend_result php_module_startup(sapi_module_struct *sf, zend_module_entry *additi
 		}
 	}
 
+	/* Record the number of internal functions for deoptimization bitmap sizing. */
+	CG(num_global_internal_funcs) = CG(function_table)->nNumUsed;
+
 	/* disable certain functions as requested by php.ini */
 	zend_disable_functions(INI_STR("disable_functions"));
 

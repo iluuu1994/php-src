@@ -24,6 +24,7 @@
 #include "zend.h"
 #include "zend_compile.h"
 #include "zend_execute.h"
+#include "zend_bitset.h"
 #include "zend_API.h"
 #include "zend_stack.h"
 #include "zend_constants.h"
@@ -204,8 +205,8 @@ void init_executor(void) /* {{{ */
 
 	zend_hash_init(&EG(callable_convert_cache), 8, NULL, ZVAL_PTR_DTOR, 0);
 
-	EG(num_shadowed_global_funcs) = 0;
-	zend_hash_init(&EG(deoptimized_funcs), 0, NULL, ZEND_FUNCTION_DTOR, 0);
+	EG(shadowed_global_funcs_len) = zend_bitset_len(CG(num_global_internal_funcs));
+	EG(shadowed_global_funcs) = ecalloc(EG(shadowed_global_funcs_len), sizeof(zend_ulong));
 
 	EG(active) = 1;
 }
@@ -519,7 +520,7 @@ void shutdown_executor(void) /* {{{ */
 		}
 
 		zend_hash_destroy(&EG(callable_convert_cache));
-		zend_hash_destroy(&EG(deoptimized_funcs));
+		efree(EG(shadowed_global_funcs));
 	}
 
 #if ZEND_DEBUG
