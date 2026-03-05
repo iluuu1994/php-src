@@ -1359,6 +1359,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func)
 	HashTable saved_functions;
 	zend_hash_init(&saved_functions, 8, NULL, NULL, 0);
 
+	// FIXME: This is slow, better to just skip decl of functions in the deoptimization case.
 	const zend_string *filename = func->op_array.filename;
 	zend_string *key;
 	zval *zv;
@@ -1384,7 +1385,7 @@ ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func)
 
 	zend_file_handle file_handle;
 	zend_stream_init_filename_ex(&file_handle, func->op_array.filename);
-	zend_op_array *main_op_array = compile_file(&file_handle, ZEND_INCLUDE);
+	zend_op_array *main_op_array = zend_compile_file(&file_handle, ZEND_INCLUDE);
 	zend_destroy_file_handle(&file_handle);
 
 	CG(compiler_options) = orig_compiler_options;
@@ -1411,6 +1412,10 @@ ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func)
 	}
 
 	/* Cache the result on the original op_array. */
+	// FIXME: We should either somehow only compile the relevant function, or at
+	// least link all deoptimized functions to their optimized counterparts.
+	// Otherwise we'll trigger a deoptimization for each function, while also
+	// persisting the entire script every time.
 	if (deopt) {
 		if (!zend_store_deoptimized_op_array) {
 			func->op_array.deoptimized = &deopt->op_array;
