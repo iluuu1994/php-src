@@ -448,6 +448,7 @@ PHP_NEW_EXTENSION([standard], m4_normalize([
     user_filters.c
     uuencode.c
     var_unserializer.c
+    compact_vector.c
     var.c
     versioning.c
     $php_ext_standard_sources

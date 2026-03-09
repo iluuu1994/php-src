@@ -337,6 +337,7 @@ PHP_MINIT_FUNCTION(basic) /* {{{ */
 	BASIC_MINIT_SUBMODULE(exec)
 
 	BASIC_MINIT_SUBMODULE(user_streams)
+	BASIC_MINIT_SUBMODULE(compact_vector)
 
 	php_register_url_stream_wrapper("php", &php_stream_php_wrapper);
 	php_register_url_stream_wrapper("file", &php_plain_files_wrapper);
