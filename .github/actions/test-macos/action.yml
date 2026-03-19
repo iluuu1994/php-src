@@ -30,4 +30,5 @@ runs:
           --offline \
           --show-diff \
           --show-slow 1000 \
-          --set-timeout 120
+          --set-timeout 120 \
+          ext/standard/tests/file/bug52820.phpt
