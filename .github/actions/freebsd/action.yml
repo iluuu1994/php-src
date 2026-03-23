@@ -113,7 +113,8 @@ runs:
             --offline \
             --show-diff \
             --show-slow 1000 \
-            --set-timeout 120
+            --set-timeout 120 \
+            ext/sqlite3/tests ext/pdo_sqlite/tests
 
           if test "${{ inputs.runExtraTests }}" = "true"; then
             sapi/cli/php run-extra-tests.php
