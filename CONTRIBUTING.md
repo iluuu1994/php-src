@@ -541,8 +541,8 @@ also be in master.
 ## LLM usage in GitHub comments
 
 When using LLMs to generate comments to maintainers for any purpose other than
-direct translation, you're expected to disclose the relevant paragraphs as such
-via markdown quote.
+direct translation, we would highly appreciate it if you disclosed the relevant
+paragraphs as such via markdown quote.
 
 ## Thanks
 
