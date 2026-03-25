@@ -1934,6 +1934,9 @@ static void zend_do_extended_stmt(znode* result) /* {{{ */
 
 	opline->opcode = ZEND_EXT_STMT;
 	if (result) {
+		if (result->op_type == IS_CONST) {
+			Z_TRY_ADDREF(result->u.constant);
+		}
 		SET_NODE(opline->op1, result);
 	}
 }
