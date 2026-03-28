@@ -29,6 +29,7 @@
 #include "zend_operators.h"
 #include "zend_interfaces.h"
 #include "zend_attributes.h"
+#include "zend_bitset.h"
 
 #ifdef HAVE_JIT
 # include "Optimizer/zend_func_info.h"
@@ -698,6 +699,13 @@ static void zend_persist_op_array_ex(zend_op_array *op_array, zend_persistent_sc
 			op_array->dynamic_func_defs[i] = Z_PTR(tmp);
 		}
 	}
+
+	if (op_array->global_func_assumptions) {
+		op_array->global_func_assumptions = zend_shared_memdup_put_free(op_array->global_func_assumptions, sizeof(zend_ulong) * zend_bitset_len(CG(num_global_internal_funcs)));
+	}
+
+	/* Function has never been run, deoptimized must still be NULL. */
+	ZEND_ASSERT(!op_array->deoptimized);
 
 	ZCG(mem) = (void*)((char*)ZCG(mem) + ZEND_ALIGNED_SIZE(zend_extensions_op_array_persist(op_array, ZCG(mem))));
 }

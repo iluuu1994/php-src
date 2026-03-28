@@ -296,4 +296,14 @@ static inline int zend_bitset_pop_first(zend_bitset set, uint32_t len) {
 	return i;
 }
 
+static inline bool zend_bitset_has_intersection(zend_bitset set1, zend_bitset set2, uint32_t len)
+{
+	for (uint32_t i = 0; i < len; i++) {
+		if (set1[i] & set2[i]) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 #endif /* _ZEND_BITSET_H_ */

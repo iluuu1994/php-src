@@ -24,6 +24,7 @@
 #include "zend.h"
 #include "zend_compile.h"
 #include "zend_execute.h"
+#include "zend_bitset.h"
 #include "zend_API.h"
 #include "zend_stack.h"
 #include "zend_constants.h"
@@ -52,6 +53,7 @@
 ZEND_API void (*zend_execute_ex)(zend_execute_data *execute_data);
 ZEND_API void (*zend_execute_internal)(zend_execute_data *execute_data, zval *return_value);
 ZEND_API zend_class_entry *(*zend_autoload)(zend_string *name, zend_string *lc_name);
+ZEND_API void (*zend_store_deoptimized_op_array)(zend_op_array *optimized, zend_op_array *deoptimized);
 
 #ifdef ZEND_WIN32
 ZEND_TLS HANDLE tq_timer = NULL;
@@ -203,6 +205,9 @@ void init_executor(void) /* {{{ */
 	zend_weakrefs_init();
 
 	zend_hash_init(&EG(callable_convert_cache), 8, NULL, ZVAL_PTR_DTOR, 0);
+
+	EG(shadowed_global_funcs_len) = 0;
+	EG(shadowed_global_funcs) = NULL;
 
 	EG(active) = 1;
 }
@@ -516,6 +521,10 @@ void shutdown_executor(void) /* {{{ */
 		}
 
 		zend_hash_destroy(&EG(callable_convert_cache));
+
+		if (EG(shadowed_global_funcs)) {
+			efree(EG(shadowed_global_funcs));
+		}
 	}
 
 #if ZEND_DEBUG
