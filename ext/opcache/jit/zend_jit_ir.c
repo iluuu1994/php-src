@@ -4105,11 +4105,12 @@ static int zend_jit_cond_jmp(zend_jit_ctx *jit, const zend_op *next_opline, int 
 	return 1;
 }
 
-static int zend_jit_set_cond(zend_jit_ctx *jit, const zend_op *next_opline, uint32_t var)
+static int zend_jit_set_cond(zend_jit_ctx *jit, const zend_op *opline, const zend_op *next_opline, uint32_t var)
 {
 	ir_ref ref;
 
-	ref = ir_ADD_U32(ir_ZEXT_U32(jit_CMP_IP(jit, IR_EQ, next_opline)), ir_CONST_U32(IS_FALSE));
+	ir_op op = (opline->result_type & IS_SMART_BRANCH_JMPZ) ? IR_EQ : IR_NE;
+	ref = ir_ADD_U32(ir_ZEXT_U32(jit_CMP_IP(jit, op, next_opline)), ir_CONST_U32(IS_FALSE));
 
 	// EX_VAR(var) = ...
 	ir_STORE(ir_ADD_OFFSET(jit_FP(jit), var + offsetof(zval, u1.type_info)), ref);
