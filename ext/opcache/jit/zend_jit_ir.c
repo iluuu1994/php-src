@@ -3967,19 +3967,6 @@ static int zend_jit_cond_jmp(zend_jit_ctx *jit, const zend_op *next_opline, int 
 	return 1;
 }
 
-static int zend_jit_set_cond(zend_jit_ctx *jit, const zend_op *next_opline, uint32_t var)
-{
-	ir_ref ref;
-
-	ref = ir_ADD_U32(ir_ZEXT_U32(jit_CMP_IP(jit, IR_EQ, next_opline)), ir_CONST_U32(IS_FALSE));
-
-	// EX_VAR(var) = ...
-	ir_STORE(ir_ADD_OFFSET(jit_FP(jit), var + offsetof(zval, u1.type_info)), ref);
-
-	zend_jit_reset_last_valid_opline(jit);
-	return zend_jit_set_ip(jit, next_opline - 1);
-}
-
 /* PHP JIT handlers */
 static void zend_jit_check_exception(zend_jit_ctx *jit)
 {

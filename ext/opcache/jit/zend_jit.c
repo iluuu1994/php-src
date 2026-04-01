@@ -2888,13 +2888,6 @@ static int zend_jit(const zend_op_array *op_array, zend_ssa *ssa, const zend_op 
 							zend_may_throw(opline, ssa_op, op_array, ssa))) {
 						goto jit_failure;
 					}
-					if (i == end
-					 && (opline->result_type & (IS_SMART_BRANCH_JMPZ|IS_SMART_BRANCH_JMPNZ)) != 0) {
-						/* smart branch split across basic blocks */
-						if (!zend_jit_set_cond(&ctx, opline + 2, opline->result.var)) {
-							goto jit_failure;
-						}
-					}
 			}
 done:
 			if (zend_jit_dec_call_level(opline->opcode)) {
