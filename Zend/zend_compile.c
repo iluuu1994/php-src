@@ -4691,9 +4691,16 @@ static uint32_t zend_compile_frameless_icall_ex(znode *result, zend_ast_list *ar
 	uint32_t num_args = frameless_function_info->num_args;
 	uint32_t offset = find_frameless_function_offset(num_args, frameless_function_info->handler);
 	znode arg_zvs[3];
+	bool is_main = !CG(active_op_array)->function_name;
+
 	for (uint32_t i = 0; i < num_args; i++) {
 		if (i < args->children) {
 			zend_compile_expr(&arg_zvs[i], args->child[i]);
+			/* Use a VAR copy in main to prevent the value from going away. */
+			if (is_main && arg_zvs[i].op_type == IS_CV) {
+				znode tmp = arg_zvs[i];
+				zend_emit_op(&arg_zvs[i], ZEND_QM_ASSIGN, &tmp, NULL);
+			}
 		} else {
 			zend_internal_arg_info *arg_info = (zend_internal_arg_info *)&fbc->common.arg_info[i];
 			arg_zvs[i].op_type = IS_CONST;
