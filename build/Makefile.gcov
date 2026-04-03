@@ -24,6 +24,7 @@ GCOVR_EXCLUDES = \
 	'ext/hash/sha3/.*' \
 	'ext/lexbor/lexbor/.*' \
 	'ext/mbstring/libmbfl/.*' \
+	'ext/opcache/jit/ir/.*' \
 	'ext/pcre/pcre2lib/.*' \
 	'ext/uri/uriparser/.*'
 
