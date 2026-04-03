@@ -27,7 +27,11 @@ GCOVR_EXCLUDES = \
 	'ext/pcre/pcre2lib/.*' \
 	'ext/uri/uriparser/.*'
 
-GCOVR_EXCLUDE_LINES_BY_PATTERN = '.*\b(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*'
+GCOVR_EXCLUDE_LINES_BY_PATTERN = \
+	'.*\b(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*' \
+	'\s*ZEND_UNREACHABLE\(\);\s*' \
+	'\s*EMPTY_SWITCH_DEFAULT_CASE\(\)(;)?\s*' \
+	'\s*ZEND_ASSERT\(.*\);\s*'
 
 lcov: lcov-html
 
@@ -53,14 +57,14 @@ gcovr-html:
 	@rm -rf gcovr_html/
 	@mkdir gcovr_html
 	gcovr -sr . -o gcovr_html/index.html --html --html-details \
-		--exclude-lines-by-pattern $(GCOVR_EXCLUDE_LINES_BY_PATTERN) \
+		$(foreach pattern, $(GCOVR_EXCLUDE_LINES_BY_PATTERN), --exclude-lines-by-pattern $(pattern)) \
 		$(foreach lib, $(GCOVR_EXCLUDES), -e $(lib))
 
 gcovr-xml:
 	@echo "Generating gcovr XML"
 	@rm -f gcovr.xml
 	gcovr -sr . -o gcovr.xml --xml \
-		--exclude-lines-by-pattern $(GCOVR_EXCLUDE_LINES_BY_PATTERN) \
+		$(foreach pattern, $(GCOVR_EXCLUDE_LINES_BY_PATTERN), --exclude-lines-by-pattern $(pattern)) \
 		$(foreach lib, $(GCOVR_EXCLUDES), -e $(lib))
 
 .PHONY: gcovr-html lcov-html php_lcov.info
