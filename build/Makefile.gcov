@@ -29,9 +29,9 @@ GCOVR_EXCLUDES = \
 
 GCOVR_EXCLUDE_LINES_BY_PATTERN = \
 	'.*\b(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*' \
-	'\s*ZEND_UNREACHABLE\(\);\s*' \
 	'\s*EMPTY_SWITCH_DEFAULT_CASE\(\)(;)?\s*' \
-	'\s*ZEND_ASSERT\(.*\);\s*'
+	'\s*ZEND_ASSERT\(.*\);\s*' \
+	'\s*ZEND_UNREACHABLE\(\);\s*'
 
 lcov: lcov-html
 
