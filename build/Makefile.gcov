@@ -22,8 +22,12 @@ GCOVR_EXCLUDES = \
 	'ext/fileinfo/libmagic/.*' \
 	'ext/gd/libgd/.*' \
 	'ext/hash/sha3/.*' \
+	'ext/lexbor/lexbor/.*' \
 	'ext/mbstring/libmbfl/.*' \
-	'ext/pcre/pcre2lib/.*'
+	'ext/pcre/pcre2lib/.*' \
+	'ext/uri/uriparser/.*'
+
+GCOVR_EXCLUDE_LINES_BY_PATTERN = '.*(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*'
 
 lcov: lcov-html
 
@@ -49,14 +53,14 @@ gcovr-html:
 	@rm -rf gcovr_html/
 	@mkdir gcovr_html
 	gcovr -sr . -o gcovr_html/index.html --html --html-details \
-		--exclude-directories 'ext/date/lib$$' \
+		--exclude-lines-by-pattern $(GCOVR_EXCLUDE_LINES_BY_PATTERN) \
 		$(foreach lib, $(GCOVR_EXCLUDES), -e $(lib))
 
 gcovr-xml:
 	@echo "Generating gcovr XML"
 	@rm -f gcovr.xml
 	gcovr -sr . -o gcovr.xml --xml \
-		--exclude-directories 'ext/date/lib$$' \
+		--exclude-lines-by-pattern $(GCOVR_EXCLUDE_LINES_BY_PATTERN) \
 		$(foreach lib, $(GCOVR_EXCLUDES), -e $(lib))
 
 .PHONY: gcovr-html lcov-html php_lcov.info
