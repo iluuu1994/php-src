@@ -1526,52 +1526,9 @@ static bool needs_live_range(const zend_op_array *op_array, const zend_op *def_o
 	return (type & (MAY_BE_STRING|MAY_BE_ARRAY|MAY_BE_OBJECT|MAY_BE_RESOURCE|MAY_BE_REF)) != 0;
 }
 
-static void zend_foreach_op_array_helper(
-		zend_op_array *op_array, zend_op_array_func_t func, void *context) {
-	func(op_array, context);
-	for (uint32_t i = 0; i < op_array->num_dynamic_func_defs; i++) {
-		zend_foreach_op_array_helper(op_array->dynamic_func_defs[i], func, context);
-	}
-}
-
 void zend_foreach_op_array(zend_script *script, zend_op_array_func_t func, void *context)
 {
-	zval *zv;
-	zend_op_array *op_array;
-
-	zend_foreach_op_array_helper(&script->main_op_array, func, context);
-
-	ZEND_HASH_MAP_FOREACH_PTR(&script->function_table, op_array) {
-		zend_foreach_op_array_helper(op_array, func, context);
-	} ZEND_HASH_FOREACH_END();
-
-	ZEND_HASH_MAP_FOREACH_VAL(&script->class_table, zv) {
-		if (Z_TYPE_P(zv) == IS_ALIAS_PTR) {
-			continue;
-		}
-		const zend_class_entry *ce = Z_CE_P(zv);
-		ZEND_HASH_MAP_FOREACH_PTR(&ce->function_table, op_array) {
-			if (op_array->scope == ce
-					&& op_array->type == ZEND_USER_FUNCTION
-					&& !(op_array->fn_flags & ZEND_ACC_ABSTRACT)
-					&& !(op_array->fn_flags & ZEND_ACC_TRAIT_CLONE)) {
-				zend_foreach_op_array_helper(op_array, func, context);
-			}
-		} ZEND_HASH_FOREACH_END();
-
-		zend_property_info *property;
-		ZEND_HASH_MAP_FOREACH_PTR(&ce->properties_info, property) {
-			zend_function **hooks = property->hooks;
-			if (property->ce == ce && property->hooks) {
-				for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
-					const zend_function *hook = hooks[i];
-					if (hook && hook->common.scope == ce && !(hooks[i]->op_array.fn_flags & ZEND_ACC_TRAIT_CLONE)) {
-						zend_foreach_op_array_helper(&hooks[i]->op_array, func, context);
-					}
-				}
-			}
-		} ZEND_HASH_FOREACH_END();
-	} ZEND_HASH_FOREACH_END();
+	zend_foreach_op_array_ex(&script->main_op_array, &script->function_table, &script->class_table, func, context);
 }
 
 static void step_optimize_op_array(zend_op_array *op_array, void *context) {
