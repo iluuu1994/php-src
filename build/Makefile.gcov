@@ -29,9 +29,7 @@ GCOVR_EXCLUDES = \
 	'ext/uri/uriparser/.*'
 
 GCOVR_EXCLUDE_LINES_BY_PATTERNS = \
-	'.*\b(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*' \
-	'\s*EMPTY_SWITCH_DEFAULT_CASE\(\)(;)?\s*' \
-	'\s*ZEND_UNREACHABLE\(\);\s*'
+	'.*\b(ZEND_PARSE_PARAMETERS_(START|END|NONE)|Z_PARAM_).*'
 
 lcov: lcov-html
 
