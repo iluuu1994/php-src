@@ -396,7 +396,7 @@ jobs:
       - name: apt
         uses: ./.github/actions/apt-x64
       - name: Install gcovr
-        run: sudo -H pip install gcovr
+        run: sudo -H pip install 'gcovr==8.4'
       - name: ./configure
         uses: ./.github/actions/configure-x64
         with:
