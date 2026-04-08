@@ -102,6 +102,8 @@ struct _zend_compiler_globals {
 	HashTable *function_table;	/* function symbol table */
 	HashTable *class_table;		/* class table */
 
+	uint32_t num_global_internal_funcs; /* count of internal funcs at startup, determines bitmap size */
+
 	HashTable *auto_globals;
 
 	/* Refer to zend_yytnamerr() in zend_language_parser.y for meaning of values */
@@ -326,6 +328,11 @@ struct _zend_executor_globals {
 	zend_strtod_state strtod_state;
 
 	HashTable callable_convert_cache;
+
+	/* Bitmap of internal functions (by arData index) that have been shadowed
+	 * by a namespaced function. Compared against per-op_array assumption bitmaps. */
+	zend_ulong *shadowed_global_funcs;
+	uint32_t shadowed_global_funcs_len; /* length in zend_ulong words */
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };

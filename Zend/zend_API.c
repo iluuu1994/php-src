@@ -3043,6 +3043,7 @@ ZEND_API zend_result zend_register_functions(zend_class_entry *scope, const zend
 		internal_function->function_name = zend_string_init_interned(ptr->fname, fname_len, 1);
 		internal_function->scope = scope;
 		internal_function->prototype = NULL;
+		internal_function->fn_flags2 = 0;
 		internal_function->prop_info = NULL;
 		internal_function->attributes = NULL;
 		internal_function->frameless_function_infos = ptr->frameless_function_infos;

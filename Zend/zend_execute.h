@@ -36,6 +36,7 @@ ZEND_API extern void (*zend_execute_internal)(zend_execute_data *execute_data, z
 
 /* The lc_name may be stack allocated! */
 ZEND_API extern zend_class_entry *(*zend_autoload)(zend_string *name, zend_string *lc_name);
+ZEND_API extern void (*zend_store_deoptimized_op_array)(zend_op_array *optimized, zend_op_array *deoptimized);
 
 void init_executor(void);
 void shutdown_executor(void);

@@ -1,5 +1,11 @@
 --TEST--
 Allow defining FCC in const expressions in a namespace with function matching a global function later.
+--SKIPIF--
+<?php
+if (function_exists('opcache_get_status')) {
+    die('skip not for opcache');
+}
+?>
 --FILE--
 <?php
 

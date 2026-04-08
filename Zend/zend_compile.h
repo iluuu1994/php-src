@@ -207,7 +207,6 @@ typedef struct _zend_oparray_context {
 	HashTable *labels;
 	zend_string *active_property_info_name;
 	zend_property_hook_kind active_property_hook_kind;
-	bool       in_jmp_frameless_branch;
 	bool has_assigned_to_http_response_header;
 } zend_oparray_context;
 
@@ -413,10 +412,12 @@ typedef struct _zend_oparray_context {
 /* op_array uses strict mode types                        |     |     |     */
 #define ZEND_ACC_STRICT_TYPES            (1U << 31) /*    |  X  |     |     */
 /*                                                        |     |     |     */
-/* Function Flags 2 (fn_flags2) (unused: 0-31)            |     |     |     */
+/* Function Flags 2 (fn_flags2) (unused: 1-31)            |     |     |     */
 /* ============================                           |     |     |     */
 /*                                                        |     |     |     */
-/* #define ZEND_ACC2_EXAMPLE             (1 << 0)         |  X  |     |     */
+/* op_array was compiled assuming possibly global calls   |     |     |     */
+/* are necessarily global                                 |     |     |     */
+#define ZEND_ACC2_ASSUMPTIONS            (1 << 0) /*      |  X  |     |     */
 
 #define ZEND_ACC_PPP_MASK  (ZEND_ACC_PUBLIC | ZEND_ACC_PROTECTED | ZEND_ACC_PRIVATE)
 #define ZEND_ACC_PPP_SET_MASK  (ZEND_ACC_PUBLIC_SET | ZEND_ACC_PROTECTED_SET | ZEND_ACC_PRIVATE_SET)
@@ -575,6 +576,9 @@ struct _zend_op_array {
 	/* Functions that are declared dynamically are stored here and
 	 * referenced by index from opcodes. */
 	zend_op_array **dynamic_func_defs;
+
+	zend_ulong *global_func_assumptions; /* bitset: which internal funcs are assumed global */
+	struct _zend_op_array *deoptimized; /* recompiled version without NS global assumptions */
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };
@@ -965,6 +969,7 @@ ZEND_API zend_result zend_execute_script(int type, zval *retval, zend_file_handl
 ZEND_API zend_result open_file_for_scanning(zend_file_handle *file_handle);
 ZEND_API void init_op_array(zend_op_array *op_array, zend_function_type type, int initial_ops_size);
 ZEND_API void destroy_op_array(zend_op_array *op_array);
+ZEND_API zend_function *zend_get_deoptimized_function(zend_function *func);
 ZEND_API void zend_destroy_static_vars(zend_op_array *op_array);
 ZEND_API void zend_destroy_file_handle(zend_file_handle *file_handle);
 ZEND_API void zend_cleanup_mutable_class_data(zend_class_entry *ce);
@@ -1312,6 +1317,9 @@ END_EXTERN_C()
 /* ignore observer notifications, e.g. to manually notify afterwards in a post-processing step after compilation */
 #define ZEND_COMPILE_IGNORE_OBSERVER			(1<<18)
 
+/* Disable assumption that any possible global function call is global */
+#define ZEND_COMPILE_DEOPTIMIZED				(1<<19)
+
 /* The default value for CG(compiler_options) */
 #define ZEND_COMPILE_DEFAULT					ZEND_COMPILE_HANDLE_OP_ARRAY
 
@@ -1325,5 +1333,8 @@ ZEND_API bool zend_unary_op_produces_error(uint32_t opcode, const zval *op);
 bool zend_try_ct_eval_cast(zval *result, uint32_t type, zval *op1);
 
 bool zend_op_may_elide_result(uint8_t opcode);
+
+typedef void (*zend_op_array_func_t)(zend_op_array *, void *context);
+void zend_foreach_op_array_ex(zend_op_array *main_op_array, HashTable *function_table, HashTable *class_table, zend_op_array_func_t func, void *context);
 
 #endif /* ZEND_COMPILE_H */

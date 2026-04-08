@@ -27,6 +27,7 @@
 #include "zend_operators.h"
 #include "zend_attributes.h"
 #include "zend_constants.h"
+#include "zend_bitset.h"
 
 #define ADD_DUP_SIZE(m,s)  ZCG(current_persistent_script)->size += zend_shared_memdup_size((void*)m, s)
 #define ADD_SIZE(m)        ZCG(current_persistent_script)->size += ZEND_ALIGNED_SIZE(m)
@@ -345,6 +346,13 @@ static void zend_persist_op_array_calc_ex(zend_op_array *op_array)
 			zend_persist_op_array_calc(&tmp);
 		}
 	}
+
+	if (op_array->global_func_assumptions) {
+		ADD_SIZE(sizeof(zend_ulong) * zend_bitset_len(CG(num_global_internal_funcs)));
+	}
+
+	/* Function has never been run, deoptimized must still be NULL. */
+	ZEND_ASSERT(!op_array->deoptimized);
 
 	ADD_SIZE(ZEND_ALIGNED_SIZE(zend_extensions_op_array_persist_calc(op_array)));
 }

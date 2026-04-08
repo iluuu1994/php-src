@@ -25,6 +25,7 @@
 
 #include "zend.h"
 #include "zend_compile.h"
+#include "zend_bitset.h"
 #include "zend_execute.h"
 #include "zend_API.h"
 #include "zend_ptr_stack.h"
@@ -5896,6 +5897,32 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 
 /* This callback disables optimization of "vm_stack_data" variable in VM */
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
+
+static zend_never_inline ZEND_COLD void zend_maybe_deoptimize_func(zend_function **fbc_ptr, uint32_t *used_stack OPLINE_DC)
+{
+	zend_function *fbc = *fbc_ptr;
+	zend_bitset assumptions = fbc->op_array.global_func_assumptions;
+	ZEND_ASSERT(assumptions && EG(shadowed_global_funcs));
+	if (!zend_bitset_has_intersection(assumptions, EG(shadowed_global_funcs), EG(shadowed_global_funcs_len))) {
+		return;
+	}
+
+	zend_op_array *deopt = fbc->op_array.deoptimized;
+	if (!deopt) {
+		deopt = (zend_op_array *)zend_get_deoptimized_function(fbc);
+		if (!deopt) {
+			return;
+		}
+	}
+
+	*fbc_ptr = fbc = (zend_function *)deopt;
+	if (UNEXPECTED(!RUN_TIME_CACHE(deopt))) {
+		init_func_run_time_cache(deopt);
+	}
+	if (used_stack) {
+		*used_stack = zend_vm_calc_used_stack(opline->extended_value, fbc);
+	}
+}
 
 #include "zend_vm_execute.h"
 
