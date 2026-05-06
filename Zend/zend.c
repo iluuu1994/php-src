@@ -1496,9 +1496,14 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		}
 	}
 
-	/* Delay non-bailing errors while executing in the VM */
+	/* Delay non-bailing errors while executing in the VM, but only if a user
+	 * error handler will actually be called for this error. */
 	if ((!(type & E_FATAL_ERRORS) || (type & E_DONT_BAIL))
-			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)) {
+			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)
+			&& Z_TYPE(EG(user_error_handler)) != IS_UNDEF
+			&& (EG(user_error_handler_error_reporting) & type)
+			&& EG(error_handling) == EH_NORMAL
+			&& !(type & (E_CORE_WARNING | E_COMPILE_WARNING))) {
 		if ((EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION)
 				&& (EG(user_error_handler_error_reporting) & type)) {
 			zend_object *obj = zend_throw_error_exception(
