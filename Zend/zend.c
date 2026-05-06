@@ -1499,6 +1499,18 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 	/* Delay non-bailing errors while executing in the VM */
 	if ((!(type & E_FATAL_ERRORS) || (type & E_DONT_BAIL))
 			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)) {
+		if ((EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION)
+				&& (EG(user_error_handler_error_reporting) & type)) {
+			zend_object *obj = zend_throw_error_exception(
+				zend_ce_promoted_error_exception, message, /* code */ 0, type);
+			zval tmp;
+			ZVAL_STR_COPY(&tmp, error_filename);
+			zend_update_property_ex(zend_ce_exception, obj, ZSTR_KNOWN(ZEND_STR_FILE), &tmp);
+			zval_ptr_dtor(&tmp);
+			ZVAL_LONG(&tmp, error_lineno);
+			zend_update_property_ex(zend_ce_exception, obj, ZSTR_KNOWN(ZEND_STR_LINE), &tmp);
+			return;
+		}
 		zend_error_info *info = emalloc(sizeof(zend_error_info));
 		info->type = type;
 		info->lineno = error_lineno;

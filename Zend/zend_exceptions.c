@@ -49,6 +49,7 @@ ZEND_API zend_class_entry *zend_ce_arithmetic_error;
 ZEND_API zend_class_entry *zend_ce_division_by_zero_error;
 ZEND_API zend_class_entry *zend_ce_unhandled_match_error;
 ZEND_API zend_class_entry *zend_ce_request_parse_body_exception;
+ZEND_API zend_class_entry *zend_ce_promoted_error_exception;
 
 /* Internal pseudo-exception that is not exposed to userland. Throwing this exception *does not* execute finally blocks. */
 static zend_class_entry zend_ce_unwind_exit;
@@ -826,6 +827,9 @@ void zend_register_default_exception(void) /* {{{ */
 
 	zend_ce_request_parse_body_exception = register_class_RequestParseBodyException(zend_ce_exception);
 	zend_init_exception_class_entry(zend_ce_request_parse_body_exception);
+
+	zend_ce_promoted_error_exception = register_class_PromotedErrorException(zend_ce_error_exception);
+	zend_init_exception_class_entry(zend_ce_promoted_error_exception);
 
 	INIT_CLASS_ENTRY(zend_ce_unwind_exit, "UnwindExit", NULL);
 

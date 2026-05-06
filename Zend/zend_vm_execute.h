@@ -3403,6 +3403,41 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_HANDLE_EXCEPT
 		zend_handle_delayed_errors();
 	}
 
+	// FIXME: zend_handle_delayed_errors may have overridden EX(exception)
+	if (throw_op && EG(exception)->ce == zend_ce_promoted_error_exception) {
+		zend_object *promoted = EG(exception);
+
+		zval *severity_zv = zend_read_property_ex(
+			zend_ce_error_exception, promoted, ZSTR_KNOWN(ZEND_STR_SEVERITY), /* silent */ 1, NULL);
+		zval *message_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, NULL);
+		zval *file_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_FILE), 1, NULL);
+		zval *line_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_LINE), 1, NULL);
+
+		int error_type = (int) Z_LVAL_P(severity_zv) & E_ALL;
+		if (!error_type) {
+			error_type = E_ERROR;
+		}
+		zend_string *error_message = zend_string_copy(Z_STR_P(message_zv));
+		zend_string *error_file = zend_string_copy(Z_STR_P(file_zv));
+		zend_long error_line = Z_LVAL_P(line_zv);
+
+		EG(exception) = NULL;
+		EX(opline) = throw_op;
+		zend_error_zstr_at(error_type | E_NO_DELAY, error_file, error_line, error_message);
+
+		zend_string_release(error_file);
+		zend_string_release(error_message);
+
+		if (!EG(exception)) {
+			EG(exception) = promoted;
+		} else {
+			OBJ_RELEASE(promoted);
+		}
+	}
+
 	/* Exception was thrown before executing any op */
 	if (UNEXPECTED(!throw_op)) {
 		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX -1, 0));
@@ -56095,6 +56130,41 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_HANDLE_EXCEPTION_S
 
 	if (zend_hash_num_elements(&EG(delayed_errors))) {
 		zend_handle_delayed_errors();
+	}
+
+	// FIXME: zend_handle_delayed_errors may have overridden EX(exception)
+	if (throw_op && EG(exception)->ce == zend_ce_promoted_error_exception) {
+		zend_object *promoted = EG(exception);
+
+		zval *severity_zv = zend_read_property_ex(
+			zend_ce_error_exception, promoted, ZSTR_KNOWN(ZEND_STR_SEVERITY), /* silent */ 1, NULL);
+		zval *message_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, NULL);
+		zval *file_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_FILE), 1, NULL);
+		zval *line_zv = zend_read_property_ex(
+			zend_ce_exception, promoted, ZSTR_KNOWN(ZEND_STR_LINE), 1, NULL);
+
+		int error_type = (int) Z_LVAL_P(severity_zv) & E_ALL;
+		if (!error_type) {
+			error_type = E_ERROR;
+		}
+		zend_string *error_message = zend_string_copy(Z_STR_P(message_zv));
+		zend_string *error_file = zend_string_copy(Z_STR_P(file_zv));
+		zend_long error_line = Z_LVAL_P(line_zv);
+
+		EG(exception) = NULL;
+		EX(opline) = throw_op;
+		zend_error_zstr_at(error_type | E_NO_DELAY, error_file, error_line, error_message);
+
+		zend_string_release(error_file);
+		zend_string_release(error_message);
+
+		if (!EG(exception)) {
+			EG(exception) = promoted;
+		} else {
+			OBJ_RELEASE(promoted);
+		}
 	}
 
 	/* Exception was thrown before executing any op */

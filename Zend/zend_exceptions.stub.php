@@ -81,6 +81,10 @@ class ErrorException extends Exception
     final public function getSeverity(): int {}
 }
 
+class PromotedErrorException extends ErrorException
+{
+}
+
 class Error implements Throwable
 {
     /**

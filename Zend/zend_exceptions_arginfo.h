@@ -1,5 +1,5 @@
 /* This is a generated file, edit zend_exceptions.stub.php instead.
- * Stub hash: ba1562ca8fe2fe48c40bc52d10545aa989afd86c */
+ * Stub hash: 29f62b734a504e14599e240910b01fd5f44fad60 */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Throwable_getMessage, 0, 0, IS_STRING, 0)
 ZEND_END_ARG_INFO()
@@ -203,6 +203,16 @@ static zend_class_entry *register_class_ErrorException(zend_class_entry *class_e
 	zval property_severity_default_value;
 	ZVAL_LONG(&property_severity_default_value, E_ERROR);
 	zend_declare_typed_property(class_entry, ZSTR_KNOWN(ZEND_STR_SEVERITY), &property_severity_default_value, ZEND_ACC_PROTECTED, NULL, (zend_type) ZEND_TYPE_INIT_MASK(MAY_BE_LONG));
+
+	return class_entry;
+}
+
+static zend_class_entry *register_class_PromotedErrorException(zend_class_entry *class_entry_ErrorException)
+{
+	zend_class_entry ce, *class_entry;
+
+	INIT_CLASS_ENTRY(ce, "PromotedErrorException", NULL);
+	class_entry = zend_register_internal_class_with_flags(&ce, class_entry_ErrorException, 0);
 
 	return class_entry;
 }
