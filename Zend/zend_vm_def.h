@@ -8280,74 +8280,6 @@ ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 	ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper, try_catch_offset, current_try_catch_offset, op_num, throw_op_num);
 }
 
-ZEND_VM_HANDLER(212, ZEND_HANDLE_DELAYED_ERROR, ANY, ANY)
-{
-	const zend_op *prev_op = EG(opline_before_exception);
-	bool delay = false;
-	switch (prev_op->opcode) {
-		case ZEND_FETCH_W:
-		case ZEND_FETCH_RW:
-		case ZEND_FETCH_FUNC_ARG:
-		case ZEND_FETCH_UNSET:
-		case ZEND_FETCH_DIM_W:
-		case ZEND_FETCH_DIM_RW:
-		case ZEND_FETCH_DIM_UNSET:
-		case ZEND_FETCH_LIST_W:
-		case ZEND_FETCH_OBJ_W:
-		case ZEND_FETCH_OBJ_RW:
-		case ZEND_FETCH_OBJ_UNSET:
-			delay = true;
-			break;
-	}
-
-	// FIXME: Is this guaranteed to be there?
-	const zend_op *next_op = prev_op + 1;
-	if (next_op->opcode == ZEND_OP_DATA) {
-		next_op++;
-	}
-
-	if (delay) {
-		zend_op *delayed_op = &EG(delayed_error_op)[0];
-		*delayed_op = *next_op;
-		if (delayed_op->op1_type == IS_CONST) {
-			ZVAL_COPY_VALUE(&EG(delayed_error_consts)[0], RT_CONSTANT(next_op, next_op->op1));
-			delayed_op->op1.num = (char *)&EG(delayed_error_consts)[0] - (char *)delayed_op;
-		}
-		if (delayed_op->op2_type == IS_CONST) {
-			ZVAL_COPY_VALUE(&EG(delayed_error_consts)[1], RT_CONSTANT(next_op, next_op->op2));
-			delayed_op->op2.num = (char *)&EG(delayed_error_consts)[1] - (char *)delayed_op;
-		}
-		// FIXME: Is this guaranteed to be there?
-		if (next_op[1].opcode == ZEND_OP_DATA) {
-			const zend_op *next_opdata = &next_op[1];
-			zend_op *delayed_opdata = &EG(delayed_error_op)[1];
-			*delayed_opdata = *next_opdata;
-			if (delayed_opdata->op1_type == IS_CONST) {
-				ZVAL_COPY_VALUE(&EG(delayed_error_consts)[2], RT_CONSTANT(next_opdata, next_opdata->op1));
-				delayed_opdata->op1.num = (char *)&EG(delayed_error_consts)[2] - (char *)delayed_opdata;
-			}
-		} else {
-			/* Reset to ZEND_HANDLE_DELAYED_ERROR */
-			EG(delayed_error_op)[1] = EG(delayed_error_op)[2];
-		}
-		EG(opline_before_exception) = next_op;
-
-		ZEND_VM_SET_NEXT_OPCODE(delayed_op);
-	} else {
-		EX(opline) = prev_op;
-		zend_handle_delayed_errors();
-
-		if (EG(exception)) {
-			HANDLE_EXCEPTION();
-		}
-
-		EG(opline_before_exception) = NULL;
-		ZEND_VM_SET_NEXT_OPCODE(next_op);
-	}
-
-	ZEND_VM_CONTINUE();
-}
-
 ZEND_VM_HANDLER(150, ZEND_USER_OPCODE, ANY, ANY)
 {
 	USE_OPLINE
@@ -10702,9 +10634,16 @@ ZEND_VM_HELPER(zend_interrupt_helper, ANY, ANY)
 #else
 	SAVE_OPLINE();
 #endif
+	if (zend_hash_num_elements(&EG(delayed_errors))) {
+		zend_handle_delayed_errors();
+		if (EG(exception)) {
+			ZEND_VM_ENTER();
+		}
+	}
 	if (zend_atomic_bool_load_ex(&EG(timed_out))) {
 		zend_timeout();
-	} else if (zend_interrupt_function) {
+	}
+	if (zend_interrupt_function) {
 		zend_interrupt_function(execute_data);
 		if (EG(exception)) {
 			/* We have to UNDEF result, because ZEND_HANDLE_EXCEPTION is going to free it */

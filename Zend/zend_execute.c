@@ -4337,6 +4337,9 @@ ZEND_API void ZEND_FASTCALL zend_free_compiled_variables(zend_execute_data *exec
 ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *call)
 {
 	zend_atomic_bool_store_ex(&EG(vm_interrupt), false);
+	if (zend_hash_num_elements(&EG(delayed_errors))) {
+		zend_handle_delayed_errors();
+	}
 	if (zend_atomic_bool_load_ex(&EG(timed_out))) {
 		zend_timeout();
 	} else if (zend_interrupt_function) {
