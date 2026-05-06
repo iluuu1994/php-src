@@ -1496,6 +1496,19 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		}
 	}
 
+	/* Delay non-bailing errors while executing in the VM */
+	if ((!(type & E_FATAL_ERRORS) || (type & E_DONT_BAIL))
+			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)) {
+		zend_error_info *info = emalloc(sizeof(zend_error_info));
+		info->type = type;
+		info->lineno = error_lineno;
+		info->filename = zend_string_copy(error_filename);
+		info->message = zend_string_copy(message);
+		zend_hash_next_index_insert_ptr(&EG(delayed_errors), info);
+		zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
+		return;
+	}
+
 	// Always clear the last backtrace.
 	zval_ptr_dtor(&EG(last_fatal_error_backtrace));
 	ZVAL_UNDEF(&EG(last_fatal_error_backtrace));
@@ -1805,23 +1818,6 @@ ZEND_API void zend_free_recorded_errors(void)
 	}
 	efree(EG(errors).errors);
 	memset(&EG(errors), 0, sizeof(EG(errors)));
-}
-
-ZEND_API ZEND_COLD void zend_error_delayed(int type, const char *format, ...)
-{
-	ZEND_ASSERT(!(type & E_FATAL_ERRORS) && "Cannot delay fatal error");
-	zend_error_info *info = emalloc(sizeof(zend_error_info));
-	info->type = type;
-	get_filename_lineno(type, &info->filename, &info->lineno);
-	zend_string_addref(info->filename);
-
-	va_list args;
-	va_start(args, format);
-	info->message = zend_vstrpprintf(0, format, args);
-	va_end(args);
-
-	zend_hash_next_index_insert_ptr(&EG(delayed_errors), info);
-	zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
 }
 
 ZEND_API ZEND_COLD void zend_throw_error(zend_class_entry *exception_ce, const char *format, ...) /* {{{ */

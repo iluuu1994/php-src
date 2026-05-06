@@ -4823,6 +4823,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 
 
 
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
 
@@ -4901,6 +4903,9 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
+
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
 
@@ -17195,6 +17200,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 
 
 
+
+	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
@@ -39861,6 +39868,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 
 
 
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
 
@@ -57508,6 +57517,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 
 
 
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
 
@@ -57586,6 +57597,9 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETUR
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
+
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
 
@@ -69778,6 +69792,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 
 
 
+
+	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
@@ -92344,6 +92360,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 
 
 
+	ZEND_VM_INTERRUPT_CHECK();
+
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
 
@@ -110814,6 +110832,8 @@ zend_leave_helper_SPEC_LABEL:
 
 
 
+	ZEND_VM_INTERRUPT_CHECK();
+
 	goto zend_leave_helper_SPEC_LABEL;
 }
 
@@ -110894,6 +110914,9 @@ zend_leave_helper_SPEC_LABEL:
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
+
+	ZEND_VM_INTERRUPT_CHECK();
+
 	goto zend_leave_helper_SPEC_LABEL;
 }
 
@@ -112527,6 +112550,8 @@ zend_leave_helper_SPEC_LABEL:
 
 
 
+
+	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }
@@ -114401,6 +114426,8 @@ zend_leave_helper_SPEC_LABEL:
 
 
 
+
+	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }

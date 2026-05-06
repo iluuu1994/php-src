@@ -349,8 +349,7 @@ static zval* ZEND_FASTCALL zend_jit_hash_index_lookup_rw(HashTable *ht, zend_lon
 	zval *retval = zend_hash_index_find(ht, idx);
 
 	if (!retval) {
-		zend_undefined_offset_delayed(idx);
-		retval = zend_hash_index_add_new(ht, idx, &EG(uninitialized_zval));
+		retval = zend_undefined_offset_write(ht, idx);
 	}
 	return retval;
 }
@@ -1010,8 +1009,7 @@ num_index:
 	return retval;
 
 num_undef:
-	zend_undefined_offset_delayed(hval);
-	retval = zend_hash_index_add_new(ht, hval, &EG(uninitialized_zval));
+	retval = zend_undefined_offset_write(ht, hval);
 	return retval;
 }
 
