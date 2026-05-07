@@ -1521,6 +1521,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		info->lineno = error_lineno;
 		info->filename = zend_string_copy(error_filename);
 		info->message = zend_string_copy(message);
+		info->error_reporting = EG(error_reporting);
 		zend_hash_next_index_insert_ptr(&EG(delayed_errors), info);
 		zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
 		return;

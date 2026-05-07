@@ -2534,7 +2534,10 @@ ZEND_API void ZEND_FASTCALL zend_handle_delayed_errors(void)
 
 	zend_error_info *info;
 	ZEND_HASH_FOREACH_PTR(&ht, info) {
+		int orig_error_reporting = EG(error_reporting);
+		EG(error_reporting) = info->error_reporting;
 		zend_error_zstr_at(info->type | E_NO_DELAY, info->filename, info->lineno, info->message);
+		EG(error_reporting) = orig_error_reporting;
 		zend_string_release(info->filename);
 		zend_string_release(info->message);
 		efree(info);

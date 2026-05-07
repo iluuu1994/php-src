@@ -130,6 +130,7 @@ typedef struct _zend_error_info {
 	uint32_t lineno;
 	zend_string *filename;
 	zend_string *message;
+	int error_reporting;
 } zend_error_info;
 
 struct _zend_inheritance_cache_entry {
