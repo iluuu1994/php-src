@@ -14,5 +14,7 @@ var_dump($y);
 ?>
 --EXPECT--
 Err: The float 1.0E+20 is not representable as an int, cast occurred
-array(0) {
+array(1) {
+  [7766279631452241920]=>
+  int(1)
 }

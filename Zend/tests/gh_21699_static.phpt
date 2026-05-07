@@ -2,9 +2,9 @@
 GH-21699 (static::): no shutdown_executor trampoline assertion when error handler throws during static:: callable resolution
 --FILE--
 <?php
-set_error_handler(function () {
-    throw new Exception;
-});
+set_error_handler(function ($_, $errstr) {
+    throw new Exception($errstr);
+}, promote_to_exception: true);
 class bar {
     public static function __callstatic($fusion, $b)
     {
@@ -18,14 +18,9 @@ $x = new bar;
 $x->test();
 ?>
 --EXPECTF--
-Fatal error: Uncaught Exception in %s:%d
+Fatal error: Uncaught Exception: Use of "static" in callables is deprecated in %s:%d
 Stack trace:
 #0 %s(%d): {closure:%s}(%d, 'Use of "static"%s', '%s', %d)
 #1 %s(%d): bar->test()
 #2 {main}
-
-Next TypeError: call_user_func(): Argument #1 ($callback) must be a valid callback, (null) in %s:%d
-Stack trace:
-#0 %s(%d): bar->test()
-#1 {main}
   thrown in %s on line %d

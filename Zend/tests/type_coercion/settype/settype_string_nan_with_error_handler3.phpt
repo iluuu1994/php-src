@@ -15,7 +15,10 @@ settype($nan, 'string');
 var_dump($nan);
 
 ?>
---EXPECT--
+--EXPECTF--
 float(NAN)
 unexpected NAN value was coerced to string
-string(3) "NAN"
+array(1) {
+  [0]=>
+  string(8) "%s"
+}

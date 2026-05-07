@@ -5,7 +5,7 @@ Bug #61767 (Shutdown functions not called in certain error situation)
 set_error_handler(function($code, $msg, $file = null, $line = null) {
     echo "Error handler called ($msg)\n";
     throw new \ErrorException($msg, $code, 0, $file, $line);
-});
+}, promote_to_exception: true);
 
 register_shutdown_function(function(){
     echo "Shutting down\n";

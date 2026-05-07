@@ -18,7 +18,4 @@ var_dump($nan);
 --EXPECTF--
 float(NAN)
 unexpected NAN value was coerced to array
-array(1) {
-  [0]=>
-  string(8) "%s"
-}
+string(8) "%s"

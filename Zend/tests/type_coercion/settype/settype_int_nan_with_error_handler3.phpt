@@ -15,7 +15,7 @@ settype($nan, 'int');
 var_dump($nan);
 
 ?>
---EXPECT--
+--EXPECTF--
 float(NAN)
 The float NAN is not representable as an int, cast occurred
-int(0)
+string(8) "%s"

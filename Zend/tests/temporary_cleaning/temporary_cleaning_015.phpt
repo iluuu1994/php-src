@@ -4,7 +4,7 @@ Attempt to free invalid structure (result of ROPE_INIT is not a zval)
 <?php
 set_error_handler(function () {
     throw new Exception();
-});
+}, promote_to_exception: true);
 $a = [];
 $b = "";
 try {

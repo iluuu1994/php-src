@@ -20,7 +20,7 @@ try {
     $a <<= -1;
 } catch (Error $e) { var_dump($a); }
 
-set_error_handler(function($type, $msg) { throw new Exception($msg); });
+set_error_handler(function($type, $msg) { throw new Exception($msg); }, promote_to_exception: true);
 
 try {
     $a = [];

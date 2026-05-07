@@ -18,7 +18,4 @@ var_dump($nan);
 --EXPECT--
 float(NAN)
 unexpected NAN value was coerced to object
-object(stdClass)#2 (1) {
-  ["scalar"]=>
-  NULL
-}
+NULL

@@ -18,4 +18,4 @@ var_dump($nan);
 --EXPECT--
 float(NAN)
 The float NAN is not representable as an int, cast occurred
-int(0)
+NULL

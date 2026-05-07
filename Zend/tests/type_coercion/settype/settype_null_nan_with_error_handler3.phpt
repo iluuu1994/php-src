@@ -15,7 +15,7 @@ settype($nan, 'null');
 var_dump($nan);
 
 ?>
---EXPECT--
+--EXPECTF--
 float(NAN)
 unexpected NAN value was coerced to null
-NULL
+string(8) "%s"

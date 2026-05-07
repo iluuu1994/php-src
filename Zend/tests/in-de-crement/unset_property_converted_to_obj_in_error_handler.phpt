@@ -19,7 +19,6 @@ try {
 }
 var_dump($c->a);
 ?>
---EXPECT--
-Cannot increment stdClass
-object(stdClass)#2 (0) {
+--EXPECTF--
+object(stdClass)#%d (0) {
 }

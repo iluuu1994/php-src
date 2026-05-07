@@ -10,7 +10,7 @@ function foo(string $v) {
 
 set_error_handler(function ($number, $message) {
 	throw new Exception($message);
-});
+}, promote_to_exception: true);
 
 $a = array_map(foo(...), ['Hello', 'World']);
 var_dump($a);

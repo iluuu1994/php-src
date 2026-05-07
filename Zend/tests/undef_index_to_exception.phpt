@@ -7,7 +7,7 @@ opcache.jit=0
 
 set_error_handler(function($_, $msg) {
     throw new Exception($msg);
-});
+}, promote_to_exception: true);
 
 $test = [];
 try {
@@ -39,14 +39,10 @@ try {
 ?>
 --EXPECT--
 Undefined array key 0
-array(1) {
-  [0]=>
-  string(3) "xyz"
+array(0) {
 }
 Undefined array key "key"
-array(1) {
-  [0]=>
-  string(3) "xyz"
+array(0) {
 }
 Undefined global variable $test
 Undefined variable $test

@@ -5,7 +5,7 @@
 
 set_error_handler(function (int $errno, string $errstr, ?string $errfile = null, ?int $errline = null) {
 	throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
+}, promote_to_exception: true);
 
 #[\Deprecated(TEST)]
 const TEST = "from itself";

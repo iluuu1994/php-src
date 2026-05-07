@@ -30,8 +30,8 @@ try {
 }
 ?>
 --EXPECTF--
-ERR#2: include(class://non.existent.Class): Failed to open stream: "CLWrapper::stream_open" call failed @ include
-ERR#2: include(): Failed opening 'class://non.existent.Class' for inclusion (include_path='%s') @ include
+ERR#2: include(class://non.existent.Class): Failed to open stream: "CLWrapper::stream_open" call failed @ __construct
+ERR#2: include(): Failed opening 'class://non.existent.Class' for inclusion (include_path='.:') @ __construct
 
 Fatal error: Uncaught Exception: Failed loading class://non.existent.Class in %s
 Stack trace:

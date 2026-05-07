@@ -6,7 +6,7 @@ register_shutdown_function(function(){echo("\n\n!!!shutdown!!!\n\n");});
 set_error_handler(function($errno, $errstr, $errfile, $errline){
  echo "error($errstr)";
  throw new Exception("Foo");
-});
+}, promote_to_exception: true);
 
 require 'notfound.php';
 ?>

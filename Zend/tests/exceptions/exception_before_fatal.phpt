@@ -6,7 +6,7 @@ function exception_error_handler($code, $msg) {
     throw new Exception($msg);
 }
 
-set_error_handler("exception_error_handler");
+set_error_handler("exception_error_handler", promote_to_exception: true);
 
 try {
     $foo->a();

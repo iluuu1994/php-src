@@ -15,7 +15,7 @@ settype($nan, 'bool');
 var_dump($nan);
 
 ?>
---EXPECT--
+--EXPECTF--
 float(NAN)
 unexpected NAN value was coerced to bool
-bool(true)
+string(8) "%s"

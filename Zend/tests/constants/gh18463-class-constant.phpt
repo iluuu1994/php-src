@@ -15,6 +15,7 @@ set_error_handler('handler');
 var_dump(_ZendTestClass::ZEND_TEST_DEPRECATED);
 ?>
 --EXPECTF--
+int(42)
 Constant _ZendTestClass::ZEND_TEST_DEPRECATED is deprecated in %s on line %d
 
 Fatal error: Cannot use "string" as a class name as it is reserved in %s(%d) : eval()'d code on line %d

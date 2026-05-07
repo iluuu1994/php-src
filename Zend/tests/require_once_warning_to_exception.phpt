@@ -6,7 +6,7 @@ Promoting require_once warning to exception
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
     throw new Exception($errstr);
 }
-set_error_handler("exception_error_handler");
+set_error_handler("exception_error_handler", promote_to_exception: true);
 
 try {
     $results = require_once 'does-not-exist.php';

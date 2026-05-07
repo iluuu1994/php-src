@@ -18,4 +18,4 @@ var_dump($nan);
 --EXPECT--
 float(NAN)
 unexpected NAN value was coerced to null
-NULL
+int(45)

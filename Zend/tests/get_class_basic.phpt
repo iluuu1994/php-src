@@ -25,7 +25,7 @@ $f2 = new foo2;
 
 set_error_handler(function ($severity, $message, $file, $line) {
     throw new Exception($message);
-});
+}, promote_to_exception: true);
 try {
     $f1->bar();
 } catch (Exception $e) {
