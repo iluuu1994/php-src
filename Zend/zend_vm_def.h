@@ -8285,6 +8285,15 @@ ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper, try_catch_offset, -1, op_num, 0);
 	}
 
+	/* Exception was thrown from the ZEND_DO_FCALL interrupt handler just
+	 * before entering EG(call_trampoline_op). */
+	if (UNEXPECTED(throw_op == &EG(call_trampoline_op))) {
+		ZEND_ASSERT(EX(func)->op_array.opcodes == &EG(call_trampoline_op));
+		zend_string_release_ex(EX(func)->op_array.function_name, 0);
+		zend_free_trampoline(EX(func));
+		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper, try_catch_offset, -1, op_num, 0);
+	}
+
 	uint32_t throw_op_num = throw_op - EX(func)->op_array.opcodes;
 	uint32_t current_try_catch_offset = -1;
 
