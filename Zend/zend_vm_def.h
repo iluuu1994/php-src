@@ -8234,7 +8234,14 @@ ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 	const zend_op *throw_op = EG(opline_before_exception);
 
 	if (zend_hash_num_elements(&EG(delayed_errors))) {
+		zend_object *orig_exception = EG(exception);
+		EG(exception) = NULL;
 		zend_handle_delayed_errors();
+		if (EG(exception)) {
+			zend_exception_set_previous(EG(exception), orig_exception);
+		} else {
+			EG(exception) = orig_exception;
+		}
 	}
 
 	// FIXME: EG(exception) may be overridden by a subsequent exception (Zend/tests/gh16799.phpt, Zend/tests/inheritance/deprecation_to_exception_during_inheritance_can_be_caught.phpt, Zend/tests/gh_21699.phpt, Zend/tests/gh_21699_parent.phpt)
