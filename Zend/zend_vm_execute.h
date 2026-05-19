@@ -3400,11 +3400,16 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_HANDLE_EXCEPT
 	const zend_op *throw_op = EG(opline_before_exception);
 
 	if (zend_hash_num_elements(&EG(delayed_errors))) {
+		zend_object *orig_exception = EG(exception);
+		EG(exception) = NULL;
 		zend_handle_delayed_errors();
+		if (EG(exception)) {
+			zend_exception_set_previous(EG(exception), orig_exception);
+		} else {
+			EG(exception) = orig_exception;
+		}
 	}
 
-	// FIXME: EG(exception) may be overridden by a subsequent exception (Zend/tests/gh16799.phpt, Zend/tests/inheritance/deprecation_to_exception_during_inheritance_can_be_caught.phpt, Zend/tests/gh_21699.phpt, Zend/tests/gh_21699_parent.phpt)
-	// FIXME: zend_handle_delayed_errors may have overridden EX(exception)
 	if (throw_op && EG(exception)->ce == zend_ce_promoted_error_exception) {
 		zend_object *promoted = EG(exception);
 
@@ -3441,6 +3446,15 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_HANDLE_EXCEPT
 
 	/* Exception was thrown before executing any op */
 	if (UNEXPECTED(!throw_op)) {
+		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX -1, 0));
+	}
+
+	/* Exception was thrown from the ZEND_DO_FCALL interrupt handler just
+	 * before entering EG(call_trampoline_op). */
+	if (UNEXPECTED(throw_op == &EG(call_trampoline_op))) {
+		ZEND_ASSERT(EX(func)->op_array.opcodes == &EG(call_trampoline_op));
+		zend_string_release_ex(EX(func)->op_array.function_name, 0);
+		zend_free_trampoline(EX(func));
 		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX -1, 0));
 	}
 
@@ -4854,12 +4868,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
@@ -4936,11 +4959,21 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_
 			}
 		}
 	}
+
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
+
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
-
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
@@ -17232,12 +17265,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
@@ -39899,12 +39941,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_TAIL_CALL(zend_leave_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU));
 }
@@ -56130,11 +56181,16 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_HANDLE_EXCEPTION_S
 	const zend_op *throw_op = EG(opline_before_exception);
 
 	if (zend_hash_num_elements(&EG(delayed_errors))) {
+		zend_object *orig_exception = EG(exception);
+		EG(exception) = NULL;
 		zend_handle_delayed_errors();
+		if (EG(exception)) {
+			zend_exception_set_previous(EG(exception), orig_exception);
+		} else {
+			EG(exception) = orig_exception;
+		}
 	}
 
-	// FIXME: EG(exception) may be overridden by a subsequent exception (Zend/tests/gh16799.phpt, Zend/tests/inheritance/deprecation_to_exception_during_inheritance_can_be_caught.phpt, Zend/tests/gh_21699.phpt, Zend/tests/gh_21699_parent.phpt)
-	// FIXME: zend_handle_delayed_errors may have overridden EX(exception)
 	if (throw_op && EG(exception)->ce == zend_ce_promoted_error_exception) {
 		zend_object *promoted = EG(exception);
 
@@ -56171,6 +56227,15 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_HANDLE_EXCEPTION_S
 
 	/* Exception was thrown before executing any op */
 	if (UNEXPECTED(!throw_op)) {
+		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper_SPEC_TAILCALL(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX -1, 0));
+	}
+
+	/* Exception was thrown from the ZEND_DO_FCALL interrupt handler just
+	 * before entering EG(call_trampoline_op). */
+	if (UNEXPECTED(throw_op == &EG(call_trampoline_op))) {
+		ZEND_ASSERT(EX(func)->op_array.opcodes == &EG(call_trampoline_op));
+		zend_string_release_ex(EX(func)->op_array.function_name, 0);
+		zend_free_trampoline(EX(func));
 		ZEND_VM_DISPATCH_TO_HELPER(zend_dispatch_try_catch_finally_helper_SPEC_TAILCALL(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_EX -1, 0));
 	}
 
@@ -57584,12 +57649,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
@@ -57666,11 +57740,21 @@ static ZEND_VM_COLD ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETUR
 			}
 		}
 	}
+
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
+
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
-
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
@@ -69860,12 +69944,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
@@ -92427,12 +92520,21 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RETURN
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_LEAVE_HELPER(zend_leave_helper_SPEC_TAILCALL);
 }
@@ -110899,12 +111001,21 @@ zend_leave_helper_SPEC_LABEL:
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }
@@ -110983,11 +111094,21 @@ zend_leave_helper_SPEC_LABEL:
 			}
 		}
 	}
+
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
+
 	SAVE_OPLINE();
 	zend_observer_fcall_end(execute_data, return_value);
 	if (return_value == &observer_retval) { zval_ptr_dtor_nogc(&observer_retval); };
-
-	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }
@@ -112618,12 +112739,21 @@ zend_leave_helper_SPEC_LABEL:
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }
@@ -114494,12 +114624,21 @@ zend_leave_helper_SPEC_LABEL:
 		}
 	}
 
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
 
 
 
 
 
-	ZEND_VM_INTERRUPT_CHECK();
 
 	goto zend_leave_helper_SPEC_LABEL;
 }
