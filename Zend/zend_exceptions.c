@@ -167,7 +167,7 @@ ZEND_API ZEND_COLD void zend_throw_exception_internal(zend_object *exception) /*
 
 	if (exception != NULL) {
 		const zend_object *previous = EG(exception);
-		if (previous && zend_is_unwind_exit(previous)) {
+		if (previous && (zend_is_unwind_exit(previous) || zend_is_promoted_error_exception(previous))) {
 			/* Don't replace unwinding exception with different exception. */
 			OBJ_RELEASE(exception);
 			return;
@@ -1067,3 +1067,9 @@ ZEND_API bool zend_is_graceful_exit(const zend_object *ex)
 {
 	return ex->ce == &zend_ce_graceful_exit;
 }
+
+ZEND_API bool zend_is_promoted_error_exception(const zend_object *ex)
+{
+	return ex->ce == zend_ce_promoted_error_exception;
+}
+

@@ -74,6 +74,7 @@ ZEND_API ZEND_COLD void zend_throw_unwind_exit(void);
 ZEND_API ZEND_COLD void zend_throw_graceful_exit(void);
 ZEND_API bool zend_is_unwind_exit(const zend_object *ex);
 ZEND_API bool zend_is_graceful_exit(const zend_object *ex);
+ZEND_API bool zend_is_promoted_error_exception(const zend_object *ex);
 
 #include "zend_globals.h"
 

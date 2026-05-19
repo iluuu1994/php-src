@@ -1506,6 +1506,11 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 			&& !(type & (E_CORE_WARNING | E_COMPILE_WARNING))) {
 		if ((EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION)
 				&& (EG(user_error_handler_error_reporting) & type)) {
+			if (EG(exception)) {
+				/* Promoting this error would override the existing exception,
+				 * but, we want the first exception/error to have precedence. */
+				return;
+			}
 			zend_object *obj = zend_throw_error_exception(
 				zend_ce_promoted_error_exception, message, /* code */ 0, type);
 			zval tmp;
