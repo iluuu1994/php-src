@@ -8244,8 +8244,6 @@ ZEND_VM_HANDLER(149, ZEND_HANDLE_EXCEPTION, ANY, ANY)
 		}
 	}
 
-	// FIXME: EG(exception) may be overridden by a subsequent exception (Zend/tests/gh16799.phpt, Zend/tests/inheritance/deprecation_to_exception_during_inheritance_can_be_caught.phpt, Zend/tests/gh_21699.phpt, Zend/tests/gh_21699_parent.phpt)
-	// FIXME: zend_handle_delayed_errors may have overridden EX(exception)
 	if (throw_op && EG(exception)->ce == zend_ce_promoted_error_exception) {
 		zend_object *promoted = EG(exception);
 
