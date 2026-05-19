@@ -4611,11 +4611,21 @@ ZEND_VM_INLINE_HANDLER(62, ZEND_RETURN, CONST|TMP|CV, ANY, SPEC(OBSERVER))
 			}
 		}
 	}
+
+	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+		if (zend_hash_num_elements(&EG(delayed_errors))) {
+			zend_handle_delayed_errors();
+			if (EG(exception)) {
+				ZEND_VM_ENTER();
+			}
+		}
+		/* Do not reset EG(vm_interrupt) as it may have been set for other
+		 * reasons */
+	}
+
 	ZEND_OBSERVER_SAVE_OPLINE();
 	ZEND_OBSERVER_FCALL_END(execute_data, return_value);
 	ZEND_OBSERVER_FREE_RETVAL();
-
-	ZEND_VM_INTERRUPT_CHECK();
 
 	ZEND_VM_DISPATCH_TO_HELPER(zend_leave_helper);
 }
