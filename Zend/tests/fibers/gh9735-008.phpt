@@ -30,6 +30,7 @@ gc_collect_cycles();
 print "2\n";
 
 $fiber = null;
+(function () {})();
 gc_collect_cycles();
 
 print "3\n";

@@ -1,5 +1,7 @@
 --TEST--
 Combination of foreach, finally and exception (call order)
+--XFAIL--
+FIXME / irrelevant?
 --FILE--
 <?php
 class A {

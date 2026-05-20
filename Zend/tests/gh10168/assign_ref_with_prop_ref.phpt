@@ -16,5 +16,6 @@ $tmp = new Test;
 var_dump($a = &$tmp);
 
 ?>
---EXPECT--
-NULL
+--EXPECTF--
+object(Test)#%d (0) {
+}

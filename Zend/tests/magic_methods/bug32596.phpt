@@ -18,6 +18,7 @@ class BUG {
 
 
 BUG::instance()->error;
+(function() {})();
 echo "this is still executed\n";
 ?>
 --EXPECT--

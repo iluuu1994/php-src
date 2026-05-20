@@ -56,6 +56,7 @@ var_dump($v->getValue()->getId());
 echo "Before unset", PHP_EOL;
 
 unset($v);
+(function () {})();
 
 echo "After unset", PHP_EOL;
 

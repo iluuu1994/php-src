@@ -12,6 +12,7 @@ $x = 0;
 $c = [[$x,$x]];
 try {
     list($a, $b) = $c[0];
+    (function() {})();
 } catch (Exception $e) {
     echo "exception\n";
 }

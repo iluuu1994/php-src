@@ -5,7 +5,7 @@
 
 set_error_handler(function (int $errno, string $errstr, ?string $errfile = null, ?int $errline = null) {
 	throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
+}, promote_to_exception: 1);
 
 #[\Deprecated("convert to exception")]
 function test() {
@@ -76,7 +76,7 @@ class Destructor {
 }
 
 try {
-	new Destructor();
+	(function () { new Destructor(); })();
 } catch (ErrorException $e) {
 	echo "Caught: ", $e->getMessage(), PHP_EOL;
 }

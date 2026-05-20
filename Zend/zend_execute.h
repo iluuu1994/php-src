@@ -99,7 +99,7 @@ ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_cannot_add_element(
 ZEND_API bool ZEND_FASTCALL zend_asymmetric_property_has_set_access(const zend_property_info *prop_info);
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_asymmetric_visibility_property_modification_error(const zend_property_info *prop_info, const char *operation);
 
-ZEND_API void ZEND_FASTCALL zend_handle_delayed_errors(void);
+ZEND_API void ZEND_FASTCALL zend_handle_delayed_effects(void);
 
 ZEND_API bool zend_verify_scalar_type_hint(uint32_t type_mask, zval *arg, bool strict, bool is_internal_arg);
 ZEND_API zend_never_inline ZEND_COLD void zend_verify_arg_error(

@@ -27,6 +27,7 @@ $generator = gen2();
 var_dump($generator->current());
 
 unset($generator);
+(function() {})();
 
 echo "Done\n";
 

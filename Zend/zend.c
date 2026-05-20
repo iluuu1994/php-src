@@ -1527,7 +1527,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		info->filename = zend_string_copy(error_filename);
 		info->message = zend_string_copy(message);
 		info->error_reporting = EG(error_reporting);
-		zend_hash_next_index_insert_ptr(&EG(delayed_errors), info);
+		zend_hash_next_index_insert_ptr(&EG(delayed_effects), info);
 		zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
 		return;
 	}
@@ -2006,6 +2006,9 @@ ZEND_API zend_result zend_execute_script(int type, zval *retval, zend_file_handl
 	zend_result ret = SUCCESS;
 	if (op_array) {
 		zend_execute(op_array, retval);
+		if (zend_hash_num_elements(&EG(delayed_effects))) {
+			zend_handle_delayed_effects();
+		}
 		if (UNEXPECTED(EG(exception))) {
 			if (Z_TYPE(EG(user_exception_handler)) != IS_UNDEF) {
 				zend_user_exception_handler();

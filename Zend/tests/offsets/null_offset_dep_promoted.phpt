@@ -5,7 +5,7 @@ Do not leak when promoting null offset deprecation
 
 set_error_handler(function ($errno, $errstr) {
     throw new Exception($errstr);
-});
+}, promote_to_exception: true);
 
 try {
 	$a = ['foo' => 'bar', null => new stdClass];

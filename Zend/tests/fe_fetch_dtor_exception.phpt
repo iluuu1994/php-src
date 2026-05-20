@@ -19,4 +19,5 @@ try {
 
 ?>
 --EXPECT--
+int(1)
 foo

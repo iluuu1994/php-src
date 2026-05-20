@@ -29,6 +29,7 @@ print "After makeLazy\n";
 
 var_dump($obj->a);
 $obj = null;
+(function () {})();
 
 print "# Proxy:\n";
 

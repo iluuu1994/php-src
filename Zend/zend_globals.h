@@ -320,7 +320,7 @@ struct _zend_executor_globals {
 	pid_t pid;
 	struct sigaction oldact;
 #endif
-	HashTable delayed_errors;
+	HashTable delayed_effects;
 
 	zend_strtod_state strtod_state;
 

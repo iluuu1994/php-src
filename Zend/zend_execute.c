@@ -2525,24 +2525,48 @@ ZEND_API ZEND_COLD zval* ZEND_FASTCALL zend_undefined_offset_write(HashTable *ht
 	return zend_hash_index_add_new(ht, lval, &EG(uninitialized_zval));
 }
 
-ZEND_API void ZEND_FASTCALL zend_handle_delayed_errors(void)
+ZEND_API void ZEND_FASTCALL zend_handle_delayed_effects(void)
 {
-	/* Clear EG(delayed_errors), as more errors may be delayed while we are handling these. */
+restart:;
+	/* Clear EG(delayed_effects), as more effects may be queued while we are handling these. */
+	// FIXME: Avoid the overhead?
 	HashTable ht;
-	memcpy(&ht, &EG(delayed_errors), sizeof(HashTable));
-	zend_hash_init(&EG(delayed_errors), 0, NULL, NULL, 0);
+	memcpy(&ht, &EG(delayed_effects), sizeof(HashTable));
+	zend_hash_init(&EG(delayed_effects), 0, NULL, NULL, 0);
 
-	zend_error_info *info;
-	ZEND_HASH_FOREACH_PTR(&ht, info) {
-		int orig_error_reporting = EG(error_reporting);
-		EG(error_reporting) = info->error_reporting;
-		zend_error_zstr_at(info->type | E_NO_DELAY, info->filename, info->lineno, info->message);
-		EG(error_reporting) = orig_error_reporting;
-		zend_string_release(info->filename);
-		zend_string_release(info->message);
-		efree(info);
+	zval *val;
+	ZEND_HASH_FOREACH_VAL(&ht, val) {
+		switch (Z_TYPE_P(val)) {
+			case IS_PTR: {
+				zend_error_info *info = Z_PTR_P(val);
+				int orig_error_reporting = EG(error_reporting);
+				EG(error_reporting) = info->error_reporting;
+				zend_error_zstr_at(info->type | E_NO_DELAY, info->filename, info->lineno, info->message);
+				EG(error_reporting) = orig_error_reporting;
+				zend_string_release(info->filename);
+				zend_string_release(info->message);
+				efree(info);
+				break;
+			}
+			case IS_OBJECT: {
+				zend_object *obj = Z_OBJ_P(val);
+				ZEND_ASSERT(GC_REFCOUNT(obj) == 1);
+				obj->handlers->dtor_obj(obj);
+				GC_DELREF(obj);
+				if (GC_REFCOUNT(obj) == 0) {
+					zend_objects_store_del(obj);
+				}
+				break;
+			}
+			default:
+				ZEND_UNREACHABLE();
+		}
 	} ZEND_HASH_FOREACH_END();
 	zend_hash_destroy(&ht);
+
+	if (zend_hash_num_elements(&EG(delayed_effects)) > 0) {
+		goto restart;
+	}
 }
 
 ZEND_API ZEND_COLD zval* ZEND_FASTCALL zend_undefined_index_write(HashTable *ht, zend_string *offset)
@@ -4334,8 +4358,8 @@ ZEND_API void ZEND_FASTCALL zend_free_compiled_variables(zend_execute_data *exec
 ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *call)
 {
 	zend_atomic_bool_store_ex(&EG(vm_interrupt), false);
-	if (zend_hash_num_elements(&EG(delayed_errors))) {
-		zend_handle_delayed_errors();
+	if (zend_hash_num_elements(&EG(delayed_effects))) {
+		zend_handle_delayed_effects();
 	}
 	if (zend_atomic_bool_load_ex(&EG(timed_out))) {
 		zend_timeout();
@@ -5815,6 +5839,15 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 		ZEND_VM_CONTINUE(); \
 	} while (0)
 
+/* Same but indicate that we are jumping forward, so not interrupt check is performed */
+#define ZEND_VM_JMP_FWD_EX(new_op, check_exception) do { \
+		if (check_exception && UNEXPECTED(EG(exception))) { \
+			HANDLE_EXCEPTION(); \
+		} \
+		ZEND_VM_SET_OPCODE_NO_INTERRUPT(new_op); \
+		ZEND_VM_CONTINUE(); \
+	} while (0)
+
 #define ZEND_VM_JMP(new_op) \
 	ZEND_VM_JMP_EX(new_op, 1)
 
@@ -5935,6 +5968,53 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 
 /* This callback disables optimization of "vm_stack_data" variable in VM */
 ZEND_API void (ZEND_FASTCALL *zend_touch_vm_stack_data)(void *vm_stack_data) = NULL;
+
+void zend_interrupt_consume(EXECUTE_DATA_D OPLINE_DC)
+{
+	/* Interrupts are handled before executing opline, but exception handling
+	 * assumes that a throwing opline was executed.
+	 * Here we need to consume inputs and and initialize outputs. */
+
+	if (opline
+			&& opline->result_type & (IS_TMP_VAR|IS_VAR)
+			&& opline->opcode != ZEND_ADD_ARRAY_ELEMENT
+			&& opline->opcode != ZEND_ADD_ARRAY_UNPACK
+			&& opline->opcode != ZEND_ROPE_INIT
+			&& opline->opcode != ZEND_ROPE_ADD) {
+		ZVAL_UNDEF(ZEND_CALL_VAR(EG(current_execute_data), opline->result.var));
+	}
+
+	if (opline->opcode == ZEND_SEPARATE) {
+		ZEND_ASSERT(opline->op1.var == opline->result.var);
+		return;
+	}
+
+	if ((opline->op1_type & (IS_TMP_VAR|IS_VAR))) {
+		if (EXPECTED(!zend_keeps_op1_alive(opline))) {
+			zval_ptr_dtor(EX_VAR(opline->op1.var));
+		}
+	}
+
+	if ((opline->op2_type & (IS_TMP_VAR|IS_VAR))) {
+		if (UNEXPECTED(opline->opcode == ZEND_FE_FETCH_R
+				|| opline->opcode == ZEND_FE_FETCH_RW)) {
+			/* OP2 of FE_FETCH is actually a def, not a use. */
+		} else {
+			zval_ptr_dtor(EX_VAR(opline->op2.var));
+		}
+	}
+
+	const zend_op_array *op_array = &EX(func)->op_array;
+
+	if (opline >= op_array->opcodes
+			&& opline - op_array->opcodes < op_array->last) {
+		const zend_op *next_op = opline + 1;
+		if (next_op->opcode == ZEND_OP_DATA
+				&& next_op->op1_type & (IS_TMP_VAR|IS_VAR)) {
+			zval_ptr_dtor(EX_VAR(opline->op1.var));
+		}
+	}
+}
 
 #include "zend_vm_execute.h"
 

@@ -133,6 +133,7 @@ typedef struct _zend_error_info {
 	int error_reporting;
 } zend_error_info;
 
+
 struct _zend_inheritance_cache_entry {
 	zend_inheritance_cache_entry *next;
 	zend_class_entry             *ce;

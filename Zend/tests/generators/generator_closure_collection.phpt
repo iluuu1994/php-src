@@ -12,6 +12,7 @@ $genFactory = function() {
 $r = WeakReference::create($genFactory);
 $generator = $genFactory();
 unset($genFactory);
+(function () {})();
 
 var_dump($r->get());
 
@@ -20,6 +21,7 @@ foreach ($generator as $value) var_dump($value);
 var_dump($r->get());
 
 unset($generator);
+(function () {})();
 
 var_dump($r->get());
 

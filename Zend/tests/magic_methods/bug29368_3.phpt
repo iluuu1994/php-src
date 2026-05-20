@@ -13,7 +13,7 @@ class Foo {
 class Bar {
     function __construct() {
         echo __METHOD__ . "\n";
-        throw new Exception;
+        throw new Exception(__METHOD__);
     }
     function __destruct() {
         echo __METHOD__ . "\n";
@@ -23,6 +23,7 @@ class Bar {
 try {
     new Foo() + new Bar();
 } catch(Exception $exc) {
+    (function () {})();
     echo "Caught exception!\n";
 }
 ?>

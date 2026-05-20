@@ -8,12 +8,14 @@ try {
         function __toString() { return "a"; }
         function __destruct() { throw new Exception; }
     } . "foo");
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 1\n"; }
 
 try {
     var_dump([0] + [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 2\n"; }
 
 try {
@@ -21,6 +23,7 @@ try {
     var_dump($foo += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 3\n"; }
 
 try {
@@ -28,6 +31,7 @@ try {
     var_dump($foo->foo += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 4\n"; }
 
 try {
@@ -38,6 +42,7 @@ try {
     var_dump($foo->foo += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 5\n"; }
 
 try {
@@ -48,6 +53,7 @@ try {
     var_dump($foo->foo += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 6\n"; }
 
 try {
@@ -60,6 +66,7 @@ try {
     var_dump($foo[0] += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 7\n"; }
 
 try {
@@ -73,6 +80,7 @@ try {
     var_dump($foo[0] += [new class {
         function __destruct() { throw new Exception; }
     }]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 8\n"; }
 
 try {
@@ -81,6 +89,7 @@ try {
         function __construct() { $this->foo = new stdClass; }
         function __destruct() { throw new Exception; }
     }; })()->foo++);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 9\n"; }
 
 try {
@@ -89,6 +98,7 @@ try {
         function __set($x, $y) {}
         function __destruct() { throw new Exception; }
     }; })()->foo++);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 10\n"; }
 
 try {
@@ -98,6 +108,7 @@ try {
         function &__get($x) { return $this->bar; }
         function __destruct() { throw new Exception; }
     }; })()->foo++);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 11\n"; }
 
 try {
@@ -105,6 +116,7 @@ try {
         function __construct() { $this->foo = new stdClass; }
         function __destruct() { throw new Exception; }
     }; })()->foo);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 12\n"; }
 
 try {
@@ -113,6 +125,7 @@ try {
         function __set($x, $y) {}
         function __destruct() { throw new Exception; }
     }; })()->foo);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 13\n"; }
 
 try {
@@ -122,6 +135,7 @@ try {
         function &__get($x) { return $this->bar; }
         function __destruct() { throw new Exception; }
     }; })()->foo);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 14\n"; }
 
 try {
@@ -132,6 +146,7 @@ try {
         function offsetUnset($x): void {}
         function __destruct() { throw new Exception; }
     }; })()[0]++);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 15\n"; }
 
 try {
@@ -142,6 +157,7 @@ try {
         function offsetUnset($x): void {}
         function __destruct() { throw new Exception; }
     }; })()[0]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 16\n"; }
 
 try {
@@ -150,6 +166,7 @@ try {
         function __construct() { $this->foo = new stdClass; }
         function __destruct() { throw new Exception; }
     })->foo);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 17\n"; }
 
 try {
@@ -158,6 +175,7 @@ try {
         function __set($x, $y) {}
         function __destruct() { throw new Exception; }
     })->foo);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 18\n"; }
 
 try {
@@ -168,6 +186,7 @@ try {
         function offsetUnset($x): void {}
         function __destruct() { throw new Exception; }
     })[0]);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 19\n"; }
 
 try {
@@ -176,6 +195,7 @@ try {
         function __construct() { $this->foo = new stdClass; }
         function __destruct() { throw new Exception; }
     })->foo->bar));
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 20\n"; }
 
 try {
@@ -184,6 +204,7 @@ try {
         function __set($x, $y) {}
         function __destruct() { throw new Exception; }
     })->foo->bar));
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 21\n"; }
 
 try {
@@ -194,6 +215,7 @@ try {
         function offsetUnset($x): void {}
         function __destruct() { throw new Exception; }
     })[0]->bar));
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 22\n"; }
 
 try {
@@ -201,6 +223,7 @@ try {
         function __destruct() { throw new Exception; }
     };
     var_dump($foo = new stdClass);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 23\n"; }
 
 try {
@@ -208,6 +231,7 @@ try {
         function __destruct() { throw new Exception; }
     }];
     var_dump($foo[0] = new stdClass);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 24\n"; }
 
 try {
@@ -215,6 +239,7 @@ try {
         function __destruct() { throw new Exception; }
     }];
     var_dump($foo->foo = new stdClass);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 25\n"; }
 
 try {
@@ -223,6 +248,7 @@ try {
         function __set($x, $y) { throw new Exception; }
     };
     var_dump($foo->foo = new stdClass);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 26\n"; }
 
 try {
@@ -233,6 +259,7 @@ try {
         function offsetUnset($x): void {}
     };
     var_dump($foo[0] = new stdClass);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 27\n"; }
 
 try {
@@ -241,6 +268,7 @@ try {
     };
     $bar = new stdClass;
     var_dump($foo = &$bar);
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 28\n"; }
 
 try {
@@ -251,6 +279,7 @@ try {
         };
     };
     var_dump("{$f()}foo");
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 29\n"; }
 
 try {
@@ -261,6 +290,7 @@ try {
         };
     };
     var_dump("bar{$f()}foo");
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 30\n"; }
 
 try {
@@ -268,24 +298,51 @@ try {
         function __toString() { $x = "Z"; return ++$x; }
         function __destruct() { throw new Exception; }
     });
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 31\n"; }
 
 try {
     var_dump(clone (new class {
         function __clone() { throw new Exception; }
     }));
+    (function() {})();
 } catch (Exception $e) { print "caught Exception 32\n"; }
 
 ?>
 --EXPECTF--
+string(4) "afoo"
 caught Exception 1
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 2
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 3
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 4
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 5
 
 Deprecated: Creation of dynamic property class@anonymous::$foo is deprecated in %s on line %d
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 6
+array(1) {
+  [0]=>
+  int(0)
+}
 caught Exception 7
 caught Exception 8
 caught Exception 9
@@ -306,21 +363,44 @@ caught Exception 15
 
 Notice: Indirect modification of overloaded element of ArrayAccess@anonymous has no effect in %s on line %d
 caught Exception 16
+object(stdClass)#%d (0) {
+}
 caught Exception 17
+object(stdClass)#%d (0) {
+}
 caught Exception 18
+array(1) {
+  [0]=>
+  object(stdClass)#%d (0) {
+  }
+}
 caught Exception 19
+bool(false)
 caught Exception 20
+bool(false)
 caught Exception 21
+bool(false)
 caught Exception 22
+object(stdClass)#%d (0) {
+}
 caught Exception 23
+object(stdClass)#%d (0) {
+}
 caught Exception 24
+object(stdClass)#%d (0) {
+}
 caught Exception 25
 caught Exception 26
 caught Exception 27
+object(stdClass)#%d (0) {
+}
 caught Exception 28
+string(4) "afoo"
 caught Exception 29
+string(7) "barafoo"
 caught Exception 30
 
 Deprecated: Increment on non-numeric string is deprecated, use str_increment() instead in %s on line %d
+string(2) "AA"
 caught Exception 31
 caught Exception 32

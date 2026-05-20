@@ -50,6 +50,6 @@ object(A)#%d (2) {
   ["a"]=>
   int(1)
   ["proxy"]=>
-  object(A)#%d (0) {
+  lazy proxy object(A)#%d (0) {
   }
 }

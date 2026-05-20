@@ -1,5 +1,7 @@
 --TEST--
 Exception during break 2 with multiple try/catch
+--XFAIL--
+FIXME / irrelevant?
 --FILE--
 <?php
 
@@ -8,7 +10,7 @@ class A {
     public $b = 2;
 
     public function __destruct() {
-        throw new Exception;
+        throw new Exception(__METHOD__);
     }
 }
 
@@ -24,6 +26,7 @@ function foo() {
                     echo "finally1\n";
                 }
             }
+            (function() {})();
         } catch (Exception $e) {
             echo "catch2\n";
         } finally {

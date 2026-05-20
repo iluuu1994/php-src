@@ -26,6 +26,7 @@ class A {
         $drv = myserv::drv();
 
         $drv->obj = $this;
+        (function (){})();
 
         echo "before call $method\n";
         print_r($this);

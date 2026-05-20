@@ -20,15 +20,16 @@ $o = new stdClass();
 
 $w[$o] = new HasDtor();
 $w[$o] = 123;
+(function () {})();
 var_dump($w);
 ?>
---EXPECT--
+--EXPECTF--
 In destruct
-object(WeakMap)#1 (11) {
+object(WeakMap)#%d (11) {
   [0]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#2 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(123)
@@ -36,7 +37,7 @@ object(WeakMap)#1 (11) {
   [1]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#4 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(0)
@@ -44,7 +45,7 @@ object(WeakMap)#1 (11) {
   [2]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#5 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(1)
@@ -52,7 +53,7 @@ object(WeakMap)#1 (11) {
   [3]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#6 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(2)
@@ -60,7 +61,7 @@ object(WeakMap)#1 (11) {
   [4]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#7 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(3)
@@ -68,7 +69,7 @@ object(WeakMap)#1 (11) {
   [5]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#8 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(4)
@@ -76,7 +77,7 @@ object(WeakMap)#1 (11) {
   [6]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#9 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(5)
@@ -84,7 +85,7 @@ object(WeakMap)#1 (11) {
   [7]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#10 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(6)
@@ -92,7 +93,7 @@ object(WeakMap)#1 (11) {
   [8]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#11 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(7)
@@ -100,7 +101,7 @@ object(WeakMap)#1 (11) {
   [9]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#12 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(8)
@@ -108,7 +109,7 @@ object(WeakMap)#1 (11) {
   [10]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#13 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(9)

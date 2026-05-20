@@ -26,7 +26,7 @@ B::$a = new A();
 
 ?>
 --EXPECTF--
-#0 %s(20): gen()
+#0 %s(%d): gen()
 
 Fatal error: Uncaught Error: Class "B" not found in %s:20
 Stack trace:

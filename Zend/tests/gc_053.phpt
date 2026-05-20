@@ -22,6 +22,7 @@ $o = new WithDestructor();
 $weakO = \WeakReference::create($o);
 echo "---\n";
 unset($o);
+(function () {})();
 echo "---\n";
 var_dump($weakO->get() !== null); // verify if kept allocated
 G::$v = null;

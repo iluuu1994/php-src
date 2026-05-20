@@ -16,7 +16,7 @@ B::$b = new A;
 
 ?>
 --EXPECTF--
-#0 %s(10): A->__destruct()
+#0 %s(%d): A->__destruct()
 
 Fatal error: Uncaught Error: Class "B" not found in %s:10
 Stack trace:

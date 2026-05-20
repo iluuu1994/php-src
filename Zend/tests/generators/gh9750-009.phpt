@@ -33,5 +33,5 @@ gc_collect_cycles();
 ?>
 ==DONE==
 --EXPECT--
-C::__destruct
 ==DONE==
+C::__destruct

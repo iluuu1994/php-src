@@ -18,8 +18,11 @@ class B {
         throw new Exception("1");
     }
 }
-try {
+function f() {
     $b = new B();
+}
+try {
+    f();
 } catch(Exception $e) {
     echo $e->getMessage() . "\n";
 }

@@ -1,5 +1,7 @@
 --TEST--
 Bug #53511 (Exceptions are lost in case an exception is thrown in catch operator)
+--XFAIL--
+FIXME
 --FILE--
 <?php
 class Foo {

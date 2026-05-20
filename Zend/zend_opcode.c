@@ -901,7 +901,7 @@ static bool is_fake_def(zend_op *opline) {
 		|| opline->opcode == ZEND_ADD_ARRAY_UNPACK;
 }
 
-static bool keeps_op1_alive(zend_op *opline) {
+bool zend_keeps_op1_alive(const zend_op *opline) {
 	/* These opcodes don't consume their OP1 operand,
 	 * it is later freed by something else. */
 	if (opline->opcode == ZEND_CASE
@@ -992,7 +992,7 @@ static void zend_calc_live_ranges(
 		if ((opline->op1_type & (IS_TMP_VAR|IS_VAR))) {
 			uint32_t var_num = EX_VAR_TO_NUM(opline->op1.var) - var_offset;
 			if (EXPECTED(last_use[var_num] == (uint32_t) -1)) {
-				if (EXPECTED(!keeps_op1_alive(opline))) {
+				if (EXPECTED(!zend_keeps_op1_alive(opline))) {
 					/* OP_DATA is really part of the previous opcode. */
 					last_use[var_num] = opnum - (opline->opcode == ZEND_OP_DATA);
 				}

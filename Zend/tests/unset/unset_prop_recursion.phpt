@@ -19,14 +19,14 @@ $a = new Node;
 $a->insert(new Node);
 $a->insert(new Node);
 ?>
---EXPECT--
-object(Node)#1 (2) {
+--EXPECTF--
+object(Node)#%d (2) {
   ["parent"]=>
   NULL
   ["children"]=>
   array(2) {
     [0]=>
-    object(Node)#2 (2) {
+    object(Node)#%d (2) {
       ["parent"]=>
       *RECURSION*
       ["children"]=>
@@ -34,7 +34,7 @@ object(Node)#1 (2) {
       }
     }
     [1]=>
-    object(Node)#3 (2) {
+    object(Node)#%d (2) {
       ["parent"]=>
       *RECURSION*
       ["children"]=>
@@ -43,9 +43,9 @@ object(Node)#1 (2) {
     }
   }
 }
-object(Node)#2 (2) {
+object(Node)#%d (2) {
   ["parent"]=>
-  object(Node)#1 (2) {
+  object(Node)#%d (1) {
     ["parent"]=>
     NULL
   }
@@ -53,9 +53,9 @@ object(Node)#2 (2) {
   array(0) {
   }
 }
-object(Node)#3 (2) {
+object(Node)#%d (2) {
   ["parent"]=>
-  object(Node)#1 (2) {
+  object(Node)#%d (1) {
     ["parent"]=>
     NULL
   }

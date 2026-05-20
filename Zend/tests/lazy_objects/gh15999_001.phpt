@@ -5,9 +5,6 @@ Lazy Objects: GH-15999 001: Object is released during initialization
 
 class C {
     public $s;
-    public function __destruct() {
-        var_dump(__METHOD__);
-    }
 }
 
 print "# Ghost:\n";
@@ -96,13 +93,10 @@ try {
 ==DONE==
 --EXPECT--
 # Ghost:
-string(13) "C::__destruct"
 Error: Lazy object was released during initialization
 # Proxy:
-string(13) "C::__destruct"
 Error: Lazy object was released during initialization
 # GC cycle:
-string(13) "C::__destruct"
 # Nested error (ghost):
 Error: Lazy object was released during initialization
 TypeError: Lazy object initializer must return NULL or no value

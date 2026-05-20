@@ -20,6 +20,7 @@ class Test1 {
 $callback = function (): int {
     try {
         new Test1;
+        (function() {})();
     } catch (Error $e) {
         return count($e->getTrace());
     }

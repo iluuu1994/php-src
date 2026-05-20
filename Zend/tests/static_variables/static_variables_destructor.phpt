@@ -19,6 +19,7 @@ function foo(bool $throw) {
         $a = new Foo();
     }
     static $a = bar();
+    (function() {})();
     var_dump($a);
 }
 

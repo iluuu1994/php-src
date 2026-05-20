@@ -29,7 +29,8 @@ test($box);
 test($box);
 
 ?>
---EXPECT--
-object(Test)#3 (0) {
+--EXPECTF--
+object(Test)#%d (0) {
 }
-NULL
+object(Test)#%d (0) {
+}

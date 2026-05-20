@@ -17,6 +17,7 @@ function do_it(): void {
 	echo "Before", PHP_EOL;
 
 	(void)test();
+    (function() {})();
 
 	echo "After", PHP_EOL;
 }

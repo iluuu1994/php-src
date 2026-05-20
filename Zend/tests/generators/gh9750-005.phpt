@@ -24,6 +24,7 @@ foreach ($gen as $value) {
 
 $gen = null;
 $c = null;
+(function () {})();
 
 gc_collect_cycles();
 

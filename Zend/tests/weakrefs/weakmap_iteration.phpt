@@ -34,37 +34,37 @@ foreach ($map as $key => &$value) {
 var_dump($map);
 
 ?>
---EXPECT--
+--EXPECTF--
 Empty loop:
 
 Simple loop:
-object(stdClass)#2 (0) {
+object(stdClass)#%d (0) {
 }
 int(0)
-object(stdClass)#3 (0) {
+object(stdClass)#%d (0) {
 }
 int(1)
-object(stdClass)#4 (0) {
+object(stdClass)#%d (0) {
 }
 int(2)
 
 Object removed during loop:
-object(stdClass)#2 (0) {
+object(stdClass)#%d (0) {
 }
 int(0)
-object(stdClass)#3 (0) {
+object(stdClass)#%d (0) {
 }
 int(1)
-object(stdClass)#4 (0) {
+object(stdClass)#%d (0) {
 }
 int(2)
 
 By reference iteration:
-object(WeakMap)#1 (2) {
+object(WeakMap)#%d (2) {
   [0]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#2 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     &int(1)
@@ -72,7 +72,7 @@ object(WeakMap)#1 (2) {
   [1]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#4 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     &int(3)

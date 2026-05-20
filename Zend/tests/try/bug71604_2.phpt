@@ -20,6 +20,7 @@ function gen() {
 
 try {
     gen()->rewind();
+    (function() {})();
 } catch (Exception $e) {
     echo $e, "\n";
 }

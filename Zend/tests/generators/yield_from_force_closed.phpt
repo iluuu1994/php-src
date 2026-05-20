@@ -22,6 +22,7 @@ try {
     $gen = gen2();
     $gen->rewind();
     unset($gen);
+    (function () {})();
 } catch (Error $e) {
     echo $e, "\n";
 }
@@ -34,4 +35,5 @@ finally
 Error: Cannot use "yield from" in a force-closed generator in %s:%d
 Stack trace:
 #0 %s(%d): gen2()
-#1 {main}
+#1 %s(%d): {closure:%s:%d}()
+#2 {main}

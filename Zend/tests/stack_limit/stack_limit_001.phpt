@@ -35,6 +35,7 @@ function replace() {
 
 try {
     new Test1;
+    (function() {})();
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
 }

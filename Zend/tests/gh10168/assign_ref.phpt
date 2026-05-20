@@ -12,7 +12,9 @@ class Test {
 $a = new Test;
 $tmp = new Test;
 var_dump($a = &$tmp);
+(function () {})();
 
 ?>
---EXPECT--
-NULL
+--EXPECTF--
+object(Test)#%d (0) {
+}

@@ -46,6 +46,7 @@ class Dtor {
 $ary = new AA;
 try {
     $ary[new Dtor][id($foo)] ??= $bar;
+    (function () {})();
 } catch (Exception $e) {
     echo $e->getMessage(), "\n";
 }

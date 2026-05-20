@@ -13,9 +13,11 @@ $box = [new Test];
 // but any function that uses zend_try_array_init() would work.
 try {
     getimagesize("dummy", $box);
+    (function () {})();
 } catch (Error $e) {
     echo $e->getMessage(), "\n";
 }
 ?>
---EXPECT--
-Attempt to assign property "value" on null
+--EXPECTF--
+Warning: getimagesize(dummy): Failed to open stream: No such file or directory in %s on line %d
+Attempt to assign property "value" on array

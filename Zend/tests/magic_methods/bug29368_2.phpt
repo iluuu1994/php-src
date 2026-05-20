@@ -11,6 +11,7 @@ class Bomb {
 }
 try {
     $x = new ReflectionMethod(new Bomb(), "foo");
+    (function () {})();
 } catch (Throwable $e) {
     echo $e->getMessage() . "\n";
 }

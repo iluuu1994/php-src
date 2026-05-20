@@ -174,6 +174,16 @@ ZEND_API void ZEND_FASTCALL zend_objects_store_del(zend_object *object) /* {{{ *
 
 		if (object->handlers->dtor_obj != zend_objects_destroy_object
 				|| object->ce->destructor) {
+			/* If we are inside the VM, delay the destructor call to a safe point. */
+			if (EG(current_execute_data)) {
+				/* Keep object alive until the delayed destructor runs. */
+				GC_SET_REFCOUNT(object, 1);
+				zval zv;
+				ZVAL_OBJ(&zv, object);
+				zend_hash_next_index_insert(&EG(delayed_effects), &zv);
+				zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
+				return;
+			}
 			GC_SET_REFCOUNT(object, 1);
 			object->handlers->dtor_obj(object);
 			GC_DELREF(object);

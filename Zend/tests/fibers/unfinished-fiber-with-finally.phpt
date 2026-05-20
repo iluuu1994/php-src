@@ -20,6 +20,7 @@ $fiber = new Fiber(function (): void {
 $fiber->start();
 
 unset($fiber); // Destroy fiber object, executing finally block.
+(function () {})();
 
 echo "done\n";
 
