@@ -1,0 +1,150 @@
+name: Merge PR and propagate up
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  merge:
+    if: github.repository == 'php/php-src' && github.event.label.name == 'Merge'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch PR head
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch origin "refs/pull/${PR_NUMBER}/head"
+
+      - name: Merge and propagate
+        id: merge
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -e
+
+          fail() {
+            {
+              echo "fail_reason<<EOF"
+              echo "$1"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 1
+          }
+
+          # Find the next branch upwards from $1.
+          # Prefer PHP-x.(y+1), then PHP-(x+1).0, finally master.
+          # Returns 1 when there is no further branch (i.e. we are on master).
+          find_next_branch() {
+            local current="$1"
+            if [ "$current" = "master" ]; then
+              return 1
+            fi
+
+            if [[ "$current" =~ ^PHP-([0-9]+)\.([0-9]+)$ ]]; then
+              local major="${BASH_REMATCH[1]}"
+              local minor="${BASH_REMATCH[2]}"
+              local candidate
+
+              candidate="PHP-${major}.$((minor + 1))"
+              if git show-ref --verify --quiet "refs/remotes/origin/${candidate}"; then
+                echo "$candidate"
+                return 0
+              fi
+
+              candidate="PHP-$((major + 1)).0"
+              if git show-ref --verify --quiet "refs/remotes/origin/${candidate}"; then
+                echo "$candidate"
+                return 0
+              fi
+
+              echo "master"
+              return 0
+            fi
+
+            return 1
+          }
+
+          # Build the list of branches to update.
+          branches=("$TARGET_BRANCH")
+          current="$TARGET_BRANCH"
+          while next=$(find_next_branch "$current"); do
+            branches+=("$next")
+            current="$next"
+          done
+
+          echo "Branches to update: ${branches[*]}"
+
+          # Fast-forward merge the PR into the target branch.
+          git checkout -B "$TARGET_BRANCH" "refs/remotes/origin/${TARGET_BRANCH}"
+          if ! git merge --ff-only "$PR_HEAD_SHA"; then
+            fail "The PR cannot be fast-forward merged into \`${TARGET_BRANCH}\`. Please rebase the PR onto \`${TARGET_BRANCH}\`."
+          fi
+
+          # Merge upwards through each higher branch.
+          for ((i = 1; i < ${#branches[@]}; i++)); do
+            prev="${branches[$((i - 1))]}"
+            current="${branches[$i]}"
+            git checkout -B "$current" "refs/remotes/origin/${current}"
+            if ! git merge --no-ff --no-edit "$prev"; then
+              git merge --abort || true
+              fail "Failed to merge \`${prev}\` into \`${current}\`. Please resolve the conflicts manually."
+            fi
+          done
+
+          # Atomically push every updated branch.
+          refspecs=()
+          for branch in "${branches[@]}"; do
+            refspecs+=("refs/heads/${branch}:refs/heads/${branch}")
+          done
+
+          if ! git push --atomic origin "${refspecs[@]}"; then
+            fail "Failed to push the merged branches to the remote. The branches may have been updated concurrently."
+          fi
+
+      - name: Report failure
+        if: failure()
+        uses: actions/github-script@v7
+        env:
+          FAIL_REASON: ${{ steps.merge.outputs.fail_reason }}
+        with:
+          script: |
+            const reason = process.env.FAIL_REASON
+              || 'The automatic merge failed. See the workflow logs for details.';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'Merge',
+              });
+            } catch (e) {
+              core.warning(`Could not remove the 'Merge' label: ${e.message}`);
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Automatic merge failed: ${reason}\n\n[View workflow run](${runUrl}).`,
+            });
