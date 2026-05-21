@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   merge:
-    if: github.repository == 'php/php-src' && github.event.label.name == 'Merge'
+    if: github.event.label.name == 'Merge'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,8 +24,8 @@ jobs:
 
       - name: Configure git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "PHP GH Bot"
+          git config user.email "gh-bot@php.net"
 
       - name: Fetch PR head
         env:
