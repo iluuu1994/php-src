@@ -11986,4 +11986,5 @@ static void zend_eval_const_expr(zend_ast **ast_ptr) /* {{{ */
 	zend_ast_destroy(ast);
 	*ast_ptr = zend_ast_create_zval(&result);
 }
+// test a
 /* }}} */
