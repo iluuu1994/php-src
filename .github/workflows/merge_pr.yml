@@ -25,6 +25,13 @@ jobs:
         with:
           client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: git checkout
         uses: actions/checkout@v6
@@ -33,14 +40,18 @@ jobs:
           filter: blob:none
           ref: ${{ github.event.pull_request.base.ref }}
           token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: git config
         run: |
-          git config user.name "PHP Merge Bot"
-          git config user.email "287303856+php-merge-bot@users.noreply.github.com"
+          # git config user.name "PHP Merge Bot"
+          # git config user.email "287303856+php-merge-bot@users.noreply.github.com"
+          git config user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
           git config merge.NEWS.name "Keep the NEWS file"
           git config merge.NEWS.driver "touch %A"
           git config merge.log true
+          git config --local url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v7
