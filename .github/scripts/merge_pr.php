@@ -171,11 +171,18 @@ function find_release_branches(string $target): array {
 function merge_pr_into_target(Context $context): string {
     $author = trim(run_command(['git', 'log', '-1', '--format=%an <%ae>', $context->pr_first_sha])->stdout);
     $message = "{$context->pr_title} (GH-{$context->pr_number})";
+    $description = wrap_commit_message($context->pr_description);
+
+    $co_authors = preg_split('(\n)', trim(run_command("git log --reverse --format='%an <%ae>' {$context->pr_first_sha}..{$context->pr_sha} | sort | uniq -c | sort -rn | sed 's/^ *[0-9]* //'")->stdout), flags: PREG_SPLIT_NO_EMPTY);
+    $co_authors = array_filter($co_authors, fn (string $co_author) => $co_author !== $author && stripos($description, $co_author) === false);
+    if (count($co_authors)) {
+        $description .= "\n\n" . implode("\n", $co_authors);
+    }
 
     run(['git', 'checkout', '-B', $context->target_ref, "refs/remotes/origin/{$context->target_ref}"]);
     run(['git', 'merge', '--squash', $context->pr_sha],
         failure_message: "Failed to squash PR into {$context->target_ref}.");
-    run(['git', 'commit', "--author=$author", '-m', $message, '-m', wrap_commit_message($context->pr_description)]);
+    run(['git', 'commit', "--author=$author", '-m', $message, '-m', $description]);
     $squashed_sha = trim((string) shell_exec('git rev-parse HEAD'));
 
     return $squashed_sha;
