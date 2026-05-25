@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 class Context {
-    public string $github_output;
     public string $pr_number;
     public string $pr_sha;
     public string $pr_ref;
