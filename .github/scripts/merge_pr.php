@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
+    throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
 class Context {
     public string $actor_id;
     public string $pr_number;
