@@ -177,9 +177,9 @@ function fetch_approvers(Context $context) {
     $approver_ids = [$context->actor_id, ...preg_split('(\n)', trim(run_command("gh api \"/repos/php/php-src/pulls/22096/reviews\" --jq 'map(select(.state == \"APPROVED\" and .commit_id == \"800d8377b8abea7317ed2e47cb6bc0fd9e0909ea\") | .user.id)[]'")->stdout), flags: PREG_SPLIT_NO_EMPTY)];
     $approvers = [];
     foreach ($approver_ids as $approver_id) {
+        $user = json_decode(run_command("gh api '/user/$id'")->stdout, true, flags: JSON_THROW_ON_ERROR);
         $id = $user['id'];
         $login = $user['login'];
-        $user = json_decode(run_command("gh api '/user/$id'")->stdout, true, flags: JSON_THROW_ON_ERROR);
         $name = $user['name'] ?? $login;
         $email = $user['email'] ?? "{$id}+{$login}@users.noreply.github.com";
         $approvers[] = "$name <$email>";
