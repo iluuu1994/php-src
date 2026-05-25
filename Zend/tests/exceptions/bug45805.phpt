@@ -38,9 +38,8 @@ $o->bar();
 --EXPECTF--
 Fatal error: Uncaught RuntimeException in %sbug45805.php:%d
 Stack trace:
-#0 %sbug45805.php(%d): PHPUnit_Util_ErrorHandler::handleError(8, 'Only variables ...', '%s', %d)
-#1 [internal function]: B->foo()
-#2 %sbug45805.php(%d): ReflectionMethod->invoke(Object(B))
-#3 %sbug45805.php(%d): B->bar()
-#4 {main}
+#0 [internal function]: PHPUnit_Util_ErrorHandler::handleError(8, 'Only variables ...', '/home/arnaud/de...', 19)
+#1 %s(%d): ReflectionMethod->invoke(Object(B))
+#2 %s(%d): B->bar()
+#3 {main}
   thrown in %sbug45805.php on line %d

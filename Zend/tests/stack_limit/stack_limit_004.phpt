@@ -38,7 +38,7 @@ $fiber = new Fiber($callback);
 $fiber->start();
 $depth2 = $fiber->getReturn();
 
-var_dump($depth1 > $depth2);
+var_dump($depth1 >= $depth2);
 
 ?>
 --EXPECTF--

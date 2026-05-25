@@ -23,7 +23,7 @@ set_error_handler(function()
     $e->_trace = debug_backtrace();
 
     throw $e;
-});
+}, promote_to_exception: true);
 
 // trigger error handler
 $a['waa'];
@@ -37,8 +37,7 @@ Deprecated: Creation of dynamic property Exception::$_trace is deprecated in %s 
 
 Fatal error: Uncaught Exception in %sbug64960.php:19
 Stack trace:
-#0 [internal function]: {closure:%s:%d}(8, 'ob_end_clean():...', '%s', 9)
-#1 %sbug64960.php(9): ob_end_clean()
-#2 [internal function]: ExceptionHandler->__invoke(Object(Exception))
-#3 {main}
+#0 %s(%d): {closure:%s:%d}(8, 'ob_end_clean():...', '/home/arnaud/de...', 9)
+#1 [internal function]: ExceptionHandler->__invoke(Object(Exception))
+#2 {main}
   thrown in %sbug64960.php on line 19

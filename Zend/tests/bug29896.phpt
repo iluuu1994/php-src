@@ -23,5 +23,4 @@ GenerateError2("Test2");
 ?>
 --EXPECTF--
 #0 %s(%d): userErrorHandler(2, 'Undefined varia...', '%s', %d)
-#1 %s(%d): GenerateError1('Test1')
-#2 %s(%d): GenerateError2('Test2')
+#1 %s(%d): GenerateError2('Test2')

@@ -7,7 +7,7 @@ function handleError($errno, $errstr, $errfile, $errline) {
     $exception = new exception("blah");
     throw $exception;
 }
-set_error_handler('handleError', E_ALL);
+set_error_handler('handleError', E_ALL, promote_to_exception: true);
 $c = $b[$a];
 ?>
 --EXPECTF--

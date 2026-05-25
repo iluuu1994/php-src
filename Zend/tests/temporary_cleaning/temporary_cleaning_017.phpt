@@ -18,6 +18,6 @@ foreach(new bar as $y) {
 --EXPECTF--
 Fatal error: Uncaught Error: Undefined constant "y" in %stemporary_cleaning_017.php:5
 Stack trace:
-#0 %s(%d): bar->__destruct()
+#0 [internal function]: bar->__destruct()
 #1 {main}
   thrown in %stemporary_cleaning_017.php on line 5

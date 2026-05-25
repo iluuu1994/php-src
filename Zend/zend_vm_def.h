@@ -2992,18 +2992,6 @@ ZEND_VM_HOT_HELPER(zend_leave_helper, ANY, ANY)
 	SAVE_OPLINE();
 #endif
 
-	/* Handle delayed effects before leaving frame to preserve backtraces */
-	if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
-		if (zend_hash_num_elements(&EG(delayed_effects))) {
-			zend_handle_delayed_effects();
-			if (EG(exception)) {
-				ZEND_VM_ENTER();
-			}
-		}
-		/* Do not reset EG(vm_interrupt) as it may have been set for other
-		 * reasons */
-	}
-
 	if (EXPECTED((call_info & (ZEND_CALL_CODE|ZEND_CALL_TOP|ZEND_CALL_HAS_SYMBOL_TABLE|ZEND_CALL_FREE_EXTRA_ARGS|ZEND_CALL_ALLOCATED|ZEND_CALL_HAS_EXTRA_NAMED_PARAMS)) == 0)) {
 		EG(current_execute_data) = EX(prev_execute_data);
 		i_free_compiled_variables(execute_data);

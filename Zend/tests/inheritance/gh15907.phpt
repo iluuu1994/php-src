@@ -5,7 +5,7 @@ GH-15907: Failed assertion when promoting inheritance error to exception
 
 set_error_handler(function($errno, $msg) {
     throw new Exception($msg);
-});
+}, promote_to_exception: true);
 
 class C implements Serializable {
     public function serialize() {}
