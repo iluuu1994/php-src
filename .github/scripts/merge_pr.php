@@ -176,10 +176,9 @@ function find_release_branches(string $target): array {
 function fetch_approvers(Context $context) {
     $approver_ids = [$context->actor_id, ...preg_split('(\n)', trim(run_command("gh api \"/repos/php/php-src/pulls/22096/reviews\" --jq 'map(select(.state == \"APPROVED\" and .commit_id == \"800d8377b8abea7317ed2e47cb6bc0fd9e0909ea\") | .user.id)[]'")->stdout), flags: PREG_SPLIT_NO_EMPTY)];
     $approvers = [];
-    foreach ($approver_ids as $approver_id) {
-        $id = $user['id'];
-        $login = $user['login'];
+    foreach ($approver_ids as $id) {
         $user = json_decode(run_command("gh api '/user/$id'")->stdout, true, flags: JSON_THROW_ON_ERROR);
+        $login = $user['login'];
         $name = $user['name'] ?? $login;
         $email = $user['email'] ?? "{$id}+{$login}@users.noreply.github.com";
         $approvers[] = "$name <$email>";
