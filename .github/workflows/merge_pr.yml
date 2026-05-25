@@ -61,6 +61,8 @@ jobs:
       - name: Merge PR
         id: merge
         env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ACTOR_ID: ${{ github.actor_id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_SHA: ${{ github.event.pull_request.head.sha }}
           PR_REF: ${{ github.event.pull_request.head.ref }}
