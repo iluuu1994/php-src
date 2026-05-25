@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 class Context {
+    public string $actor_id;
     public string $pr_number;
     public string $pr_sha;
     public string $pr_ref;
@@ -20,6 +21,7 @@ function get_context(): Context {
     $context = new Context;
 
     $env_mapping = [
+        'ACTOR_ID' => 'actor_id',
         'PR_DESCRIPTION' => 'pr_description',
         'PR_NUMBER' => 'pr_number',
         'PR_REF' => 'pr_ref',
@@ -167,19 +169,45 @@ function find_release_branches(string $target): array {
     return $branches;
 }
 
+function fetch_approvers(Context $context) {
+    $approver_ids = [$context->actor_id, ...preg_split('(\n)', trim(run_command("gh api \"/repos/php/php-src/pulls/22096/reviews\" --jq 'map(select(.state == \"APPROVED\" and .commit_id == \"800d8377b8abea7317ed2e47cb6bc0fd9e0909ea\") | .user.id)[]")->stdout), flags: PREG_SPLIT_NO_EMPTY)];
+    $approvers = [];
+    foreach ($approver_ids as $approver_id) {
+        $id = $user['id'];
+        $login = $user['login'];
+        $user = json_decode(run_command("gh api '/user/$id'")->stdout, true, flags: JSON_THROW_ON_ERROR);
+        $name = $user['name'] ?? $login;
+        $email = $user['email'] ?? "{$id}+{$login}@users.noreply.github.com";
+        $approvers[] = "$name <$email>";
+    }
+    return $approvers;
+}
+
 function merge_pr_into_target(Context $context): string {
     $author = trim(run_command(['git', 'log', '-1', '--format=%an <%ae>', $context->pr_first_sha])->stdout);
     $message = "{$context->pr_title} (GH-{$context->pr_number})";
     $description = wrap_commit_message($context->pr_description);
 
     $co_authors = preg_split('(\n)', trim(run_command("git log --reverse --format='%an <%ae>' {$context->pr_first_sha}..{$context->pr_sha} | sort | uniq -c | sort -rn | sed 's/^ *[0-9]* //'")->stdout), flags: PREG_SPLIT_NO_EMPTY);
-    $co_authors = array_filter($co_authors, fn (string $co_author) => strcasecmp($co_author, $author) !== 0 && stripos($description, $co_author) === false);
+    $co_authors = array_map(fn (string $co_author) => 'Co-authored-by: ' . $co_author, $co_authors);
+    $co_authors = array_filter($co_authors, fn (string $co_author) => strcasecmp($co_author, 'Co-authored-by: ' . $author) !== 0 && stripos($description, $co_author) === false);
     if (count($co_authors)) {
-        $co_authors = array_map(fn (string $co_author) => 'Co-authored-by: ' . $co_author, $co_authors);
         if ($description !== '') {
             $description .= "\n\n";
         }
         $description .= implode("\n", $co_authors);
+    }
+
+    $approvers = fetch_approvers($context);
+    if (count($approvers)) {
+        $approvers = array_map(fn (string $pr_approver) => 'Signed-off-by: ' . $pr_approver, $approvers);
+        $approvers = array_filter($approvers, fn (string $pr_approver) => strcasecmp($pr_approver, 'Signed-off-by: ' . $author) !== 0 && stripos($description, $pr_approver) === false);
+        if (count($approvers)) {
+            if ($description !== '') {
+                $description .= "\n\n";
+            }
+            $description .= implode("\n", $approvers);
+        }
     }
 
     run(['git', 'checkout', '-B', $context->target_ref, "refs/remotes/origin/{$context->target_ref}"]);
