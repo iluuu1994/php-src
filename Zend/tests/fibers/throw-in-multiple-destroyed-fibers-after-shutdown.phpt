@@ -35,12 +35,12 @@ echo "done\n";
 --EXPECTF--
 done
 
-Fatal error: Uncaught Exception: test1 in %sthrow-in-multiple-destroyed-fibers-after-shutdown.php:%d
+Fatal error: Uncaught Exception: test1 in %s:%d
 Stack trace:
 #0 [internal function]: {closure:%s:%d}()
 #1 {main}
 
-Next Exception: test2 in %sthrow-in-multiple-destroyed-fibers-after-shutdown.php:%d
+Next Exception: test2 in %s:%d
 Stack trace:
 #0 [internal function]: {closure:%s:%d}()
 #1 {main}

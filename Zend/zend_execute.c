@@ -2525,20 +2525,24 @@ ZEND_API ZEND_COLD zval* ZEND_FASTCALL zend_undefined_offset_write(HashTable *ht
 	return zend_hash_index_add_new(ht, lval, &EG(uninitialized_zval));
 }
 
-ZEND_API void ZEND_FASTCALL zend_handle_delayed_effects(void)
+ZEND_API zend_never_inline void ZEND_FASTCALL zend_handle_delayed_effects(void)
 {
-restart:;
-	/* Clear EG(delayed_effects), as more effects may be queued while we are handling these. */
-	// FIXME: Avoid the overhead?
-	HashTable ht;
-	memcpy(&ht, &EG(delayed_effects), sizeof(HashTable));
-	zend_hash_init(&EG(delayed_effects), 0, NULL, NULL, 0);
+	HashPosition start = EG(delayed_effects).nInternalPointer;
+	HashPosition pos = start;
+	HashPosition end = EG(delayed_effects).nNumUsed;
+	/* Nested calls handle new items */
+	EG(delayed_effects).nInternalPointer = end;
 
-	zval *val;
-	ZEND_HASH_FOREACH_VAL(&ht, val) {
+restart:;
+
+	ZEND_ASSERT(HT_IS_PACKED(&EG(delayed_effects)));
+
+	for (; pos < end; pos++) {
+		zval *val = &EG(delayed_effects).arPacked[pos];
 		switch (Z_TYPE_P(val)) {
 			case IS_PTR: {
 				zend_error_info *info = Z_PTR_P(val);
+				ZVAL_NULL(val);
 				int orig_error_reporting = EG(error_reporting);
 				EG(error_reporting) = info->error_reporting;
 				zend_error_zstr_at(info->type | E_NO_DELAY, info->filename, info->lineno, info->message);
@@ -2561,12 +2565,41 @@ restart:;
 			default:
 				ZEND_UNREACHABLE();
 		}
-	} ZEND_HASH_FOREACH_END();
-	zend_hash_destroy(&ht);
+	}
 
-	if (zend_hash_num_elements(&EG(delayed_effects)) > 0) {
+	if (EG(delayed_effects).nInternalPointer < EG(delayed_effects).nNumUsed) {
+		/* New items were added during iteration and were not handled */
+		pos = EG(delayed_effects).nInternalPointer;
+		end = EG(delayed_effects).nNumUsed;
+		EG(delayed_effects).nInternalPointer = end;
 		goto restart;
 	}
+
+	if (start == 0) {
+		zend_hash_clean(&EG(delayed_effects));
+	}
+}
+
+ZEND_API void ZEND_FASTCALL zend_discard_delayed_effects(void)
+{
+	zval *val;
+	ZEND_HASH_FOREACH_VAL(&EG(delayed_effects), val) {
+		switch (Z_TYPE_P(val)) {
+			case IS_PTR: {
+				zend_error_info *info = Z_PTR_P(val);
+				zend_string_release(info->filename);
+				zend_string_release(info->message);
+				efree(info);
+				break;
+			}
+			case IS_OBJECT:
+			case IS_NULL:
+				break;
+			default:
+				ZEND_UNREACHABLE();
+		}
+	} ZEND_HASH_FOREACH_END();
+	zend_hash_clean(&EG(delayed_effects));
 }
 
 ZEND_API ZEND_COLD zval* ZEND_FASTCALL zend_undefined_index_write(HashTable *ht, zend_string *offset)

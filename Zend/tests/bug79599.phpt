@@ -4,7 +4,7 @@ Bug #79599 (coredump in set_error_handler)
 <?php
 set_error_handler(function($code, $message){
     throw new \Exception($message);
-});
+}, promote_to_exception: true);
 function test1(){
     $a[] = $b;
 }

@@ -2650,6 +2650,7 @@ PHPAPI bool php_execute_script_ex(zend_file_handle *primary_file, zval *retval)
 		}
 	} zend_catch {
 		result = false;
+		zend_discard_delayed_effects();
 	} zend_end_try();
 
 	if (prepend_file_p) {
