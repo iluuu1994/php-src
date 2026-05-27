@@ -1009,8 +1009,7 @@ num_index:
 	return retval;
 
 num_undef:
-	retval = zend_undefined_offset_write(ht, hval);
-	return retval;
+	return zend_undefined_offset_write(ht, hval);
 }
 
 static zval* ZEND_FASTCALL zend_jit_fetch_dim_w_helper(zend_array *ht, zval *dim)
