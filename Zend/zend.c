@@ -1447,6 +1447,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 	bool orig_record_errors;
 	zend_err_buf orig_errors_buf;
 	zend_result res;
+	bool will_bail = (type & E_FATAL_ERRORS) && !(type & E_DONT_BAIL);
 
 	/* If we're executing a function during SCCP, count any warnings that may be emitted,
 	 * but don't perform any other error handling. */
@@ -1457,7 +1458,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 	}
 
 	/* Emit any delayed error before handling fatal error */
-	if ((type & E_FATAL_ERRORS) && !(type & E_DONT_BAIL) && EG(errors).size) {
+	if (will_bail && EG(errors).size) {
 		zend_err_buf errors_buf = EG(errors);
 		EG(errors).size = 0;
 
@@ -1491,21 +1492,21 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		EG(errors).errors[EG(errors).size - 1] = info;
 
 		/* Do not process non-fatal recorded error */
-		if (!(type & E_FATAL_ERRORS) || (type & E_DONT_BAIL)) {
+		if (!will_bail) {
 			return;
 		}
 	}
 
 	/* Delay non-bailing errors while executing in the VM, but only if a user
 	 * error handler will actually be called for this error. */
-	if ((!(type & E_FATAL_ERRORS) || (type & E_DONT_BAIL))
-			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)
-			&& Z_TYPE(EG(user_error_handler)) != IS_UNDEF
-			&& (EG(user_error_handler_error_reporting) & type)
-			&& EG(error_handling) == EH_NORMAL
-			&& !(type & (E_CORE_WARNING | E_COMPILE_WARNING))) {
-		if ((EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION)
-				&& (EG(user_error_handler_error_reporting) & type)) {
+	bool may_call_user_error_handler = !will_bail
+		&& !(type & (E_CORE_WARNING | E_COMPILE_WARNING))
+		&& Z_TYPE(EG(user_error_handler)) != IS_UNDEF
+		&& (EG(user_error_handler_error_reporting) & type)
+		&& EG(error_handling) == EH_NORMAL;
+	if (may_call_user_error_handler
+			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)) {
+		if (EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION) {
 			if (EG(exception)) {
 				/* Promoting this error would override the existing exception,
 				 * but, we want the first exception/error to have precedence. */
