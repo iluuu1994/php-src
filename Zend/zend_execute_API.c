@@ -533,6 +533,7 @@ void shutdown_executor(void) /* {{{ */
 	zend_shutdown_fpu();
 
 	zend_discard_delayed_effects();
+	zend_hash_destroy(&EG(delayed_effects));
 }
 /* }}} */
 
