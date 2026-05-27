@@ -1506,7 +1506,7 @@ ZEND_API ZEND_COLD void zend_error_zstr_at(
 		&& EG(error_handling) == EH_NORMAL;
 	if (may_call_user_error_handler
 			&& !(orig_type & E_NO_DELAY) && EG(current_execute_data)) {
-		if (EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION) {
+		if (EG(user_error_handler_error_reporting) & ZEND_ERROR_HANDLER_NO_DELAY) {
 			if (EG(exception)) {
 				/* Promoting this error would override the existing exception,
 				 * but, we want the first exception/error to have precedence. */

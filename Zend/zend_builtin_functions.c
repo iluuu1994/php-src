@@ -1307,7 +1307,7 @@ ZEND_FUNCTION(set_error_handler)
 	ZVAL_COPY(&EG(user_error_handler), &(fci.function_name));
 	EG(user_error_handler_error_reporting) = (int)error_type & E_ALL;
 	if (!delay) {
-		EG(user_error_handler_error_reporting) |= ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION;
+		EG(user_error_handler_error_reporting) |= ZEND_ERROR_HANDLER_NO_DELAY;
 	}
 }
 /* }}} */

@@ -42,8 +42,8 @@
 /* Indicates that this error should not be delayed */
 #define E_NO_DELAY			(1<<16L)
 
-/* Flag for EG(user_error_handler_error_reporting): promote matching errors to PromotedError exceptions */
-#define ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION (1<<30)
+/* Flag for EG(user_error_handler_error_reporting): Matching errors are promoted to exceptions, and the error handler is called during excepiton handling. */
+#define ZEND_ERROR_HANDLER_NO_DELAY (1<<30)
 
 #define E_ALL (E_ERROR | E_WARNING | E_PARSE | E_NOTICE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING | E_USER_ERROR | E_USER_WARNING | E_USER_NOTICE | E_RECOVERABLE_ERROR | E_DEPRECATED | E_USER_DEPRECATED)
 #define E_CORE (E_CORE_ERROR | E_CORE_WARNING)
