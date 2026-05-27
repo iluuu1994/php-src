@@ -24,6 +24,7 @@ class late {
 $t = new early();
 $t->__construct();
 unset($t);
+(function () {})();
 $t = new late();
 //unset($t); delay to end of script
 

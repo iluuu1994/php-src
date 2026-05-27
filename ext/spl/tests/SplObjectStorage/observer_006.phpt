@@ -250,7 +250,7 @@ object(MyStorage)#%d (2) {
   }
 }
 int(2)
-object(TestClass)#7 (1) {
+object(TestClass)#9 (1) {
   ["test"]=>
   int(3)
 }

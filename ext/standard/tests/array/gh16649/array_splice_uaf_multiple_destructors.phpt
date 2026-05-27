@@ -20,14 +20,8 @@ class MultiDestructor {
 
 $arr = ["start", new MultiDestructor(1), new MultiDestructor(2), "end"];
 
-try {
-    array_splice($arr, 1, 2);
-    echo "ERROR: Should have thrown exception\n";
-} catch (Error $e) {
-    echo "Exception caught: " . $e->getMessage() . "\n";
-}
+array_splice($arr, 1, 2);
 ?>
 --EXPECT--
 Destructor 1 called
 Destructor 2 called
-Exception caught: Array was modified during array_splice operation

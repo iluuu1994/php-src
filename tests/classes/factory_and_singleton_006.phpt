@@ -10,6 +10,7 @@ class test {
 
 $obj = new test;
 $obj = NULL;
+(function () {})();
 
 echo "Done\n";
 ?>

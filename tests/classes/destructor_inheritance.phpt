@@ -18,6 +18,7 @@ class derived extends base {
 $obj = new derived;
 
 unset($obj);
+(function () {})();
 
 echo 'Done';
 ?>

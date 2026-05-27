@@ -45,9 +45,9 @@ test(10);
 --EXPECT--
 --- Smaller size test ---
 In destructor
-Destroyed, size is now still 2
-Destroyed the logger with id 4
 Destroyed the logger with id 1
+Destroyed, size is now still 1
+Destroyed the logger with id 4
 Size is now 1
 Done
 --- Equal size test ---
@@ -59,7 +59,7 @@ Done
 Destroyed the logger with id 1
 --- Larger size test ---
 In destructor
-Destroyed, size is now still 2
+Destroyed, size is now still 10
 Destroyed the logger with id 4
 Size is now 10
 Done

@@ -11,6 +11,7 @@ $array = SplFixedArray::fromArray([new HasDestructor()]);
 var_dump($array);
 echo "Replacing\n";
 $array[0] = new stdClass();
+(function() {})();
 // As of php 8.3, this will be freed before the var_dump call
 echo "Dumping again\n";
 var_dump($array);

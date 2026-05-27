@@ -21,6 +21,7 @@ try
 {
     $o = new Test;
     $o = NULL;
+    (function () {})();
 }
 catch(Exception $e)
 {

@@ -107,14 +107,14 @@ Warning: Undefined array key "foo" in %s on line %d
 NULL
 
 Deprecated: ArrayObject::__construct(): Using an object as a backing array for ArrayObject is deprecated, as it allows violating class constraints and invariants in %s on line %d
-object(SelfArray)#9 (1) {
+object(SelfArray)#10 (1) {
   ["foo"]=>
   string(3) "bar"
 }
 string(77) "O:9:"SelfArray":4:{i:0;i:16777216;i:1;N;i:2;a:1:{s:3:"foo";s:3:"bar";}i:3;N;}"
 
 Deprecated: Creation of dynamic property SelfArray::$foo is deprecated in %s on line %d
-object(SelfArray)#9 (1) {
+object(SelfArray)#10 (1) {
   ["foo"]=>
   string(3) "bar"
 }

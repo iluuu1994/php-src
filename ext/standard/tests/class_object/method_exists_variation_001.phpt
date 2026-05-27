@@ -19,6 +19,7 @@ $method = 'string_val';
 //get an unset variable
 $unset_var = 10;
 unset ($unset_var);
+(function() {})();
 
 //array of values to iterate over
 $values = array(
@@ -86,88 +87,88 @@ echo "Done";
 Error: 2 - Undefined variable $undefined_var
 Error: 2 - Undefined variable $unset_var
 
-Arg value 0 
+Arg value 0
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, int given
 
-Arg value 1 
+Arg value 1
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, int given
 
-Arg value 12345 
+Arg value 12345
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, int given
 
-Arg value -2345 
+Arg value -2345
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, int given
 
-Arg value 10.5 
+Arg value 10.5
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, float given
 
-Arg value -10.5 
+Arg value -10.5
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, float given
 
-Arg value 101234567000 
+Arg value 101234567000
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, float given
 
-Arg value 1.07654321E-9 
+Arg value 1.07654321E-9
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, float given
 
-Arg value 0.5 
+Arg value 0.5
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, float given
 Error: 2 - Array to string conversion
 
-Arg value Array 
+Arg value Array
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, array given
 Error: 2 - Array to string conversion
 
-Arg value Array 
+Arg value Array
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, array given
 Error: 2 - Array to string conversion
 
-Arg value Array 
+Arg value Array
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, array given
 Error: 2 - Array to string conversion
 
-Arg value Array 
+Arg value Array
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, array given
 Error: 2 - Array to string conversion
 
-Arg value Array 
+Arg value Array
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, array given
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, null given
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, null given
 
-Arg value 1 
+Arg value 1
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, true given
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, false given
 
-Arg value 1 
+Arg value 1
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, true given
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, false given
 
-Arg value  
+Arg value
 bool(false)
 
-Arg value  
+Arg value
 bool(false)
 
-Arg value string 
+Arg value string
 In autoload(string)
 bool(false)
 
-Arg value String 
+Arg value String
 In autoload(String)
 bool(false)
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, null given
 
-Arg value  
+Arg value
 method_exists(): Argument #1 ($object_or_class) must be of type object|string, null given
 Done

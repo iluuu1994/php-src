@@ -11,12 +11,7 @@ class C {
 
 $arr = ["1", new C, "2"];
 
-try {
-    array_splice($arr, 1, 2);
-    echo "ERROR: Should have thrown exception\n";
-} catch (Error $e) {
-    echo "Exception caught: " . $e->getMessage() . "\n";
-}
+array_splice($arr, 1, 2);
 ?>
 --EXPECT--
-Exception caught: Array was modified during array_splice operation
+

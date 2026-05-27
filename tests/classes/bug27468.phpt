@@ -8,6 +8,7 @@ class foo {
     }
 }
 new foo();
+(function () {})();
 echo 'OK';
 ?>
 --EXPECTF--

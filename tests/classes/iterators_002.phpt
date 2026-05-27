@@ -65,6 +65,7 @@ foreach($t as $k => $v) {
 }
 
 unset($t);
+(function () {})();
 
 print "Done\n";
 ?>

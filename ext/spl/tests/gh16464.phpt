@@ -15,15 +15,18 @@ class C {
 $list = new SplDoublyLinkedList;
 $list->add(0, new C);
 $list[0] = 42;
+(function() {})();
 var_dump($list);
 
 ?>
 --EXPECTF--
-int(42)
 object(SplDoublyLinkedList)#%d (2) {
   ["flags":"SplDoublyLinkedList":private]=>
   int(0)
   ["dllist":"SplDoublyLinkedList":private]=>
-  array(0) {
+  array(1) {
+    [0]=>
+    int(42)
   }
 }
+int(42)

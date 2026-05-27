@@ -11,8 +11,10 @@ set_error_handler(function($code, $err) {
     $GLOBALS['a'] = null;
 });
 $a[$y] = function(){};
+(function() {})();
 ?>
 DONE
 --EXPECT--
 Error: Undefined variable $y
+Error: Using null as an array offset is deprecated, use an empty string instead
 DONE

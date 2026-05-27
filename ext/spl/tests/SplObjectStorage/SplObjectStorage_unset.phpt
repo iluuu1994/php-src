@@ -15,6 +15,7 @@ $s = new SplObjectStorage();
 $s[$o] = new HasDestructor();
 try {
     unset($s[$o]);
+    (function() {})();
 } catch (Exception $e) {
     echo "Caught: {$e->getMessage()}\n";
 }
@@ -22,6 +23,7 @@ var_dump($s);
 $s[$o] = new HasDestructor();
 try {
     $s->offsetUnset($o);
+    (function() {})();
 } catch (Exception $e) {
     echo "Caught: {$e->getMessage()}\n";
 }

@@ -13,6 +13,7 @@ class C {
 $arr = new SplFixedArray(2);
 $arr[0] = new C;
 unset($arr[0]);
+(function() {})();
 var_dump($arr);
 
 ?>

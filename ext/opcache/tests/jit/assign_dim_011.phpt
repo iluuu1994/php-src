@@ -6,13 +6,14 @@ opcache.enable_cli=1
 opcache.file_update_protection=0
 --FILE--
 <?php
-$my_var = null < 
+$my_var = null <
 set_error_handler(function($code, $msg) use(&$my_var) {
 	echo "Err: $msg\n";
     $my_var[] = $my_var = 0;
 });
 try {
     $my_var[] = "";
+    (function() {})();
 } catch (Throwable $e) {
     echo "Exception: " . $e->getMessage() . "\n";
 }

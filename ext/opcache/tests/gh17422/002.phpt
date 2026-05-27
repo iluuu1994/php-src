@@ -5,7 +5,7 @@ GH-17422 (OPcache bypasses the user-defined error handler for deprecations) - Th
 
 set_error_handler(static function (int $errno, string $errstr, string $errfile, int $errline) {
 	throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-});
+}, delay: false);
 
 try {
 	require __DIR__ . "/warning.inc";

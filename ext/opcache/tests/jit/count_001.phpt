@@ -36,6 +36,7 @@ class C {
 
     public static function count_throws(): int {
         $result = count([new ThrowsInDestructor()]);
+        (function() {})();
         echo "Unreachable\n";
         return $result;
     }

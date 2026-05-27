@@ -18,6 +18,7 @@ class Test
 
 $o = new Test;
 $o = NULL;
+(function () {})();
 
 $o = new Test;
 

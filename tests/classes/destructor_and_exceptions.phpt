@@ -19,6 +19,7 @@ try
 {
     $a = new FailClass;
     unset($a);
+    (function () {})();
 }
 catch(Exception $e)
 {
@@ -32,6 +33,7 @@ class FatalException extends Exception
         echo __METHOD__ . "\n";
         $o = new FailClass;
         unset($o);
+        (function () {})();
         echo "Done: " . __METHOD__ . "\n";
     }
 }

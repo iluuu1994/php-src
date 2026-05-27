@@ -46,9 +46,11 @@ class derived extends base {
 echo "Testing class base\n";
 $t = new base();
 unset($t);
+(function () {})();
 echo "Testing class derived\n";
 $t = new derived();
 unset($t);
+(function () {})();
 
 echo "Done\n";
 ?>

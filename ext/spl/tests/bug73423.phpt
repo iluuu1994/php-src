@@ -72,7 +72,9 @@ Fatal error: Uncaught Error: Class "NotExists" not found in %s:%d
 Stack trace:
 #0 %s(%d): eval()
 #1 %s(%d): fooIterator->__destruct()
-#2 {main}
+#2 [internal function]: foo->next()
+#3 %s(%d): FilterIterator->next()
+#4 {main}
 
 Next Error: Class "NotExists" not found in %s:%d
 Stack trace:

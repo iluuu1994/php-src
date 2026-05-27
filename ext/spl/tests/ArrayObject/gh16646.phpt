@@ -20,6 +20,7 @@ class C {
 
 $arr = new ArrayObject(new B(new C));
 unset($arr["b"]);
+(function() {})();
 var_dump($arr);
 
 ?>

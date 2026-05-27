@@ -30,7 +30,7 @@ var_dump("T2::static = " . T2::getDataByStatic());
 
 set_error_handler(function ($severity, $message, $file, $line) {
     throw new Exception($message);
-});
+}, delay: false);
 try {
     $Prop2->setValue(\T2::class, 'hi');
 } catch (Exception $e) {

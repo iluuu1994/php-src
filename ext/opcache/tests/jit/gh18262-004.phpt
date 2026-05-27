@@ -28,9 +28,11 @@ foreach ($tests as $test) {
 ?>
 --EXPECTF--
 int(1)
+string(3) "str"
 
 Fatal error: Uncaught Exception: B::__destruct in %s:%d
 Stack trace:
-#0 %s(%d): B->__destruct()
-#1 {main}
+#0 [internal function]: B->__destruct()
+#1 %s(%d): var_dump('str')
+#2 {main}
   thrown in %s on line %d

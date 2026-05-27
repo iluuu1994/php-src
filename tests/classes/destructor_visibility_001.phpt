@@ -15,6 +15,7 @@ class Derived extends Base {
 $obj = new Derived;
 
 unset($obj);
+(function () {})();
 
 ?>
 ===DONE===

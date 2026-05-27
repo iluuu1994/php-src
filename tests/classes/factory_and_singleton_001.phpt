@@ -24,6 +24,7 @@ class test {
 
   static function destroy() {
     test::$test = NULL;
+    (function () {})();
   }
 
   protected function __destruct() {
@@ -61,17 +62,20 @@ var_dump($y->get());
 
 echo "Destruct x\n";
 $x = NULL;
+(function () {})();
 var_dump(test::getX());
 var_dump(test::count());
 var_dump($y->get());
 
 echo "Destruct y\n";
 $y = NULL;
+(function () {})();
 var_dump(test::getX());
 var_dump(test::count());
 
 echo "Destruct static\n";
 test::destroy();
+(function () {})();
 var_dump(test::getX());
 var_dump(test::count());
 

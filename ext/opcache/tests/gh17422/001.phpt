@@ -13,5 +13,5 @@ warning();
 
 ?>
 --EXPECT--
-set_error_handler: "continue" targeting switch is equivalent to "break"
 OK: warning
+set_error_handler: "continue" targeting switch is equivalent to "break"

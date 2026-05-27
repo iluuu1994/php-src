@@ -19,7 +19,7 @@ $tests = [
 
 set_error_handler(function ($_, $errstr) {
     throw new \Exception($errstr);
-});
+}, delay: false);
 
 foreach ($tests as $obj) {
     try {

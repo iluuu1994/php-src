@@ -16,6 +16,7 @@ set_error_handler(static function (int $errno, string $errstr, string $errfile, 
 });
 
 require __DIR__ . "/warning.inc";
+(function() {})();
 
 warning();
 
