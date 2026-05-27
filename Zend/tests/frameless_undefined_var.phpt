@@ -4,7 +4,7 @@ Undefined var in frameless call
 <?php
 set_error_handler(function ($errno, $errstr) {
     throw new Exception($errstr);
-}, promote_to_exception: true);
+}, delay: false);
 function test() {
     strpos($foo, 'o');
 }

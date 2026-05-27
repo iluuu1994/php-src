@@ -23,7 +23,7 @@ set_error_handler(function()
     $e->_trace = debug_backtrace();
 
     throw $e;
-}, promote_to_exception: true);
+}, delay: false);
 
 // trigger error handler
 $a['waa'];

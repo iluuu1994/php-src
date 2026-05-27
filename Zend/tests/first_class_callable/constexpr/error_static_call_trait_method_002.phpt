@@ -5,7 +5,7 @@ FCC in initializer emits deprecation for static reference to trait method (Excep
 
 set_error_handler(function (int $errno, string $errstr, ?string $errfile = null, ?int $errline = null) {
     throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-}, promote_to_exception: true);
+}, delay: false);
 
 trait Foo {
     public static function myMethod(string $foo) {

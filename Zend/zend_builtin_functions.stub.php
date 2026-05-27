@@ -121,7 +121,7 @@ function trigger_error(string $message, int $error_level = E_USER_NOTICE): true 
 function user_error(string $message, int $error_level = E_USER_NOTICE): true {}
 
 /** @return callable|null */
-function set_error_handler(?callable $callback, int $error_levels = E_ALL, bool $promote_to_exception = false) {}
+function set_error_handler(?callable $callback, int $error_levels = E_ALL, bool $delay = true) {}
 
 function restore_error_handler(): true {}
 

@@ -5,7 +5,7 @@ Inc/dec on bool: warning converted to exception
 
 set_error_handler(function($severity, $m) {
     throw new Exception($m, $severity);
-}, promote_to_exception: true);
+}, delay: false);
 
 $values = [false, true];
 foreach ($values as $value) {

@@ -5,7 +5,7 @@ Delayed errors: The first error promoted to exception takes precedence
 
 set_error_handler(function ($errno, $errstr) {
     throw new ErrorException("Warning: $errstr");
-}, promote_to_exception: true);
+}, delay: false);
 
 try {
     class C extends DateTime {

@@ -2,7 +2,7 @@
 Live ranges should be ordered according to "start" position
 --FILE--
 <?php
-set_error_handler(function($no, $msg) { throw new Exception; }, promote_to_exception: true);
+set_error_handler(function($no, $msg) { throw new Exception; }, delay: false);
 
 try {
     $a = [];

@@ -1283,13 +1283,13 @@ ZEND_FUNCTION(set_error_handler)
 	zend_fcall_info fci;
 	zend_fcall_info_cache fcc;
 	zend_long error_type = E_ALL;
-	bool promote_to_exception = false;
+	bool delay = true;
 
 	ZEND_PARSE_PARAMETERS_START(1, 3)
 		Z_PARAM_FUNC_OR_NULL(fci, fcc)
 		Z_PARAM_OPTIONAL
 		Z_PARAM_LONG(error_type)
-		Z_PARAM_BOOL(promote_to_exception)
+		Z_PARAM_BOOL(delay)
 	ZEND_PARSE_PARAMETERS_END();
 
 	if (Z_TYPE(EG(user_error_handler)) != IS_UNDEF) {
@@ -1306,7 +1306,7 @@ ZEND_FUNCTION(set_error_handler)
 
 	ZVAL_COPY(&EG(user_error_handler), &(fci.function_name));
 	EG(user_error_handler_error_reporting) = (int)error_type & E_ALL;
-	if (promote_to_exception) {
+	if (!delay) {
 		EG(user_error_handler_error_reporting) |= ZEND_ERROR_HANDLER_PROMOTE_TO_EXCEPTION;
 	}
 }

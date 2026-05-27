@@ -5,7 +5,7 @@ Throwing undef var in verify return
 
 set_error_handler(function(int $severity, string $message, string $filename, int $lineNumber): void {
     throw new ErrorException($message, 0, $severity, $filename, $lineNumber);
-}, promote_to_exception: true);
+}, delay: false);
 
 function test(): string {
     return $test;

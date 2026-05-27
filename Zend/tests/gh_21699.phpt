@@ -4,7 +4,7 @@ GH-21699: Assertion failure in shutdown_executor when error handler throws durin
 <?php
 set_error_handler(function ($_, $errstr) {
     throw new Exception($errstr);
-}, promote_to_exception: true);
+}, delay: false);
 class bar {
     public static function __callstatic($fusion, $b)
     {

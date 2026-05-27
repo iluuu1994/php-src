@@ -9,7 +9,7 @@ if (getenv('SKIP_PRELOAD')) die('skip Error handler not active during preloading
 
 set_error_handler(function($code, $message) {
     throw new Exception($message);
-}, promote_to_exception: true);
+}, delay: false);
 
 try {
     class C extends DateTime {

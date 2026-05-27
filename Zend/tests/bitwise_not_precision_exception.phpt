@@ -4,7 +4,7 @@ Promoting float precision warning to exception in bitwise_not
 <?php
 set_error_handler(function($_, $msg) {
     throw new Exception($msg);
-}, promote_to_exception: true);
+}, delay: false);
 try {
     var_dump(~INF);
 } catch (Exception $e) {

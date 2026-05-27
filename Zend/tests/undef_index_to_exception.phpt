@@ -7,7 +7,7 @@ opcache.jit=0
 
 set_error_handler(function($_, $msg) {
     throw new Exception($msg);
-}, promote_to_exception: true);
+}, delay: false);
 
 $test = [];
 try {

@@ -4,7 +4,7 @@ GH-21699 (parent::): no shutdown_executor trampoline assertion when error handle
 <?php
 set_error_handler(function ($_, $errstr) {
     throw new Exception($errstr);
-}, promote_to_exception: true);
+}, delay: false);
 class Base {
     public static function __callStatic($name, $args)
     {

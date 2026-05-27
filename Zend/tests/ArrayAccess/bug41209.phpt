@@ -7,7 +7,7 @@ class env
 {
     public function __construct()
     {
-        set_error_handler(array(__CLASS__, 'errorHandler'), promote_to_exception: true);
+        set_error_handler(array(__CLASS__, 'errorHandler'), delay: false);
     }
 
     public static function errorHandler($errno, $errstr, $errfile, $errline)

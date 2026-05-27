@@ -63,7 +63,7 @@ class Mock_MethodCallbackByReference_7b180d26 extends MethodCallbackByReference 
 set_error_handler(function() {
 //    var_dump(func_get_args());
     DoesNotExists::$nope = true;
-}, E_ALL, promote_to_exception: true);
+}, E_ALL, delay: false);
 
 $foo = new Mock_MethodCallbackByReference_7b180d26();
 $InvMocker = new PHPUnit_Framework_MockObject_InvocationMocker();

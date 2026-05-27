@@ -11,7 +11,7 @@ set_error_handler(function($severity, $m) {
         $m = 'Warning: ' . $m;
     }
     throw new Exception($m, $severity);
-}, promote_to_exception: true);
+}, delay: false);
 
 $values = [
     '',

@@ -2,7 +2,7 @@
 GH-16799 (Assertion failure at Zend/zend_vm_execute.h)
 --FILE--
 <?php
-set_error_handler(function($_, $m) { throw new Exception($m); }, promote_to_exception: true);
+set_error_handler(function($_, $m) { throw new Exception($m); }, delay: false);
 class Test {
     static function test() {
         call_user_func("static::ok");

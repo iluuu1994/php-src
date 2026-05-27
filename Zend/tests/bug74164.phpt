@@ -7,7 +7,7 @@ namespace Foo;
 
 set_error_handler(function ($type, $msg) {
     throw new \Exception($msg);
-}, promote_to_exception: true);
+}, delay: false);
 
 call_user_func(function (array &$ref) {var_dump("xxx");}, 'not_an_array_variable');
 ?>
