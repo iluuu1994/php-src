@@ -5800,6 +5800,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame_ex(u
 
 	if (UNEXPECTED(used_stack > (size_t)(((char*)EG(vm_stack_end)) - (char*)call))) {
 		EX(opline) = opline; /* this is the only difference */
+		ZEND_VM_FCALL_INTERRUPT_CHECK(EG(current_execute_data));
 		call = (zend_execute_data*)zend_vm_stack_extend(used_stack);
 		ZEND_ASSERT_VM_STACK_GLOBAL;
 		zend_vm_init_call_frame(call, call_info | ZEND_CALL_ALLOCATED, func, num_args, object_or_called_scope);
@@ -5816,7 +5817,7 @@ static zend_always_inline zend_execute_data *_zend_vm_stack_push_call_frame(uint
 	uint32_t used_stack = zend_vm_calc_used_stack(num_args, func);
 
 	return _zend_vm_stack_push_call_frame_ex(used_stack, call_info,
-		func, num_args, object_or_called_scope);
+		func, num_args, object_or_called_scope EXECUTE_DATA_CC);
 } /* }}} */
 #else
 # define _zend_vm_stack_push_call_frame_ex zend_vm_stack_push_call_frame_ex

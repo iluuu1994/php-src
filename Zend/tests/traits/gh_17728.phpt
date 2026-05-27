@@ -21,4 +21,5 @@ try {
 
 ?>
 --EXPECT--
+string(3) "bar"
 Calling static trait method Foo::bar is deprecated, it should only be called on a class using the trait

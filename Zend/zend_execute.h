@@ -288,6 +288,11 @@ ZEND_API zend_result ZEND_FASTCALL zval_update_constant(zval *pp);
 ZEND_API zend_result ZEND_FASTCALL zval_update_constant_ex(zval *pp, zend_class_entry *scope);
 ZEND_API zend_result ZEND_FASTCALL zval_update_constant_with_ctx(zval *pp, zend_class_entry *scope, zend_ast_evaluate_ctx *ctx);
 
+/* Call this to handle the timeout or the interrupt function. It will set
+ * EG(vm_interrupt) to false.
+ */
+ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *call);
+
 /* dedicated Zend executor functions - do not use! */
 struct _zend_vm_stack {
 	zval *top;
@@ -350,6 +355,9 @@ static zend_always_inline zend_execute_data *zend_vm_stack_push_call_frame_ex(ui
 	ZEND_ASSERT_VM_STACK_GLOBAL;
 
 	if (UNEXPECTED(used_stack > (size_t)(((char*)EG(vm_stack_end)) - (char*)call))) {
+		if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) {
+			zend_fcall_interrupt(EG(current_execute_data));
+		}
 		call = (zend_execute_data*)zend_vm_stack_extend(used_stack);
 		ZEND_ASSERT_VM_STACK_GLOBAL;
 		zend_vm_init_call_frame(call, call_info | ZEND_CALL_ALLOCATED, func, num_args, object_or_called_scope);
@@ -619,11 +627,6 @@ ZEND_API bool zend_verify_property_type(const zend_property_info *info, zval *pr
 	} while (0)
 
 zend_never_inline ZEND_COLD void zend_match_unhandled_error(const zval *value);
-
-/* Call this to handle the timeout or the interrupt function. It will set
- * EG(vm_interrupt) to false.
- */
-ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *call);
 
 static zend_always_inline void *zend_get_bad_ptr(void)
 {

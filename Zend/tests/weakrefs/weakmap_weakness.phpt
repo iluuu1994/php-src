@@ -66,39 +66,39 @@ unset($map);
 (function() {})();
 
 ?>
---EXPECT--
-object(WeakMap)#1 (0) {
+--EXPECTF--
+object(WeakMap)#%d (0) {
 }
-object(WeakMap)#1 (1) {
+object(WeakMap)#%d (1) {
   [0]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#2 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
     int(2)
   }
 }
-object(WeakMap)#1 (0) {
+object(WeakMap)#%d (0) {
 }
 
 Destructor in WeakMap value:
 Before unset:
 Dtor!
 After unset:
-object(WeakMap)#1 (0) {
+object(WeakMap)#%d (0) {
 }
 
 Destroying map with live object:
-object(stdClass)#2 (0) {
+object(stdClass)#%d (0) {
 }
 
 Object freed by GC:
-object(WeakMap)#1 (1) {
+object(WeakMap)#%d (1) {
   [0]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#3 (1) {
+    object(stdClass)#%d (1) {
       ["obj"]=>
       *RECURSION*
     }
@@ -106,24 +106,24 @@ object(WeakMap)#1 (1) {
     int(4)
   }
 }
-object(WeakMap)#1 (0) {
+object(WeakMap)#%d (0) {
 }
 
 Storing object as own value:
-object(WeakMap)#3 (1) {
+object(WeakMap)#%d (1) {
   [0]=>
   array(2) {
     ["key"]=>
-    object(stdClass)#1 (0) {
+    object(stdClass)#%d (0) {
     }
     ["value"]=>
-    object(stdClass)#1 (0) {
+    object(stdClass)#%d (0) {
     }
   }
 }
 
 Storing map in itself:
-object(WeakMap)#3 (1) {
+object(WeakMap)#%d (1) {
   [0]=>
   array(2) {
     ["key"]=>

@@ -36,5 +36,4 @@ Stack trace:
 Next Exception: 2 in %s:%d
 Stack trace:
 #0 %s(%d): gen()
-#1 %s(%d): {closure:%s:%d}()
-#2 {main}
+#1 {main}
