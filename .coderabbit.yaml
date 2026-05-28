@@ -1,0 +1,4 @@
+reviews:
+  path_instructions:
+    - path: "Zend/**"
+      instructions: "Focus the review on this directory."
