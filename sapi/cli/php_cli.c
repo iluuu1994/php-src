@@ -1189,6 +1189,11 @@ err:
 }
 /* }}} */
 
+static bool is_single_request(void)
+{
+	return true;
+}
+
 /* {{{ main */
 #ifdef PHP_CLI_WIN32_NO_CONSOLE
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -1320,6 +1325,13 @@ exit_loop:
 	sapi_module_ptr->php_ini_path_override = ini_path_override;
 	sapi_module_ptr->phpinfo_as_text = 1;
 	sapi_module_ptr->php_ini_ignore_cwd = 1;
+#ifndef PHP_CLI_WIN32_NO_CONSOLE
+	if (sapi_module_ptr != &cli_server_sapi_module) {
+		sapi_module_ptr->is_single_request = is_single_request;
+	}
+#else
+	sapi_module_ptr->is_single_request = is_single_request;
+#endif
 	sapi_startup(sapi_module_ptr);
 	sapi_started = 1;
 
