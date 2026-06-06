@@ -181,14 +181,23 @@ word can't be a settable lvalue. Strategy:
 Scope the rewrite to `Zend/` + `main/` + `TSRM/` + a minimal extension set
 (`ext/standard` core, enough to run scripts). Everything else stays unbuilt.
 
-## 4. Relocating `u2` (problem C — the core work)
+## 4. Relocating `u2` (problem C — done first, incrementally)
 
-`u2` disappears entirely. Each of its 10 fields moves to a home determined by where
-its owning zval physically lives:
+This is the **first body of implementation work**, and it is done *before* touching
+`value`/`u1`. Each `u2` field is moved to its new home one at a time on the unchanged
+16-byte `zval`, building and testing green after each move. When the last consumer is
+gone, the `u2` union is **deleted entirely** — a clean, fully-tested milestone. (Note:
+removing `u2` leaves `zval` at `value(8) + u1(4)` = 12 bytes, which still rounds up to
+**16** under 8-byte alignment, so `sizeof(zval)` doesn't shrink yet; the drop to 8
+bytes happens later when `value`+`u1` are folded into the tagged word. The value of
+this phase is that the subsequent fold becomes an isolated, `u2`-free transformation.)
+
+Each of `u2`'s fields moves to a home determined by where its owning zval physically
+lives:
 
 | `u2` field | Owner zval lives in… | Relocation |
 |---|---|---|
-| **`next`** (hash chain) | `Bucket` (only ever in hashed arrays, never in `arPacked`) | Add `uint32_t next;` to `Bucket`. **Bucket stays 32 bytes**: `8(val)+8(h)+8(key)+4(next)+4(pad)`. Rewrite ~50 `Z_NEXT(p->val)` → `p->next` in `zend_hash.c/.h`. Lowest-risk, do first as the proof. |
+| **`next`** (hash chain) ✅ **done** | `Bucket` (only ever in hashed arrays, never in `arPacked`) | Added `uint32_t next;` to `Bucket`; rewrote the 43 `Z_NEXT(x->val)` → `x->next` in `zend_hash.c/.h`, `zend_string.c`, `zend_persist.c`. Build + array/Zend suites green under ASAN/UBSAN. (Bucket is temporarily **40 bytes** on the 16-byte zval; it returns to 32 — `8(val)+8(h)+8(key)+4(next)+4(pad)` — once the zval is 8 bytes.) |
 | **`num_args`** (`EX(This)`) | `zend_execute_data` (a struct we own, not a generic container) | Add a field to `zend_execute_data`; redirect `ZEND_CALL_NUM_ARGS`. Hot but clean. |
 | **`fe_pos` / `fe_iter_idx`** | FE_RESET result temp on the **VM stack** — holds array pointer *and* counter, can't coexist in 8 bytes | Allocate a tiny `{ zend_array*; uint32 pos; uint32 iter; }` iterator in `FE_RESET`, store its pointer (tagged `IS_PTR`) in the result, free in `FE_FREE`. Localized to FE_* opcodes; costs one alloc/foreach (acceptable for PoC). |
 | **`guard`** | object's `properties_table[default_count]` reserved slot — stores property *name* + flags together | Move guard storage out of the zval: dedicated allocation / small struct keyed by name. Reworks `zend_get_property_guard` in `zend_object_handlers.c`. |
@@ -241,29 +250,40 @@ approach is viable.
 
 ## 7. Implementation phases
 
-1. **Encoding + constants.** Define the word layout, `ZVAL_TAG_SHIFT` (= 6), the bit-4
-   refcount / bit-5 collectable flags, and the encode/decode helpers. **No `IS_*`
-   reorder** — the uniform shift-by-6 makes the upstream tag numbering work unchanged
-   (see §2). No behavior change yet — keep the 16-byte struct but route everything
-   through the helpers so they're exercised first. Add `ZEND_STATIC_ASSERT`s that the
-   live tags fit in 4 bits and that bits 4/5 don't overlap any tag value.
-2. **`Bucket.next` relocation** in isolation (still 16-byte zval). Proves the chain
-   rework against a passing test suite before anything else moves.
-3. **Flip the struct to 8 bytes**; reimplement all `ZVAL_*` setters and `Z_*` readers
-   against the word. Compile `Zend/`+`main/` and fix every lvalue/address-of error
-   (problem B). Expect this to be the longest phase.
-4. **Relocate remaining `u2` fields** (§4) in dependency order: trivial struct-owned
-   ones first (`num_args`, `lineno`, `constant_flags`), then the four fiddly
-   pointer+uint32 cases (FAST_CALL `opline_num`, foreach state, guard, cache_slot).
+The strategy is to **drain `u2` first**, one field at a time on the unchanged 16-byte
+`zval`, keeping the build and tests green at every step, until `u2` can be deleted
+entirely. Only then do we transform `value`+`u1` into the tagged word. This keeps the
+risky encoding change isolated and every preceding step independently verifiable.
+
+1. **Relocate `Bucket.next`** ✅ *done* — `u2.next` → `Bucket.next`, on the 16-byte
+   zval; array/Zend suites green under ASAN/UBSAN.
+2. **Drain the remaining `u2` fields** (§4), each as its own build-and-test-green step,
+   easiest first:
+   - struct-owned, trivial: `num_args` → `zend_execute_data`, `lineno` →
+     `zend_ast_zval`, `constant_flags` → `zend_constant`;
+   - then the fiddly pointer+uint32 cases: FAST_CALL `opline_num`, foreach
+     `fe_pos`/`fe_iter_idx`, property `guard`, `cache_slot`; plus `extra` and
+     `Z_TYPE_EXTRA`.
+3. **Delete the `u2` union.** With no consumers left, remove the field and the
+   `Z_*`/`Z_*_P` accessor macros for it. `zval` is now `value(8)+u1(4)` (still 16
+   bytes under alignment), but `u2`-free. Build + full Zend/standard suites green —
+   the key milestone before the encoding change.
+4. **Fold `value`+`u1` into the 8-byte tagged word.** Define `ZVAL_TAG_SHIFT` (= 6),
+   the bit-4 refcount / bit-5 collectable flags, encode/decode helpers (**no `IS_*`
+   reorder**, see §2), and the `ZEND_STATIC_ASSERT`s (live tags fit 4 bits; bits 4/5
+   don't overlap a tag). Reimplement all `Z_*` readers / `ZVAL_*` setters against the
+   word, then fix every lvalue/address-of compile error across `Zend/`+`main/`
+   (problem B). The longest phase.
 5. **Doubles→floats + long overflow** (§5).
 6. **Stabilize**: run `sapi/cli`, get `make test` (Zend core subset) green, triage.
 
-Phases 2–4 each end at a buildable, testable state.
+Phases 1–3 each end at a buildable, testable 16-byte state; phase 4 is the flip.
 
 ## 8. Testing
 
-- After Phase 2: full existing suite must still pass (pure refactor).
-- After each later phase: `Zend/tests/`, `tests/`, `ext/standard/tests/` core
+- Phases 1–3 (the `u2` drain + deletion) are pure refactors: the **full** existing
+  suite must stay green after each field move and after the union is removed.
+- Phases 4–5 (the fold + floats): `Zend/tests/`, `tests/`, `ext/standard/tests/` core
   arithmetic/array/string. Expect and whitelist failures in float-precision and
   large-int tests.
 - Smoke target: run a non-trivial script (array-heavy + OOP + closures + foreach)

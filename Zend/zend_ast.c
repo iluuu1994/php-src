@@ -73,7 +73,7 @@ static zend_always_inline zend_ast * zend_ast_create_zval_int(const zval *zv, ui
 	ast->kind = ZEND_AST_ZVAL;
 	ast->attr = attr;
 	ZVAL_COPY_VALUE(&ast->val, zv);
-	Z_LINENO(ast->val) = lineno;
+	ast->lineno = lineno;
 	return (zend_ast *) ast;
 }
 
@@ -108,7 +108,7 @@ ZEND_API zend_ast * ZEND_FASTCALL zend_ast_create_constant(zend_string *name, ze
 	ast->kind = ZEND_AST_CONSTANT;
 	ast->attr = attr;
 	ZVAL_STR(&ast->val, name);
-	Z_LINENO(ast->val) = CG(zend_lineno);
+	ast->lineno = CG(zend_lineno);
 	return (zend_ast *) ast;
 }
 
@@ -1378,14 +1378,14 @@ static void* ZEND_FASTCALL zend_ast_tree_copy(zend_ast *ast, void *buf)
 		new->kind = ZEND_AST_ZVAL;
 		new->attr = ast->attr;
 		ZVAL_COPY(&new->val, zend_ast_get_zval(ast));
-		Z_LINENO(new->val) = zend_ast_get_lineno(ast);
+		new->lineno = zend_ast_get_lineno(ast);
 		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
 	} else if (ast->kind == ZEND_AST_CONSTANT) {
 		zend_ast_zval *new = (zend_ast_zval*)buf;
 		new->kind = ZEND_AST_CONSTANT;
 		new->attr = ast->attr;
 		ZVAL_STR_COPY(&new->val, zend_ast_get_constant_name(ast));
-		Z_LINENO(new->val) = zend_ast_get_lineno(ast);
+		new->lineno = zend_ast_get_lineno(ast);
 		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
 	} else if (zend_ast_is_list(ast)) {
 		const zend_ast_list *list = zend_ast_get_list(ast);
