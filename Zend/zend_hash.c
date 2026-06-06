@@ -446,12 +446,12 @@ ZEND_API void ZEND_FASTCALL zend_hash_discard(HashTable *ht, uint32_t nNumUsed)
 		ht->nNumOfElements--;
 		/* Collision pointers always directed from higher to lower buckets */
 #if 0
-		if (!(Z_NEXT(p->val) == HT_INVALID_IDX || HT_HASH_TO_BUCKET_EX(arData, Z_NEXT(p->val)) < p)) {
+		if (!(p->next == HT_INVALID_IDX || HT_HASH_TO_BUCKET_EX(arData, p->next) < p)) {
 			abort();
 		}
 #endif
 		nIndex = p->h | ht->nTableMask;
-		HT_HASH_EX(arData, nIndex) = Z_NEXT(p->val);
+		HT_HASH_EX(arData, nIndex) = p->next;
 	}
 }
 
@@ -766,7 +766,7 @@ static zend_always_inline Bucket *zend_hash_find_bucket(const HashTable *ht, con
 		    zend_string_equal_content(p->key, key)) {
 			return p;
 		}
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 		if (idx == HT_INVALID_IDX) {
 			return NULL;
 		}
@@ -794,7 +794,7 @@ static zend_always_inline Bucket *zend_hash_str_find_bucket(const HashTable *ht,
 			 && zend_string_equals_cstr(p->key, str, len)) {
 			return p;
 		}
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return NULL;
 }
@@ -814,7 +814,7 @@ static zend_always_inline Bucket *zend_hash_index_find_bucket(const HashTable *h
 		if (p->h == h && !p->key) {
 			return p;
 		}
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return NULL;
 }
@@ -889,7 +889,7 @@ add_to_hash:
 	p->key = key;
 	p->h = h = ZSTR_H(key);
 	nIndex = h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH_EX(arData, nIndex);
+	p->next = HT_HASH_EX(arData, nIndex);
 	HT_HASH_EX(arData, nIndex) = HT_IDX_TO_HASH(idx);
 	if (flag & HASH_LOOKUP) {
 		ZVAL_NULL(&p->val);
@@ -974,7 +974,7 @@ add_to_hash:
 		ZVAL_COPY_VALUE(&p->val, pData);
 	}
 	nIndex = h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+	p->next = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 
 	return &p->val;
@@ -1186,7 +1186,7 @@ convert_to_hash:
 	idx = ht->nNumUsed++;
 	nIndex = h | ht->nTableMask;
 	p = ht->arData + idx;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+	p->next = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	if ((zend_long)h >= ht->nNextFreeElement) {
 		ht->nNextFreeElement = (zend_long)h < ZEND_LONG_MAX ? h + 1 : ZEND_LONG_MAX;
@@ -1279,14 +1279,14 @@ ZEND_API zval* ZEND_FASTCALL zend_hash_set_bucket_key(HashTable *ht, Bucket *b, 
 	nIndex = b->h | ht->nTableMask;
 	i = HT_HASH_EX(arData, nIndex);
 	if (i == idx) {
-		HT_HASH_EX(arData, nIndex) = Z_NEXT(b->val);
+		HT_HASH_EX(arData, nIndex) = b->next;
 	} else {
 		p = HT_HASH_TO_BUCKET_EX(arData, i);
-		while (Z_NEXT(p->val) != idx) {
-			i = Z_NEXT(p->val);
+		while (p->next != idx) {
+			i = p->next;
 			p = HT_HASH_TO_BUCKET_EX(arData, i);
 		}
-		Z_NEXT(p->val) = Z_NEXT(b->val);
+		p->next = b->next;
 	}
 	zend_string_release(b->key);
 
@@ -1298,16 +1298,16 @@ ZEND_API zval* ZEND_FASTCALL zend_hash_set_bucket_key(HashTable *ht, Bucket *b, 
 	idx = HT_IDX_TO_HASH(idx);
 	i = HT_HASH_EX(arData, nIndex);
 	if (i == HT_INVALID_IDX || i < idx) {
-		Z_NEXT(b->val) = i;
+		b->next = i;
 		HT_HASH_EX(arData, nIndex) = idx;
 	} else {
 		p = HT_HASH_TO_BUCKET_EX(arData, i);
-		while (Z_NEXT(p->val) != HT_INVALID_IDX && Z_NEXT(p->val) > idx) {
-			i = Z_NEXT(p->val);
+		while (p->next != HT_INVALID_IDX && p->next > idx) {
+			i = p->next;
 			p = HT_HASH_TO_BUCKET_EX(arData, i);
 		}
-		Z_NEXT(b->val) = Z_NEXT(p->val);
-		Z_NEXT(p->val) = idx;
+		b->next = p->next;
+		p->next = idx;
 	}
 	return &b->val;
 }
@@ -1373,7 +1373,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 	if (HT_IS_WITHOUT_HOLES(ht)) {
 		do {
 			nIndex = p->h | ht->nTableMask;
-			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+			p->next = HT_HASH(ht, nIndex);
 			HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(i);
 			p++;
 		} while (++i < ht->nNumUsed);
@@ -1392,7 +1392,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 							q->h = p->h;
 							nIndex = q->h | ht->nTableMask;
 							q->key = p->key;
-							Z_NEXT(q->val) = HT_HASH(ht, nIndex);
+							q->next = HT_HASH(ht, nIndex);
 							HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(j);
 							if (UNEXPECTED(ht->nInternalPointer > j && ht->nInternalPointer <= i)) {
 								ht->nInternalPointer = j;
@@ -1411,7 +1411,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 							q->h = p->h;
 							nIndex = q->h | ht->nTableMask;
 							q->key = p->key;
-							Z_NEXT(q->val) = HT_HASH(ht, nIndex);
+							q->next = HT_HASH(ht, nIndex);
 							HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(j);
 							if (UNEXPECTED(ht->nInternalPointer > j && ht->nInternalPointer <= i)) {
 								ht->nInternalPointer = j;
@@ -1431,7 +1431,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 				break;
 			}
 			nIndex = p->h | ht->nTableMask;
-			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+			p->next = HT_HASH(ht, nIndex);
 			HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(i);
 			p++;
 		} while (++i < ht->nNumUsed);
@@ -1482,9 +1482,9 @@ static zend_always_inline void _zend_hash_packed_del_val(HashTable *ht, uint32_t
 static zend_always_inline void _zend_hash_del_el_ex(HashTable *ht, uint32_t idx, Bucket *p, Bucket *prev)
 {
 	if (prev) {
-		Z_NEXT(prev->val) = Z_NEXT(p->val);
+		prev->next = p->next;
 	} else {
-		HT_HASH(ht, p->h | ht->nTableMask) = Z_NEXT(p->val);
+		HT_HASH(ht, p->h | ht->nTableMask) = p->next;
 	}
 	idx = HT_HASH_TO_IDX(idx);
 	ht->nNumOfElements--;
@@ -1516,8 +1516,8 @@ static zend_always_inline void _zend_hash_del_el(HashTable *ht, uint32_t idx, Bu
 
 	if (i != idx) {
 		prev = HT_HASH_TO_BUCKET(ht, i);
-		while (Z_NEXT(prev->val) != idx) {
-			i = Z_NEXT(prev->val);
+		while (prev->next != idx) {
+			i = prev->next;
 			prev = HT_HASH_TO_BUCKET(ht, i);
 		}
 	}
@@ -1573,7 +1573,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_del(HashTable *ht, zend_string *key
 			return SUCCESS;
 		}
 		prev = p;
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return FAILURE;
 }
@@ -1623,7 +1623,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_del_ind(HashTable *ht, zend_string 
 			return SUCCESS;
 		}
 		prev = p;
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return FAILURE;
 }
@@ -1668,7 +1668,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_str_del_ind(HashTable *ht, const ch
 			return SUCCESS;
 		}
 		prev = p;
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return FAILURE;
 }
@@ -1699,7 +1699,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_str_del(HashTable *ht, const char *
 			return SUCCESS;
 		}
 		prev = p;
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return FAILURE;
 }
@@ -1734,7 +1734,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_index_del(HashTable *ht, zend_ulong
 			return SUCCESS;
 		}
 		prev = p;
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 	return FAILURE;
 }
@@ -2352,7 +2352,7 @@ static zend_always_inline bool zend_array_dup_element(const HashTable *source, H
 		}
 
 		nIndex = q->h | target->nTableMask;
-		Z_NEXT(q->val) = HT_HASH(target, nIndex);
+		q->next = HT_HASH(target, nIndex);
 		HT_HASH(target, nIndex) = HT_IDX_TO_HASH(idx);
 	}
 	return 1;
@@ -3026,9 +3026,9 @@ static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_comp
 	}
 
 	if (!HT_IS_PACKED(ht)) {
-		/* We broke the hash collisions chains overriding Z_NEXT() by Z_EXTRA().
-		 * Reset the hash headers table as well to avoid possible inconsistent
-		 * access on recursive data structures.
+		/* Sorting reorders the buckets, which invalidates the collision chains
+		 * (Bucket.next). Reset the hash headers table as well to avoid possible
+		 * inconsistent access on recursive data structures.
 	     *
 	     * See Zend/tests/bug63882_2.phpt
 		 */

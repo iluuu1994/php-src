@@ -352,7 +352,6 @@ struct _zval_struct {
 		} v;
 	} u1;
 	union {
-		uint32_t     next;                 /* hash collision chain */
 		uint32_t     cache_slot;           /* cache slot (for RECV_INIT) */
 		uint32_t     opline_num;           /* opline number (for FAST_CALL) */
 		uint32_t     lineno;               /* line number (for ast nodes) */
@@ -387,6 +386,7 @@ typedef struct _Bucket {
 	zval              val;
 	zend_ulong        h;                /* hash value (or numeric index)   */
 	zend_string      *key;              /* string key or NULL for numerics */
+	uint32_t          next;             /* hash collision chain (was zval.u2.next) */
 } Bucket;
 
 typedef struct _zend_array HashTable;

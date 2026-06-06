@@ -1296,13 +1296,13 @@ static zend_always_inline void *zend_hash_get_current_data_ptr_ex(const HashTabl
 				uint32_t i = HT_HASH(__ht, nIndex); \
 				if (UNEXPECTED(j != i)) { \
 					Bucket *prev = HT_HASH_TO_BUCKET(__ht, i); \
-					while (Z_NEXT(prev->val) != j) { \
-						i = Z_NEXT(prev->val); \
+					while (prev->next != j) { \
+						i = prev->next; \
 						prev = HT_HASH_TO_BUCKET(__ht, i); \
 					} \
-					Z_NEXT(prev->val) = Z_NEXT(_p->val); \
+					prev->next = _p->next; \
 				} else { \
-					HT_HASH(__ht, nIndex) = Z_NEXT(_p->val); \
+					HT_HASH(__ht, nIndex) = _p->next; \
 				} \
 			} while (0); \
 		} \
@@ -1648,7 +1648,7 @@ static zend_always_inline zval *_zend_hash_append_ex(HashTable *ht, zend_string 
 	p->key = key;
 	p->h = ZSTR_H(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+	p->next = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
 	return &p->val;
@@ -1675,7 +1675,7 @@ static zend_always_inline zval *_zend_hash_append_ptr_ex(HashTable *ht, zend_str
 	p->key = key;
 	p->h = ZSTR_H(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+	p->next = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
 	return &p->val;
@@ -1701,7 +1701,7 @@ static zend_always_inline void _zend_hash_append_ind(HashTable *ht, zend_string 
 	p->key = key;
 	p->h = ZSTR_H(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
-	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
+	p->next = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
 }

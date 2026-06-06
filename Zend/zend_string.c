@@ -142,7 +142,7 @@ static zend_always_inline zend_string *zend_interned_string_ht_lookup_ex(zend_ul
 		if ((p->h == h) && zend_string_equals_cstr(p->key, str, size)) {
 			return p->key;
 		}
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 
 	return NULL;
@@ -162,7 +162,7 @@ static zend_always_inline zend_string *zend_interned_string_ht_lookup(zend_strin
 		if ((p->h == h) && zend_string_equal_content(p->key, str)) {
 			return p->key;
 		}
-		idx = Z_NEXT(p->val);
+		idx = p->next;
 	}
 
 	return NULL;
