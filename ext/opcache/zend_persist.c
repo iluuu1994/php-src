@@ -876,7 +876,7 @@ static void zend_persist_class_constant(zval *zv)
 	if (c) {
 		Z_PTR_P(zv) = c;
 		return;
-	} else if (((orig_c->ce->ce_flags & ZEND_ACC_IMMUTABLE) && !(Z_CONSTANT_FLAGS(orig_c->value) & CONST_OWNED))
+	} else if (((orig_c->ce->ce_flags & ZEND_ACC_IMMUTABLE) && !(orig_c->flags & CONST_OWNED))
 	 || orig_c->ce->type == ZEND_INTERNAL_CLASS) {
 		/* Class constant comes from a different file in shm or internal class, keep existing pointer. */
 		return;

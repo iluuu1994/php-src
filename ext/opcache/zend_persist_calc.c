@@ -425,7 +425,7 @@ static void zend_persist_class_constant_calc(const zval *zv)
 	zend_class_constant *c = Z_PTR_P(zv);
 
 	if (!zend_shared_alloc_get_xlat_entry(c)) {
-		if (((c->ce->ce_flags & ZEND_ACC_IMMUTABLE) && !(Z_CONSTANT_FLAGS(c->value) & CONST_OWNED))
+		if (((c->ce->ce_flags & ZEND_ACC_IMMUTABLE) && !(c->flags & CONST_OWNED))
 		 || c->ce->type == ZEND_INTERNAL_CLASS) {
 			/* Class constant comes from a different file in shm or internal class, keep existing pointer. */
 			return;

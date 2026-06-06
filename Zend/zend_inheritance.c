@@ -1661,7 +1661,7 @@ static void do_inherit_class_constant(zend_string *name, zend_class_constant *pa
 				c = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
 				memcpy(c, parent_const, sizeof(zend_class_constant));
 				parent_const = c;
-				Z_CONSTANT_FLAGS(c->value) |= CONST_OWNED;
+				c->flags |= CONST_OWNED;
 			}
 		}
 		if (ce->type == ZEND_INTERNAL_CLASS) {
@@ -2143,7 +2143,7 @@ static void do_inherit_iface_constant(zend_string *name, zend_class_constant *c,
 				ct = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
 				memcpy(ct, c, sizeof(zend_class_constant));
 				c = ct;
-				Z_CONSTANT_FLAGS(c->value) |= CONST_OWNED;
+				c->flags |= CONST_OWNED;
 			}
 		}
 		if (ce->type == ZEND_INTERNAL_CLASS) {

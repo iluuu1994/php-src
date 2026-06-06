@@ -30,9 +30,9 @@
 /* Protection from recursive self-referencing class constants */
 #define IS_CONSTANT_VISITED_MARK    0x80
 
-#define IS_CONSTANT_VISITED(zv)     (Z_CONSTANT_FLAGS_P(zv) & IS_CONSTANT_VISITED_MARK)
-#define MARK_CONSTANT_VISITED(zv)   Z_CONSTANT_FLAGS_P(zv) |= IS_CONSTANT_VISITED_MARK
-#define RESET_CONSTANT_VISITED(zv)  Z_CONSTANT_FLAGS_P(zv) &= ~IS_CONSTANT_VISITED_MARK
+#define IS_CONSTANT_VISITED(c)      ((c)->flags & IS_CONSTANT_VISITED_MARK)
+#define MARK_CONSTANT_VISITED(c)    (c)->flags |= IS_CONSTANT_VISITED_MARK
+#define RESET_CONSTANT_VISITED(c)   (c)->flags &= ~IS_CONSTANT_VISITED_MARK
 
 /* Use for special null/true/false constants. */
 static zend_constant *null_const, *true_const, *false_const;
@@ -393,15 +393,15 @@ ZEND_API zval *zend_get_class_constant_ex(zend_string *class_name, zend_string *
 	if (ret_constant && Z_TYPE_P(ret_constant) == IS_CONSTANT_AST) {
 		zend_result ret;
 
-		if (IS_CONSTANT_VISITED(ret_constant)) {
+		if (IS_CONSTANT_VISITED(c)) {
 			zend_throw_error(NULL, "Cannot declare self-referencing constant %s::%s", ZSTR_VAL(class_name), ZSTR_VAL(constant_name));
 			ret_constant = NULL;
 			goto failure;
 		}
 
-		MARK_CONSTANT_VISITED(ret_constant);
+		MARK_CONSTANT_VISITED(c);
 		ret = zend_update_class_constant(c, constant_name, c->ce);
-		RESET_CONSTANT_VISITED(ret_constant);
+		RESET_CONSTANT_VISITED(c);
 
 		if (UNEXPECTED(ret != SUCCESS)) {
 			ret_constant = NULL;

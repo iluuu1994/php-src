@@ -358,7 +358,6 @@ struct _zval_struct {
 		uint32_t     fe_pos;               /* foreach position */
 		uint32_t     fe_iter_idx;          /* foreach iterator index */
 		uint32_t     guard;                /* recursion and single property guard */
-		uint32_t     constant_flags;       /* constant flags */
 		uint32_t     extra;                /* not further specified */
 	} u2;
 };
@@ -690,9 +689,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 
 #define Z_GUARD(zval)				(zval).u2.guard
 #define Z_GUARD_P(zval_p)			Z_GUARD(*(zval_p))
-
-#define Z_CONSTANT_FLAGS(zval)		(zval).u2.constant_flags
-#define Z_CONSTANT_FLAGS_P(zval_p)	Z_CONSTANT_FLAGS(*(zval_p))
 
 #define Z_EXTRA(zval)				(zval).u2.extra
 #define Z_EXTRA_P(zval_p)			Z_EXTRA(*(zval_p))

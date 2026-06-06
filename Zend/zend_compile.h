@@ -488,14 +488,15 @@ typedef struct _zend_property_info {
 	((uintptr_t)(slot) - (uintptr_t)(obj))
 
 typedef struct _zend_class_constant {
-	zval value; /* flags are stored in u2 */
+	zval value;
+	uint32_t flags; /* ZEND_ACC_* visibility/flags (was value.u2.constant_flags) */
 	zend_string *doc_comment;
 	HashTable *attributes;
 	zend_class_entry *ce;
 	zend_type type;
 } zend_class_constant;
 
-#define ZEND_CLASS_CONST_FLAGS(c) Z_CONSTANT_FLAGS((c)->value)
+#define ZEND_CLASS_CONST_FLAGS(c) ((c)->flags)
 
 C23_ENUM(zend_function_type, uint8_t) {
 	ZEND_INTERNAL_FUNCTION = 1,
