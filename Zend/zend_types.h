@@ -354,7 +354,6 @@ struct _zval_struct {
 	union {
 		uint32_t     cache_slot;           /* cache slot (for RECV_INIT) */
 		uint32_t     opline_num;           /* opline number (for FAST_CALL) */
-		uint32_t     lineno;               /* line number (for ast nodes) */
 		uint32_t     num_args;             /* arguments number for EX(This) */
 		uint32_t     fe_pos;               /* foreach position */
 		uint32_t     fe_iter_idx;          /* foreach iterator index */
@@ -677,14 +676,8 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 #define Z_TYPE_INFO(zval)			(zval).u1.type_info
 #define Z_TYPE_INFO_P(zval_p)		Z_TYPE_INFO(*(zval_p))
 
-#define Z_NEXT(zval)				(zval).u2.next
-#define Z_NEXT_P(zval_p)			Z_NEXT(*(zval_p))
-
 #define Z_CACHE_SLOT(zval)			(zval).u2.cache_slot
 #define Z_CACHE_SLOT_P(zval_p)		Z_CACHE_SLOT(*(zval_p))
-
-#define Z_LINENO(zval)				(zval).u2.lineno
-#define Z_LINENO_P(zval_p)			Z_LINENO(*(zval_p))
 
 #define Z_OPLINE_NUM(zval)			(zval).u2.opline_num
 #define Z_OPLINE_NUM_P(zval_p)		Z_OPLINE_NUM(*(zval_p))
