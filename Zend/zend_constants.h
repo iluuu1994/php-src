@@ -28,33 +28,34 @@
 #define CONST_OWNED				(1<<3)				/* constant should be destroyed together with class */
 #define CONST_RECURSIVE			(1<<4)				/* Recursion protection for constant evaluation */
 
-#define CONST_IS_RECURSIVE(c) (Z_CONSTANT_FLAGS((c)->value) & CONST_RECURSIVE)
+#define CONST_IS_RECURSIVE(c) ((c)->flags & CONST_RECURSIVE)
 #define CONST_PROTECT_RECURSION(c) \
 	do { \
-		Z_CONSTANT_FLAGS((c)->value) |= CONST_RECURSIVE; \
+		(c)->flags |= CONST_RECURSIVE; \
 	} while (0)
 #define CONST_UNPROTECT_RECURSION(c) \
 	do { \
-		Z_CONSTANT_FLAGS((c)->value) &= ~CONST_RECURSIVE; \
+		(c)->flags &= ~CONST_RECURSIVE; \
 	} while (0)
 
 #define	PHP_USER_CONSTANT   0x7fffff /* a constant defined in user space */
 
 typedef struct _zend_constant {
 	zval value;
+	uint32_t flags;        /* CONST_* flags + module number (was value.u2.constant_flags) */
 	zend_string *name;
 	zend_string *filename;
 	HashTable *attributes;
 } zend_constant;
 
 #define ZEND_CONSTANT_FLAGS(c) \
-	(Z_CONSTANT_FLAGS((c)->value) & 0xff)
+	((c)->flags & 0xff)
 
 #define ZEND_CONSTANT_MODULE_NUMBER(c) \
-	(Z_CONSTANT_FLAGS((c)->value) >> 8)
+	((c)->flags >> 8)
 
 #define ZEND_CONSTANT_SET_FLAGS(c, _flags, _module_number) do { \
-		Z_CONSTANT_FLAGS((c)->value) = \
+		(c)->flags = \
 			((_flags) & 0xff) | ((_module_number) << 8); \
 	} while (0)
 

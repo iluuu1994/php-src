@@ -294,7 +294,7 @@ static zend_object *reflection_objects_new(zend_class_entry *class_type) /* {{{ 
 }
 /* }}} */
 
-static void _const_string(smart_str *str, const char *name, zval *value, const char *indent);
+static void _const_string(smart_str *str, const char *name, zval *value, uint32_t flags, const char *indent);
 static void _function_string(smart_str *str, zend_function *fptr, zend_class_entry *scope, const char* indent);
 static void _property_string(smart_str *str, zend_property_info *prop, const char *prop_name, const char* indent);
 static void _class_const_string(smart_str *str, const zend_string *name, zend_class_constant *c, const char* indent);
@@ -572,10 +572,9 @@ static void _class_string(smart_str *str, zend_class_entry *ce, zval *obj, const
 /* }}} */
 
 /* {{{ _const_string */
-static void _const_string(smart_str *str, const char *name, zval *value, const char *indent)
+static void _const_string(smart_str *str, const char *name, zval *value, uint32_t flags, const char *indent)
 {
 	const char *type = zend_zval_type_name(value);
-	uint32_t flags = Z_CONSTANT_FLAGS_P(value);
 
 	smart_str_appends(str, indent);
 	smart_str_appends(str, "Constant [ ");
@@ -1182,7 +1181,7 @@ static void _extension_string(smart_str *str, const zend_module_entry *module, c
 
 		ZEND_HASH_MAP_FOREACH_PTR(EG(zend_constants), constant) {
 			if (ZEND_CONSTANT_MODULE_NUMBER(constant) == module->module_number) {
-				_const_string(&str_constants, ZSTR_VAL(constant->name), &constant->value, "    ");
+				_const_string(&str_constants, ZSTR_VAL(constant->name), &constant->value, constant->flags, "    ");
 				num_constants++;
 			}
 		} ZEND_HASH_FOREACH_END();
@@ -8155,7 +8154,7 @@ ZEND_METHOD(ReflectionConstant, __toString)
 	ZEND_PARSE_PARAMETERS_NONE();
 
 	GET_REFLECTION_OBJECT_PTR(const_);
-	_const_string(&str, ZSTR_VAL(const_->name), &const_->value, "");
+	_const_string(&str, ZSTR_VAL(const_->name), &const_->value, const_->flags, "");
 	RETURN_STR(smart_str_extract(&str));
 }
 
