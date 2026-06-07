@@ -735,6 +735,16 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 #define EX_CALL_KIND()			ZEND_CALL_KIND(execute_data)
 #define EX_NUM_ARGS()			ZEND_CALL_NUM_ARGS(execute_data)
 
+/* The fast_call temporary is either a pending return opnum or a stashed
+ * exception object. (Previously packed into zval.value + zval.u2.opline_num.) */
+#define ZEND_FAST_CALL_CLEAR(zv)					ZVAL_NULL(zv)
+#define ZEND_FAST_CALL_HAS_RETURN_OPNUM(zv)			(Z_TYPE_P(zv) == IS_LONG)
+#define ZEND_FAST_CALL_GET_RETURN_OPNUM(zv)			((uint32_t) Z_LVAL_P(zv))
+#define ZEND_FAST_CALL_SET_RETURN_OPNUM(zv, opnum)	ZVAL_LONG((zv), (opnum))
+#define ZEND_FAST_CALL_HAS_EXCEPTION(zv)			(Z_TYPE_P(zv) == IS_OBJECT)
+#define ZEND_FAST_CALL_GET_EXCEPTION(zv)			Z_OBJ_P(zv)
+#define ZEND_FAST_CALL_SET_EXCEPTION(zv, obj)		ZVAL_OBJ((zv), (obj))
+
 #define ZEND_CALL_USES_STRICT_TYPES(call) \
 	(((call)->func->common.fn_flags & ZEND_ACC_STRICT_TYPES) != 0)
 

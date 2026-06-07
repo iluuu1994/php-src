@@ -321,8 +321,7 @@ static void zend_generator_dtor_storage(zend_object *object) /* {{{ */
 				EG(exception) = NULL;
 			}
 
-			Z_OBJ_P(fast_call) = NULL;
-			Z_OPLINE_NUM_P(fast_call) = (uint32_t)-1;
+			ZEND_FAST_CALL_CLEAR(fast_call);
 
 			/* -1 because zend_generator_resume() will increment it */
 			ex->opline = &ex->func->op_array.opcodes[try_catch->finally_op] - 1;
@@ -348,15 +347,15 @@ static void zend_generator_dtor_storage(zend_object *object) /* {{{ */
 			zval *fast_call =
 				ZEND_CALL_VAR(ex, ex->func->op_array.opcodes[try_catch->finally_end].op1.var);
 			/* Clean up incomplete return statement */
-			if (Z_OPLINE_NUM_P(fast_call) != (uint32_t) -1) {
-				zend_op *retval_op = &ex->func->op_array.opcodes[Z_OPLINE_NUM_P(fast_call)];
+			if (ZEND_FAST_CALL_HAS_RETURN_OPNUM(fast_call)) {
+				zend_op *retval_op = &ex->func->op_array.opcodes[ZEND_FAST_CALL_GET_RETURN_OPNUM(fast_call)];
 				if (retval_op->op2_type & (IS_TMP_VAR | IS_VAR)) {
 					zval_ptr_dtor(ZEND_CALL_VAR(ex, retval_op->op2.var));
 				}
 			}
 			/* Clean up backed-up exception */
-			if (Z_OBJ_P(fast_call)) {
-				OBJ_RELEASE(Z_OBJ_P(fast_call));
+			if (ZEND_FAST_CALL_HAS_EXCEPTION(fast_call)) {
+				OBJ_RELEASE(ZEND_FAST_CALL_GET_EXCEPTION(fast_call));
 			}
 		}
 

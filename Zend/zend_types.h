@@ -352,7 +352,6 @@ struct _zval_struct {
 		} v;
 	} u1;
 	union {
-		uint32_t     opline_num;           /* opline number (for FAST_CALL) */
 		uint32_t     fe_pos;               /* foreach position */
 		uint32_t     fe_iter_idx;          /* foreach iterator index */
 		uint32_t     extra;                /* not further specified */
@@ -671,9 +670,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 
 #define Z_TYPE_INFO(zval)			(zval).u1.type_info
 #define Z_TYPE_INFO_P(zval_p)		Z_TYPE_INFO(*(zval_p))
-
-#define Z_OPLINE_NUM(zval)			(zval).u2.opline_num
-#define Z_OPLINE_NUM_P(zval_p)		Z_OPLINE_NUM(*(zval_p))
 
 #define Z_FE_POS(zval)				(zval).u2.fe_pos
 #define Z_FE_POS_P(zval_p)			Z_FE_POS(*(zval_p))
