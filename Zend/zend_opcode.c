@@ -1147,7 +1147,7 @@ ZEND_API void pass_two(zend_op_array *op_array)
 					zval *val = CT_CONSTANT(opline->op2);
 					if (Z_TYPE_P(val) == IS_CONSTANT_AST) {
 						uint32_t slot = ZEND_MM_ALIGNED_SIZE_EX(op_array->cache_size, 8);
-						Z_CACHE_SLOT_P(val) = slot;
+						opline->extended_value = slot;
 						op_array->cache_size += sizeof(zval);
 					}
 				}

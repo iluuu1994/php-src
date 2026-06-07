@@ -4236,7 +4236,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_R
 		zval *default_value = RT_CONSTANT(opline, opline->op2);
 
 		if (Z_OPT_TYPE_P(default_value) == IS_CONSTANT_AST) {
-			zval *cache_val = (zval*)CACHE_ADDR(Z_CACHE_SLOT_P(default_value));
+			zval *cache_val = (zval*)CACHE_ADDR(opline->extended_value);
 
 			/* we keep in cache only not refcounted values */
 			if (Z_TYPE_P(cache_val) != IS_UNDEF) {
@@ -56910,7 +56910,7 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_RECV_I
 		zval *default_value = RT_CONSTANT(opline, opline->op2);
 
 		if (Z_OPT_TYPE_P(default_value) == IS_CONSTANT_AST) {
-			zval *cache_val = (zval*)CACHE_ADDR(Z_CACHE_SLOT_P(default_value));
+			zval *cache_val = (zval*)CACHE_ADDR(opline->extended_value);
 
 			/* we keep in cache only not refcounted values */
 			if (Z_TYPE_P(cache_val) != IS_UNDEF) {

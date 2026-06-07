@@ -5620,7 +5620,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_handle_undef_args(zend_execute_data *cal
 
 					void *run_time_cache = RUN_TIME_CACHE(op_array);
 					zval *cache_val =
-						(zval *) ((char *) run_time_cache + Z_CACHE_SLOT_P(default_value));
+						(zval *) ((char *) run_time_cache + opline->extended_value);
 
 					if (Z_TYPE_P(cache_val) != IS_UNDEF) {
 						/* We keep in cache only not refcounted values */

@@ -5754,7 +5754,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_RECV, op->op2.num == MAY_BE_ANY, ZEND_RECV_NO
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HOT_HANDLER(64, ZEND_RECV_INIT, NUM, CONST)
+ZEND_VM_HOT_HANDLER(64, ZEND_RECV_INIT, NUM, CONST, CACHE_SLOT)
 {
 	USE_OPLINE
 	uint32_t arg_num;
@@ -5768,7 +5768,7 @@ ZEND_VM_HOT_HANDLER(64, ZEND_RECV_INIT, NUM, CONST)
 		zval *default_value = RT_CONSTANT(opline, opline->op2);
 
 		if (Z_OPT_TYPE_P(default_value) == IS_CONSTANT_AST) {
-			zval *cache_val = (zval*)CACHE_ADDR(Z_CACHE_SLOT_P(default_value));
+			zval *cache_val = (zval*)CACHE_ADDR(opline->extended_value);
 
 			/* we keep in cache only not refcounted values */
 			if (Z_TYPE_P(cache_val) != IS_UNDEF) {
