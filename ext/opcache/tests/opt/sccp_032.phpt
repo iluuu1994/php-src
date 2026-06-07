@@ -26,12 +26,12 @@ foreach (test() as $x) {
 ?>
 --EXPECTF--
 $_main:
-     ; (lines=11, args=0, vars=1, tmps=2)
+     ; (lines=11, args=0, vars=1, tmps=3)
      ; (after optimizer)
      ; %ssccp_032.php:1-15
 0000 INIT_FCALL 0 %d string("test")
-0001 T2 = DO_UCALL
-0002 T1 = FE_RESET_R T2 0009
+0001 T3 = DO_UCALL
+0002 T1 = FE_RESET_R T3 0009
 0003 FE_FETCH_R T1 CV0($x) 0009
 0004 INIT_FCALL 1 %d string("var_export")
 0005 SEND_VAR CV0($x) 1

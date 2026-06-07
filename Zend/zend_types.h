@@ -352,8 +352,6 @@ struct _zval_struct {
 		} v;
 	} u1;
 	union {
-		uint32_t     fe_pos;               /* foreach position */
-		uint32_t     fe_iter_idx;          /* foreach iterator index */
 		uint32_t     extra;                /* not further specified */
 	} u2;
 };
@@ -671,11 +669,15 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 #define Z_TYPE_INFO(zval)			(zval).u1.type_info
 #define Z_TYPE_INFO_P(zval_p)		Z_TYPE_INFO(*(zval_p))
 
-#define Z_FE_POS(zval)				(zval).u2.fe_pos
-#define Z_FE_POS_P(zval_p)			Z_FE_POS(*(zval_p))
-
-#define Z_FE_ITER(zval)				(zval).u2.fe_iter_idx
-#define Z_FE_ITER_P(zval_p)			Z_FE_ITER(*(zval_p))
+/* The foreach loop temporary is a 2-slot "fat" temp: slot [0] holds the iterated
+ * array/object, slot [1] holds the iteration position (a packed-array index, a
+ * hash-table iterator index, or (uint32_t)-1). The position lives in the value of the
+ * adjacent slot -- the compiler reserves it right after each FE_RESET result (see
+ * zend_compile.c). (Was zval.u2.fe_pos / fe_iter_idx.) */
+#define Z_FE_POS_P(fe_var)			((uint32_t)Z_LVAL_P((fe_var) + 1))
+#define Z_SET_FE_POS(fe_var, l)		ZVAL_LONG((fe_var) + 1, (uint32_t)l)
+#define Z_FE_ITER_P(fe_var)			((uint32_t)Z_LVAL_P((fe_var) + 1))
+#define Z_SET_FE_ITER(fe_var, l)	ZVAL_LONG((fe_var) + 1, (uint32_t)l)
 
 #define Z_EXTRA(zval)				(zval).u2.extra
 #define Z_EXTRA_P(zval_p)			Z_EXTRA(*(zval_p))

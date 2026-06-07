@@ -5418,7 +5418,7 @@ static zend_never_inline bool ZEND_FASTCALL zend_fe_reset_iterator(zval *array_p
 	iter->index = -1; /* will be set to 0 before using next handler */
 
 	ZVAL_OBJ(EX_VAR(opline->result.var), &iter->std);
-	Z_FE_ITER_P(EX_VAR(opline->result.var)) = (uint32_t)-1;
+	Z_SET_FE_ITER(EX_VAR(opline->result.var), (uint32_t)-1);
 
 	return is_empty;
 }

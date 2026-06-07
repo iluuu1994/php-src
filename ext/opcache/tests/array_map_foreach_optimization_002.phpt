@@ -33,17 +33,17 @@ $_main:
 0002 SEND_VAL int(10) 2
 0003 T2 = DO_ICALL
 0004 ASSIGN CV0($array) T2
-0005 T5 = NEW 1 string("ArrayIterator")
+0005 T6 = NEW 1 string("ArrayIterator")
 0006 SEND_VAR%S CV0($array) 1
 0007 DO_FCALL
-0008 TYPE_ASSERT 131079 string("array_map") T5
+0008 TYPE_ASSERT 131079 string("array_map") T6
 0009 T2 = INIT_ARRAY 0 (packed) NEXT
-0010 V3 = FE_RESET_R T5 0017
-0011 T5 = FE_FETCH_R V3 T4 0017
+0010 V3 = FE_RESET_R T6 0017
+0011 T6 = FE_FETCH_R V3 T5 0017
 0012 INIT_FCALL 1 %d string("plus1")
-0013 SEND_VAL T4 1
-0014 T4 = DO_UCALL
-0015 T2 = ADD_ARRAY_ELEMENT T4 T5
+0013 SEND_VAL T5 1
+0014 T5 = DO_UCALL
+0015 T2 = ADD_ARRAY_ELEMENT T5 T6
 0016 JMP 0011
 0017 FE_FREE V3
 0018 ASSIGN CV1($foo) T2
@@ -52,12 +52,12 @@ $_main:
 0021 DO_ICALL
 0022 RETURN int(1)
 LIVE RANGES:
-     5: 0006 - 0008 (new)
-     5: 0008 - 0010 (tmp/var)
+     6: 0006 - 0008 (new)
+     6: 0008 - 0010 (tmp/var)
      2: 0010 - 0018 (tmp/var)
      3: 0011 - 0017 (loop)
-     4: 0012 - 0013 (tmp/var)
-     5: 0012 - 0015 (tmp/var)
+     5: 0012 - 0013 (tmp/var)
+     6: 0012 - 0015 (tmp/var)
 
 plus1:
      ; (lines=3, args=1, vars=1, tmps=%d)

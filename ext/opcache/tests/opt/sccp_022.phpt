@@ -48,18 +48,18 @@ foo:
 0010 RETURN null
 
 bar:
-     ; (lines=9, args=0, vars=3, tmps=2)
+     ; (lines=9, args=0, vars=3, tmps=4)
      ; (after optimizer)
      ; %s
 0000 T3 = FE_RESET_R CV0($a) 0007
 0001 FE_FETCH_R T3 CV1($v) 0007
-0002 T4 = FE_RESET_R CV1($v) 0005
-0003 FE_FETCH_R T4 CV2($v2) 0005
+0002 T5 = FE_RESET_R CV1($v) 0005
+0003 FE_FETCH_R T5 CV2($v2) 0005
 0004 JMP 0003
-0005 FE_FREE T4
+0005 FE_FREE T5
 0006 JMP 0001
 0007 FE_FREE T3
 0008 RETURN null
 LIVE RANGES:
      3: 0001 - 0007 (loop)
-     4: 0003 - 0005 (loop)
+     5: 0003 - 0005 (loop)

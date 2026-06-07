@@ -34,27 +34,27 @@ foreach (range(0, 6) as $number) {
 ?>
 --EXPECTF--
 $_main:
-     ; (lines=22, args=0, vars=1, tmps=2)
+     ; (lines=22, args=0, vars=1, tmps=3)
      ; (after optimizer)
      ; %s.php:1-25
 0000 INIT_FCALL 2 %d string("range")
 0001 SEND_VAL int(0) 1
 0002 SEND_VAL int(6) 2
-0003 T2 = DO_ICALL
-0004 T1 = FE_RESET_R T2 0020
+0003 T3 = DO_ICALL
+0004 T1 = FE_RESET_R T3 0020
 0005 FE_FETCH_R T1 CV0($number) 0020
 0006 INIT_FCALL 1 %d string("var_dump")
 0007 INIT_FCALL 1 %d string("test")
 0008 SEND_VAR CV0($number) 1
-0009 T2 = DO_UCALL
-0010 SEND_VAL T2 1
+0009 T3 = DO_UCALL
+0010 SEND_VAL T3 1
 0011 DO_ICALL
 0012 INIT_FCALL 1 %d string("var_dump")
 0013 INIT_FCALL 1 %d string("test")
-0014 T2 = CAST (string) CV0($number)
-0015 SEND_VAL T2 1
-0016 T2 = DO_UCALL
-0017 SEND_VAL T2 1
+0014 T3 = CAST (string) CV0($number)
+0015 SEND_VAL T3 1
+0016 T3 = DO_UCALL
+0017 SEND_VAL T3 1
 0018 DO_ICALL
 0019 JMP 0005
 0020 FE_FREE T1

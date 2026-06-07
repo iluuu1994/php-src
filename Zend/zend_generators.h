@@ -75,10 +75,10 @@ struct _zend_generator {
 	zend_long largest_used_integer_key;
 
 	/* Values specified by "yield from" to yield from this generator.
-	 * This is only used for arrays or non-generator Traversables.
-	 * This zval also uses the u2 structure in the same way as
-	 * by-value foreach. */
+	 * This is only used for arrays or non-generator Traversables. */
 	zval values;
+	/* Iteration position within `values` (was values.u2.fe_pos). */
+	uint32_t values_pos;
 
 	/* Node of waiting generators when multiple "yield from" expressions
 	 * are nested. */

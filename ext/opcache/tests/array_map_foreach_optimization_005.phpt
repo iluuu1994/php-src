@@ -35,11 +35,11 @@ $_main:
 0005 TYPE_ASSERT 131079 string("array_map") CV0($array)
 0006 T2 = INIT_ARRAY 0 (packed) NEXT
 0007 V3 = FE_RESET_R CV0($array) 0014
-0008 T5 = FE_FETCH_R V3 T4 0014
+0008 T6 = FE_FETCH_R V3 T5 0014
 0009 INIT_STATIC_METHOD_CALL 1 string("Adder") string("plus1")
-0010 SEND_VAL T4 1
-0011 T4 = DO_UCALL
-0012 T2 = ADD_ARRAY_ELEMENT T4 T5
+0010 SEND_VAL T5 1
+0011 T5 = DO_UCALL
+0012 T2 = ADD_ARRAY_ELEMENT T5 T6
 0013 JMP 0008
 0014 FE_FREE V3
 0015 ASSIGN CV1($foo) T2
@@ -50,8 +50,8 @@ $_main:
 LIVE RANGES:
      2: 0007 - 0015 (tmp/var)
      3: 0008 - 0014 (loop)
-     4: 0009 - 0010 (tmp/var)
-     5: 0009 - 0012 (tmp/var)
+     5: 0009 - 0010 (tmp/var)
+     6: 0009 - 0012 (tmp/var)
 
 Adder::plus1:
      ; (lines=3, args=1, vars=1, tmps=%d)

@@ -97,6 +97,14 @@ void zend_optimize_temporary_variables(zend_op_array *op_array, zend_optimizer_c
 			} else {
 				if (map_T[currT] == INVALID_VAR) {
 					int use_new_var = 0;
+					/* The foreach loop variable occupies two consecutive temporaries:
+					 * the loop variable and, in the next slot, the iteration position
+					 * (Z_FE_POS_P/Z_FE_ITER_P), which is never referenced as an operand.
+					 * Reserve them as a consecutive pair so the position slot is neither
+					 * reused for another temporary nor separated from the loop variable. */
+					bool needs_pair = opline->opcode == ZEND_FE_FETCH_R
+					               || opline->opcode == ZEND_FE_FETCH_RW
+					               || opline->opcode == ZEND_FE_FREE;
 
 					/* Code in "finally" blocks may modify temporary variables.
 					 * We allocate new temporaries for values that need to
@@ -125,6 +133,19 @@ void zend_optimize_temporary_variables(zend_op_array *op_array, zend_optimizer_c
 					if (use_new_var) {
 						i = ++max;
 						zend_bitset_incl(taken_T, i);
+						if (needs_pair) {
+							zend_bitset_incl(taken_T, ++max);
+						}
+					} else if (needs_pair) {
+						/* Find a consecutive pair of free slots above the live set. */
+						int var = max;
+						while (var >= 0 && !zend_bitset_in(taken_T, var)) {
+							var--;
+						}
+						max = MAX(max, var + 2);
+						i = var + 1;
+						zend_bitset_incl(taken_T, i);
+						zend_bitset_incl(taken_T, i + 1);
 					} else {
 						GET_AVAILABLE_T();
 					}
@@ -164,6 +185,11 @@ void zend_optimize_temporary_variables(zend_op_array *op_array, zend_optimizer_c
 						num--;
 						zend_bitset_excl(taken_T, map_T[currT]+num);
 					}
+				} else if (opline->opcode == ZEND_FE_RESET_R
+				        || opline->opcode == ZEND_FE_RESET_RW) {
+					/* Free the foreach iteration-position slot paired with the loop
+					 * variable (reserved at FE_FETCH/FE_FREE above). */
+					zend_bitset_excl(taken_T, map_T[currT] + 1);
 				}
 			}
 		}
