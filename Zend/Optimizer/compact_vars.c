@@ -48,6 +48,12 @@ void zend_optimizer_compact_vars(zend_op_array *op_array) {
 					num--;
 					zend_bitset_incl(used_vars, VAR_NUM(opline->result.var) + num);
 				}
+			} else if (opline->opcode == ZEND_FE_RESET_R || opline->opcode == ZEND_FE_RESET_RW) {
+				/* FE_RESET reserves the slot right after the result to hold the foreach
+				 * iteration position (Z_FE_POS_P/Z_FE_ITER_P). Keep it so it isn't
+				 * dropped, and -- since used temps are renumbered in index order -- it
+				 * stays immediately after the loop variable. */
+				zend_bitset_incl(used_vars, VAR_NUM(opline->result.var) + 1);
 			}
 		}
 	}

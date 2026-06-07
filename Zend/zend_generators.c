@@ -670,7 +670,7 @@ static zend_result zend_generator_get_next_delegated_value(zend_generator *gener
 	zval *value;
 	if (Z_TYPE(generator->values) == IS_ARRAY) {
 		HashTable *ht = Z_ARR(generator->values);
-		HashPosition pos = Z_FE_POS(generator->values);
+		HashPosition pos = generator->values_pos;
 
 		if (HT_IS_PACKED(ht)) {
 			do {
@@ -712,7 +712,7 @@ static zend_result zend_generator_get_next_delegated_value(zend_generator *gener
 				ZVAL_LONG(&generator->key, p->h);
 			}
 		}
-		Z_FE_POS(generator->values) = pos;
+		generator->values_pos = pos;
 	} else {
 		zend_object_iterator *iter = (zend_object_iterator *) Z_OBJ(generator->values);
 

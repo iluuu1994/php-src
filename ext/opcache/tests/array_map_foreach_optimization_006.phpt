@@ -35,11 +35,11 @@ $_main:
 0006 TYPE_ASSERT 131079 string("array_map") CV0($array)
 0007 T3 = INIT_ARRAY 0 (packed) NEXT
 0008 V4 = FE_RESET_R CV0($array) 0015
-0009 T6 = FE_FETCH_R V4 T5 0015
+0009 T7 = FE_FETCH_R V4 T6 0015
 0010 INIT_DYNAMIC_CALL 1 CV1($plus1)
-0011 SEND_VAL_EX T5 1
-0012 T5 = DO_FCALL
-0013 T3 = ADD_ARRAY_ELEMENT T5 T6
+0011 SEND_VAL_EX T6 1
+0012 T6 = DO_FCALL
+0013 T3 = ADD_ARRAY_ELEMENT T6 T7
 0014 JMP 0009
 0015 FE_FREE V4
 0016 ASSIGN CV2($foo) T3
@@ -50,8 +50,8 @@ $_main:
 LIVE RANGES:
      3: 0008 - 0016 (tmp/var)
      4: 0009 - 0015 (loop)
-     5: 0010 - 0011 (tmp/var)
-     6: 0010 - 0013 (tmp/var)
+     6: 0010 - 0011 (tmp/var)
+     7: 0010 - 0013 (tmp/var)
 
 plus1:
      ; (lines=3, args=1, vars=1, tmps=%d)

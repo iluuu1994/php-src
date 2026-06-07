@@ -5187,6 +5187,9 @@ static zend_result zend_compile_func_array_map(znode *result, zend_ast_list *arg
 	uint32_t opnum_reset = get_next_op_number();
 	znode reset_node;
 	zend_emit_op(&reset_node, ZEND_FE_RESET_R, &array, NULL);
+	/* Reserve the slot right after the loop variable for the iteration position
+	 * (Z_FE_POS_P/Z_FE_ITER_P access the adjacent slot; see zend_types.h). */
+	get_temporary_variable();
 	zend_begin_loop(ZEND_FE_FREE, &reset_node, false);
 	uint32_t opnum_fetch = get_next_op_number();
 	zend_emit_op_tmp(&key, ZEND_FE_FETCH_R, &reset_node, &value);
@@ -6416,6 +6419,9 @@ static void zend_compile_foreach(zend_ast *ast) /* {{{ */
 		opline->result_type = IS_TMP_VAR;
 		reset_node.op_type = IS_TMP_VAR;
 	}
+	/* Reserve the slot right after the loop variable to hold the iteration position;
+	 * Z_FE_POS_P/Z_FE_ITER_P access this adjacent slot (see zend_types.h). */
+	get_temporary_variable();
 
 	zend_begin_loop(ZEND_FE_FREE, &reset_node, false);
 

@@ -6927,7 +6927,7 @@ ZEND_VM_HANDLER(77, ZEND_FE_RESET_R, CONST|TMP|CV, JMP_ADDR)
 		if (OP1_TYPE != IS_TMP_VAR && Z_OPT_REFCOUNTED_P(result)) {
 			Z_ADDREF_P(array_ptr);
 		}
-		Z_FE_POS_P(result) = 0;
+		Z_SET_FE_POS(result, 0);
 
 		FREE_OP1_IF_VAR();
 		ZEND_VM_NEXT_OPCODE();
@@ -6961,12 +6961,12 @@ ZEND_VM_HANDLER(77, ZEND_FE_RESET_R, CONST|TMP|CV, JMP_ADDR)
 			}
 
 			if (zend_hash_num_elements(properties) == 0) {
-				Z_FE_ITER_P(result) = (uint32_t) -1;
+				Z_SET_FE_ITER(result, (uint32_t) -1);
 				FREE_OP1_IF_VAR();
 				ZEND_VM_JMP(OP_JMP_ADDR(opline, opline->op2));
 			}
 
-			Z_FE_ITER_P(result) = zend_hash_iterator_add(properties, 0);
+			Z_SET_FE_ITER(result, zend_hash_iterator_add(properties, 0));
 			FREE_OP1_IF_VAR();
 			ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 		} else {
@@ -6984,7 +6984,7 @@ ZEND_VM_HANDLER(77, ZEND_FE_RESET_R, CONST|TMP|CV, JMP_ADDR)
 	} else {
 		zend_error(E_WARNING, "foreach() argument must be of type array|object, %s given", zend_zval_value_name(array_ptr));
 		ZVAL_UNDEF(EX_VAR(opline->result.var));
-		Z_FE_ITER_P(EX_VAR(opline->result.var)) = (uint32_t)-1;
+		Z_SET_FE_ITER(EX_VAR(opline->result.var), (uint32_t)-1);
 		FREE_OP1();
 		ZEND_VM_JMP(OP_JMP_ADDR(opline, opline->op2));
 	}
@@ -7024,7 +7024,7 @@ ZEND_VM_COLD_CONST_HANDLER(125, ZEND_FE_RESET_RW, CONST|TMP|VAR|CV, JMP_ADDR)
 		} else {
 			SEPARATE_ARRAY(array_ptr);
 		}
-		Z_FE_ITER_P(EX_VAR(opline->result.var)) = zend_hash_iterator_add(Z_ARRVAL_P(array_ptr), 0);
+		Z_SET_FE_ITER(EX_VAR(opline->result.var), zend_hash_iterator_add(Z_ARRVAL_P(array_ptr), 0));
 
 		FREE_OP1_IF_VAR();
 		ZEND_VM_NEXT_OPCODE();
@@ -7061,12 +7061,12 @@ ZEND_VM_COLD_CONST_HANDLER(125, ZEND_FE_RESET_RW, CONST|TMP|VAR|CV, JMP_ADDR)
 
 			properties = Z_OBJPROP_P(array_ptr);
 			if (zend_hash_num_elements(properties) == 0) {
-				Z_FE_ITER_P(EX_VAR(opline->result.var)) = (uint32_t) -1;
+				Z_SET_FE_ITER(EX_VAR(opline->result.var), (uint32_t) -1);
 				FREE_OP1_IF_VAR();
 				ZEND_VM_JMP(OP_JMP_ADDR(opline, opline->op2));
 			}
 
-			Z_FE_ITER_P(EX_VAR(opline->result.var)) = zend_hash_iterator_add(properties, 0);
+			Z_SET_FE_ITER(EX_VAR(opline->result.var), zend_hash_iterator_add(properties, 0));
 			FREE_OP1_IF_VAR();
 			ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 		} else {
@@ -7083,7 +7083,7 @@ ZEND_VM_COLD_CONST_HANDLER(125, ZEND_FE_RESET_RW, CONST|TMP|VAR|CV, JMP_ADDR)
 	} else {
 		zend_error(E_WARNING, "foreach() argument must be of type array|object, %s given", zend_zval_value_name(array_ptr));
 		ZVAL_UNDEF(EX_VAR(opline->result.var));
-		Z_FE_ITER_P(EX_VAR(opline->result.var)) = (uint32_t)-1;
+		Z_SET_FE_ITER(EX_VAR(opline->result.var), (uint32_t)-1);
 		FREE_OP1();
 		ZEND_VM_JMP(OP_JMP_ADDR(opline, opline->op2));
 	}
@@ -7242,7 +7242,7 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, TMP, ANY, JMP_ADDR)
 			pos++;
 			value++;
 		}
-		Z_FE_POS_P(array) = pos + 1;
+		Z_SET_FE_POS(array, pos + 1);
 		if (RETURN_VALUE_USED(opline)) {
 			ZVAL_LONG(EX_VAR(opline->result.var), pos);
 		}
@@ -7265,7 +7265,7 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, TMP, ANY, JMP_ADDR)
 			}
 			p++;
 		}
-		Z_FE_POS_P(array) = pos;
+		Z_SET_FE_POS(array, pos);
 		if (RETURN_VALUE_USED(opline)) {
 			if (!p->key) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
@@ -8579,7 +8579,7 @@ ZEND_VM_C_LABEL(yield_from_try_again):
 		if (Z_OPT_REFCOUNTED_P(val)) {
 			Z_ADDREF_P(val);
 		}
-		Z_FE_POS(generator->values) = 0;
+		generator->values_pos = 0;
 		FREE_OP1();
 	} else if (OP1_TYPE != IS_CONST && Z_TYPE_P(val) == IS_OBJECT && Z_OBJCE_P(val)->get_iterator) {
 		zend_class_entry *ce = Z_OBJCE_P(val);
@@ -10580,7 +10580,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_inf
 			pos++;
 			value++;
 		}
-		Z_FE_POS_P(array) = pos + 1;
+		Z_SET_FE_POS(array, pos + 1);
 		if (RETURN_VALUE_USED(opline)) {
 			ZVAL_LONG(EX_VAR(opline->result.var), pos);
 		}
@@ -10603,7 +10603,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_inf
 			}
 			p++;
 		}
-		Z_FE_POS_P(array) = pos;
+		Z_SET_FE_POS(array, pos);
 		if (RETURN_VALUE_USED(opline)) {
 			if (!p->key) {
 				ZVAL_LONG(EX_VAR(opline->result.var), p->h);

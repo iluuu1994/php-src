@@ -61,7 +61,7 @@ Loop::test2:
 0000 RETURN null
 
 Loop::test3:
-     ; (lines=3, args=0, vars=0, tmps=1)
+     ; (lines=3, args=0, vars=0, tmps=2)
      ; (after optimizer)
      ; %sdce_009.php:15-18
 0000 V0 = FE_RESET_RW array(...) 0001
