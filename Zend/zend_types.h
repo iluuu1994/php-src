@@ -355,7 +355,6 @@ struct _zval_struct {
 		uint32_t     opline_num;           /* opline number (for FAST_CALL) */
 		uint32_t     fe_pos;               /* foreach position */
 		uint32_t     fe_iter_idx;          /* foreach iterator index */
-		uint32_t     guard;                /* recursion and single property guard */
 		uint32_t     extra;                /* not further specified */
 	} u2;
 };
@@ -681,9 +680,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 
 #define Z_FE_ITER(zval)				(zval).u2.fe_iter_idx
 #define Z_FE_ITER_P(zval_p)			Z_FE_ITER(*(zval_p))
-
-#define Z_GUARD(zval)				(zval).u2.guard
-#define Z_GUARD_P(zval_p)			Z_GUARD(*(zval_p))
 
 #define Z_EXTRA(zval)				(zval).u2.extra
 #define Z_EXTRA_P(zval_p)			Z_EXTRA(*(zval_p))

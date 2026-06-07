@@ -317,6 +317,8 @@ ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *membe
 
 ZEND_API uint32_t *zend_get_recursion_guard(zend_object *zobj);
 
+ZEND_API void zend_object_guards_dtor(zend_object *zobj);
+
 /* Default behavior for get_properties_for. For use as a fallback in custom
  * get_properties_for implementations. */
 ZEND_API HashTable *zend_std_get_properties_for(zend_object *obj, zend_prop_purpose purpose);

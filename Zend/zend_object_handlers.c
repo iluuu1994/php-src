@@ -599,6 +599,18 @@ ZEND_API bool ZEND_FASTCALL zend_asymmetric_property_has_set_access(const zend_p
 		&& is_protected_compatible_scope(prop_info->prototype->ce, scope));
 }
 
+#define ZEND_GUARDS_SINGLE 0
+#define ZEND_GUARDS_HT     1
+
+typedef struct zend_object_guards {
+	uint8_t  mode;
+	uint32_t guard;
+	union {
+		zend_string *member;
+		HashTable   *ht;
+	} u;
+} zend_object_guards;
+
 static void zend_property_guard_dtor(zval *el) /* {{{ */ {
 	uint32_t *ptr = (uint32_t*)Z_PTR_P(el);
 	if (EXPECTED(!(((uintptr_t)ptr) & 1))) {
@@ -612,51 +624,64 @@ static zend_always_inline zval *zend_get_guard_value(zend_object *zobj)
 	return zobj->properties_table + zobj->ce->default_properties_count;
 }
 
-ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *member) /* {{{ */
+static zend_always_inline zend_object_guards *zend_get_object_guards(zend_object *zobj)
 {
-	HashTable *guards;
-	zval *zv;
-	uint32_t *ptr;
+	zval *zv = zend_get_guard_value(zobj);
+	zend_object_guards *guards;
 
-
-	ZEND_ASSERT(zobj->ce->ce_flags & ZEND_ACC_USE_GUARDS);
-	zv = zend_get_guard_value(zobj);
-	if (EXPECTED(Z_TYPE_P(zv) == IS_STRING)) {
-		zend_string *str = Z_STR_P(zv);
-		if (EXPECTED(str == member) ||
-		    /* str and member don't necessarily have a pre-calculated hash value here */
-		    EXPECTED(zend_string_equal_content(str, member))) {
-			return &Z_GUARD_P(zv);
-		} else if (EXPECTED(Z_GUARD_P(zv) == 0)) {
-			zval_ptr_dtor_str(zv);
-			ZVAL_STR_COPY(zv, member);
-			return &Z_GUARD_P(zv);
-		} else {
-			ALLOC_HASHTABLE(guards);
-			zend_hash_init(guards, 8, NULL, zend_property_guard_dtor, 0);
-			/* mark pointer as "special" using low bit */
-			zend_hash_add_new_ptr(guards, str,
-				(void*)(((uintptr_t)&Z_GUARD_P(zv)) | 1));
-			zval_ptr_dtor_str(zv);
-			ZVAL_ARR(zv, guards);
-		}
-	} else if (EXPECTED(Z_TYPE_P(zv) == IS_ARRAY)) {
-		guards = Z_ARRVAL_P(zv);
-		ZEND_ASSERT(guards != NULL);
-		zv = zend_hash_find(guards, member);
-		if (zv != NULL) {
-			return (uint32_t*)(((uintptr_t)Z_PTR_P(zv)) & ~1);
-		}
+	if (EXPECTED(Z_TYPE_P(zv) == IS_PTR)) {
+		guards = Z_PTR_P(zv);
 	} else {
 		ZEND_ASSERT(Z_TYPE_P(zv) == IS_UNDEF);
-		ZVAL_STR_COPY(zv, member);
-		Z_GUARD_P(zv) &= ~ZEND_GUARD_PROPERTY_MASK;
-		return &Z_GUARD_P(zv);
+		guards = emalloc(sizeof(zend_object_guards));
+		guards->guard = 0;
+		guards->mode = ZEND_GUARDS_SINGLE;
+		guards->u.member = NULL;
+		ZVAL_PTR(zv, guards);
+	}
+	return guards;
+}
+
+ZEND_API uint32_t *zend_get_property_guard(zend_object *zobj, zend_string *member) /* {{{ */
+{
+	ZEND_ASSERT(zobj->ce->ce_flags & ZEND_ACC_USE_GUARDS);
+	zend_object_guards *guards = zend_get_object_guards(zobj);
+	uint32_t *ptr;
+
+	if (EXPECTED(guards->mode == ZEND_GUARDS_SINGLE)) {
+		zend_string *str = guards->u.member;
+		if (str == NULL) {
+			guards->u.member = zend_string_copy(member);
+			return &guards->guard;
+		} else if (EXPECTED(str == member)
+		        /* str and member don't necessarily have a pre-calculated hash here */
+		        || EXPECTED(zend_string_equal_content(str, member))) {
+			return &guards->guard;
+		} else if (EXPECTED(guards->guard == 0)) {
+			zend_string_release(str);
+			guards->u.member = zend_string_copy(member);
+			return &guards->guard;
+		} else {
+			HashTable *ht;
+			ALLOC_HASHTABLE(ht);
+			zend_hash_init(ht, 8, NULL, zend_property_guard_dtor, 0);
+			/* mark pointer as "special" using low bit */
+			zend_hash_add_new_ptr(ht, str,
+				(void*)(((uintptr_t)&guards->guard) | 1));
+			zend_string_release(str);
+			guards->mode = ZEND_GUARDS_HT;
+			guards->u.ht = ht;
+		}
+	} else {
+		ptr = zend_hash_find_ptr(guards->u.ht, member);
+		if (ptr) {
+			return (uint32_t*)(((uintptr_t)ptr) & ~(uintptr_t)1);
+		}
 	}
 	/* we have to allocate uint32_t separately because ht->arData may be reallocated */
 	ptr = (uint32_t*)emalloc(sizeof(uint32_t));
 	*ptr = 0;
-	return (uint32_t*)zend_hash_add_new_ptr(guards, member, ptr);
+	return (uint32_t*)zend_hash_add_new_ptr(guards->u.ht, member, ptr);
 }
 /* }}} */
 
@@ -665,8 +690,22 @@ ZEND_API uint32_t *zend_get_recursion_guard(zend_object *zobj)
 	if (!(zobj->ce->ce_flags & ZEND_ACC_USE_GUARDS)) {
 		return NULL;
 	}
+	return &zend_get_object_guards(zobj)->guard;
+}
+
+ZEND_API void zend_object_guards_dtor(zend_object *zobj)
+{
 	zval *zv = zend_get_guard_value(zobj);
-	return &Z_GUARD_P(zv);
+	if (Z_TYPE_P(zv) == IS_PTR) {
+		zend_object_guards *guards = Z_PTR_P(zv);
+		if (guards->mode == ZEND_GUARDS_HT) {
+			zend_hash_destroy(guards->u.ht);
+			FREE_HASHTABLE(guards->u.ht);
+		} else if (guards->u.member) {
+			zend_string_release(guards->u.member);
+		}
+		efree(guards);
+	}
 }
 
 ZEND_COLD static void zend_typed_property_uninitialized_access(const zend_property_info *prop_info, zend_string *name)
