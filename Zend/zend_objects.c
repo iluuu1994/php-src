@@ -38,7 +38,6 @@ static zend_always_inline void _zend_object_std_init(zend_object *object, zend_c
 	if (UNEXPECTED(ce->ce_flags & ZEND_ACC_USE_GUARDS)) {
 		zval *guard_value = object->properties_table + object->ce->default_properties_count;
 		ZVAL_UNDEF(guard_value);
-		Z_GUARD_P(guard_value) = 0;
 	}
 }
 
@@ -97,16 +96,7 @@ ZEND_API void zend_object_std_dtor(zend_object *object)
 	}
 
 	if (UNEXPECTED(object->ce->ce_flags & ZEND_ACC_USE_GUARDS)) {
-		if (EXPECTED(Z_TYPE_P(p) == IS_STRING)) {
-			zval_ptr_dtor_str(p);
-		} else if (Z_TYPE_P(p) == IS_ARRAY) {
-			HashTable *guards;
-
-			guards = Z_ARRVAL_P(p);
-			ZEND_ASSERT(guards != NULL);
-			zend_hash_destroy(guards);
-			FREE_HASHTABLE(guards);
-		}
+		zend_object_guards_dtor(object);
 	}
 }
 
