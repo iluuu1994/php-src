@@ -97,7 +97,7 @@ __asm__(
     ".ascii \"\\n\"\n"
     ".ascii \"			set $callFrameSize = (sizeof(zend_execute_data) + sizeof(zval) - 1) / sizeof(zval)\\n\"\n"
     ".ascii \"\\n\"\n"
-    ".ascii \"			set $count = $ex->This.u2.num_args\\n\"\n"
+    ".ascii \"			set $count = $ex->num_args\\n\"\n"
     ".ascii \"			set $arg = 0\\n\"\n"
     ".ascii \"			while $arg < $count\\n\"\n"
     ".ascii \"				if $arg > 0\\n\"\n"

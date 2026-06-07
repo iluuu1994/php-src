@@ -648,11 +648,12 @@ struct _zend_execute_data {
 	zend_execute_data   *call;             /* current call                   */
 	zval                *return_value;
 	zend_function       *func;             /* executed function              */
-	zval                 This;             /* this + call_info + num_args    */
+	zval                 This;             /* this + call_info (num_args moved out of u2) */
 	zend_execute_data   *prev_execute_data;
 	zend_array          *symbol_table;
 	void               **run_time_cache;   /* cache op_array->run_time_cache */
 	zend_array          *extra_named_params;
+	uint32_t             num_args;         /* arguments number (was This.u2.num_args) */
 };
 
 #define ZEND_CALL_HAS_THIS           IS_OBJECT_EX
@@ -710,7 +711,7 @@ struct _zend_execute_data {
 	} while (0)
 
 #define ZEND_CALL_NUM_ARGS(call) \
-	(call)->This.u2.num_args
+	(call)->num_args
 
 /* Ensure the correct alignment before slots calculation */
 ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),

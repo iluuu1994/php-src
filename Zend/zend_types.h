@@ -354,7 +354,6 @@ struct _zval_struct {
 	union {
 		uint32_t     cache_slot;           /* cache slot (for RECV_INIT) */
 		uint32_t     opline_num;           /* opline number (for FAST_CALL) */
-		uint32_t     num_args;             /* arguments number for EX(This) */
 		uint32_t     fe_pos;               /* foreach position */
 		uint32_t     fe_iter_idx;          /* foreach iterator index */
 		uint32_t     guard;                /* recursion and single property guard */
