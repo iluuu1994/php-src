@@ -33,7 +33,7 @@ PHPAPI zend_class_entry  *spl_ce_SplDoublyLinkedList;
 PHPAPI zend_class_entry  *spl_ce_SplQueue;
 PHPAPI zend_class_entry  *spl_ce_SplStack;
 
-#define SPL_LLIST_RC(elem) Z_EXTRA((elem)->data)
+#define SPL_LLIST_RC(elem) (elem)->rc
 
 #define SPL_LLIST_DELREF(elem) if (!--SPL_LLIST_RC(elem)) { \
 	efree(elem); \
@@ -56,6 +56,7 @@ PHPAPI zend_class_entry  *spl_ce_SplStack;
 typedef struct _spl_ptr_llist_element {
 	struct _spl_ptr_llist_element *prev;
 	struct _spl_ptr_llist_element *next;
+	int                            rc;
 	zval                           data;
 } spl_ptr_llist_element;
 
