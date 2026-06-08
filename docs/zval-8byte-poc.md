@@ -235,8 +235,8 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
   `unset()`, and readonly-overwritable during `__clone`).
 - [ ] **`INI_ZVAL_IS_NUMBER`** — flag set by `zend_ini_parser.y` to mark explicit numbers.
 - [ ] **`VAR_WAKEUP_FLAG` / `VAR_UNSERIALIZE_FLAG`** — `ext/standard/var_unserializer.re`.
-- [ ] **`PHP_FUNCTION(array_map)`** — a local optimization.
-- [ ] **`ext/spl/spl_dllist.c`** — effectively revert commit `c51a5f02aeb160ef79e0acd6c65b8029ed8c0d3`.
+- [x] **`PHP_FUNCTION(array_map)`** — a local optimization.
+- [x] **`ext/spl/spl_dllist.c`** — effectively revert commit `c51a5f02aeb160ef79e0acd6c65b8029ed8c0d3`.
 
 Once the checklist is clear, delete `Z_EXTRA`/`Z_EXTRA_P` and the `u2.extra` member,
 which empties the `u2` union entirely.
