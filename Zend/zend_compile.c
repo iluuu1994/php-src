@@ -2821,25 +2821,6 @@ static inline void zend_handle_numeric_op(znode *node) /* {{{ */
 }
 /* }}} */
 
-static inline void zend_handle_numeric_dim(const zend_op *opline, znode *dim_node) /* {{{ */
-{
-	if (Z_TYPE(dim_node->u.constant) == IS_STRING) {
-		zend_ulong index;
-
-		if (ZEND_HANDLE_NUMERIC(Z_STR(dim_node->u.constant), index)) {
-			/* For numeric indexes we also keep the original value to use by ArrayAccess
-			 * See bug #63217
-			 */
-			int c = zend_add_literal(&dim_node->u.constant);
-			ZEND_ASSERT(opline->op2.constant + 1 == c);
-			ZVAL_LONG(CT_CONSTANT(opline->op2), index);
-			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = ZEND_EXTRA_VALUE;
-			return;
-		}
-	}
-}
-/* }}} */
-
 static inline void zend_set_class_name_op1(zend_op *opline, znode *class_node) /* {{{ */
 {
 	if (class_node->op_type == IS_CONST) {
@@ -3140,9 +3121,6 @@ static zend_op *zend_delayed_compile_dim(znode *result, zend_ast *ast, uint32_t 
 		opline->extended_value = ZEND_FETCH_DIM_REF;
 	}
 
-	if (dim_node.op_type == IS_CONST) {
-		zend_handle_numeric_dim(opline, &dim_node);
-	}
 	return opline;
 }
 
@@ -3398,10 +3376,6 @@ static void zend_compile_list_assign(
 		if (opline->opcode == ZEND_FETCH_LIST_R) {
 			opline->result_type = IS_TMP_VAR;
 			fetch_result.op_type = IS_TMP_VAR;
-		}
-
-		if (dim_node.op_type == IS_CONST) {
-			zend_handle_numeric_dim(opline, &dim_node);
 		}
 
 		if (elem_ast->attr) {
@@ -5141,7 +5115,7 @@ static zend_result zend_compile_func_array_map(znode *result, zend_ast_list *arg
 	 * breaking for the generated call.
 	 */
 	if (callback->kind == ZEND_AST_CALL
-	 && callback->child[0]->kind == ZEND_AST_ZVAL 
+	 && callback->child[0]->kind == ZEND_AST_ZVAL
 	 && Z_TYPE_P(zend_ast_get_zval(callback->child[0])) == IS_STRING
 	 && zend_string_equals_literal_ci(zend_ast_get_str(callback->child[0]), "assert")) {
 		return FAILURE;

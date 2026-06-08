@@ -205,7 +205,7 @@ lives:
 | **`lineno`** | `zend_ast_zval` (compile-time AST node) | Add `uint32_t lineno;` to `zend_ast_zval`. Not space-critical. Clean. |
 | **`constant_flags`** | `zend_constant` entry | Add a field to `zend_constant`. Clean. |
 | **`cache_slot`** | op_array literal (IS_CONSTANT_AST default value) — AST pointer + slot together | Store `cache_slot` alongside in a parallel literal-info slot or on the AST node. |
-| **`extra`** | various; in sort it's scratch on `Bucket.val` | Case-by-case; for array sort reuse the new `Bucket.next` scratch or add a transient field. |
+| **`extra`** | **many independent micro-uses** — drained one at a time, see checklist below | Each use gets its own relocation; the `u2.extra` member + `Z_EXTRA` macros are removed only once every use is gone. |
 
 `num_args`/`lineno`/`constant_flags`/`next` all land in structs we control →
 trivial. The genuinely fiddly four are **foreach state**, **property guard**,
@@ -214,6 +214,32 @@ packs a pointer (or other live value) + a uint32 that we can no longer co-locate
 
 Also relocate `Z_TYPE_EXTRA` (the 16-bit `u1.v.u.extra`) — same "no room" situation;
 audit its (few) users and move them.
+
+### `u2.extra` sub-uses (drain one at a time)
+
+`Z_EXTRA` / `u2.extra` is overloaded across unrelated subsystems. Each is migrated as
+its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
+`Z_EXTRA_P` macros and the `u2.extra` member removed.
+
+- [x] **`ZEND_EXTRA_VALUE`** (`zend_compile.h`) — a numeric-string dim literal is
+  compiled as two consecutive literals (the `LONG` index, then the original `STRING`
+  at `op2.constant+1`, bug #63217); the `LONG` is flagged so dim opcodes do `dim++` to
+  recover the string for `ArrayAccess`. Used by FETCH_DIM/ASSIGN_DIM/ASSIGN_DIM_OP
+  families. Set in `zend_compile.c` (`zend_handle_numeric_dim`).
+- [ ] **`ZEND_INIT_FCALL` offset** — the literal function name carries its offset into
+  the global function table for faster lookup.
+- [ ] **`ZEND_TYPE_ASSERT`** — same literal-offset trick (an `array_map()` optimization).
+- [ ] **`zend_hash_sort_internal`** — stashes each bucket's original position in
+  `Z_EXTRA(val)` for stable sorting.
+- [ ] **`IS_PROP_UNINIT` / `IS_PROP_REINITABLE`** — per-property flags (explicitly
+  `unset()`, and readonly-overwritable during `__clone`).
+- [ ] **`INI_ZVAL_IS_NUMBER`** — flag set by `zend_ini_parser.y` to mark explicit numbers.
+- [ ] **`VAR_WAKEUP_FLAG` / `VAR_UNSERIALIZE_FLAG`** — `ext/standard/var_unserializer.re`.
+- [ ] **`PHP_FUNCTION(array_map)`** — a local optimization.
+- [ ] **`ext/spl/spl_dllist.c`** — effectively revert commit `c51a5f02aeb160ef79e0acd6c65b8029ed8c0d3`.
+
+Once the checklist is clear, delete `Z_EXTRA`/`Z_EXTRA_P` and the `u2.extra` member,
+which empties the `u2` union entirely.
 
 ## 5. Doubles → floats + integer overflow (problem D)
 

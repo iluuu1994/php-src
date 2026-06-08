@@ -882,7 +882,8 @@ ZEND_STATIC_ASSERT(ZEND_MM_ALIGNED_SIZE(sizeof(zval)) == sizeof(zval),
 #define IS_SMART_BRANCH_JMPZ  (1<<4)
 #define IS_SMART_BRANCH_JMPNZ (1<<5)
 
-#define ZEND_EXTRA_VALUE 1
+// Removed for the PoC
+// #define ZEND_EXTRA_VALUE 1
 
 #include "zend_globals.h"
 

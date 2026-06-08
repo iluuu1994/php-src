@@ -548,18 +548,6 @@ bool zend_optimizer_update_op2_const(zend_op_array *op_array,
 		case ZEND_FETCH_DIM_UNSET:
 		case ZEND_FETCH_LIST_R:
 		case ZEND_FETCH_LIST_W:
-			if (Z_TYPE_P(val) == IS_STRING) {
-				zend_ulong index;
-
-				if (ZEND_HANDLE_NUMERIC(Z_STR_P(val), index)) {
-					ZVAL_LONG(&tmp, index);
-					opline->op2.constant = zend_optimizer_add_literal(op_array, &tmp);
-					zend_string_hash_val(Z_STR_P(val));
-					zend_optimizer_add_literal(op_array, val);
-					Z_EXTRA(op_array->literals[opline->op2.constant]) = ZEND_EXTRA_VALUE;
-					break;
-				}
-			}
 			opline->op2.constant = zend_optimizer_add_literal(op_array, val);
 			break;
 		case ZEND_ADD_ARRAY_ELEMENT:
