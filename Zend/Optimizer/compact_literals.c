@@ -232,11 +232,7 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 						LITERAL_INFO(opline->op1.constant, 1);
 					}
 					if (opline->op2_type == IS_CONST) {
-						if (Z_EXTRA(op_array->literals[opline->op2.constant]) == ZEND_EXTRA_VALUE) {
-							LITERAL_INFO(opline->op2.constant, 2);
-						} else {
-							LITERAL_INFO(opline->op2.constant, 1);
-						}
+						LITERAL_INFO(opline->op2.constant, 1);
 					}
 					break;
 				default:

@@ -2961,8 +2961,6 @@ fetch_from_array:
 		GC_ADDREF(obj);
 		if (ZEND_CONST_COND(dim_type == IS_CV, dim != NULL) && UNEXPECTED(Z_TYPE_P(dim) == IS_UNDEF)) {
 			dim = ZVAL_UNDEFINED_OP2();
-		} else if (dim_type == IS_CONST && Z_EXTRA_P(dim) == ZEND_EXTRA_VALUE) {
-			dim++;
 		}
 		retval = obj->handlers->read_dimension(obj, dim, type, result);
 
@@ -3171,9 +3169,6 @@ try_string_offset:
 		GC_ADDREF(obj);
 		if (ZEND_CONST_COND(dim_type == IS_CV, 1) && UNEXPECTED(Z_TYPE_P(dim) == IS_UNDEF)) {
 			dim = ZVAL_UNDEFINED_OP2();
-		}
-		if (dim_type == IS_CONST && Z_EXTRA_P(dim) == ZEND_EXTRA_VALUE) {
-			dim++;
 		}
 		retval = obj->handlers->read_dimension(obj, dim, type, result);
 

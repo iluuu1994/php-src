@@ -2211,7 +2211,7 @@ static uint32_t assign_dim_array_result_type(
 			}
 			if (dim_type & MAY_BE_STRING) {
 				tmp |= MAY_BE_ARRAY_KEY_STRING;
-				if (dim_op_type != IS_CONST) {
+				if (true || dim_op_type != IS_CONST) {
 					// FIXME: numeric string
 					if (arr_type & (MAY_BE_UNDEF|MAY_BE_NULL|MAY_BE_FALSE)) {
 						tmp |= MAY_BE_ARRAY_PACKED;
