@@ -5143,14 +5143,13 @@ static zend_result zend_compile_func_array_map(znode *result, zend_ast_list *arg
 
 	/* Verify that the input array actually is an array. */
 	znode name;
-	name.op_type = IS_CONST;
-	ZVAL_STR_COPY(&name.u.constant, lcname);
+	name.op_type = IS_UNUSED;
+	const zval *fbc_zv = zend_hash_find(CG(function_table), lcname);
+	const Bucket *fbc_bucket = ZEND_CONTAINER_OF(fbc_zv, Bucket, val);
+	name.u.op.num = fbc_bucket - CG(function_table)->arData;
 	opline = zend_emit_op(NULL, ZEND_TYPE_ASSERT, &name, &array);
 	opline->lineno = lineno;
 	opline->extended_value = (2 << 16) | IS_ARRAY;
-	const zval *fbc_zv = zend_hash_find(CG(function_table), lcname);
-	const Bucket *fbc_bucket = ZEND_CONTAINER_OF(fbc_zv, Bucket, val);
-	Z_EXTRA_P(CT_CONSTANT(opline->op1)) = fbc_bucket - CG(function_table)->arData;
 
 	/* Initialize the result array. */
 	zend_emit_op_tmp(result, ZEND_INIT_ARRAY, NULL, NULL);
