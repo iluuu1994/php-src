@@ -2952,42 +2952,56 @@ ZEND_API void zend_hash_bucket_swap(Bucket *p, Bucket *q)
 	zval val;
 	zend_ulong h;
 	zend_string *key;
+	uint32_t stable_index;
 
 	val = p->val;
 	h = p->h;
 	key = p->key;
+	stable_index = p->stable_index;
 
 	p->val = q->val;
 	p->h = q->h;
 	p->key = q->key;
+	p->stable_index = q->stable_index;
 
 	q->val = val;
 	q->h = h;
 	q->key = key;
+	q->stable_index = stable_index;
 }
 
 ZEND_API void zend_hash_bucket_renum_swap(Bucket *p, Bucket *q)
 {
 	zval val;
+	uint32_t stable_index;
 
 	val = p->val;
+	stable_index = p->stable_index;
+
 	p->val = q->val;
+	p->stable_index = q->stable_index;
+
 	q->val = val;
+	q->stable_index = stable_index;
 }
 
 ZEND_API void zend_hash_bucket_packed_swap(Bucket *p, Bucket *q)
 {
 	zval val;
 	zend_ulong h;
+	uint32_t stable_index;
 
 	val = p->val;
 	h = p->h;
+	stable_index = p->stable_index;
 
 	p->val = q->val;
 	p->h = q->h;
+	p->stable_index = q->stable_index;
 
 	q->val = val;
 	q->h = h;
+	q->stable_index = stable_index;
 }
 
 static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_compare_func_t compar, bool renumber)
@@ -3009,7 +3023,7 @@ static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_comp
 	if (HT_IS_WITHOUT_HOLES(ht)) {
 		/* Store original order of elements in extra space to allow stable sorting. */
 		for (i = 0; i < ht->nNumUsed; i++) {
-			Z_EXTRA(ht->arData[i].val) = i;
+			ht->arData[i].stable_index = i;
 		}
 	} else {
 		/* Remove holes and store original order. */
@@ -3019,7 +3033,7 @@ static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_comp
 			if (i != j) {
 				ht->arData[i] = *p;
 			}
-			Z_EXTRA(ht->arData[i].val) = i;
+			ht->arData[i].stable_index = i;
 			i++;
 		}
 		ht->nNumUsed = i;
