@@ -229,7 +229,7 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
 - [x] **`ZEND_INIT_FCALL` offset** — the literal function name carries its offset into
   the global function table for faster lookup.
 - [x] **`ZEND_TYPE_ASSERT`** — same literal-offset trick (an `array_map()` optimization).
-- [ ] **`zend_hash_sort_internal`** — stashes each bucket's original position in
+- [x] **`zend_hash_sort_internal`** — stashes each bucket's original position in
   `Z_EXTRA(val)` for stable sorting.
 - [ ] **`IS_PROP_UNINIT` / `IS_PROP_REINITABLE`** — per-property flags (explicitly
   `unset()`, and readonly-overwritable during `__clone`).
