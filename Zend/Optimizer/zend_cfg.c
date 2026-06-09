@@ -330,19 +330,30 @@ ZEND_API void zend_build_cfg(zend_arena **arena, const zend_op_array *op_array, 
 				flags |= ZEND_FUNC_HAS_CALLS;
 				break;
 			case ZEND_INIT_FCALL:
-			case ZEND_INIT_NS_FCALL_BY_NAME:
-				zv = CRT_CONSTANT(opline->op2);
-				if (opline->opcode == ZEND_INIT_NS_FCALL_BY_NAME) {
-					/* The third literal is the lowercased unqualified name */
-					zv += 2;
+			case ZEND_INIT_NS_FCALL_BY_NAME: {
+				zend_string *fn_name = NULL;
+				if (opline->op2_type == IS_CONST) {
+					zv = CRT_CONSTANT(opline->op2);
+					if (opline->opcode == ZEND_INIT_NS_FCALL_BY_NAME) {
+						/* The third literal is the lowercased unqualified name */
+						zv += 2;
+					}
+					if ((fn = zend_hash_find_ptr(EG(function_table), Z_STR_P(zv)))) {
+						fn_name = fn->common.function_name;
+					}
+				} else {
+					ZEND_ASSERT(opline->op2_type == IS_UNUSED);
+					fn = Z_PTR(EG(function_table)->arData[opline->op2.num].val);
+					fn_name = fn->common.function_name;
 				}
-				if ((fn = zend_hash_find_ptr(EG(function_table), Z_STR_P(zv))) != NULL) {
+				if (fn != NULL) {
 					if (fn->type == ZEND_INTERNAL_FUNCTION) {
 						flags |= zend_optimizer_classify_function(
-							Z_STR_P(zv), opline->extended_value);
+							fn_name, opline->extended_value);
 					}
 				}
 				break;
+			}
 			case ZEND_FAST_CALL:
 				BB_START(OP_JMP_ADDR(opline, opline->op1) - op_array->opcodes);
 				BB_START(i + 1);

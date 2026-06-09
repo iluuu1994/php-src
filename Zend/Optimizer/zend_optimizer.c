@@ -470,6 +470,7 @@ bool zend_optimizer_update_op2_const(zend_op_array *op_array,
 				zval_ptr_dtor_nogc(val);
 				val = &tmp;
 			}
+			opline->op2_type = IS_CONST;
 			opline->op2.constant = zend_optimizer_add_literal(op_array, val);
 			opline->result.num = alloc_cache_slots(op_array, 1);
 			break;
@@ -897,6 +898,10 @@ zend_function *zend_optimizer_get_called_func(
 	switch (opline->opcode) {
 		case ZEND_INIT_FCALL:
 		{
+			if (opline->op2_type == IS_UNUSED) {
+				return Z_PTR(EG(function_table)->arData[opline->op2.num].val);
+			}
+			ZEND_ASSERT(opline->op2_type == IS_CONST);
 			zend_string *function_name = Z_STR_P(CRT_CONSTANT(opline->op2));
 			zend_function *func;
 			zval *func_zv;
@@ -1462,9 +1467,14 @@ static void zend_adjust_fcall_stack_size(const zend_op_array *op_array, const ze
 	const zend_op* end = opline + op_array->last;
 	while (opline < end) {
 		if (opline->opcode == ZEND_INIT_FCALL) {
-			func = zend_hash_find_ptr(
-				&ctx->script->function_table,
-				Z_STR_P(RT_CONSTANT(opline, opline->op2)));
+			if (opline->op2_type == IS_CONST) {
+				func = zend_hash_find_ptr(
+					&ctx->script->function_table,
+					Z_STR_P(RT_CONSTANT(opline, opline->op2)));
+			} else {
+				ZEND_ASSERT(opline->op2_type == IS_UNUSED);
+				func = Z_PTR(EG(function_table)->arData[opline->op2.num].val);
+			}
 			if (func) {
 				opline->op1.num = zend_vm_calc_used_stack(opline->extended_value, func);
 			}

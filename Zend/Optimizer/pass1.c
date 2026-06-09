@@ -212,15 +212,23 @@ void zend_optimizer_pass1(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 				init_opline--;
 			}
 			if (init_opline->opcode != ZEND_INIT_FCALL ||
-			    init_opline->op2_type != IS_CONST ||
-			    Z_TYPE(ZEND_OP2_LITERAL(init_opline)) != IS_STRING) {
+			    (init_opline->op2_type == IS_CONST &&
+			     Z_TYPE(ZEND_OP2_LITERAL(init_opline)) != IS_STRING)) {
 				/* don't collect constants after unknown function call */
 				collect_constants = false;
 				break;
 			}
 
+			zend_string *callee_name;
+			if (init_opline->op2_type == IS_CONST) {
+				callee_name = Z_STR(ZEND_OP2_LITERAL(init_opline));
+			} else {
+				zend_function *callee = Z_PTR(EG(function_table)->arData[init_opline->op2.num].val);
+				callee_name = callee->common.function_name;
+			}
+
 			/* define("name", scalar); */
-			if (zend_string_equals_literal_ci(Z_STR(ZEND_OP2_LITERAL(init_opline)), "define")) {
+			if (zend_string_equals_literal_ci(callee_name, "define")) {
 
 				if (Z_TYPE(ZEND_OP1_LITERAL(send1_opline)) == IS_STRING && send2_opline) {
 
@@ -239,7 +247,9 @@ void zend_optimizer_pass1(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 						opline->op2.constant = send2_opline->op1.constant;
 						opline->result.num = 0;
 
-						literal_dtor(&ZEND_OP2_LITERAL(init_opline));
+						if (init_opline->op2_type == IS_CONST) {
+							literal_dtor(&ZEND_OP2_LITERAL(init_opline));
+						}
 						MAKE_NOP(init_opline);
 						MAKE_NOP(send1_opline);
 						MAKE_NOP(send2_opline);
@@ -249,8 +259,10 @@ void zend_optimizer_pass1(zend_op_array *op_array, zend_optimizer_ctx *ctx)
 			}
 
 			if (!send2_opline && Z_TYPE(ZEND_OP1_LITERAL(send1_opline)) == IS_STRING &&
-					zend_optimizer_eval_special_func_call(&result, Z_STR(ZEND_OP2_LITERAL(init_opline)), Z_STR(ZEND_OP1_LITERAL(send1_opline))) == SUCCESS) {
-				literal_dtor(&ZEND_OP2_LITERAL(init_opline));
+					zend_optimizer_eval_special_func_call(&result, callee_name, Z_STR(ZEND_OP1_LITERAL(send1_opline))) == SUCCESS) {
+				if (init_opline->op2_type == IS_CONST) {
+					literal_dtor(&ZEND_OP2_LITERAL(init_opline));
+				}
 				MAKE_NOP(init_opline);
 				literal_dtor(&ZEND_OP1_LITERAL(send1_opline));
 				MAKE_NOP(send1_opline);

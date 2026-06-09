@@ -4078,7 +4078,7 @@ ZEND_VM_HOT_HANDLER(61, ZEND_INIT_FCALL, NUM, CONST, NUM|CACHE_SLOT)
 	zend_execute_data *call;
 
 	fbc = CACHED_PTR(opline->result.num);
-	if (UNEXPECTED(fbc == NULL)) {
+	if (opline->op2_type == IS_CONST && UNEXPECTED(fbc == NULL)) {
 		fname = (zval*)RT_CONSTANT(opline, opline->op2);
 		func = zend_hash_find_known_hash(EG(function_table), Z_STR_P(fname));
 		ZEND_ASSERT(func != NULL && "Function existence must be checked at compile time");
@@ -4087,32 +4087,17 @@ ZEND_VM_HOT_HANDLER(61, ZEND_INIT_FCALL, NUM, CONST, NUM|CACHE_SLOT)
 			init_func_run_time_cache(&fbc->op_array);
 		}
 		CACHE_PTR(opline->result.num, fbc);
-	}
-
-	call = _zend_vm_stack_push_call_frame_ex(
-		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
-		fbc, opline->extended_value, NULL);
-	call->prev_execute_data = EX(call);
-	EX(call) = call;
-
-	ZEND_VM_NEXT_OPCODE();
-}
-
-ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_INIT_FCALL, Z_EXTRA_P(RT_CONSTANT(op, op->op2)) != 0, ZEND_INIT_FCALL_OFFSET, NUM, CONST, NUM|CACHE_SLOT)
-{
-	USE_OPLINE
-	zend_function *fbc;
-	zend_execute_data *call;
-	fbc = CACHED_PTR(opline->result.num);
-	if (UNEXPECTED(fbc == NULL)) {
-		fbc = Z_PTR(EG(function_table)->arData[Z_EXTRA_P(RT_CONSTANT(opline, opline->op2))].val);
+	} else if (opline->op2_type == IS_UNUSED && UNEXPECTED(fbc == NULL)) {
+		fbc = Z_PTR(EG(function_table)->arData[opline->op2.num].val);
 		CACHE_PTR(opline->result.num, fbc);
 	}
+
 	call = _zend_vm_stack_push_call_frame_ex(
 		opline->op1.num, ZEND_CALL_NESTED_FUNCTION,
 		fbc, opline->extended_value, NULL);
 	call->prev_execute_data = EX(call);
 	EX(call) = call;
+
 	ZEND_VM_NEXT_OPCODE();
 }
 
