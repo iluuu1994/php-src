@@ -86,9 +86,9 @@ PHP_MSHUTDOWN_FUNCTION(array) /* {{{ */
 /* }}} */
 
 static zend_never_inline ZEND_COLD int stable_sort_fallback(Bucket *a, Bucket *b) {
-	if (Z_EXTRA(a->val) > Z_EXTRA(b->val)) {
+	if (a->stable_index > b->stable_index) {
 		return 1;
-	} else if (Z_EXTRA(a->val) < Z_EXTRA(b->val)) {
+	} else if (a->stable_index < b->stable_index) {
 		return -1;
 	} else {
 		return 0;
@@ -6092,7 +6092,7 @@ PHP_FUNCTION(array_multisort)
 	}
 	for (k = 0; k < array_size; k++) {
 		ZVAL_UNDEF(&indirect[k][num_arrays].val);
-		Z_EXTRA_P(&indirect[k][num_arrays].val) = k;
+		indirect[k][num_arrays].stable_index = k;
 	}
 
 	/* Do the actual sort magic - bada-bim, bada-boom. */

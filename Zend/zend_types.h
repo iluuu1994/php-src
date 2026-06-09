@@ -379,6 +379,7 @@ typedef struct _Bucket {
 	zend_ulong        h;                /* hash value (or numeric index)   */
 	zend_string      *key;              /* string key or NULL for numerics */
 	uint32_t          next;             /* hash collision chain (was zval.u2.next) */
+	uint32_t          stable_index;     /* used during sorting */
 } Bucket;
 
 typedef struct _zend_array HashTable;
