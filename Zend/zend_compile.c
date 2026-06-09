@@ -5442,16 +5442,25 @@ static void zend_compile_call(znode *result, const zend_ast *ast, uint32_t type)
 		}
 
 		zval_ptr_dtor(&name_node.u.constant);
-		ZVAL_STR(&name_node.u.constant, lcname);
+
+		/* Store offset to function from symbol table in op2.extra. */
+		if (fbc->type == ZEND_INTERNAL_FUNCTION
+		 /* See GH-17733. Reset Z_EXTRA_P(op2) of ZEND_INIT_FCALL, which
+		  * is an offset into the global function table, to avoid calling
+		  * incorrect functions when environment changes. This, and the
+		  * equivalent code below, can be removed once proper system ID
+		  * validation is implemented. */
+		 && !(CG(compiler_options) & ZEND_COMPILE_WITH_FILE_CACHE)) {
+			zend_string_release_ex(lcname, 0);
+			const Bucket *fbc_bucket = ZEND_CONTAINER_OF(fbc_zv, Bucket, val);
+			name_node.op_type = IS_UNUSED;
+			name_node.u.op.num = fbc_bucket - CG(function_table)->arData;
+		} else {
+			ZVAL_STR(&name_node.u.constant, lcname);
+		}
 
 		opline = zend_emit_op(NULL, ZEND_INIT_FCALL, NULL, &name_node);
 		opline->result.num = zend_alloc_cache_slot();
-
-		/* Store offset to function from symbol table in op2.extra. */
-		if (fbc->type == ZEND_INTERNAL_FUNCTION) {
-			const Bucket *fbc_bucket = ZEND_CONTAINER_OF(fbc_zv, Bucket, val);
-			Z_EXTRA_P(CT_CONSTANT(opline->op2)) = fbc_bucket - CG(function_table)->arData;
-		}
 
 		zend_compile_call_common(result, args_ast, fbc, ast->lineno, type);
 	}
