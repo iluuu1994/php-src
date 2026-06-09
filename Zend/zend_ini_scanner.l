@@ -147,8 +147,27 @@ ZEND_API zend_ini_scanner_globals ini_scanner_globals;
 	} else {                                                       \
 		zend_ini_copy_value(ini_lval, str, len);                   \
 	}                                                              \
-	Z_EXTRA_P(ini_lval) = 0;                                       \
 	return type;                                                   \
+}
+
+static inline zend_result convert_to_number(zval *retval, const char *str, const int str_len)
+{
+	uint8_t type;
+	int overflow;
+	zend_long lval;
+	double dval;
+
+	if ((type = is_numeric_string_ex(str, str_len, &lval, &dval, 0, &overflow, NULL)) != 0) {
+		if (type == IS_LONG) {
+			ZVAL_LONG(retval, lval);
+			return SUCCESS;
+		} else if (type == IS_DOUBLE && !overflow) {
+			ZVAL_DOUBLE(retval, dval);
+			return SUCCESS;
+		}
+	}
+
+	return FAILURE;
 }
 
 static void zend_ini_copy_typed_value(zval *retval, const int type, const char *str, int len)
@@ -163,6 +182,11 @@ static void zend_ini_copy_typed_value(zval *retval, const int type, const char *
 			ZVAL_NULL(retval);
 			break;
 
+		case TC_NUMBER:
+			if (convert_to_number(retval, str, len) == SUCCESS) {
+				break;
+			}
+			ZEND_FALLTHROUGH;
 		default:
 			zend_ini_copy_value(retval, str, len);
 	}
@@ -653,7 +677,6 @@ end_raw_value_chars:
 	yyleng = YYCURSOR - SCNG(yy_text);
 
 	zend_ini_escape_string(ini_lval, yytext, yyleng, '"');
-	Z_EXTRA_P(ini_lval) = 0;
 	return TC_QUOTED_STRING;
 }
 
