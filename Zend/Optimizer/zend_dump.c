@@ -666,6 +666,10 @@ ZEND_API void zend_dump_op(const zend_op_array *op_array, const zend_basic_block
 			} else {
 				fprintf(stderr, " %04u", (uint32_t)(OP_JMP_ADDR(opline, opline->op1) - op_array->opcodes));
 			}
+		} else if (opline->opcode == ZEND_TYPE_ASSERT) {
+			// FIXME: Use ZEND_VM_OP flag. We also shouldn't lie about the type.
+			zend_function *callee = Z_PTR(EG(function_table)->arData[opline->op1.num].val);
+			fprintf(stderr, " string(\"%s\")", ZSTR_VAL(callee->common.function_name));
 		} else {
 			zend_dump_unused_op(opline, opline->op1, op1_flags);
 		}

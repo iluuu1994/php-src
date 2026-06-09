@@ -6143,13 +6143,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_T
 	uint8_t expected_type = opline->extended_value & 0xff;
 	/* Simple types can be checked directly. */
 	if (UNEXPECTED(actual_type != expected_type)) {
-		zend_function *fbc;
-		{
-			zval *fname = (zval*)RT_CONSTANT(opline, opline->op1);
-			ZEND_ASSERT(Z_EXTRA_P(fname) != 0);
-			fbc = Z_FUNC(EG(function_table)->arData[Z_EXTRA_P(fname)].val);
-			ZEND_ASSERT(fbc->type != ZEND_USER_FUNCTION);
-		}
+		zend_function *fbc = Z_FUNC(EG(function_table)->arData[opline->op1.num].val);
+		ZEND_ASSERT(fbc->type != ZEND_USER_FUNCTION);
 		uint16_t argno = opline->extended_value >> 16;
 		zend_arg_info *arginfo = &fbc->common.arg_info[argno - 1];
 
@@ -58580,13 +58575,8 @@ static ZEND_VM_HOT ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_TYPE_A
 	uint8_t expected_type = opline->extended_value & 0xff;
 	/* Simple types can be checked directly. */
 	if (UNEXPECTED(actual_type != expected_type)) {
-		zend_function *fbc;
-		{
-			zval *fname = (zval*)RT_CONSTANT(opline, opline->op1);
-			ZEND_ASSERT(Z_EXTRA_P(fname) != 0);
-			fbc = Z_FUNC(EG(function_table)->arData[Z_EXTRA_P(fname)].val);
-			ZEND_ASSERT(fbc->type != ZEND_USER_FUNCTION);
-		}
+		zend_function *fbc = Z_FUNC(EG(function_table)->arData[opline->op1.num].val);
+		ZEND_ASSERT(fbc->type != ZEND_USER_FUNCTION);
 		uint16_t argno = opline->extended_value >> 16;
 		zend_arg_info *arginfo = &fbc->common.arg_info[argno - 1];
 
