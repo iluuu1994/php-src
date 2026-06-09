@@ -233,7 +233,7 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
   `Z_EXTRA(val)` for stable sorting.
 - [ ] **`IS_PROP_UNINIT` / `IS_PROP_REINITABLE`** — per-property flags (explicitly
   `unset()`, and readonly-overwritable during `__clone`).
-- [ ] **`INI_ZVAL_IS_NUMBER`** — flag set by `zend_ini_parser.y` to mark explicit numbers.
+- [x] **`INI_ZVAL_IS_NUMBER`** — flag set by `zend_ini_parser.y` to mark explicit numbers.
 - [ ] **`VAR_WAKEUP_FLAG` / `VAR_UNSERIALIZE_FLAG`** — `ext/standard/var_unserializer.re`.
 - [x] **`PHP_FUNCTION(array_map)`** — a local optimization.
 - [x] **`ext/spl/spl_dllist.c`** — effectively revert commit `c51a5f02aeb160ef79e0acd6c65b8029ed8c0d3`.
