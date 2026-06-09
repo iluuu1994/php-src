@@ -226,9 +226,9 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
   at `op2.constant+1`, bug #63217); the `LONG` is flagged so dim opcodes do `dim++` to
   recover the string for `ArrayAccess`. Used by FETCH_DIM/ASSIGN_DIM/ASSIGN_DIM_OP
   families. Set in `zend_compile.c` (`zend_handle_numeric_dim`).
-- [ ] **`ZEND_INIT_FCALL` offset** — the literal function name carries its offset into
+- [x] **`ZEND_INIT_FCALL` offset** — the literal function name carries its offset into
   the global function table for faster lookup.
-- [ ] **`ZEND_TYPE_ASSERT`** — same literal-offset trick (an `array_map()` optimization).
+- [x] **`ZEND_TYPE_ASSERT`** — same literal-offset trick (an `array_map()` optimization).
 - [ ] **`zend_hash_sort_internal`** — stashes each bucket's original position in
   `Z_EXTRA(val)` for stable sorting.
 - [ ] **`IS_PROP_UNINIT` / `IS_PROP_REINITABLE`** — per-property flags (explicitly
