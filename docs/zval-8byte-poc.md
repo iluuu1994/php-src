@@ -231,8 +231,9 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
 - [x] **`ZEND_TYPE_ASSERT`** — same literal-offset trick (an `array_map()` optimization).
 - [x] **`zend_hash_sort_internal`** — stashes each bucket's original position in
   `Z_EXTRA(val)` for stable sorting.
-- [ ] **`IS_PROP_UNINIT` / `IS_PROP_REINITABLE`** — per-property flags (explicitly
-  `unset()`, and readonly-overwritable during `__clone`).
+- [x] **`IS_PROP_UNINIT`** — per-property flags (explicitly `unset()`).
+- [x] **`IS_PROP_LAZY`**.
+- [ ] **`IS_PROP_REINITABLE`** — per-property flags (readonly-overwritable during `__clone`).
 - [x] **`INI_ZVAL_IS_NUMBER`** — flag set by `zend_ini_parser.y` to mark explicit numbers.
 - [ ] **`VAR_WAKEUP_FLAG` / `VAR_UNSERIALIZE_FLAG`** — `ext/standard/var_unserializer.re`.
 - [x] **`PHP_FUNCTION(array_map)`** — a local optimization.

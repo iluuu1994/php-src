@@ -6190,10 +6190,12 @@ ZEND_METHOD(ReflectionProperty, setRawValueWithoutLazyInitialization)
 	}
 
 	zval *var_ptr = OBJ_PROP(object, prop->offset);
-	bool prop_was_lazy = Z_PROP_FLAG_P(var_ptr) & IS_PROP_LAZY;
+	bool prop_was_lazy =  zend_prop_is_lazy(var_ptr);
 
 	/* Do not trigger initialization */
-	Z_PROP_FLAG_P(var_ptr) &= ~IS_PROP_LAZY;
+	if (prop_was_lazy) {
+		zend_prop_reset_flags(var_ptr);
+	}
 
 	reflection_property_set_raw_value(prop, ref->unmangled_name,
 			ref->cache_slot, intern, object, value);
@@ -6202,11 +6204,11 @@ ZEND_METHOD(ReflectionProperty, setRawValueWithoutLazyInitialization)
 	if (EG(exception) && prop_was_lazy && Z_TYPE_P(var_ptr) == IS_UNDEF
 			&& zend_object_is_lazy(object)
 			&& !zend_lazy_object_initialized(object)) {
-		Z_PROP_FLAG_P(var_ptr) |= IS_PROP_LAZY;
+		zend_prop_mark_lazy(var_ptr);
 	}
 
 	/* Object becomes non-lazy if this was the last lazy prop */
-	if (prop_was_lazy && !(Z_PROP_FLAG_P(var_ptr) & IS_PROP_LAZY)
+	if (prop_was_lazy && !zend_prop_is_lazy(var_ptr)
 			&& zend_object_is_lazy(object)
 			&& !zend_lazy_object_initialized(object)) {
 		if (zend_lazy_object_decr_lazy_props(object)) {
@@ -6242,7 +6244,7 @@ ZEND_METHOD(ReflectionProperty, skipLazyInitialization)
 	zval *src = &object->ce->default_properties_table[OBJ_PROP_TO_NUM(ref->prop->offset)];
 	zval *dst = OBJ_PROP(object, ref->prop->offset);
 
-	if (!(Z_PROP_FLAG_P(dst) & IS_PROP_LAZY)) {
+	if (!zend_prop_is_lazy(dst)) {
 		/* skipLazyInitialization has no effect on non-lazy properties */
 		return;
 	}
@@ -6281,7 +6283,7 @@ ZEND_METHOD(ReflectionProperty, isLazy)
 		object = zend_lazy_object_get_instance(object);
 	}
 
-	RETURN_BOOL(Z_PROP_FLAG_P(OBJ_PROP(object, ref->prop->offset)) & IS_PROP_LAZY);
+	RETURN_BOOL(zend_prop_is_lazy(OBJ_PROP(object, ref->prop->offset)));
 }
 
 /* {{{ Returns true if property was initialized */
@@ -6773,14 +6775,14 @@ handle_magic_get:
 retry_declared:;
 		zval *prop_val = OBJ_PROP(obj, prop->offset);
 		if (Z_TYPE_P(prop_val) == IS_UNDEF) {
-			if (zend_lazy_object_must_init(obj) && (Z_PROP_FLAG_P(prop_val) & IS_PROP_LAZY)) {
+			if (zend_lazy_object_must_init(obj) && zend_prop_is_lazy(prop_val)) {
 				obj = zend_lazy_object_init(obj);
 				if (!obj) {
 					RETURN_THROWS();
 				}
 				goto retry_declared;
 			}
-			if (!(Z_PROP_FLAG_P(prop_val) & IS_PROP_UNINIT)) {
+			if (zend_prop_is_unset(prop_val)) {
 				goto handle_magic_get;
 			}
 			RETURN_FALSE;
@@ -6866,7 +6868,7 @@ retry:;
 		zval *prop_val = OBJ_PROP(obj, prop->offset);
 		if (Z_TYPE_P(prop_val) == IS_UNDEF
 		 && zend_lazy_object_must_init(obj)
-		 && (Z_PROP_FLAG_P(prop_val) & IS_PROP_LAZY)) {
+		 && zend_prop_is_lazy(prop_val)) {
 			obj = zend_lazy_object_init(obj);
 			if (!obj) {
 				RETURN_THROWS();

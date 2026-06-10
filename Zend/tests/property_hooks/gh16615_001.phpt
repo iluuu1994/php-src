@@ -11,7 +11,6 @@ class Foo {
 
 $reflector = new ReflectionClass(Foo::class);
 
-// Adds IS_PROP_LAZY to prop flags
 $foo = $reflector->newLazyGhost(function ($ghost) {
     $ghost->bar = 'bar';
 });

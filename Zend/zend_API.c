@@ -4540,7 +4540,7 @@ ZEND_API zend_property_info *zend_declare_typed_property(zend_class_entry *ce, z
 		}
 		property_default_ptr = &ce->default_properties_table[OBJ_PROP_TO_NUM(property_info->offset)];
 		ZVAL_COPY_VALUE(property_default_ptr, property);
-		Z_PROP_FLAG_P(property_default_ptr) = Z_ISUNDEF_P(property) ? IS_PROP_UNINIT : 0;
+		Z_PROP_FLAG_P(property_default_ptr) = 0;
 	}
 skip_property_storage:
 	if (ce->type == ZEND_INTERNAL_CLASS) {
