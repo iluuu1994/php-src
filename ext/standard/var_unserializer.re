@@ -38,10 +38,15 @@ typedef struct {
 	zval *data[VAR_ENTRIES_MAX];
 } var_entries;
 
+typedef struct zval_aux {
+	zval zv;
+	uint32_t flags;
+} zval_aux;
+
 typedef struct {
 	zend_long used_slots;
 	void *next;
-	zval data[VAR_DTOR_ENTRIES_MAX];
+	zval_aux data[VAR_DTOR_ENTRIES_MAX];
 } var_dtor_entries;
 
 struct php_unserialize_data {
@@ -152,7 +157,7 @@ static zend_never_inline void var_push_dtor_value(php_unserialize_data_t *var_ha
 	}
 }
 
-static zend_always_inline zval *tmp_var(php_unserialize_data_t *var_hashx, zend_long num)
+static zend_always_inline zval_aux *tmp_var_ex(php_unserialize_data_t *var_hashx, zend_long num)
 {
     var_dtor_entries *var_hash;
 	zend_long used_slots;
@@ -176,10 +181,17 @@ static zend_always_inline zval *tmp_var(php_unserialize_data_t *var_hashx, zend_
         (*var_hashx)->last_dtor = var_hash;
     }
 	for (used_slots = var_hash->used_slots; var_hash->used_slots < used_slots + num; var_hash->used_slots++) {
-		ZVAL_UNDEF(&var_hash->data[var_hash->used_slots]);
-		Z_EXTRA(var_hash->data[var_hash->used_slots]) = 0;
+		zval_aux *aux = &var_hash->data[var_hash->used_slots];
+		ZVAL_UNDEF(&aux->zv);
+		aux->flags = 0;
 	}
     return &var_hash->data[used_slots];
+}
+
+static zend_always_inline zval *tmp_var(php_unserialize_data_t *var_hashx, zend_long num)
+{
+	zval_aux *aux = tmp_var_ex(var_hashx, num);
+	return &aux->zv;
 }
 
 PHPAPI zval *var_tmp_var(php_unserialize_data_t *var_hashx)
@@ -245,12 +257,13 @@ PHPAPI void var_destroy(php_unserialize_data_t *var_hashx)
 
 	while (var_dtor_hash) {
 		for (i = 0; i < var_dtor_hash->used_slots; i++) {
-			zval *zv = &var_dtor_hash->data[i];
+			zval_aux *aux = &var_dtor_hash->data[i];
+			zval *zv = &aux->zv;
 #if VAR_ENTRIES_DBG
 			fprintf(stderr, "var_destroy dtor(%p, %ld)\n", &var_dtor_hash->data[i], Z_REFCOUNT_P(&var_dtor_hash->data[i]));
 #endif
 
-			if (Z_EXTRA_P(zv) == VAR_WAKEUP_FLAG) {
+			if (aux->flags == VAR_WAKEUP_FLAG) {
 				/* Perform delayed __wakeup calls */
 				if (!delayed_call_failed) {
 					zval retval;
@@ -283,11 +296,11 @@ PHPAPI void var_destroy(php_unserialize_data_t *var_hashx)
 				} else {
 					GC_ADD_FLAGS(Z_OBJ_P(zv), IS_OBJ_DESTRUCTOR_CALLED);
 				}
-			} else if (Z_EXTRA_P(zv) == VAR_UNSERIALIZE_FLAG) {
+			} else if (aux->flags == VAR_UNSERIALIZE_FLAG) {
 				/* Perform delayed __unserialize calls */
 				if (!delayed_call_failed) {
 					zval param;
-					ZVAL_COPY(&param, &var_dtor_hash->data[i + 1]);
+					ZVAL_COPY(&param, &var_dtor_hash->data[i + 1].zv);
 
 					BG(serialize_lock)++;
 					zend_call_known_instance_method_with_1_params(
@@ -807,10 +820,11 @@ static inline int object_common(UNSERIALIZE_PARAMETER, zend_long elements, bool 
 		/* Delay __unserialize() call until end of serialization. We use two slots here to
 		 * store both the object and the unserialized data array. */
 		ZVAL_DEREF(rval);
-		tmp = tmp_var(var_hash, 2);
+		zval_aux *aux = tmp_var_ex(var_hash, 2);
+		tmp = &aux->zv;
 		ZVAL_COPY(tmp, rval);
-		Z_EXTRA_P(tmp) = VAR_UNSERIALIZE_FLAG;
-		tmp++;
+		aux->flags = VAR_UNSERIALIZE_FLAG;
+		tmp = &(aux+1)->zv;
 		ZVAL_COPY_VALUE(tmp, &ary);
 
 		return finish_nested_data(UNSERIALIZE_PASSTHRU);
@@ -836,9 +850,10 @@ static inline int object_common(UNSERIALIZE_PARAMETER, zend_long elements, bool 
 	ZVAL_DEREF(rval);
 	if (has_wakeup) {
 		/* Delay __wakeup call until end of serialization */
-		zval *wakeup_var = var_tmp_var(var_hash);
+		zval_aux *aux = tmp_var_ex(var_hash, 1);
+		zval *wakeup_var = &aux->zv;
 		ZVAL_COPY(wakeup_var, rval);
-		Z_EXTRA_P(wakeup_var) = VAR_WAKEUP_FLAG;
+		aux->flags = VAR_WAKEUP_FLAG;
 	}
 
 	return finish_nested_data(UNSERIALIZE_PASSTHRU);
