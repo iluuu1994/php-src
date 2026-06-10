@@ -819,7 +819,7 @@ try_again:
 		if (EXPECTED(Z_TYPE_P(retval) != IS_UNDEF)) {
 			goto exit;
 		}
-		if (UNEXPECTED(Z_PROP_FLAG_P(retval) & IS_PROP_UNINIT)) {
+		if (UNEXPECTED(!zend_prop_is_unset(retval))) {
 			/* Skip __get() for uninitialized typed properties */
 			goto uninit_error;
 		}
@@ -866,7 +866,7 @@ try_again:
 			if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
 				/* As hooked properties can't be unset, the only way to end up with an undef
 				 * value is via an uninitialized property. */
-				ZEND_ASSERT(Z_PROP_FLAG_P(retval) & IS_PROP_UNINIT);
+				ZEND_ASSERT(!zend_prop_is_unset(retval));
 				goto uninit_error;
 			}
 
@@ -1021,7 +1021,7 @@ call_getter:
 
 uninit_error:
 	if (UNEXPECTED(zend_lazy_object_must_init(zobj))) {
-		if (!prop_info || (Z_PROP_FLAG_P(retval) & IS_PROP_LAZY)) {
+		if (!prop_info || zend_prop_is_lazy(retval)) {
 			zend_object *instance = zend_lazy_object_init(zobj);
 			if (!instance) {
 				retval = &EG(uninitialized_zval);
@@ -1119,7 +1119,7 @@ try_again:
 
 		if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
 			bool error;
-			if (Z_TYPE_P(variable_ptr) != IS_UNDEF || (Z_PROP_FLAG_P(variable_ptr) & IS_PROP_UNINIT) || !zobj->ce->__set) {
+			if (Z_TYPE_P(variable_ptr) != IS_UNDEF || !zend_prop_is_unset(variable_ptr) || !zobj->ce->__set) {
 				error = true;
 			} else {
 				guard = zend_get_property_guard(zobj, name);
@@ -1162,7 +1162,7 @@ typed_property:
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
-				Z_PROP_FLAG_P(variable_ptr) &= ~(IS_PROP_UNINIT|IS_PROP_REINITABLE);
+				Z_PROP_FLAG_P(variable_ptr) &= ~IS_PROP_REINITABLE;
 				value = &tmp;
 			}
 
@@ -1192,9 +1192,9 @@ found:;
 			}
 			goto exit;
 		}
-		if (Z_PROP_FLAG_P(variable_ptr) & IS_PROP_UNINIT) {
+		if (!zend_prop_is_unset(variable_ptr)) {
 			if (UNEXPECTED(zend_lazy_object_must_init(zobj))) {
-				if (Z_PROP_FLAG_P(variable_ptr) & IS_PROP_LAZY) {
+				if (zend_prop_is_lazy(variable_ptr)) {
 					goto lazy_init;
 				}
 			}
@@ -1481,8 +1481,8 @@ try_again:
 		if (UNEXPECTED(Z_TYPE_P(retval) == IS_UNDEF)) {
 			if (EXPECTED(!zobj->ce->__get) ||
 			    UNEXPECTED((*zend_get_property_guard(zobj, name)) & IN_GET) ||
-			    UNEXPECTED(prop_info && (Z_PROP_FLAG_P(retval) & IS_PROP_UNINIT))) {
-				if (UNEXPECTED(zend_lazy_object_must_init(zobj) && (Z_PROP_FLAG_P(retval) & IS_PROP_LAZY))) {
+			    UNEXPECTED(prop_info && !zend_prop_is_unset(retval))) {
+				if (UNEXPECTED(zend_lazy_object_must_init(zobj) && zend_prop_is_lazy(retval))) {
 					bool guarded = zobj->ce->__get
 						&& (*zend_get_property_guard(zobj, name) & IN_GET);
 					zend_object *instance = zend_lazy_object_init(zobj);
@@ -1608,7 +1608,7 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 
 		if (prop_info && UNEXPECTED(prop_info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
 			bool error;
-			if (Z_TYPE_P(slot) != IS_UNDEF || Z_PROP_FLAG_P(slot) & IS_PROP_UNINIT || !zobj->ce->__unset) {
+			if (Z_TYPE_P(slot) != IS_UNDEF || !zend_prop_is_unset(slot) || !zobj->ce->__unset) {
 				error = true;
 			} else {
 				guard = zend_get_property_guard(zobj, name);
@@ -1638,14 +1638,15 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			zval tmp;
 			ZVAL_COPY_VALUE(&tmp, slot);
 			ZVAL_UNDEF(slot);
+			zend_prop_mark_unset(slot);
 			zval_ptr_dtor(&tmp);
 			if (zobj->properties) {
 				HT_FLAGS(zobj->properties) |= HASH_FLAG_HAS_EMPTY_IND;
 			}
 			return;
 		}
-		if (UNEXPECTED(Z_PROP_FLAG_P(slot) & IS_PROP_UNINIT)) {
-			if (UNEXPECTED(zend_lazy_object_must_init(zobj) && (Z_PROP_FLAG_P(slot) & IS_PROP_LAZY))) {
+		if (UNEXPECTED(!zend_prop_is_unset(slot))) {
+			if (UNEXPECTED(zend_lazy_object_must_init(zobj) && zend_prop_is_lazy(slot))) {
 				zobj = zend_lazy_object_init(zobj);
 				if (!zobj) {
 					return;
@@ -1654,8 +1655,8 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 				return;
 			}
 
-			/* Reset the IS_PROP_UNINIT flag, if it exists and bypass __unset(). */
-			Z_PROP_FLAG_P(slot) = 0;
+			/* Mark property as explicitly unset and bypass __unset(). */
+			zend_prop_mark_unset(slot);
 			return;
 		}
 	} else if (EXPECTED(IS_DYNAMIC_PROPERTY_OFFSET(property_offset))
@@ -2407,7 +2408,7 @@ try_again:
 		if (Z_TYPE_P(value) != IS_UNDEF) {
 			goto found;
 		}
-		if (UNEXPECTED(Z_PROP_FLAG_P(value) & IS_PROP_UNINIT)) {
+		if (UNEXPECTED(!zend_prop_is_unset(value))) {
 			/* Skip __isset() for uninitialized typed properties */
 			goto lazy_init;
 		}
@@ -2548,7 +2549,7 @@ exit:
 
 lazy_init:
 	if (UNEXPECTED(zend_lazy_object_must_init(zobj))) {
-		if (!value || (Z_PROP_FLAG_P(value) & IS_PROP_LAZY)) {
+		if (!value || zend_prop_is_lazy(value)) {
 			zobj = zend_lazy_object_init(zobj);
 			if (!zobj) {
 				result = false;

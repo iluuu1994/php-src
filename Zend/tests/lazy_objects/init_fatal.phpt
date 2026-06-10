@@ -24,6 +24,7 @@ var_dump($obj);
 var_dump($obj->c);
 var_dump($obj);
 
+?>
 --EXPECTF--
 lazy ghost object(C)#%d (1) {
   ["b"]=>

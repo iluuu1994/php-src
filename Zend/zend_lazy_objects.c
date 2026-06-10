@@ -276,7 +276,7 @@ ZEND_API zend_object *zend_object_make_lazy(zend_object *obj,
 			zend_property_info *prop_info = obj->ce->properties_info_table[i];
 			if (prop_info) {
 				zval *p = &obj->properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
-				Z_PROP_FLAG_P(p) = IS_PROP_UNINIT | IS_PROP_LAZY;
+				zend_prop_mark_lazy(p);
 				lazy_properties_count++;
 			}
 		}
@@ -338,7 +338,7 @@ ZEND_API zend_object *zend_object_make_lazy(zend_object *obj,
 					zend_object_dtor_property(obj, p);
 					ZVAL_UNDEF(p);
 				}
-				Z_PROP_FLAG_P(p) = IS_PROP_UNINIT | IS_PROP_LAZY;
+				zend_prop_mark_lazy(p);
 				lazy_properties_count++;
 			}
 		}
@@ -390,7 +390,7 @@ ZEND_API zend_object *zend_lazy_object_mark_as_initialized(zend_object *obj)
 	OBJ_EXTRA_FLAGS(obj) &= ~(IS_OBJ_LAZY_UNINITIALIZED|IS_OBJ_LAZY_PROXY);
 
 	for (int i = 0; i < ce->default_properties_count; i++) {
-		if (Z_PROP_FLAG_P(&properties_table[i]) & IS_PROP_LAZY) {
+		if (zend_prop_is_lazy(&properties_table[i])) {
 			ZVAL_COPY_PROP(&properties_table[i], &default_properties_table[i]);
 		}
 	}
@@ -551,7 +551,7 @@ static zend_object *zend_lazy_object_init_proxy(zend_object *obj)
 			zval *prop = &obj->properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
 			zend_object_dtor_property(obj, prop);
 			ZVAL_UNDEF(prop);
-			Z_PROP_FLAG_P(prop) = IS_PROP_UNINIT | IS_PROP_LAZY;
+			zend_prop_mark_lazy(prop);
 		}
 	}
 
@@ -643,7 +643,7 @@ ZEND_API zend_object *zend_lazy_object_init(zend_object *obj)
 
 		for (int i = 0; i < ce->default_properties_count; i++) {
 			ZVAL_COPY_PROP(&properties_table_snapshot[i], &properties_table[i]);
-			if (Z_PROP_FLAG_P(&properties_table[i]) & IS_PROP_LAZY) {
+			if (zend_prop_is_lazy(&properties_table[i])) {
 				ZVAL_COPY_PROP(&properties_table[i], &default_properties_table[i]);
 			}
 		}
@@ -713,7 +713,7 @@ void zend_lazy_object_realize(zend_object *obj)
 
 #if ZEND_DEBUG
 	for (int i = 0; i < obj->ce->default_properties_count; i++) {
-		ZEND_ASSERT(!(Z_PROP_FLAG_P(&obj->properties_table[i]) & IS_PROP_LAZY));
+		ZEND_ASSERT(!zend_prop_is_lazy(&obj->properties_table[i]));
 	}
 #endif
 
@@ -772,7 +772,7 @@ zend_object *zend_lazy_object_clone(zend_object *old_obj)
 		zend_property_info *prop_info = ce->properties_info_table[i];
 		if (prop_info) {
 			zval *p = &new_proxy->properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
-			Z_PROP_FLAG_P(p) = IS_PROP_UNINIT | IS_PROP_LAZY;
+			zend_prop_mark_lazy(p);
 		}
 	}
 

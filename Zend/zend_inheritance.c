@@ -1510,7 +1510,7 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 					ce->default_properties_table = perealloc(ce->default_properties_table, sizeof(zval) * ce->default_properties_count, ce->type == ZEND_INTERNAL_CLASS);
 					zval *property_default_ptr = &ce->default_properties_table[OBJ_PROP_TO_NUM(child_info->offset)];
 					ZVAL_UNDEF(property_default_ptr);
-					Z_PROP_FLAG_P(property_default_ptr) = IS_PROP_UNINIT;
+					Z_PROP_FLAG_P(property_default_ptr) = 0;
 				}
 
 				int parent_num = OBJ_PROP_TO_NUM(parent_info->offset);

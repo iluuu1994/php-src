@@ -1032,7 +1032,9 @@ static zend_always_inline uint32_t zval_gc_info(uint32_t gc_type_info) {
 #define Z_PTR_P(zval_p)				Z_PTR(*(zval_p))
 
 #define ZVAL_UNDEF(z) do {				\
-		Z_TYPE_INFO_P(z) = IS_UNDEF;	\
+		zval *__z = (z);				\
+		Z_TYPE_INFO_P(__z) = IS_UNDEF;	\
+		Z_LVAL_P(__z) = 0;				\
 	} while (0)
 
 #define ZVAL_NULL(z) do {				\
@@ -1553,9 +1555,9 @@ static zend_always_inline uint32_t zval_delref_p(zval* pz) {
  * (both use IS_UNDEF type) in the Z_EXTRA space. As such we also need to copy
  * the Z_EXTRA space when copying property default values etc. We define separate
  * macros for this purpose, so this workaround is easier to remove in the future. */
-#define IS_PROP_UNINIT (1<<0)
+#define IS_PROP_UNSET (1)
 #define IS_PROP_REINITABLE (1<<1)  /* It has impact only on readonly properties */
-#define IS_PROP_LAZY (1<<2)
+#define IS_PROP_LAZY (2)
 #define Z_PROP_FLAG_P(z) Z_EXTRA_P(z)
 #define ZVAL_COPY_VALUE_PROP(z, v) \
 	do { *(z) = *(v); } while (0)
@@ -1564,6 +1566,34 @@ static zend_always_inline uint32_t zval_delref_p(zval* pz) {
 #define ZVAL_COPY_OR_DUP_PROP(z, v) \
 	do { ZVAL_COPY_OR_DUP(z, v); Z_PROP_FLAG_P(z) = Z_PROP_FLAG_P(v); } while (0)
 
+static zend_always_inline bool zend_prop_is_unset(zval *zv)
+{
+	ZEND_ASSERT(Z_TYPE_P(zv) == IS_UNDEF);
+	return Z_LVAL_P(zv) == IS_PROP_UNSET;
+}
+
+static zend_always_inline void zend_prop_mark_unset(zval *zv)
+{
+	ZEND_ASSERT(Z_TYPE_P(zv) == IS_UNDEF);
+	Z_LVAL_P(zv) = IS_PROP_UNSET;
+}
+
+static zend_always_inline bool zend_prop_is_lazy(zval *zv)
+{
+	return Z_TYPE_P(zv) == IS_UNDEF && Z_LVAL_P(zv) == IS_PROP_LAZY;
+}
+
+static zend_always_inline void zend_prop_mark_lazy(zval *zv)
+{
+	ZEND_ASSERT(Z_TYPE_P(zv) == IS_UNDEF);
+	Z_LVAL_P(zv) = IS_PROP_LAZY;
+}
+
+static zend_always_inline void zend_prop_reset_flags(zval *zv)
+{
+	ZEND_ASSERT(Z_TYPE_P(zv) == IS_UNDEF);
+	Z_LVAL_P(zv) = 0;
+}
 
 static zend_always_inline bool zend_may_modify_arg_in_place(const zval *arg)
 {
