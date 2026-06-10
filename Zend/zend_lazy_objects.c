@@ -271,7 +271,6 @@ ZEND_API zend_object *zend_object_make_lazy(zend_object *obj,
 		for (int i = obj->ce->default_properties_count - 1; i >= 0; i--) {
 			zval *p = &obj->properties_table[i];
 			ZVAL_UNDEF(p);
-			Z_PROP_FLAG_P(p) = 0;
 
 			zend_property_info *prop_info = obj->ce->properties_info_table[i];
 			if (prop_info) {
@@ -391,7 +390,7 @@ ZEND_API zend_object *zend_lazy_object_mark_as_initialized(zend_object *obj)
 
 	for (int i = 0; i < ce->default_properties_count; i++) {
 		if (zend_prop_is_lazy(&properties_table[i])) {
-			ZVAL_COPY_PROP(&properties_table[i], &default_properties_table[i]);
+			ZVAL_COPY(&properties_table[i], &default_properties_table[i]);
 		}
 	}
 
@@ -417,7 +416,7 @@ static void zend_lazy_object_revert_init(zend_object *obj, zval *properties_tabl
 
 			zval *p = &properties_table[OBJ_PROP_TO_NUM(prop_info->offset)];
 			zend_object_dtor_property(obj, p);
-			ZVAL_COPY_VALUE_PROP(p, &properties_table_snapshot[OBJ_PROP_TO_NUM(prop_info->offset)]);
+			ZVAL_COPY_VALUE(p, &properties_table_snapshot[OBJ_PROP_TO_NUM(prop_info->offset)]);
 
 			if (Z_ISREF_P(p) && ZEND_TYPE_IS_SET(prop_info->type)) {
 				ZEND_REF_ADD_TYPE_SOURCE(Z_REF_P(p), prop_info);
@@ -492,7 +491,7 @@ static zend_object *zend_lazy_object_init_proxy(zend_object *obj)
 		properties_table_snapshot = emalloc(sizeof(*properties_table_snapshot) * obj->ce->default_properties_count);
 
 		for (int i = 0; i < obj->ce->default_properties_count; i++) {
-			ZVAL_COPY_PROP(&properties_table_snapshot[i], &properties_table[i]);
+			ZVAL_COPY(&properties_table_snapshot[i], &properties_table[i]);
 		}
 	}
 
@@ -642,9 +641,9 @@ ZEND_API zend_object *zend_lazy_object_init(zend_object *obj)
 		properties_table_snapshot = emalloc(sizeof(*properties_table_snapshot) * ce->default_properties_count);
 
 		for (int i = 0; i < ce->default_properties_count; i++) {
-			ZVAL_COPY_PROP(&properties_table_snapshot[i], &properties_table[i]);
+			ZVAL_COPY(&properties_table_snapshot[i], &properties_table[i]);
 			if (zend_prop_is_lazy(&properties_table[i])) {
-				ZVAL_COPY_PROP(&properties_table[i], &default_properties_table[i]);
+				ZVAL_COPY(&properties_table[i], &default_properties_table[i]);
 			}
 		}
 	}
@@ -767,7 +766,6 @@ zend_object *zend_lazy_object_clone(zend_object *old_obj)
 	for (int i = ce->default_properties_count - 1; i >= 0; i--) {
 		zval *p = &new_proxy->properties_table[i];
 		ZVAL_UNDEF(p);
-		Z_PROP_FLAG_P(p) = 0;
 
 		zend_property_info *prop_info = ce->properties_info_table[i];
 		if (prop_info) {
