@@ -351,9 +351,7 @@ struct _zval_struct {
 				} u)
 		} v;
 	} u1;
-	union {
-		uint32_t     extra;                /* not further specified */
-	} u2;
+	uint32_t u2;
 };
 
 typedef struct _zend_refcounted_h {
@@ -679,9 +677,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 #define Z_SET_FE_POS(fe_var, l)		ZVAL_LONG((fe_var) + 1, (uint32_t)l)
 #define Z_FE_ITER_P(fe_var)			((uint32_t)Z_LVAL_P((fe_var) + 1))
 #define Z_SET_FE_ITER(fe_var, l)	ZVAL_LONG((fe_var) + 1, (uint32_t)l)
-
-#define Z_EXTRA(zval)				(zval).u2.extra
-#define Z_EXTRA_P(zval_p)			Z_EXTRA(*(zval_p))
 
 #define Z_COUNTED(zval)				(zval).value.counted
 #define Z_COUNTED_P(zval_p)			Z_COUNTED(*(zval_p))

@@ -578,7 +578,6 @@ static inline void zend_insert_literal(const zend_op_array *op_array, zval *zv, 
 		zval_make_interned_string(zv);
 	}
 	ZVAL_COPY_VALUE(lit, zv);
-	Z_EXTRA_P(lit) = 0;
 }
 /* }}} */
 
