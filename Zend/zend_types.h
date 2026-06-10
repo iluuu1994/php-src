@@ -662,9 +662,6 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 #define Z_TYPE_FLAGS(zval)			(zval).u1.v.type_flags
 #define Z_TYPE_FLAGS_P(zval_p)		Z_TYPE_FLAGS(*(zval_p))
 
-#define Z_TYPE_EXTRA(zval)			(zval).u1.v.u.extra
-#define Z_TYPE_EXTRA_P(zval_p)		Z_TYPE_EXTRA(*(zval_p))
-
 #define Z_TYPE_INFO(zval)			(zval).u1.type_info
 #define Z_TYPE_INFO_P(zval_p)		Z_TYPE_INFO(*(zval_p))
 
@@ -1025,6 +1022,9 @@ static zend_always_inline uint32_t zval_gc_info(uint32_t gc_type_info) {
 
 #define Z_PTR(zval)					(zval).value.ptr
 #define Z_PTR_P(zval_p)				Z_PTR(*(zval_p))
+
+#define Z_RAW(zval)					(zval).value.ptr
+#define Z_RAW_P(zval_p)				Z_RAW(*(zval_p))
 
 #define ZVAL_UNDEF(z) do {				\
 		zval *__z = (z);				\

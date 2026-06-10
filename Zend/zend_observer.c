@@ -242,7 +242,7 @@ ZEND_API bool zend_observer_remove_end_handler(const zend_function *function, ze
 static inline zend_execute_data **prev_observed_frame(zend_execute_data *execute_data) {
 	const zend_function *func = EX(func);
 	ZEND_ASSERT(func);
-	return (zend_execute_data **)&Z_PTR_P(EX_VAR_NUM((ZEND_USER_CODE(func->type) ? func->op_array.last_var : ZEND_CALL_NUM_ARGS(execute_data)) + func->common.T - 1));
+	return (zend_execute_data **)&Z_RAW_P(EX_VAR_NUM((ZEND_USER_CODE(func->type) ? func->op_array.last_var : ZEND_CALL_NUM_ARGS(execute_data)) + func->common.T - 1));
 }
 
 static void ZEND_FASTCALL _zend_observe_fcall_begin(zend_execute_data *execute_data) {

@@ -2302,17 +2302,17 @@ ZEND_API void ZEND_FASTCALL zend_hash_copy(HashTable *target, const HashTable *s
 static zend_always_inline bool zend_array_dup_value(const HashTable *source, zval *data, zval *dest, bool packed, bool with_holes)
 {
 	if (with_holes) {
-		if (!packed && Z_TYPE_INFO_P(data) == IS_INDIRECT) {
+		if (!packed && Z_TYPE_P(data) == IS_INDIRECT) {
 			data = Z_INDIRECT_P(data);
 		}
-		if (UNEXPECTED(Z_TYPE_INFO_P(data) == IS_UNDEF)) {
+		if (UNEXPECTED(Z_ISUNDEF_P(data))) {
 			return 0;
 		}
 	} else if (!packed) {
 		/* INDIRECT element may point to UNDEF-ined slots */
-		if (Z_TYPE_INFO_P(data) == IS_INDIRECT) {
+		if (Z_TYPE_P(data) == IS_INDIRECT) {
 			data = Z_INDIRECT_P(data);
-			if (UNEXPECTED(Z_TYPE_INFO_P(data) == IS_UNDEF)) {
+			if (UNEXPECTED(Z_ISUNDEF_P(data))) {
 				return 0;
 			}
 		}

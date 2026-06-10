@@ -4377,7 +4377,7 @@ static zend_never_inline void zend_copy_extra_args(EXECUTE_DATA_D)
 	zval *src;
 	size_t delta;
 	uint32_t count;
-	uint32_t type_flags = 0;
+	bool refcounted = false;
 
 	if (EXPECTED((op_array->fn_flags & ZEND_ACC_HAS_TYPE_HINTS) == 0)) {
 		/* Skip useless ZEND_RECV and ZEND_RECV_INIT opcodes */
@@ -4396,12 +4396,12 @@ static zend_never_inline void zend_copy_extra_args(EXECUTE_DATA_D)
 	if (EXPECTED(delta != 0)) {
 		delta *= sizeof(zval);
 		do {
-			type_flags |= Z_TYPE_INFO_P(src);
+			refcounted |= Z_OPT_REFCOUNTED_P(src);
 			ZVAL_COPY_VALUE((zval*)(((char*)src) + delta), src);
 			ZVAL_UNDEF(src);
 			src--;
 		} while (--count);
-		if (Z_TYPE_INFO_REFCOUNTED(type_flags)) {
+		if (refcounted) {
 			ZEND_ADD_CALL_FLAG(execute_data, ZEND_CALL_FREE_EXTRA_ARGS);
 		}
 	} else {

@@ -247,10 +247,16 @@ try_again:
 			goto try_again;
 		case IS_STRING:
 			{
-				zend_string *str;
+				zend_string *str = Z_STR_P(op);
 
-				str = Z_STR_P(op);
-				if ((Z_TYPE_INFO_P(op)=is_numeric_string(ZSTR_VAL(str), ZSTR_LEN(str), &Z_LVAL_P(op), &Z_DVAL_P(op), 1)) == 0) {
+				zend_long l;
+				double d;
+				uint8_t type = is_numeric_string(ZSTR_VAL(str), ZSTR_LEN(str), &l, &d, 1);
+				if (type == IS_LONG) {
+					ZVAL_LONG(op, l);
+				} else if (type == IS_DOUBLE) {
+					ZVAL_DOUBLE(op, d);
+				} else {
 					ZVAL_LONG(op, 0);
 				}
 				zend_string_release_ex(str, 0);
@@ -298,11 +304,19 @@ static zend_never_inline zval* ZEND_FASTCALL _zendi_convert_scalar_to_number_sil
 		case IS_TRUE:
 			ZVAL_LONG(holder, 1);
 			return holder;
-		case IS_STRING:
-			if ((Z_TYPE_INFO_P(holder) = is_numeric_string(Z_STRVAL_P(op), Z_STRLEN_P(op), &Z_LVAL_P(holder), &Z_DVAL_P(holder), 1)) == 0) {
+		case IS_STRING: {
+			zend_long l;
+			double d;
+			uint8_t type = is_numeric_string(Z_STRVAL_P(op), Z_STRLEN_P(op), &l, &d, 1);
+			if (type == IS_LONG) {
+				ZVAL_LONG(holder, l);
+			} else if (type == IS_DOUBLE) {
+				ZVAL_DOUBLE(holder, d);
+			} else {
 				ZVAL_LONG(holder, 0);
 			}
 			return holder;
+		}
 		case IS_RESOURCE:
 			ZVAL_LONG(holder, Z_RES_HANDLE_P(op));
 			return holder;
@@ -334,9 +348,15 @@ static zend_never_inline zend_result ZEND_FASTCALL _zendi_try_convert_scalar_to_
 		case IS_STRING:
 		{
 			bool trailing_data = false;
+			zend_long l;
+			double d;
 			/* For BC reasons we allow errors so that we can warn on leading numeric string */
-			if (0 == (Z_TYPE_INFO_P(holder) = is_numeric_string_ex(Z_STRVAL_P(op), Z_STRLEN_P(op),
-					&Z_LVAL_P(holder), &Z_DVAL_P(holder),  /* allow errors */ true, NULL, &trailing_data))) {
+			uint8_t type = is_numeric_string_ex(Z_STRVAL_P(op), Z_STRLEN_P(op), &l, &d,  /* allow errors */ true, NULL, &trailing_data);
+			if (type == IS_LONG) {
+				ZVAL_LONG(holder, l);
+			} else if (type == IS_DOUBLE) {
+				ZVAL_DOUBLE(holder, d);
+			} else {
 				/* Will lead to invalid OP type error */
 				return FAILURE;
 			}
