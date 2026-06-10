@@ -625,7 +625,9 @@ PHP_FUNCTION(count)
 			zend_object *zobj = Z_OBJ_P(array);
 			if (zobj->handlers->count_elements) {
 				RETVAL_LONG(1);
-				if (SUCCESS == zobj->handlers->count_elements(zobj, &Z_LVAL_P(return_value))) {
+				zend_long count;
+				if (SUCCESS == zobj->handlers->count_elements(zobj, &count)) {
+					ZVAL_LONG(return_value, count);
 					return;
 				}
 				if (EG(exception)) {

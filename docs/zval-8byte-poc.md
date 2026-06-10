@@ -242,6 +242,11 @@ its own step (build + test green), and only when all are gone are the `Z_EXTRA`/
 Once the checklist is clear, delete `Z_EXTRA`/`Z_EXTRA_P` and the `u2.extra` member,
 which empties the `u2` union entirely.
 
+## Remove lval uses
+
+- [ ] `spl_array_get_hash_table_ptr()`
+- [x] `zend_object_handlers.count_elements`
+
 ## 5. Doubles → floats + integer overflow (problem D)
 
 - `ZVAL_DOUBLE` stores `(float)d`; `Z_DVAL` returns the float widened to `double`.

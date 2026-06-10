@@ -1109,7 +1109,7 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 // op_1: ASSIGN ? -> #v [use_as_double], long(?) => ASSIGN ? -> #v, double(?)
 
 					zval *zv = CT_CONSTANT_EX(op_array, opline->op2.constant);
-					ZEND_ASSERT(Z_TYPE_INFO_P(zv) == IS_LONG);
+					ZEND_ASSERT(Z_TYPE_P(zv) == IS_LONG);
 					ZVAL_DOUBLE(&tmp, zval_get_double(zv));
 					opline->op2.constant = zend_optimizer_add_literal(op_array, &tmp);
 
@@ -1120,7 +1120,7 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 // op_1: QM_ASSIGN #v [use_as_double], long(?) => QM_ASSIGN #v, double(?)
 
 					zval *zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
-					ZEND_ASSERT(Z_TYPE_INFO_P(zv) == IS_LONG);
+					ZEND_ASSERT(Z_TYPE_P(zv) == IS_LONG);
 					ZVAL_DOUBLE(&tmp, zval_get_double(zv));
 					opline->op1.constant = zend_optimizer_add_literal(op_array, &tmp);
 				}
@@ -1139,7 +1139,7 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 						zval *zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
 
 						if ((OP2_INFO() & MAY_BE_ANY) == MAY_BE_DOUBLE
-						 && Z_TYPE_INFO_P(zv) == IS_LONG) {
+						 && Z_TYPE_P(zv) == IS_LONG) {
 
 // op_1: #v.? = ADD long(?), #?.? [double] => #v.? = ADD double(?), #?.? [double]
 
@@ -1151,10 +1151,10 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 							zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
 
 							if (((OP2_INFO() & (MAY_BE_ANY|MAY_BE_UNDEF)) == MAY_BE_LONG
-							  && Z_TYPE_INFO_P(zv) == IS_LONG
+							  && Z_TYPE_P(zv) == IS_LONG
 							  && Z_LVAL_P(zv) == 0)
 							 || ((OP2_INFO() & (MAY_BE_ANY|MAY_BE_UNDEF)) == MAY_BE_DOUBLE
-							  && Z_TYPE_INFO_P(zv) == IS_DOUBLE
+							  && Z_TYPE_P(zv) == IS_DOUBLE
 							  && Z_DVAL_P(zv) == 0.0)) {
 
 // op_1: #v.? = ADD 0, #?.? [double,long] => #v.? = QM_ASSIGN #?.?
@@ -1173,9 +1173,9 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 						 && (OP2_INFO() & ((MAY_BE_ANY|MAY_BE_UNDEF)-(MAY_BE_LONG|MAY_BE_DOUBLE))) == 0) {
 							zv = CT_CONSTANT_EX(op_array, opline->op1.constant);
 
-							if ((Z_TYPE_INFO_P(zv) == IS_LONG
+							if ((Z_TYPE_P(zv) == IS_LONG
 							  && Z_LVAL_P(zv) == 2)
-							 || (Z_TYPE_INFO_P(zv) == IS_DOUBLE
+							 || (Z_TYPE_P(zv) == IS_DOUBLE
 							  && Z_DVAL_P(zv) == 2.0
 							  && !(OP2_INFO() & MAY_BE_LONG))) {
 
@@ -1192,7 +1192,7 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 						zval *zv = CT_CONSTANT_EX(op_array, opline->op2.constant);
 
 						if ((OP1_INFO() & MAY_BE_ANY) == MAY_BE_DOUBLE
-						 && Z_TYPE_INFO_P(CT_CONSTANT_EX(op_array, opline->op2.constant)) == IS_LONG) {
+						 && Z_TYPE_P(CT_CONSTANT_EX(op_array, opline->op2.constant)) == IS_LONG) {
 
 // op_1: #v.? = ADD #?.? [double], long(?) => #v.? = ADD #?.? [double], double(?)
 
@@ -1202,10 +1202,10 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 						}
 						if (opline->opcode == ZEND_ADD || opline->opcode == ZEND_SUB) {
 							if (((OP1_INFO() & (MAY_BE_ANY|MAY_BE_UNDEF)) == MAY_BE_LONG
-							  && Z_TYPE_INFO_P(zv) == IS_LONG
+							  && Z_TYPE_P(zv) == IS_LONG
 							  && Z_LVAL_P(zv) == 0)
 							 || ((OP1_INFO() & (MAY_BE_ANY|MAY_BE_UNDEF)) == MAY_BE_DOUBLE
-							  && Z_TYPE_INFO_P(zv) == IS_DOUBLE
+							  && Z_TYPE_P(zv) == IS_DOUBLE
 							  && Z_DVAL_P(zv) == 0.0)) {
 
 // op_1: #v.? = ADD #?.? [double,long], 0 => #v.? = QM_ASSIGN #?.?
@@ -1218,9 +1218,9 @@ void zend_dfa_optimize_op_array(zend_op_array *op_array, zend_optimizer_ctx *ctx
 						 && (OP1_INFO() & ((MAY_BE_ANY|MAY_BE_UNDEF)-(MAY_BE_LONG|MAY_BE_DOUBLE))) == 0) {
 							zv = CT_CONSTANT_EX(op_array, opline->op2.constant);
 
-							if ((Z_TYPE_INFO_P(zv) == IS_LONG
+							if ((Z_TYPE_P(zv) == IS_LONG
 							  && Z_LVAL_P(zv) == 2)
-							 || (Z_TYPE_INFO_P(zv) == IS_DOUBLE
+							 || (Z_TYPE_P(zv) == IS_DOUBLE
 							  && Z_DVAL_P(zv) == 2.0
 							  && !(OP1_INFO() & MAY_BE_LONG))) {
 

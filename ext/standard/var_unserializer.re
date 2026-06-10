@@ -500,7 +500,7 @@ static zend_always_inline int process_nested_array_data(UNSERIALIZE_PARAMETER, H
 			idx = Z_LVAL(key);
 numeric_key:
 			data = zend_hash_index_lookup(ht, idx);
-			if (UNEXPECTED(Z_TYPE_INFO_P(data) != IS_NULL)) {
+			if (UNEXPECTED(Z_TYPE_P(data) != IS_NULL)) {
 				var_push_dtor_value(var_hash, data);
 				ZVAL_NULL(data);
 			}
@@ -510,7 +510,7 @@ numeric_key:
 				goto numeric_key;
 			}
 			data = zend_hash_lookup(ht, Z_STR(key));
-			if (UNEXPECTED(Z_TYPE_INFO_P(data) != IS_NULL)) {
+			if (UNEXPECTED(Z_TYPE_P(data) != IS_NULL)) {
 				var_push_dtor_value(var_hash, data);
 				ZVAL_NULL(data);
 			}
@@ -673,7 +673,7 @@ second_try:
 					data = zend_hash_lookup(ht, Z_STR(key));
 					if (Z_TYPE_P(data) == IS_INDIRECT) {
 						goto declared_property;
-					} else if (UNEXPECTED(Z_TYPE_INFO_P(data) != IS_NULL)) {
+					} else if (UNEXPECTED(Z_TYPE_P(data) != IS_NULL)) {
 						var_push_dtor_value(var_hash, data);
 						ZVAL_NULL(data);
 					}

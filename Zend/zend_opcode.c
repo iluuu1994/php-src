@@ -312,7 +312,7 @@ ZEND_API void destroy_zend_class(zval *zv)
 
 	/* We don't increase the refcount for class aliases,
 	 * skip the destruction of aliases entirely. */
-	if (UNEXPECTED(Z_TYPE_INFO_P(zv) == IS_ALIAS_PTR)) {
+	if (UNEXPECTED(Z_TYPE_P(zv) == IS_ALIAS_PTR)) {
 		return;
 	}
 

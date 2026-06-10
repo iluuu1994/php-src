@@ -333,7 +333,7 @@ ZEND_FUNCTION(func_get_args)
 			if (arg_count > first_extra_arg) {
 				while (i < first_extra_arg) {
 					q = p;
-					if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
+					if (EXPECTED(!Z_ISUNDEF_P(q))) {
 						ZVAL_DEREF(q);
 						if (Z_OPT_REFCOUNTED_P(q)) {
 							Z_ADDREF_P(q);
@@ -350,7 +350,7 @@ ZEND_FUNCTION(func_get_args)
 			}
 			while (i < arg_count) {
 				q = p;
-				if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
+				if (EXPECTED(!Z_ISUNDEF_P(q))) {
 					ZVAL_DEREF(q);
 					if (Z_OPT_REFCOUNTED_P(q)) {
 						Z_ADDREF_P(q);
@@ -1756,7 +1756,7 @@ static void debug_backtrace_get_args(zend_execute_data *call, zval *arg_array) /
 						zval original_arg;
 						bool is_sensitive = backtrace_is_arg_sensitive(call, i);
 
-						if (EXPECTED(Z_TYPE_INFO_P(p) != IS_UNDEF)) {
+						if (EXPECTED(!Z_ISUNDEF_P(p))) {
 							zval *arg = p;
 							ZVAL_DEREF(arg);
 							ZVAL_COPY_VALUE(&original_arg, arg);
@@ -1789,7 +1789,7 @@ static void debug_backtrace_get_args(zend_execute_data *call, zval *arg_array) /
 					is_sensitive = backtrace_is_arg_sensitive(call, MIN(i, call->func->common.num_args));
 				}
 
-				if (EXPECTED(Z_TYPE_INFO_P(p) != IS_UNDEF)) {
+				if (EXPECTED(!Z_ISUNDEF_P(p))) {
 					zval *arg = p;
 					ZVAL_DEREF(arg);
 					ZVAL_COPY_VALUE(&original_arg, arg);

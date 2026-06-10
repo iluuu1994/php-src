@@ -7396,9 +7396,11 @@ ZEND_METHOD(ReflectionReference, getId)
 		REFLECTION_G(key_initialized) = true;
 	}
 
+	zend_reference *ref = Z_REF(intern->obj);
+
 	/* SHA1(ref || key) to avoid directly exposing memory addresses. */
 	PHP_SHA1Init(&context);
-	PHP_SHA1Update(&context, (unsigned char *) &Z_REF(intern->obj), sizeof(zend_reference *));
+	PHP_SHA1Update(&context, (unsigned char *) &ref, sizeof(zend_reference *));
 	PHP_SHA1Update(&context, REFLECTION_G(key), REFLECTION_KEY_LEN);
 	PHP_SHA1Final(digest, &context);
 

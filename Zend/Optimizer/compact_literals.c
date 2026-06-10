@@ -348,9 +348,10 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 						i++;
 					}
 					break;
-				case IS_DOUBLE:
+				case IS_DOUBLE: {
 					ZEND_ASSERT(info[i].num_related == 1);
-					key = zend_string_init((char*)&Z_DVAL(op_array->literals[i]), sizeof(double), 0);
+					double d = Z_DVAL(op_array->literals[i]);
+					key = zend_string_init((char*)&d, sizeof(double), 0);
 					bias_key(key, 200);
 					if ((pos = zend_hash_find(&hash, key))) {
 						map[i] = Z_LVAL_P(pos);
@@ -366,6 +367,7 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 					}
 					zend_string_release_ex(key, 0);
 					break;
+				}
 				case IS_STRING: {
 					key = create_str_cache_key(&op_array->literals[i], info[i].num_related);
 					if ((pos = zend_hash_find(&hash, key)) != NULL) {
