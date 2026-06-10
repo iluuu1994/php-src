@@ -16,7 +16,6 @@ class Foo {
     }
 }
 
-// Adds IS_PROP_REINITABLE to prop flags
 clone new Foo();
 
 ?>

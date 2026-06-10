@@ -25,6 +25,7 @@
 #include "zend_exceptions.h"
 #include "zend_weakrefs.h"
 #include "zend_lazy_objects.h"
+#include "zend_bitset.h"
 
 static zend_always_inline void _zend_object_std_init(zend_object *object, zend_class_entry *ce)
 {
@@ -196,10 +197,6 @@ ZEND_API void ZEND_FASTCALL zend_objects_clone_members(zend_object *new_object, 
 			i_zval_ptr_dtor(dst);
 			ZVAL_COPY_VALUE_PROP(dst, src);
 			zval_add_ref(dst);
-			if (has_clone_method) {
-				/* Unconditionally add the IS_PROP_REINITABLE flag to avoid a potential cache miss of property_info */
-				Z_PROP_FLAG_P(dst) |= IS_PROP_REINITABLE;
-			}
 
 			if (UNEXPECTED(Z_ISREF_P(dst)) &&
 					(ZEND_DEBUG || ZEND_REF_HAS_TYPE_SOURCES(Z_REF_P(dst)))) {
@@ -245,10 +242,6 @@ ZEND_API void ZEND_FASTCALL zend_objects_clone_members(zend_object *new_object, 
 				ZVAL_COPY_VALUE(&new_prop, prop);
 				zval_add_ref(&new_prop);
 			}
-			if (has_clone_method) {
-				/* Unconditionally add the IS_PROP_REINITABLE flag to avoid a potential cache miss of property_info */
-				Z_PROP_FLAG_P(&new_prop) |= IS_PROP_REINITABLE;
-			}
 			if (EXPECTED(key)) {
 				_zend_hash_append(new_object->properties, key, &new_prop);
 			} else {
@@ -258,14 +251,13 @@ ZEND_API void ZEND_FASTCALL zend_objects_clone_members(zend_object *new_object, 
 	}
 
 	if (has_clone_method) {
+		zend_cloning_obj_aux aux;
+		if (UNEXPECTED(ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce))) {
+			zend_install_cloning_obj_aux(&aux, new_object);
+		}
 		zend_call_known_instance_method_with_0_params(new_object->ce->clone, new_object, NULL);
-
-		if (ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce)) {
-			for (uint32_t i = 0; i < new_object->ce->default_properties_count; i++) {
-				zval* prop = OBJ_PROP_NUM(new_object, i);
-				/* Unconditionally remove the IS_PROP_REINITABLE flag to avoid a potential cache miss of property_info */
-				Z_PROP_FLAG_P(prop) &= ~IS_PROP_REINITABLE;
-			}
+		if (UNEXPECTED(ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce))) {
+			zend_uninstall_cloning_obj_aux(&aux, new_object);
 		}
 	}
 }
@@ -274,15 +266,12 @@ ZEND_API zend_object *zend_objects_clone_obj_with(zend_object *old_object, const
 {
 	zend_object *new_object = old_object->handlers->clone_obj(old_object);
 
-	if (EXPECTED(!EG(exception))) {
-		/* Unlock readonly properties once more. */
-		if (ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce)) {
-			for (uint32_t i = 0; i < new_object->ce->default_properties_count; i++) {
-				zval* prop = OBJ_PROP_NUM(new_object, i);
-				Z_PROP_FLAG_P(prop) |= IS_PROP_REINITABLE;
-			}
-		}
+	zend_cloning_obj_aux aux;
+	if (UNEXPECTED(ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce))) {
+		zend_install_cloning_obj_aux(&aux, new_object);
+	}
 
+	if (EXPECTED(!EG(exception))) {
 		const zend_class_entry *old_scope = EG(fake_scope);
 
 		EG(fake_scope) = scope;
@@ -313,6 +302,10 @@ ZEND_API zend_object *zend_objects_clone_obj_with(zend_object *old_object, const
 		EG(fake_scope) = old_scope;
 	}
 
+	if (UNEXPECTED(ZEND_CLASS_HAS_READONLY_PROPS(new_object->ce))) {
+		zend_uninstall_cloning_obj_aux(&aux, new_object);
+	}
+
 	return new_object;
 }
 
@@ -341,4 +334,75 @@ ZEND_API zend_object *zend_objects_clone_obj(zend_object *old_object)
 	zend_objects_clone_members(new_object, old_object);
 
 	return new_object;
+}
+
+zend_cloning_obj_aux *zend_find_cloning_obj_aux(const zend_object *obj)
+{
+	for (zend_cloning_obj_aux *aux = EG(cloning_objects_aux); aux; aux = aux->next) {
+		if (aux->obj == obj) {
+			return aux;
+		}
+	}
+	return NULL;
+}
+
+void zend_install_cloning_obj_aux(zend_cloning_obj_aux *aux, const zend_object *obj)
+{
+	ZEND_ASSERT(!zend_find_cloning_obj_aux(obj));
+
+	uint32_t bitset_len = zend_bitset_len(zend_hash_num_elements(&obj->ce->properties_info));
+
+	aux->next = EG(cloning_objects_aux);
+	aux->obj = obj;
+	aux->reinitable_props = emalloc(bitset_len * ZEND_BITSET_ELM_SIZE);
+	zend_bitset_fill(aux->reinitable_props, bitset_len);
+
+	EG(cloning_objects_aux) = aux;
+}
+
+void zend_uninstall_cloning_obj_aux(zend_cloning_obj_aux *aux, const zend_object *obj)
+{
+	efree(aux->reinitable_props);
+
+	zend_cloning_obj_aux *prev = NULL;
+	for (zend_cloning_obj_aux *aux = EG(cloning_objects_aux); aux; prev = aux, aux = aux->next) {
+		if (aux->obj == obj) {
+			if (!prev) {
+				EG(cloning_objects_aux) = aux->next;
+			} else {
+				prev->next = aux->next;
+			}
+			return;
+		}
+	}
+	ZEND_UNREACHABLE();
+}
+
+bool zend_prop_is_reinitable(const zend_object *obj, const zend_property_info *prop_info)
+{
+	ZEND_ASSERT(prop_info->flags & ZEND_ACC_READONLY);
+	zend_cloning_obj_aux *aux = zend_find_cloning_obj_aux(obj);
+	if (!aux) {
+		return false;
+	}
+	return zend_bitset_in(aux->reinitable_props, OBJ_PROP_TO_NUM(prop_info->offset));
+}
+
+void zend_prop_mark_not_reinitable(const zend_object *obj, const zend_property_info *prop_info)
+{
+	ZEND_ASSERT(prop_info->flags & ZEND_ACC_READONLY);
+	zend_cloning_obj_aux *aux = zend_find_cloning_obj_aux(obj);
+	if (aux) {
+		zend_bitset_excl(aux->reinitable_props, OBJ_PROP_TO_NUM(prop_info->offset));
+	}
+}
+
+void zend_prop_mark_all_reinitable(const zend_object *obj, const zend_property_info *prop_info)
+{
+	ZEND_ASSERT(prop_info->flags & ZEND_ACC_READONLY);
+	zend_cloning_obj_aux *aux = zend_find_cloning_obj_aux(obj);
+	if (aux) {
+		uint32_t bitset_len = zend_bitset_len(zend_hash_num_elements(&obj->ce->properties_info));
+		zend_bitset_fill(aux->reinitable_props, bitset_len);
+	}
 }

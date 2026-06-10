@@ -169,6 +169,13 @@ struct _zend_compiler_globals {
 #endif
 };
 
+typedef zend_ulong *zend_bitset;
+
+typedef struct zend_cloning_obj_aux {
+	struct zend_cloning_obj_aux *next;
+	const zend_object *obj;
+	zend_bitset reinitable_props;
+} zend_cloning_obj_aux;
 
 struct _zend_executor_globals {
 	zval uninitialized_zval;
@@ -325,6 +332,10 @@ struct _zend_executor_globals {
 	zend_strtod_state strtod_state;
 
 	HashTable callable_convert_cache;
+
+	/* Linked list of aux data for cloning objects, indicating which readonly
+	 * properties have already been written to. */
+	zend_cloning_obj_aux *cloning_objects_aux;
 
 	void *reserved[ZEND_MAX_RESERVED_RESOURCES];
 };

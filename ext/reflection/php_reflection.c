@@ -6875,7 +6875,7 @@ retry:;
 			}
 			goto retry;
 		}
-		if (Z_TYPE_P(prop_val) != IS_UNDEF && !(Z_PROP_FLAG_P(prop_val) & IS_PROP_REINITABLE)) {
+		if (Z_TYPE_P(prop_val) != IS_UNDEF && !zend_prop_is_reinitable(obj, prop)) {
 			RETURN_FALSE;
 		}
 	}
