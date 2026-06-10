@@ -6251,7 +6251,7 @@ ZEND_METHOD(ReflectionProperty, skipLazyInitialization)
 
 	ZEND_ASSERT(Z_TYPE_P(dst) == IS_UNDEF && "Lazy property should be UNDEF");
 
-	ZVAL_COPY_PROP(dst, src);
+	ZVAL_COPY(dst, src);
 
 	/* Object becomes non-lazy if this was the last lazy prop */
 	if (zend_object_is_lazy(object)

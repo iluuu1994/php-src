@@ -296,7 +296,7 @@ static void add_token(
 			zval *end = token_class->default_properties_table
 				+ token_class->default_properties_count;
 			for (; src < end; src++, dst++) {
-				ZVAL_COPY_PROP(dst, src);
+				ZVAL_COPY(dst, src);
 			}
 		}
 	} else if (token_type >= 256) {

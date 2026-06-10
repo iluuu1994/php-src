@@ -1510,7 +1510,6 @@ static void do_inherit_property(zend_property_info *parent_info, zend_string *ke
 					ce->default_properties_table = perealloc(ce->default_properties_table, sizeof(zval) * ce->default_properties_count, ce->type == ZEND_INTERNAL_CLASS);
 					zval *property_default_ptr = &ce->default_properties_table[OBJ_PROP_TO_NUM(child_info->offset)];
 					ZVAL_UNDEF(property_default_ptr);
-					Z_PROP_FLAG_P(property_default_ptr) = 0;
 				}
 
 				int parent_num = OBJ_PROP_TO_NUM(parent_info->offset);
@@ -1889,7 +1888,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 			do {
 				dst--;
 				src--;
-				ZVAL_COPY_VALUE_PROP(dst, src);
+				ZVAL_COPY_VALUE(dst, src);
 			} while (dst != end);
 			pefree(src, ce->type == ZEND_INTERNAL_CLASS);
 			end = ce->default_properties_table;
@@ -1907,7 +1906,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 				/* We don't have to account for refcounting because
 				 * zend_declare_typed_property() disallows refcounted defaults for internal classes. */
 				ZEND_ASSERT(!Z_REFCOUNTED_P(src));
-				ZVAL_COPY_VALUE_PROP(dst, src);
+				ZVAL_COPY_VALUE(dst, src);
 				if (Z_OPT_TYPE_P(dst) == IS_CONSTANT_AST) {
 					ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
 					ce->ce_flags |= ZEND_ACC_HAS_AST_PROPERTIES;
@@ -1918,7 +1917,7 @@ ZEND_API void zend_do_inheritance_ex(zend_class_entry *ce, zend_class_entry *par
 			do {
 				dst--;
 				src--;
-				ZVAL_COPY_PROP(dst, src);
+				ZVAL_COPY(dst, src);
 				if (Z_OPT_TYPE_P(dst) == IS_CONSTANT_AST) {
 					ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
 					ce->ce_flags |= ZEND_ACC_HAS_AST_PROPERTIES;
@@ -3366,7 +3365,7 @@ static zend_class_entry *zend_lazy_class_load(const zend_class_entry *pce)
 
 		ce->default_properties_table = dst;
 		for (; src != end; src++, dst++) {
-			ZVAL_COPY_VALUE_PROP(dst, src);
+			ZVAL_COPY_VALUE(dst, src);
 		}
 	}
 
