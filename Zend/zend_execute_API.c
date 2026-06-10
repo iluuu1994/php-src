@@ -202,6 +202,8 @@ void init_executor(void) /* {{{ */
 
 	zend_hash_init(&EG(callable_convert_cache), 8, NULL, ZVAL_PTR_DTOR, 0);
 
+	EG(cloning_objects_aux) = NULL;
+
 	EG(active) = 1;
 }
 /* }}} */
@@ -418,6 +420,7 @@ ZEND_API void zend_shutdown_executor_values(bool fast_shutdown)
 		zend_stack_clean(&EG(user_exception_handlers), (void (*)(void *))ZVAL_PTR_DTOR, 1);
 
 		zend_hash_clean(&EG(callable_convert_cache));
+		ZEND_ASSERT(zend_hash_num_elements(&EG(callable_convert_cache)) == 0);
 
 #if ZEND_DEBUG
 		if (!CG(unclean_shutdown)) {

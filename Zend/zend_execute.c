@@ -1075,9 +1075,12 @@ static zend_never_inline zval* zend_assign_to_typed_prop(const zend_property_inf
 	zval tmp;
 
 	if (UNEXPECTED(info->flags & (ZEND_ACC_READONLY|ZEND_ACC_PPP_SET_MASK))) {
-		if ((info->flags & ZEND_ACC_READONLY) && !(Z_PROP_FLAG_P(property_val) & IS_PROP_REINITABLE)) {
-			zend_readonly_property_modification_error(info);
-			return &EG(uninitialized_zval);
+		if ((info->flags & ZEND_ACC_READONLY)) {
+			zend_object *obj = (zend_object *)((char *)property_val - info->offset);
+			if (!zend_prop_is_reinitable(obj, info)) {
+				zend_readonly_property_modification_error(info);
+				return &EG(uninitialized_zval);
+			}
 		}
 		if (info->flags & ZEND_ACC_PPP_SET_MASK && !zend_asymmetric_property_has_set_access(info)) {
 			zend_asymmetric_visibility_property_modification_error(info, "modify");
@@ -1093,7 +1096,10 @@ static zend_never_inline zval* zend_assign_to_typed_prop(const zend_property_inf
 		return &EG(uninitialized_zval);
 	}
 
-	Z_PROP_FLAG_P(property_val) &= ~IS_PROP_REINITABLE;
+	if (UNEXPECTED(info->flags & ZEND_ACC_READONLY)) {
+		zend_object *obj = (zend_object *)((char *)info - info->offset);
+		zend_prop_mark_not_reinitable(obj, info);
+	}
 
 	return zend_assign_to_variable_ex(property_val, &tmp, IS_TMP_VAR, EX_USES_STRICT_TYPES(), garbage_ptr);
 }

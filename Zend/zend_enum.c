@@ -54,15 +54,11 @@ zend_object *zend_enum_new(zval *result, zend_class_entry *ce, int case_id, zend
 
 	zval *zname = OBJ_PROP_NUM(zobj, 0);
 	ZVAL_STR_COPY(zname, case_name);
-	/* ZVAL_COPY does not set Z_PROP_FLAG, this needs to be cleared to avoid leaving IS_PROP_REINITABLE set */
-	Z_PROP_FLAG_P(zname) = 0;
 
 	if (backing_value_zv != NULL) {
 		zval *prop = OBJ_PROP_NUM(zobj, 1);
 
 		ZVAL_COPY(prop, backing_value_zv);
-		/* ZVAL_COPY does not set Z_PROP_FLAG, this needs to be cleared to avoid leaving IS_PROP_REINITABLE set */
-		Z_PROP_FLAG_P(prop) = 0;
 	}
 
 	return zobj;

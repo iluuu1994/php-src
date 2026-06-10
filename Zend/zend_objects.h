@@ -34,6 +34,13 @@ ZEND_API zend_object *zend_objects_clone_obj_with(zend_object *object, const zen
 void zend_object_dtor_dynamic_properties(zend_object *object);
 void zend_object_dtor_property(zend_object *object, zval *p);
 
+typedef struct zend_cloning_obj_aux zend_cloning_obj_aux;
+void zend_install_cloning_obj_aux(zend_cloning_obj_aux *aux, const zend_object *obj);
+void zend_uninstall_cloning_obj_aux(zend_cloning_obj_aux *aux, const zend_object *obj);
+
+bool zend_prop_is_reinitable(const zend_object *obj, const zend_property_info *prop_info);
+void zend_prop_mark_not_reinitable(const zend_object *obj, const zend_property_info *prop_info);
+
 END_EXTERN_C()
 
 #endif /* ZEND_OBJECTS_H */

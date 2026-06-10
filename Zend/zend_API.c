@@ -1742,8 +1742,8 @@ ZEND_API void object_properties_load(zend_object *object, const HashTable *prope
 				(property_info->flags & ZEND_ACC_STATIC) == 0) {
 				zval *slot = OBJ_PROP(object, property_info->offset);
 				if (UNEXPECTED((property_info->flags & ZEND_ACC_READONLY) && !Z_ISUNDEF_P(slot))) {
-					if (Z_PROP_FLAG_P(slot) & IS_PROP_REINITABLE) {
-						Z_PROP_FLAG_P(slot) &= ~IS_PROP_REINITABLE;
+					if (zend_prop_is_reinitable(object, property_info)) {
+						zend_prop_mark_not_reinitable(object, property_info);
 					} else {
 						zend_readonly_property_modification_error(property_info);
 						return;

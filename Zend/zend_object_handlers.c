@@ -1128,7 +1128,7 @@ try_again:
 			if (error) {
 				if ((prop_info->flags & ZEND_ACC_READONLY)
 				 && Z_TYPE_P(variable_ptr) != IS_UNDEF
-				 && !(Z_PROP_FLAG_P(variable_ptr) & IS_PROP_REINITABLE)) {
+				 && !zend_prop_is_reinitable(zobj, prop_info)) {
 					zend_readonly_property_modification_error(prop_info);
 					variable_ptr = &EG(error_zval);
 					goto exit;
@@ -1162,7 +1162,9 @@ typed_property:
 					variable_ptr = &EG(error_zval);
 					goto exit;
 				}
-				Z_PROP_FLAG_P(variable_ptr) &= ~IS_PROP_REINITABLE;
+				if (UNEXPECTED(prop_info->flags & ZEND_ACC_READONLY)) {
+					zend_prop_mark_not_reinitable(zobj, prop_info);
+				}
 				value = &tmp;
 			}
 
@@ -1617,7 +1619,7 @@ ZEND_API void zend_std_unset_property(zend_object *zobj, zend_string *name, void
 			if (error) {
 				if ((prop_info->flags & ZEND_ACC_READONLY)
 				 && Z_TYPE_P(slot) != IS_UNDEF
-				 && !(Z_PROP_FLAG_P(slot) & IS_PROP_REINITABLE)) {
+				 && !zend_prop_is_reinitable(zobj, prop_info)) {
 					zend_readonly_property_unset_error(prop_info->ce, name);
 					return;
 				}
