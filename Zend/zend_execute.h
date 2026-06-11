@@ -335,6 +335,8 @@ static zend_always_inline void zend_vm_init_call_frame(zend_execute_data *call, 
 {
 	ZEND_ASSERT(!func->common.scope || object_or_called_scope);
 	call->func = func;
+	// FIXME: Can we avoid this branch?
+	Z_TYPE_INFO(call->This) = (call_info & ZEND_CALL_HAS_THIS) ? IS_OBJECT_EX : IS_PTR;
 	Z_PTR(call->This) = object_or_called_scope;
 	ZEND_CALL_INFO(call) = call_info;
 	ZEND_CALL_NUM_ARGS(call) = num_args;
