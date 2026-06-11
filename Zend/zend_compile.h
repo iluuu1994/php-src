@@ -382,7 +382,7 @@ typedef struct _zend_oparray_context {
 /*                                                        |     |     |     */
 /* Closure related                                        |     |     |     */
 #define ZEND_ACC_CLOSURE                 (1 << 22) /*     |  X  |     |     */
-#define ZEND_ACC_FAKE_CLOSURE            (1 << 23) /*     |  X  |     |     */ /* Same as ZEND_CALL_FAKE_CLOSURE */
+#define ZEND_ACC_FAKE_CLOSURE            (1 << 23) /*     |  X  |     |     */
 /*                                                        |     |     |     */
 #define ZEND_ACC_GENERATOR               (1 << 24) /*     |  X  |     |     */
 /*                                                        |     |     |     */
@@ -654,31 +654,30 @@ struct _zend_execute_data {
 	void               **run_time_cache;   /* cache op_array->run_time_cache */
 	zend_array          *extra_named_params;
 	uint32_t             num_args;         /* arguments number (was This.u2.num_args) */
+	uint32_t             call_info;        /* call_info flags (was This.u1.type_info) */
 };
 
-#define ZEND_CALL_HAS_THIS           IS_OBJECT_EX
-
-/* Top 16 bits of Z_TYPE_INFO(EX(This)) are used as call_info flags */
-#define ZEND_CALL_FUNCTION           (0 << 16)
-#define ZEND_CALL_CODE               (1 << 16)
-#define ZEND_CALL_NESTED             (0 << 17)
-#define ZEND_CALL_TOP                (1 << 17)
-#define ZEND_CALL_ALLOCATED          (1 << 18)
-#define ZEND_CALL_FREE_EXTRA_ARGS    (1 << 19)
-#define ZEND_CALL_HAS_SYMBOL_TABLE   (1 << 20)
-#define ZEND_CALL_RELEASE_THIS       (1 << 21)
-#define ZEND_CALL_CLOSURE            (1 << 22)
-#define ZEND_CALL_FAKE_CLOSURE       (1 << 23) /* Same as ZEND_ACC_FAKE_CLOSURE */
-#define ZEND_CALL_GENERATOR          (1 << 24)
-#define ZEND_CALL_DYNAMIC            (1 << 25)
-#define ZEND_CALL_MAY_HAVE_UNDEF     (1 << 26)
-#define ZEND_CALL_HAS_EXTRA_NAMED_PARAMS (1 << 27)
-#define ZEND_CALL_OBSERVED           (1 << 28) /* "fcall_begin" observer handler may set this flag */
+#define ZEND_CALL_FUNCTION           (0 << 0)
+#define ZEND_CALL_CODE               (1 << 0)
+#define ZEND_CALL_NESTED             (0 << 1)
+#define ZEND_CALL_TOP                (1 << 1)
+#define ZEND_CALL_ALLOCATED          (1 << 2)
+#define ZEND_CALL_FREE_EXTRA_ARGS    (1 << 3)
+#define ZEND_CALL_HAS_SYMBOL_TABLE   (1 << 4)
+#define ZEND_CALL_RELEASE_THIS       (1 << 5)
+#define ZEND_CALL_CLOSURE            (1 << 6)
+#define ZEND_CALL_FAKE_CLOSURE       (1 << 7)
+#define ZEND_CALL_GENERATOR          (1 << 8)
+#define ZEND_CALL_DYNAMIC            (1 << 9)
+#define ZEND_CALL_MAY_HAVE_UNDEF     (1 << 10)
+#define ZEND_CALL_HAS_EXTRA_NAMED_PARAMS (1 << 11)
+#define ZEND_CALL_OBSERVED           (1 << 12) /* "fcall_begin" observer handler may set this flag */
                                                /* to prevent optimization in RETURN handler and    */
                                                /* keep all local variables for "fcall_end" handler */
-#define ZEND_CALL_JIT_RESERVED       (1 << 29) /* reserved for tracing JIT */
-#define ZEND_CALL_NEEDS_REATTACH     (1 << 30)
-#define ZEND_CALL_SEND_ARG_BY_REF    (1u << 31)
+#define ZEND_CALL_JIT_RESERVED       (1 << 13) /* reserved for tracing JIT */
+#define ZEND_CALL_NEEDS_REATTACH     (1 << 14)
+#define ZEND_CALL_SEND_ARG_BY_REF    (1u << 15)
+#define ZEND_CALL_HAS_THIS           (1u << 16)
 
 #define ZEND_CALL_NESTED_FUNCTION    (ZEND_CALL_FUNCTION | ZEND_CALL_NESTED)
 #define ZEND_CALL_NESTED_CODE        (ZEND_CALL_CODE | ZEND_CALL_NESTED)
@@ -686,7 +685,7 @@ struct _zend_execute_data {
 #define ZEND_CALL_TOP_CODE           (ZEND_CALL_CODE | ZEND_CALL_TOP)
 
 #define ZEND_CALL_INFO(call) \
-	Z_TYPE_INFO((call)->This)
+	((call)->call_info)
 
 #define ZEND_CALL_KIND_EX(call_info) \
 	(call_info & (ZEND_CALL_CODE | ZEND_CALL_TOP))
@@ -703,11 +702,11 @@ struct _zend_execute_data {
 	} while (0)
 
 #define ZEND_ADD_CALL_FLAG(call, flag) do { \
-		ZEND_ADD_CALL_FLAG_EX(Z_TYPE_INFO((call)->This), flag); \
+		ZEND_ADD_CALL_FLAG_EX(ZEND_CALL_INFO(call), flag); \
 	} while (0)
 
 #define ZEND_DEL_CALL_FLAG(call, flag) do { \
-		ZEND_DEL_CALL_FLAG_EX(Z_TYPE_INFO((call)->This), flag); \
+		ZEND_DEL_CALL_FLAG_EX(ZEND_CALL_INFO(call), flag); \
 	} while (0)
 
 #define ZEND_CALL_NUM_ARGS(call) \
