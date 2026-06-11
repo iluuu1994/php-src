@@ -26,7 +26,7 @@ typedef struct _zend_array zend_array;
 typedef struct _zend_class_entry zend_class_entry;
 typedef struct _zend_object zend_object;
 typedef struct _zend_object_iterator zend_object_iterator;
-typedef struct _zval_struct zval;
+typedef union zval zval;
 
 typedef enum {
 	ZEND_PROPERTY_HOOK_GET = 0,

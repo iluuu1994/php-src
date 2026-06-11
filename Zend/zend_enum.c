@@ -632,8 +632,7 @@ ZEND_API void zend_enum_add_case(zend_class_entry *ce, zend_string *case_name, z
 	int case_id = zend_enum_next_case_id(ce);
 
 	zval ast_zv;
-	Z_TYPE_INFO(ast_zv) = IS_CONSTANT_AST;
-	Z_AST(ast_zv) = create_enum_case_ast(ce->name, case_id, case_name, value);
+	ZVAL_AST(&ast_zv, create_enum_case_ast(ce->name, case_id, case_name, value));
 	zend_class_constant *c = zend_declare_class_constant_ex(
 		ce, case_name, &ast_zv, ZEND_ACC_PUBLIC, NULL);
 	ZEND_CLASS_CONST_FLAGS(c) |= ZEND_CLASS_CONST_IS_CASE;

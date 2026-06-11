@@ -31,17 +31,22 @@
 
 # define ADD_STRING(str) ADD_DUP_SIZE((str), _ZSTR_STRUCT_SIZE(ZSTR_LEN(str)))
 
+static zend_always_inline zend_string *add_interned_string_ex(zend_string *str) {
+	if (ZCG(current_persistent_script)->corrupted) {
+		ADD_STRING(str);
+	} else if (!IS_ACCEL_INTERNED(str)) {
+		zend_string *tmp = accel_new_interned_string(str);
+		if (tmp != str) {
+			str = tmp;
+		} else {
+			ADD_STRING(str);
+		}
+	}
+	return str;
+}
+
 # define ADD_INTERNED_STRING(str) do { \
-		if (ZCG(current_persistent_script)->corrupted) { \
-			ADD_STRING(str); \
-		} else if (!IS_ACCEL_INTERNED(str)) { \
-			zend_string *tmp = accel_new_interned_string(str); \
-			if (tmp != (str)) { \
-				(str) = tmp; \
-			} else { \
-				ADD_STRING(str); \
-			} \
-		} \
+		(str) = add_interned_string_ex(str); \
 	} while (0)
 
 static void zend_persist_zval_calc(zval *z);
@@ -113,10 +118,7 @@ static void zend_persist_zval_calc(zval *z)
 
 	switch (Z_TYPE_P(z)) {
 		case IS_STRING:
-			ADD_INTERNED_STRING(Z_STR_P(z));
-			if (ZSTR_IS_INTERNED(Z_STR_P(z))) {
-				Z_TYPE_FLAGS_P(z) = 0;
-			}
+			ZVAL_STR(z, add_interned_string_ex(Z_STR_P(z)));
 			break;
 		case IS_ARRAY:
 			if (!ZCG(current_persistent_script)->corrupted

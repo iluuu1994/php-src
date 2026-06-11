@@ -708,7 +708,7 @@ static void auto_global_copy_ctor(zval *zv) /* {{{ */
 	new_ag->auto_global_callback = old_ag->auto_global_callback;
 	new_ag->jit = old_ag->jit;
 
-	Z_PTR_P(zv) = new_ag;
+	ZVAL_PTR(zv, new_ag);
 }
 /* }}} */
 

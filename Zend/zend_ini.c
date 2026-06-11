@@ -147,7 +147,7 @@ static void copy_ini_entry(zval *zv) /* {{{ */
 	zend_ini_entry *old_entry = (zend_ini_entry*)Z_PTR_P(zv);
 	zend_ini_entry *new_entry = pemalloc(sizeof(zend_ini_entry), true);
 
-	Z_PTR_P(zv) = new_entry;
+	ZVAL_PTR(zv, new_entry);
 	memcpy(new_entry, old_entry, sizeof(zend_ini_entry));
 	if (old_entry->name) {
 		new_entry->name = zend_string_dup(old_entry->name, true);

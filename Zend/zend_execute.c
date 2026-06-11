@@ -2640,7 +2640,7 @@ static ZEND_COLD void zend_binary_assign_op_dim_slow(const zval *container, cons
 	}
 }
 
-static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *dim, zend_value *value EXECUTE_DATA_DC)
+static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *dim, zval *value EXECUTE_DATA_DC)
 {
 	switch (Z_TYPE_P(dim)) {
 		case IS_UNDEF: {
@@ -2675,7 +2675,7 @@ static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *d
 				return IS_NULL;
 			}
 
-			value->str = ZSTR_EMPTY_ALLOC();
+			ZVAL_STR(value, ZSTR_EMPTY_ALLOC());
 			return IS_STRING;
 		case IS_DOUBLE:
 			/* The array may be destroyed while throwing the notice.
@@ -2683,7 +2683,7 @@ static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *d
 			if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
 				GC_ADDREF(ht);
 			}
-			value->lval = zend_dval_to_lval_safe(Z_DVAL_P(dim));
+			ZVAL_LONG(value, zend_dval_to_lval_safe(Z_DVAL_P(dim)));
 			if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE) && !GC_DELREF(ht)) {
 				zend_array_destroy(ht);
 				return IS_NULL;
@@ -2706,13 +2706,13 @@ static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *d
 			if (EG(exception)) {
 				return IS_NULL;
 			}
-			value->lval = Z_RES_HANDLE_P(dim);
+			ZVAL_LONG(value, Z_RES_HANDLE_P(dim));
 			return IS_LONG;
 		case IS_FALSE:
-			value->lval = 0;
+			ZVAL_LONG(value, 0);
 			return IS_LONG;
 		case IS_TRUE:
-			value->lval = 1;
+			ZVAL_LONG(value, 1);
 			return IS_LONG;
 		default:
 			zend_illegal_array_offset_access(dim);
@@ -2720,7 +2720,7 @@ static zend_never_inline uint8_t slow_index_convert(HashTable *ht, const zval *d
 	}
 }
 
-static zend_never_inline uint8_t slow_index_convert_w(HashTable *ht, const zval *dim, zend_value *value EXECUTE_DATA_DC)
+static zend_never_inline uint8_t slow_index_convert_w(HashTable *ht, const zval *dim, zval *value EXECUTE_DATA_DC)
 {
 	switch (Z_TYPE_P(dim)) {
 		case IS_UNDEF: {
@@ -2757,7 +2757,7 @@ static zend_never_inline uint8_t slow_index_convert_w(HashTable *ht, const zval 
 			if (EG(exception)) {
 				return IS_NULL;
 			}
-			value->str = ZSTR_EMPTY_ALLOC();
+			ZVAL_STR(value, ZSTR_EMPTY_ALLOC());
 			return IS_STRING;
 		case IS_DOUBLE:
 			/* The array may be destroyed while throwing the notice.
@@ -2765,7 +2765,7 @@ static zend_never_inline uint8_t slow_index_convert_w(HashTable *ht, const zval 
 			if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE)) {
 				GC_ADDREF(ht);
 			}
-			value->lval = zend_dval_to_lval_safe(Z_DVAL_P(dim));
+			ZVAL_LONG(value, zend_dval_to_lval_safe(Z_DVAL_P(dim)));
 			if (!(GC_FLAGS(ht) & IS_ARRAY_IMMUTABLE) && GC_DELREF(ht) != 1) {
 				if (!GC_REFCOUNT(ht)) {
 					zend_array_destroy(ht);
@@ -2792,13 +2792,13 @@ static zend_never_inline uint8_t slow_index_convert_w(HashTable *ht, const zval 
 			if (EG(exception)) {
 				return IS_NULL;
 			}
-			value->lval = Z_RES_HANDLE_P(dim);
+			ZVAL_LONG(value, Z_RES_HANDLE_P(dim));
 			return IS_LONG;
 		case IS_FALSE:
-			value->lval = 0;
+			ZVAL_LONG(value, 0);
 			return IS_LONG;
 		case IS_TRUE:
-			value->lval = 1;
+			ZVAL_LONG(value, 1);
 			return IS_LONG;
 		default:
 			zend_illegal_array_offset_access(dim);
@@ -2866,7 +2866,7 @@ str_index:
 		dim = Z_REFVAL_P(dim);
 		goto try_again;
 	} else {
-		zend_value val;
+		zval val;
 		uint8_t t;
 
 		if (type != BP_VAR_W && type != BP_VAR_RW) {
@@ -2875,10 +2875,10 @@ str_index:
 			t = slow_index_convert_w(ht, dim, &val EXECUTE_DATA_CC);
 		}
 		if (t == IS_STRING) {
-			offset_key = val.str;
+			offset_key = Z_STR(val);
 			goto str_index;
 		} else if (t == IS_LONG) {
-			hval = val.lval;
+			hval = Z_LVAL(val);
 			goto num_index;
 		} else {
 			retval = (type == BP_VAR_W || type == BP_VAR_RW) ?

@@ -660,7 +660,7 @@ PHP_FUNCTION(phpdbg_end_oplog)
 				if (!num) {
 					num = zend_hash_index_add_new(insert_ht, insert_idx, &zero);
 				}
-				Z_LVAL_P(num)++;
+				ZVAL_LONG(num, Z_LVAL_P(num) + 1);
 			}
 
 		} while ((cur = cur->next));

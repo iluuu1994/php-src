@@ -46,18 +46,24 @@
 	GC_TYPE_INFO(str) = flags; \
 } while (0)
 
+static zend_always_inline zend_string *zend_accel_store_string_ex(zend_string *str)
+{
+	zend_string *new_str = zend_shared_alloc_get_xlat_entry(str);
+	if (new_str) {
+		zend_string_release_ex(str, 0);
+		str = new_str;
+	} else {
+		new_str = zend_shared_memdup_put((void*)str, _ZSTR_STRUCT_SIZE(ZSTR_LEN(str)));
+		zend_string_release_ex(str, 0);
+		str = new_str;
+		zend_string_hash_val(str);
+		zend_set_str_gc_flags(str);
+	}
+	return str;
+}
+
 #define zend_accel_store_string(str) do { \
-		zend_string *new_str = zend_shared_alloc_get_xlat_entry(str); \
-		if (new_str) { \
-			zend_string_release_ex(str, 0); \
-			str = new_str; \
-		} else { \
-			new_str = zend_shared_memdup_put((void*)str, _ZSTR_STRUCT_SIZE(ZSTR_LEN(str))); \
-			zend_string_release_ex(str, 0); \
-			str = new_str; \
-			zend_string_hash_val(str); \
-			zend_set_str_gc_flags(str); \
-		} \
+		str = zend_accel_store_string_ex(str); \
 	} while (0)
 #define zend_accel_memdup_string(str) do { \
 		zend_string *new_str = zend_shared_alloc_get_xlat_entry(str); \
@@ -219,14 +225,16 @@ static void zend_persist_zval(zval *z)
 
 	switch (Z_TYPE_P(z)) {
 		case IS_STRING:
-			zend_accel_store_interned_string(Z_STR_P(z));
-			Z_TYPE_FLAGS_P(z) = 0;
+			if (!IS_ACCEL_INTERNED(Z_STR_P(z))) {
+				ZVAL_STR(z, zend_accel_store_string_ex(Z_STR_P(z)));
+			}
+			z_mark_immutable(z);
 			break;
 		case IS_ARRAY:
 			new_ptr = zend_shared_alloc_get_xlat_entry(Z_ARR_P(z));
 			if (new_ptr) {
-				Z_ARR_P(z) = new_ptr;
-				Z_TYPE_FLAGS_P(z) = 0;
+				ZVAL_ARR(z, new_ptr);
+				z_mark_immutable(z);
 			} else if (!ZCG(current_persistent_script)->corrupted
 			 && zend_accel_in_shm(Z_ARR_P(z))) {
 				/* pass */
@@ -239,7 +247,7 @@ static void zend_persist_zval(zval *z)
 					GC_REMOVE_FROM_BUFFER(Z_ARR_P(z));
 					ht = zend_shared_memdup_put_free(Z_ARR_P(z), sizeof(zend_array));
 				}
-				Z_ARR_P(z) = ht;
+				ZVAL_ARR(z, ht);
 				zend_hash_persist(ht);
 				if (HT_IS_PACKED(ht)) {
 					zval *zv;
@@ -258,7 +266,7 @@ static void zend_persist_zval(zval *z)
 					} ZEND_HASH_FOREACH_END();
 				}
 				/* make immutable array */
-				Z_TYPE_FLAGS_P(z) = 0;
+				z_mark_immutable(z);
 				GC_SET_REFCOUNT(Z_COUNTED_P(z), 2);
 				GC_ADD_FLAGS(Z_COUNTED_P(z), IS_ARRAY_IMMUTABLE);
 			}
@@ -266,14 +274,14 @@ static void zend_persist_zval(zval *z)
 		case IS_CONSTANT_AST:
 			new_ptr = zend_shared_alloc_get_xlat_entry(Z_AST_P(z));
 			if (new_ptr) {
-				Z_AST_P(z) = new_ptr;
-				Z_TYPE_FLAGS_P(z) = 0;
+				ZVAL_AST(z, new_ptr);
+				z_mark_immutable(z);
 			} else if (ZCG(current_persistent_script)->corrupted
 			 || !zend_accel_in_shm(Z_AST_P(z))) {
 				zend_ast_ref *old_ref = Z_AST_P(z);
-				Z_AST_P(z) = zend_shared_memdup_put(Z_AST_P(z), sizeof(zend_ast_ref));
+				ZVAL_AST(z, zend_shared_memdup_put(Z_AST_P(z), sizeof(zend_ast_ref)));
 				zend_persist_ast(GC_AST(old_ref));
-				Z_TYPE_FLAGS_P(z) = 0;
+				z_mark_immutable(z);
 				GC_SET_REFCOUNT(Z_COUNTED_P(z), 1);
 				GC_ADD_FLAGS(Z_COUNTED_P(z), GC_IMMUTABLE);
 				efree(old_ref);
@@ -710,7 +718,8 @@ static void zend_persist_op_array(zval *zv)
 
 	old_op_array = zend_shared_alloc_get_xlat_entry(op_array);
 	if (!old_op_array) {
-		op_array = Z_PTR_P(zv) = zend_shared_memdup_put(Z_PTR_P(zv), sizeof(zend_op_array));
+		op_array = zend_shared_memdup_put(Z_PTR_P(zv), sizeof(zend_op_array));
+		ZVAL_PTR(zv, op_array);
 		zend_persist_op_array_ex(op_array, NULL);
 		if (!ZCG(current_persistent_script)->corrupted) {
 			op_array->fn_flags |= ZEND_ACC_IMMUTABLE;
@@ -729,7 +738,7 @@ static void zend_persist_op_array(zval *zv)
 #endif
 	} else {
 		/* This can happen during preloading, if a dynamic function definition is declared. */
-		Z_PTR_P(zv) = old_op_array;
+		ZVAL_PTR(zv, old_op_array);
 	}
 }
 
@@ -874,7 +883,7 @@ static void zend_persist_class_constant(zval *zv)
 	zend_class_entry *ce;
 
 	if (c) {
-		Z_PTR_P(zv) = c;
+		ZVAL_PTR(zv, c);
 		return;
 	} else if (((orig_c->ce->ce_flags & ZEND_ACC_IMMUTABLE) && !(orig_c->flags & CONST_OWNED))
 	 || orig_c->ce->type == ZEND_INTERNAL_CLASS) {
@@ -884,7 +893,8 @@ static void zend_persist_class_constant(zval *zv)
 	 && zend_accel_in_shm(Z_PTR_P(zv))) {
 		return;
 	}
-	c = Z_PTR_P(zv) = zend_shared_memdup_put(Z_PTR_P(zv), sizeof(zend_class_constant));
+	c = zend_shared_memdup_put(Z_PTR_P(zv), sizeof(zend_class_constant));
+	ZVAL_PTR(zv, c);
 	zend_persist_zval(&c->value);
 	ce = zend_shared_alloc_get_xlat_entry(c->ce);
 	if (ce) {
@@ -956,7 +966,7 @@ zend_class_entry *zend_persist_class_entry(zend_class_entry *orig_ce)
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->function_table, p) {
 			ZEND_ASSERT(p->key != NULL);
 			zend_accel_store_interned_string(p->key);
-			Z_PTR(p->val) = zend_persist_class_method(Z_PTR(p->val), ce);
+			ZVAL_PTR(&p->val, zend_persist_class_method(Z_PTR(p->val), ce));
 		} ZEND_HASH_FOREACH_END();
 		HT_FLAGS(&ce->function_table) &= (HASH_FLAG_UNINITIALIZED | HASH_FLAG_STATIC_KEYS);
 		if (ce->default_properties_table) {
@@ -1000,11 +1010,11 @@ zend_class_entry *zend_persist_class_entry(zend_class_entry *orig_ce)
 			ZEND_ASSERT(p->key != NULL);
 			zend_accel_store_interned_string(p->key);
 			if (prop->ce == orig_ce) {
-				Z_PTR(p->val) = zend_persist_property_info(prop);
+				ZVAL_PTR(&p->val, zend_persist_property_info(prop));
 			} else {
 				prop = zend_shared_alloc_get_xlat_entry(prop);
 				if (prop) {
-					Z_PTR(p->val) = prop;
+					ZVAL_PTR(&p->val, prop);
 				} else {
 					/* This can happen if preloading is used and we inherit a property from an
 					 * internal class. In that case we should keep pointing to the internal
@@ -1334,7 +1344,7 @@ static void zend_accel_persist_class_table(HashTable *class_table)
 	ZEND_HASH_MAP_FOREACH_BUCKET(class_table, p) {
 		ZEND_ASSERT(p->key != NULL);
 		zend_accel_store_interned_string(p->key);
-		Z_CE(p->val) = zend_persist_class_entry(Z_CE(p->val));
+		ZVAL_CE(&p->val, zend_persist_class_entry(Z_CE(p->val)));
 	} ZEND_HASH_FOREACH_END();
 	ZEND_HASH_MAP_FOREACH_BUCKET(class_table, p) {
 		if (EXPECTED(Z_TYPE(p->val) != IS_ALIAS_PTR)) {

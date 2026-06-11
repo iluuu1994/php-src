@@ -702,7 +702,7 @@ try_again:
 
 				if ((tmp = zend_hash_str_find(Z_ARRVAL_P(digest), "nc", sizeof("nc")-1)) != NULL &&
 					Z_TYPE_P(tmp) == IS_LONG) {
-					Z_LVAL_P(tmp)++;
+					ZVAL_LONG(tmp, Z_LVAL_P(tmp) + 1);
 					snprintf(nc, sizeof(nc), "%08" ZEND_LONG_FMT_SPEC, Z_LVAL_P(tmp));
 				} else {
 					add_assoc_long(digest, "nc", 1);

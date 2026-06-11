@@ -2115,7 +2115,7 @@ static xmlNsPtr dom_alloc_ns_decl(HashTable *links, xmlNodePtr node)
 	if (Z_ISNULL_P(zv)) {
 		ZVAL_LONG(zv, 1);
 	} else {
-		Z_LVAL_P(zv)++;
+		ZVAL_LONG(zv, Z_LVAL_P(zv) + 1);
 	}
 
 	memset(ns, 0, sizeof(*ns));

@@ -158,7 +158,7 @@ static zval *xsl_objects_write_property_with_validation(zend_object *object, zen
 
 	/* Validate value *after* coercions have been performed, and restore the old value if necessary. */
 	if (UNEXPECTED(Z_LVAL_P(property) < 0)) {
-		Z_LVAL_P(property) = old_property_value;
+		ZVAL_LONG(property, old_property_value);
 		zend_value_error("%s::$%s must be greater than or equal to 0", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
 		return &EG(error_zval);
 	}

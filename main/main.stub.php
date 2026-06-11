@@ -158,14 +158,12 @@ const PHP_EOL = UNKNOWN;
 const PHP_MAXPATHLEN = UNKNOWN;
 /**
  * @var int
- * @cvalue ZEND_LONG_MAX
  */
-const PHP_INT_MAX = UNKNOWN;
+const PHP_INT_MAX = 144_115_188_075_855_871;
 /**
  * @var int
- * @cvalue ZEND_LONG_MIN
  */
-const PHP_INT_MIN = UNKNOWN;
+const PHP_INT_MIN = -144_115_188_075_855_872;
 /**
  * @var int
  * @cvalue SIZEOF_ZEND_LONG
