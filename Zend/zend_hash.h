@@ -86,11 +86,9 @@ typedef enum {
 
 extern ZEND_API const HashTable zend_empty_array;
 
-#define ZVAL_EMPTY_ARRAY(z) do {						\
-		zval *__z = (z);								\
-		Z_ARR_P(__z) = (zend_array*)&zend_empty_array;	\
-		Z_TYPE_INFO_P(__z) = IS_ARRAY; \
-	} while (0)
+static zend_always_inline void ZVAL_EMPTY_ARRAY(zval *zv) {
+	zv->ptr = ((uintptr_t)&zend_empty_array << Z_TYPE_SHIFT) | IS_ARRAY;
+}
 
 
 typedef struct _zend_hash_key {
@@ -744,7 +742,7 @@ static zend_always_inline void *zend_hash_add_mem(HashTable *ht, zend_string *ke
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_add(ht, key, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+		ZVAL_PTR(zv, pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT));
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -757,7 +755,7 @@ static zend_always_inline void *zend_hash_add_new_mem(HashTable *ht, zend_string
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_add_new(ht, key, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+		ZVAL_PTR(zv, pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT));
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -770,7 +768,7 @@ static zend_always_inline void *zend_hash_str_add_mem(HashTable *ht, const char 
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_str_add(ht, str, len, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+		ZVAL_PTR(zv, pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT));
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -783,7 +781,7 @@ static zend_always_inline void *zend_hash_str_add_new_mem(HashTable *ht, const c
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_str_add_new(ht, str, len, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+		ZVAL_PTR(zv, pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT));
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -842,7 +840,7 @@ static zend_always_inline void *zend_hash_index_add_mem(HashTable *ht, zend_ulon
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_index_add(ht, h, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+		ZVAL_PTR(zv, pemalloc(size, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT));
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}

@@ -39,7 +39,7 @@ static void zend_vm_trace(const char *op, size_t op_len)
 		zv = zend_hash_str_find(&vm_trace_ht, buf, len);
 		if (EXPECTED(zv)) {
 			if (EXPECTED(Z_LVAL_P(zv) < ZEND_LONG_MAX)) {
-				Z_LVAL_P(zv)++;
+				ZVAL_LONG(zv, Z_LVAL_P(zv) + 1);
 			}
 		} else {
 			ZVAL_LONG(&tmp, 1);

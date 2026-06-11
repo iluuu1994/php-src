@@ -102,7 +102,7 @@
 
 BEGIN_EXTERN_C()
 
-typedef struct _zval_struct zval;
+typedef union zval zval;
 typedef struct _zend_op zend_op;
 typedef union _zend_function zend_function;
 

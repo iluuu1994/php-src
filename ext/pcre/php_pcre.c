@@ -2498,11 +2498,13 @@ PHP_FUNCTION(preg_replace_callback_array)
 	}
 
 	if (subject_ht) {
-		RETVAL_ARR(subject_ht);
-		// Unset the type_flags of immutable arrays to prevent the VM from performing refcounting
 		if (GC_FLAGS(subject_ht) & IS_ARRAY_IMMUTABLE) {
-			Z_TYPE_FLAGS_P(return_value) = 0;
+			// Unset the type_flags of immutable arrays to prevent the VM from performing refcounting
+			ZVAL_IMMUTABLE_ARR(return_value, subject_ht);
+		} else {
+			ZVAL_ARR(return_value, subject_ht);
 		}
+		return;
 		return;
 	} else {
 		RETURN_STR(subject_str);

@@ -105,14 +105,13 @@ void zend_vm_dtor(void)
 static void init_opcode_serialiser(void)
 {
 	int i;
-	zval tmp;
 
 	zend_handlers_table = malloc(sizeof(HashTable));
 	zend_hash_init(zend_handlers_table, zend_handlers_count, NULL, NULL, 1);
 	zend_hash_real_init(zend_handlers_table, 0);
-	Z_TYPE_INFO(tmp) = IS_LONG;
 	for (i = 0; i < zend_handlers_count; i++) {
-		Z_LVAL(tmp) = i;
+		zval tmp;
+		ZVAL_LONG(&tmp, i);
 		zend_hash_index_add(zend_handlers_table, (zend_ulong)(uintptr_t)zend_opcode_handlers[i], &tmp);
 	}
 }

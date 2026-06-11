@@ -367,7 +367,7 @@ static void php_browscap_parser_cb(zval *arg1, zval *arg2, zval *arg3, int callb
 			if (persistent) {
 				pattern = zend_new_interned_string(zend_string_copy(pattern));
 				if (ZSTR_IS_INTERNED(pattern)) {
-					Z_TYPE_FLAGS_P(arg1) = 0;
+					z_mark_immutable(arg1);
 				} else {
 					zend_string_release(pattern);
 				}

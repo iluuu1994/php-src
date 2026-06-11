@@ -533,7 +533,7 @@ ZEND_API void zend_reset_lc_ctype_locale(void);
 
 static zend_always_inline void fast_long_increment_function(zval *op1)
 {
-#if ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
+#if 0 && ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
 	__asm__ goto(
 		"addl $1,(%0)\n\t"
 		"jo  %l1\n"
@@ -544,7 +544,7 @@ static zend_always_inline void fast_long_increment_function(zval *op1)
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
 	__asm__ goto(
 		"addq $1,(%0)\n\t"
 		"jo  %l1\n"
@@ -555,7 +555,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
 	__asm__ goto (
 		"ldr x5, [%0]\n\t"
 		"adds x5, x5, 1\n\t"
@@ -574,7 +574,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
-		Z_LVAL_P(op1) = lresult;
+		ZVAL_LONG(op1, lresult);
 	}
 #elif defined(PHP_HAVE_BUILTIN_SADDLL_OVERFLOW) && SIZEOF_LONG_LONG == SIZEOF_ZEND_LONG
 	long long llresult;
@@ -582,7 +582,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
-		Z_LVAL_P(op1) = llresult;
+		ZVAL_LONG(op1, llresult);
 	}
 #elif defined(ZEND_WIN32) && SIZEOF_LONG == SIZEOF_ZEND_LONG
 	long lresult;
@@ -590,7 +590,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
-		Z_LVAL_P(op1) = lresult;
+		ZVAL_LONG(op1, lresult);
 	}
 #elif defined(ZEND_WIN32) && SIZEOF_LONG_LONG == SIZEOF_ZEND_LONG
 	long long llresult;
@@ -598,21 +598,21 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
-		Z_LVAL_P(op1) = llresult;
+		ZVAL_LONG(op1, llresult);
 	}
 #else
 	if (UNEXPECTED(Z_LVAL_P(op1) == ZEND_LONG_MAX)) {
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
-		Z_LVAL_P(op1)++;
+		ZVAL_LONG(op1, Z_LVAL_P(op1) + 1);
 	}
 #endif
 }
 
 static zend_always_inline void fast_long_decrement_function(zval *op1)
 {
-#if ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
+#if 0 && ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
 	__asm__ goto(
 		"subl $1,(%0)\n\t"
 		"jo  %l1\n"
@@ -623,7 +623,7 @@ static zend_always_inline void fast_long_decrement_function(zval *op1)
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
 	__asm__ goto(
 		"subq $1,(%0)\n\t"
 		"jo  %l1\n"
@@ -634,7 +634,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
 	__asm__ goto (
 		"ldr x5, [%0]\n\t"
 		"subs x5 ,x5, 1\n\t"
@@ -653,7 +653,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
-		Z_LVAL_P(op1) = lresult;
+		ZVAL_LONG(op1, lresult);
 	}
 #elif defined(PHP_HAVE_BUILTIN_SSUBLL_OVERFLOW) && SIZEOF_LONG_LONG == SIZEOF_ZEND_LONG
 	long long llresult;
@@ -661,7 +661,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
-		Z_LVAL_P(op1) = llresult;
+		ZVAL_LONG(op1, llresult);
 	}
 #elif defined(ZEND_WIN32) && SIZEOF_LONG == SIZEOF_ZEND_LONG
 	long lresult;
@@ -669,7 +669,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
-		Z_LVAL_P(op1) = lresult;
+		ZVAL_LONG(op1, lresult);
 	}
 #elif defined(ZEND_WIN32) && SIZEOF_LONG_LONG == SIZEOF_ZEND_LONG
 	long long llresult;
@@ -677,21 +677,21 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
-		Z_LVAL_P(op1) = llresult;
+		ZVAL_LONG(op1, llresult);
 	}
 #else
 	if (UNEXPECTED(Z_LVAL_P(op1) == ZEND_LONG_MIN)) {
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
-		Z_LVAL_P(op1)--;
+		ZVAL_LONG(op1, Z_LVAL_P(op1) - 1);
 	}
 #endif
 }
 
 static zend_always_inline void fast_long_add_function(zval *result, zval *op1, zval *op2)
 {
-#if ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
+#if 0 && ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
 	__asm__ goto(
 		"movl	(%1), %%eax\n\t"
 		"addl   (%2), %%eax\n\t"
@@ -709,7 +709,7 @@ static zend_always_inline void fast_long_add_function(zval *result, zval *op1, z
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) + (double) Z_LVAL_P(op2));
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
 	__asm__ goto(
 		"movq	(%1), %%rax\n\t"
 		"addq   (%2), %%rax\n\t"
@@ -727,7 +727,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) + (double) Z_LVAL_P(op2));
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
 	__asm__ goto(
 		"ldr    x5, [%1]\n\t"
 		"ldr    x6, [%2]\n\t"
@@ -795,7 +795,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 
 static zend_always_inline void fast_long_sub_function(zval *result, zval *op1, zval *op2)
 {
-#if ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
+#if 0 && ZEND_USE_ASM_ARITHMETIC && defined(__i386__) && !(4 == __GNUC__ && 8 == __GNUC_MINOR__)
 	__asm__ goto(
 		"movl	(%1), %%eax\n\t"
 		"subl   (%2), %%eax\n\t"
@@ -813,7 +813,7 @@ static zend_always_inline void fast_long_sub_function(zval *result, zval *op1, z
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) - (double) Z_LVAL_P(op2));
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__x86_64__)
 	__asm__ goto(
 		"movq	(%1), %%rax\n\t"
 		"subq   (%2), %%rax\n\t"
@@ -831,7 +831,7 @@ overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	return;
 overflow: ZEND_ATTRIBUTE_COLD_LABEL
 	ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) - (double) Z_LVAL_P(op2));
-#elif ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
+#elif 0 && ZEND_USE_ASM_ARITHMETIC && defined(__aarch64__)
 	__asm__ goto(
 		"ldr    x5, [%1]\n\t"
 		"ldr    x6, [%2]\n\t"

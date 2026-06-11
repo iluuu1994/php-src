@@ -770,6 +770,7 @@ ZEND_API void ZEND_FASTCALL gc_possible_root(zend_refcounted *ref)
 	GC_BENCH_PEAK(root_buf_peak, root_buf_length);
 }
 
+#if 0
 /* Add an extra root during a GC run */
 static void ZEND_FASTCALL gc_extra_root(zend_refcounted *ref)
 {
@@ -803,6 +804,7 @@ static void ZEND_FASTCALL gc_extra_root(zend_refcounted *ref)
 	GC_BENCH_INC(root_buf_length);
 	GC_BENCH_PEAK(root_buf_peak, root_buf_length);
 }
+#endif
 
 /* Remove a node from the root buffer given its compressed index */
 static zend_never_inline void ZEND_FASTCALL gc_remove_compressed(zend_refcounted *ref, uint32_t idx)
@@ -854,6 +856,7 @@ tail_call:
 			zval *table;
 			int len;
 
+#if 0
 			if (UNEXPECTED(GC_FLAGS(obj) & IS_OBJ_WEAKLY_REFERENCED)) {
 				zend_weakmap_get_object_key_entry_gc(obj, &table, &len);
 				n = len;
@@ -929,6 +932,7 @@ tail_call:
 				}
 				goto next;
 			}
+#endif
 
 			ht = obj->handlers->get_gc(obj, &table, &len);
 			n = len;
@@ -1030,7 +1034,7 @@ handle_ht:
 		}
 	}
 
-next:
+//next:
 	ref = GC_STACK_POP();
 	if (ref) {
 		goto tail_call;
@@ -1057,6 +1061,7 @@ tail_call:
 			zval *table;
 			int len;
 
+#if 0
 			if (UNEXPECTED(GC_FLAGS(obj) & IS_OBJ_WEAKLY_REFERENCED)) {
 				zend_weakmap_get_object_key_entry_gc(obj, &table, &len);
 				n = len;
@@ -1107,6 +1112,7 @@ tail_call:
 				}
 				goto next;
 			}
+#endif
 
 			ht = obj->handlers->get_gc(obj, &table, &len);
 			n = len;
@@ -1207,7 +1213,7 @@ handle_ht:
 		}
 	}
 
-next:
+//next:
 	ref = GC_STACK_POP();
 	if (ref) {
 		goto tail_call;
@@ -1310,6 +1316,7 @@ tail_call:
 			zval *table;
 			int len;
 
+#if 0
 			if (UNEXPECTED(GC_FLAGS(obj) & IS_OBJ_WEAKLY_REFERENCED)) {
 				zend_weakmap_get_object_entry_gc(obj, &table, &len);
 				n = len;
@@ -1327,6 +1334,7 @@ tail_call:
 					zv++;
 				}
 			}
+#endif
 
 			ht = obj->handlers->get_gc(obj, &table, &len);
 			n = len;
@@ -1524,6 +1532,7 @@ tail_call:
 				*flags |= GC_HAS_DESTRUCTORS;
 			}
 
+#if 0
 			if (UNEXPECTED(GC_FLAGS(obj) & IS_OBJ_WEAKLY_REFERENCED)) {
 				zend_weakmap_get_object_entry_gc(obj, &table, &len);
 				n = len;
@@ -1566,6 +1575,7 @@ tail_call:
 				}
 				goto next;
 			}
+#endif
 
 			ht = obj->handlers->get_gc(obj, &table, &len);
 			n = len;
@@ -1671,7 +1681,7 @@ handle_ht:
 		}
 	}
 
-next:
+//next:
 	ref = GC_STACK_POP();
 	if (ref) {
 		goto tail_call;
@@ -1756,6 +1766,7 @@ tail_call:
 			int len;
 			zval *table;
 
+#if 0
 			if (UNEXPECTED(GC_FLAGS(obj) & IS_OBJ_WEAKLY_REFERENCED)) {
 				zend_weakmap_get_object_entry_gc(obj, &table, &len);
 				n = len;
@@ -1770,6 +1781,7 @@ tail_call:
 					zv++;
 				}
 			}
+#endif
 
 			ht = obj->handlers->get_gc(obj, &table, &len);
 			n = len;

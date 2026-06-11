@@ -1550,7 +1550,8 @@ ZEND_API zend_result zend_update_class_constants(zend_class_entry *class_type) /
 			c = Z_PTR_P(val);
 			if (Z_TYPE(c->value) == IS_CONSTANT_AST) {
 				if (c->ce != class_type) {
-					Z_PTR_P(val) = c = zend_hash_find_ptr(CE_CONSTANTS_TABLE(c->ce), name);
+					c = zend_hash_find_ptr(CE_CONSTANTS_TABLE(c->ce), name);
+					ZVAL_PTR(val, c);
 					if (Z_TYPE(c->value) != IS_CONSTANT_AST) {
 						continue;
 					}
@@ -1803,14 +1804,12 @@ static zend_always_inline zend_result _object_and_properties_init(zval *arg, zen
 			zend_throw_error(NULL, "Cannot instantiate abstract class %s", ZSTR_VAL(class_type->name));
 		}
 		ZVAL_NULL(arg);
-		Z_OBJ_P(arg) = NULL;
 		return FAILURE;
 	}
 
 	if (UNEXPECTED(!(class_type->ce_flags & ZEND_ACC_CONSTANTS_UPDATED))) {
 		if (UNEXPECTED(zend_update_class_constants(class_type) != SUCCESS)) {
 			ZVAL_NULL(arg);
-			Z_OBJ_P(arg) = NULL;
 			return FAILURE;
 		}
 	}

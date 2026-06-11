@@ -4496,7 +4496,7 @@ PHP_FUNCTION(array_count_values)
 				ZVAL_LONG(&data, 1);
 				zend_hash_index_add_new(Z_ARRVAL_P(return_value), Z_LVAL_P(entry), &data);
 			} else {
-				Z_LVAL_P(tmp)++;
+				ZVAL_LONG(tmp, Z_LVAL_P(tmp) + 1);
 			}
 		} else if (Z_TYPE_P(entry) == IS_STRING) {
 			if ((tmp = zend_symtable_find(Z_ARRVAL_P(return_value), Z_STR_P(entry))) == NULL) {
@@ -4504,7 +4504,7 @@ PHP_FUNCTION(array_count_values)
 				ZVAL_LONG(&data, 1);
 				zend_symtable_add_new(Z_ARRVAL_P(return_value), Z_STR_P(entry), &data);
 			} else {
-				Z_LVAL_P(tmp)++;
+				ZVAL_LONG(tmp, Z_LVAL_P(tmp) + 1);
 			}
 		} else {
 			php_error_docref(NULL, E_WARNING, "Can only count string and integer values, entry skipped");
@@ -6391,7 +6391,7 @@ static zend_always_inline void php_array_binop(INTERNAL_FUNCTION_PARAMETERS, con
 				if (UNEXPECTED(overflow)) {
 					ZVAL_DOUBLE(return_value, dval);
 				} else {
-					Z_LVAL_P(return_value) = lval;
+					ZVAL_LONG(return_value, lval);
 				}
 				continue;
 			}

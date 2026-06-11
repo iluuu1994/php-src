@@ -270,7 +270,7 @@ PHPAPI php_stream_filter *_php_stream_filter_alloc(const php_stream_filter_ops *
 	filter->fops = fops;
 	filter->read_seekable = read_seekable;
 	filter->write_seekable = write_seekable;
-	Z_PTR(filter->abstract) = abstract;
+	ZVAL_PTR(&filter->abstract, abstract);
 	filter->is_persistent = persistent;
 
 	return filter;

@@ -173,11 +173,15 @@ ZEND_VM_COLD_CONSTCONST_HANDLER(3, ZEND_MUL, CONST|TMPVARCV, CONST|TMPVARCV, SPE
 		/* pass */
 	} else if (EXPECTED(Z_TYPE_P(op1) == IS_LONG)) {
 		if (EXPECTED(Z_TYPE_P(op2) == IS_LONG)) {
-			zend_long overflow;
+			zend_long l, overflow;
 
 			result = EX_VAR(opline->result.var);
-			ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1), Z_LVAL_P(op2), Z_LVAL_P(result), Z_DVAL_P(result), overflow);
-			Z_TYPE_INFO_P(result) = overflow ? IS_DOUBLE : IS_LONG;
+			ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1), Z_LVAL_P(op2), l, d1, overflow);
+			if (EXPECTED(!overflow)) {
+				ZVAL_LONG(result, l);
+			} else {
+				ZVAL_DOUBLE(result, d1);
+			}
 			ZEND_VM_NEXT_OPCODE();
 		} else if (EXPECTED(Z_TYPE_P(op2) == IS_DOUBLE)) {
 			d1 = (double)Z_LVAL_P(op1);
@@ -3559,7 +3563,7 @@ ZEND_VM_HANDLER(109, ZEND_FETCH_CLASS, UNUSED|CLASS_FETCH, CONST|TMP|UNUSED|CV, 
 
 	SAVE_OPLINE();
 	if (OP2_TYPE == IS_UNUSED) {
-		Z_CE_P(EX_VAR(opline->result.var)) = zend_fetch_class(NULL, opline->op1.num);
+		ZVAL_CE(EX_VAR(opline->result.var), zend_fetch_class(NULL, opline->op1.num));
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	} else if (OP2_TYPE == IS_CONST) {
 		zend_class_entry *ce = CACHED_PTR(opline->extended_value);
@@ -3569,14 +3573,14 @@ ZEND_VM_HANDLER(109, ZEND_FETCH_CLASS, UNUSED|CLASS_FETCH, CONST|TMP|UNUSED|CV, 
 			ce = zend_fetch_class_by_name(Z_STR_P(class_name), Z_STR_P(class_name + 1), opline->op1.num);
 			CACHE_PTR(opline->extended_value, ce);
 		}
-		Z_CE_P(EX_VAR(opline->result.var)) = ce;
+		ZVAL_CE(EX_VAR(opline->result.var), ce);
 	} else {
 		class_name = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 ZEND_VM_C_LABEL(try_class_name):
 		if (Z_TYPE_P(class_name) == IS_OBJECT) {
-			Z_CE_P(EX_VAR(opline->result.var)) = Z_OBJCE_P(class_name);
+			ZVAL_CE(EX_VAR(opline->result.var), Z_OBJCE_P(class_name));
 		} else if (Z_TYPE_P(class_name) == IS_STRING) {
-			Z_CE_P(EX_VAR(opline->result.var)) = zend_fetch_class(Z_STR_P(class_name), opline->op1.num);
+			ZVAL_CE(EX_VAR(opline->result.var), zend_fetch_class(Z_STR_P(class_name), opline->op1.num));
 		} else if ((OP2_TYPE & (IS_VAR|IS_CV)) && Z_TYPE_P(class_name) == IS_REFERENCE) {
 			class_name = Z_REFVAL_P(class_name);
 			ZEND_VM_C_GOTO(try_class_name);
@@ -7166,17 +7170,8 @@ ZEND_VM_C_LABEL(fe_fetch_r_exit):
 		zval *variable_ptr = EX_VAR(opline->op2.var);
 		zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
 	} else {
-		if (UNEXPECTED(Z_ISREF_P(value))) {
-			value = Z_REFVAL_P(value);
-			value_type = Z_TYPE_INFO_P(value);
-		}
-		zval *res = EX_VAR(opline->op2.var);
-		zend_refcounted *gc = Z_COUNTED_P(value);
-
-		ZVAL_COPY_VALUE_EX(res, value, gc, value_type);
-		if (Z_TYPE_INFO_REFCOUNTED(value_type)) {
-			GC_ADDREF(gc);
-		}
+		ZVAL_DEREF(value);
+		ZVAL_COPY(EX_VAR(opline->op2.var), value);
 	}
 	ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 }
@@ -7250,17 +7245,8 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, TMP, ANY, JMP_ADDR)
 		zend_assign_to_variable(variable_ptr, value, IS_CV, EX_USES_STRICT_TYPES());
 		ZEND_VM_NEXT_OPCODE_CHECK_EXCEPTION();
 	} else {
-		if (UNEXPECTED(Z_ISREF_P(value))) {
-			value = Z_REFVAL_P(value);
-			value_type = Z_TYPE_INFO_P(value);
-		}
-		zval *res = EX_VAR(opline->op2.var);
-		zend_refcounted *gc = Z_COUNTED_P(value);
-
-		ZVAL_COPY_VALUE_EX(res, value, gc, value_type);
-		if (Z_TYPE_INFO_REFCOUNTED(value_type)) {
-			GC_ADDREF(gc);
-		}
+		ZVAL_DEREF(value);
+		ZVAL_COPY(EX_VAR(opline->op2.var), value);
 		ZEND_VM_NEXT_OPCODE();
 	}
 }
@@ -7445,11 +7431,10 @@ ZEND_VM_C_LABEL(fe_fetch_w_exit):
 	}
 
 	if (EXPECTED((value_type & Z_TYPE_MASK) != IS_REFERENCE)) {
-		zend_refcounted *gc = Z_COUNTED_P(value);
 		zval *ref;
 		ZVAL_NEW_EMPTY_REF(value);
 		ref = Z_REFVAL_P(value);
-		ZVAL_COPY_VALUE_EX(ref, value, gc, value_type);
+		ZVAL_COPY_VALUE(ref, value);
 	}
 	if (EXPECTED(OP2_TYPE == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
@@ -8013,7 +7998,7 @@ ZEND_VM_HANDLER(146, ZEND_DECLARE_ANON_CLASS, ANY, ANY, CACHE_SLOT)
 		}
 		CACHE_PTR(opline->extended_value, ce);
 	}
-	Z_CE_P(EX_VAR(opline->result.var)) = ce;
+	ZVAL_CE(EX_VAR(opline->result.var), ce);
 	ZEND_VM_NEXT_OPCODE();
 }
 
@@ -9200,8 +9185,7 @@ ZEND_VM_HANDLER(183, ZEND_BIND_STATIC, CV, ANY, REF)
 				FREE_OP2();
 			}
 			ref->sources.ptr = NULL;
-			Z_REF_P(value) = ref;
-			Z_TYPE_INFO_P(value) = IS_REFERENCE_EX;
+			ZVAL_REF(value, ref);
 			i_zval_ptr_dtor(variable_ptr);
 			ZVAL_REF(variable_ptr, ref);
 		} else {
@@ -10092,13 +10076,19 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_MUL, (op1_info == MAY_BE_LONG && op2_info == 
 {
 	USE_OPLINE
 	zval *op1, *op2, *result;
-	zend_long overflow;
+	zend_long l, overflow;
+	double d;
 
 	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 	result = EX_VAR(opline->result.var);
-	ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1), Z_LVAL_P(op2), Z_LVAL_P(result), Z_DVAL_P(result), overflow);
-	Z_TYPE_INFO_P(result) = overflow ? IS_DOUBLE : IS_LONG;
+
+	ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1), Z_LVAL_P(op2), l, d, overflow);
+	if (EXPECTED(!overflow)) {
+		ZVAL_LONG(result, l);
+	} else {
+		ZVAL_DOUBLE(result, d);
+	}
 	ZEND_VM_NEXT_OPCODE();
 }
 
@@ -10271,7 +10261,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_INC, (res_info == MAY_BE_LONG && op1_info
 	zval *var_ptr;
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
-	Z_LVAL_P(var_ptr)++;
+	ZVAL_LONG(var_ptr, Z_LVAL_P(var_ptr) + 1);
 	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 		ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
 	}
@@ -10297,7 +10287,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_PRE_DEC, (res_info == MAY_BE_LONG && op1_info
 	zval *var_ptr;
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
-	Z_LVAL_P(var_ptr)--;
+	ZVAL_LONG(var_ptr, Z_LVAL_P(var_ptr) - 1);
 	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 		ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
 	}
@@ -10324,7 +10314,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_POST_INC, (res_info == MAY_BE_LONG && op1_inf
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
-	Z_LVAL_P(var_ptr)++;
+	ZVAL_LONG(var_ptr, Z_LVAL_P(var_ptr) + 1);
 	ZEND_VM_NEXT_OPCODE();
 }
 
@@ -10346,7 +10336,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_POST_DEC, (res_info == MAY_BE_LONG && op1_inf
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 	ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL_P(var_ptr));
-	Z_LVAL_P(var_ptr)--;
+	ZVAL_LONG(var_ptr, Z_LVAL_P(var_ptr) - 1);
 	ZEND_VM_NEXT_OPCODE();
 }
 

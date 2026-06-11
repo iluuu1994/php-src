@@ -182,7 +182,7 @@ static spl_SplObjectStorageElement *spl_object_storage_attach_handle(spl_SplObje
 	/* NULL initialization necessary because `spl_object_storage_create_element` could bail out due to OOM. */
 	ZVAL_PTR(entry_zv, NULL);
 	pelement = spl_object_storage_create_element(obj, inf);
-	Z_PTR_P(entry_zv) = pelement;
+	ZVAL_PTR(entry_zv, pelement);
 	return pelement;
 } /* }}} */
 

@@ -1678,7 +1678,8 @@ int php_image_register_handler(const struct php_image_handler *handler)
 {
 	zend_hash_index_add_ptr(&php_image_handlers, (zend_ulong) php_image_handler_next_id, (void *) handler);
 	zend_register_long_constant(handler->const_name, strlen(handler->const_name), php_image_handler_next_id, CONST_PERSISTENT, basic_functions_module.module_number);
-	Z_LVAL_P(zend_get_constant_str(ZEND_STRL("IMAGETYPE_COUNT")))++;
+	zval *zv = zend_get_constant_str(ZEND_STRL("IMAGETYPE_COUNT"));
+	ZVAL_LONG(zv, Z_LVAL_P(zv) + 1);
 	return php_image_handler_next_id++;
 }
 

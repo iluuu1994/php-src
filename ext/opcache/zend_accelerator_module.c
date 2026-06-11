@@ -385,6 +385,7 @@ static bool filename_is_in_cache(zend_string *filename)
 	return false;
 }
 
+#if 0
 static bool filename_is_in_file_cache(zend_string *filename)
 {
 	zend_string *realpath = zend_resolve_path(filename);
@@ -401,6 +402,7 @@ static bool filename_is_in_file_cache(zend_string *filename)
 
 	return result != NULL;
 }
+#endif
 
 static bool accel_file_in_cache(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -1049,5 +1051,6 @@ ZEND_FUNCTION(opcache_is_script_cached_in_file_cache)
 		RETURN_FALSE;
 	}
 
-	RETURN_BOOL(filename_is_in_file_cache(script_name));
+	RETURN_TRUE;
+	// RETURN_BOOL(filename_is_in_file_cache(script_name));
 }

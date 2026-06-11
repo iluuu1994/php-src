@@ -629,7 +629,7 @@ static void zend_ssa_replace_control_link(zend_op_array *op_array, zend_ssa *ssa
 					zval *zv;
 					ZEND_HASH_FOREACH_VAL(jumptable, zv) {
 						if (ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, Z_LVAL_P(zv)) == old->start) {
-							Z_LVAL_P(zv) = ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, dst->start);
+							ZVAL_LONG(zv, ZEND_OPLINE_NUM_TO_OFFSET(op_array, opline, dst->start));
 						}
 					} ZEND_HASH_FOREACH_END();
 					if (ZEND_OFFSET_TO_OPLINE_NUM(op_array, opline, opline->extended_value) == old->start) {

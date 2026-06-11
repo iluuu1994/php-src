@@ -2594,7 +2594,7 @@ PHP_FUNCTION(date_create_from_format)
 		Z_PARAM_OBJECT_OF_CLASS_OR_NULL(timezone_object, date_ce_timezone)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_date) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_date) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	if (!php_date_initialize(Z_PHPDATE_P(return_value), time_str, time_str_len, format_str, timezone_object, PHP_DATE_INIT_FORMAT)) {
@@ -2618,7 +2618,7 @@ PHP_FUNCTION(date_create_immutable_from_format)
 		Z_PARAM_OBJECT_OF_CLASS_OR_NULL(timezone_object, date_ce_timezone)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_immutable) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_immutable) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	if (!php_date_initialize(Z_PHPDATE_P(return_value), time_str, time_str_len, format_str, timezone_object, PHP_DATE_INIT_FORMAT)) {
@@ -2676,7 +2676,7 @@ PHP_METHOD(DateTime, createFromImmutable)
 	old_obj = Z_PHPDATE_P(datetimeimmutable_object);
 	DATE_CHECK_INITIALIZED(old_obj->time, Z_OBJCE_P(datetimeimmutable_object));
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_date) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_date) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_obj = Z_PHPDATE_P(return_value);
@@ -2699,7 +2699,7 @@ PHP_METHOD(DateTime, createFromInterface)
 	old_obj = Z_PHPDATE_P(datetimeinterface_object);
 	DATE_CHECK_INITIALIZED(old_obj->time, Z_OBJCE_P(datetimeinterface_object));
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_date) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_date) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_obj = Z_PHPDATE_P(return_value);
@@ -2719,7 +2719,7 @@ PHP_METHOD(DateTime, createFromTimestamp)
 		Z_PARAM_NUMBER(value)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (object_init_ex(&new_object, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_date) != SUCCESS) {
+	if (object_init_ex(&new_object, Z_PTR(execute_data->This) ?: date_ce_date) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_dateobj = Z_PHPDATE_P(&new_object);
@@ -2757,7 +2757,7 @@ PHP_METHOD(DateTimeImmutable, createFromMutable)
 	old_obj = Z_PHPDATE_P(datetime_object);
 	DATE_CHECK_INITIALIZED(old_obj->time, Z_OBJCE_P(datetime_object));
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_immutable) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_immutable) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_obj = Z_PHPDATE_P(return_value);
@@ -2780,7 +2780,7 @@ PHP_METHOD(DateTimeImmutable, createFromInterface)
 	old_obj = Z_PHPDATE_P(datetimeinterface_object);
 	DATE_CHECK_INITIALIZED(old_obj->time, Z_OBJCE_P(datetimeinterface_object));
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_immutable) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_immutable) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_obj = Z_PHPDATE_P(return_value);
@@ -2800,7 +2800,7 @@ PHP_METHOD(DateTimeImmutable, createFromTimestamp)
 		Z_PARAM_NUMBER(value)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (object_init_ex(&new_object, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_immutable) != SUCCESS) {
+	if (object_init_ex(&new_object, Z_PTR(execute_data->This) ?: date_ce_immutable) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	new_dateobj = Z_PHPDATE_P(&new_object);
@@ -5121,7 +5121,7 @@ PHP_METHOD(DatePeriod, createFromISO8601String)
 		Z_PARAM_LONG(options)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (object_init_ex(return_value, execute_data->This.value.ce ? execute_data->This.value.ce : date_ce_period) != SUCCESS) {
+	if (object_init_ex(return_value, Z_PTR(execute_data->This) ?: date_ce_period) != SUCCESS) {
 		RETURN_THROWS();
 	}
 	dpobj = Z_PHPPERIOD_P(return_value);

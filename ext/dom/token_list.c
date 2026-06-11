@@ -113,7 +113,7 @@ bool dom_ordered_set_all_contained(HashTable *token_set, const char *value, bool
 		if (zv) {
 			if (Z_STR_P(zv)) {
 				still_needed--;
-				Z_STR_P(zv) = NULL;
+				ZVAL_STR(zv, NULL);
 			}
 		}
 
@@ -124,7 +124,7 @@ bool dom_ordered_set_all_contained(HashTable *token_set, const char *value, bool
 	zend_string *k;
 	ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(token_set, k, zv) {
 		if (!Z_STR_P(zv)) {
-			Z_STR_P(zv) = k;
+			ZVAL_STR(zv, k);
 		}
 	} ZEND_HASH_FOREACH_END();
 

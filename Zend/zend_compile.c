@@ -437,7 +437,7 @@ void zend_init_compiler_data_structures(void) /* {{{ */
 static void zend_register_seen_symbol(zend_string *name, uint32_t kind) {
 	zval *zv = zend_hash_find(&FC(seen_symbols), name);
 	if (zv) {
-		Z_LVAL_P(zv) |= kind;
+		ZVAL_LONG(zv, Z_LVAL_P(zv) | kind);
 	} else {
 		zval tmp;
 		ZVAL_LONG(&tmp, kind);
@@ -563,9 +563,9 @@ static uint32_t lookup_cv(zend_string *name) /* {{{ */{
 zend_string *zval_make_interned_string(zval *zv)
 {
 	ZEND_ASSERT(Z_TYPE_P(zv) == IS_STRING);
-	Z_STR_P(zv) = zend_new_interned_string(Z_STR_P(zv));
+	ZVAL_STR(zv, zend_new_interned_string(Z_STR_P(zv)));
 	if (ZSTR_IS_INTERNED(Z_STR_P(zv))) {
-		Z_TYPE_FLAGS_P(zv) = 0;
+		z_mark_immutable(zv);
 	}
 	return Z_STR_P(zv);
 }
@@ -2164,11 +2164,11 @@ zend_ast *zend_negate_num_string(zend_ast *ast) /* {{{ */
 			ZVAL_NEW_STR(zv, ZSTR_INIT_LITERAL("-0", 0));
 		} else {
 			ZEND_ASSERT(Z_LVAL_P(zv) > 0);
-			Z_LVAL_P(zv) *= -1;
+			ZVAL_LONG(zv, Z_LVAL_P(zv) * -1);
 		}
 	} else if (Z_TYPE_P(zv) == IS_STRING) {
 		size_t orig_len = Z_STRLEN_P(zv);
-		Z_STR_P(zv) = zend_string_extend(Z_STR_P(zv), orig_len + 1, 0);
+		ZVAL_STR(zv, zend_string_extend(Z_STR_P(zv), orig_len + 1, 0));
 		memmove(Z_STRVAL_P(zv) + 1, Z_STRVAL_P(zv), orig_len + 1);
 		Z_STRVAL_P(zv)[0] = '-';
 	} else {
@@ -4548,7 +4548,7 @@ static zend_result zend_compile_func_in_array(znode *result, zend_ast_list *args
 		if (!ok) {
 			return FAILURE;
 		}
-		Z_ARRVAL(array.u.constant) = dst;
+		ZVAL_ARR(&array.u.constant, dst);
 	}
 	array.op_type = IS_CONST;
 

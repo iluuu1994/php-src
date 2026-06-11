@@ -14,6 +14,8 @@
    +----------------------------------------------------------------------+
 */
 
+#if 0
+
 #include "zend.h"
 #include "zend_virtual_cwd.h"
 #include "zend_compile.h"
@@ -121,6 +123,8 @@ static int zend_file_cache_flock(int fd, int type)
 #define IS_UNSERIALIZED(ptr) \
 	(((char*)(ptr) >= (char*)script->mem && (char*)(ptr) <= (char*)script->mem + script->size) || \
 	 IS_ACCEL_INTERNED(ptr))
+// FIXME: Implement
+#if 0
 #define SERIALIZE_PTR(ptr) do { \
 		if (ptr) { \
 			ZEND_ASSERT(IS_UNSERIALIZED(ptr)); \
@@ -162,6 +166,12 @@ static int zend_file_cache_flock(int fd, int type)
 			} \
 		} \
 	} while (0)
+#else
+#define SERIALIZE_PTR(ptr)
+#define UNSERIALIZE_PTR(ptr)
+#define SERIALIZE_STR(ptr)
+#define UNSERIALIZE_STR(ptr)
+#endif
 
 #define SERIALIZE_ATTRIBUTES(attributes) do { \
 	if ((attributes) && !IS_SERIALIZED(attributes)) { \
@@ -2109,3 +2119,5 @@ void zend_file_cache_invalidate(zend_string *full_path)
 	zend_file_cache_unlink(filename);
 	efree(filename);
 }
+
+#endif
