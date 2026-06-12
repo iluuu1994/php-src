@@ -23736,10 +23736,7 @@ fe_fetch_w_exit:
 	}
 
 	if (EXPECTED((value_type & Z_TYPE_MASK) != IS_REFERENCE)) {
-		zval *ref;
-		ZVAL_NEW_EMPTY_REF(value);
-		ref = Z_REFVAL_P(value);
-		ZVAL_COPY_VALUE(ref, value);
+		ZVAL_MAKE_REF_EX(value, 1);
 	}
 	if (EXPECTED(opline->op2_type == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
@@ -75970,10 +75967,7 @@ fe_fetch_w_exit:
 	}
 
 	if (EXPECTED((value_type & Z_TYPE_MASK) != IS_REFERENCE)) {
-		zval *ref;
-		ZVAL_NEW_EMPTY_REF(value);
-		ref = Z_REFVAL_P(value);
-		ZVAL_COPY_VALUE(ref, value);
+		ZVAL_MAKE_REF_EX(value, 1);
 	}
 	if (EXPECTED(opline->op2_type == IS_CV)) {
 		zval *variable_ptr = EX_VAR(opline->op2.var);
