@@ -1071,6 +1071,13 @@ static zend_always_inline void ZVAL_BOOL(zval *zv, bool b) {
 }
 
 static zend_always_inline void ZVAL_LONG(zval *zv, zend_long l) {
+#if ZEND_DEBUG
+	if (l > 144115188075855871 || l < -144115188075855872) {
+		fprintf(stderr, "Unsupported int range\n");
+		exit(1);
+	}
+#endif
+
 	// Left-shift of negative numbers is UB.
 	zv->u64 = (l * (1 << Z_TYPE_SHIFT)) + IS_LONG;
 }
