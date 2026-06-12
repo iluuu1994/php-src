@@ -369,7 +369,7 @@ __asm__(
     ".ascii \"				____print_str (char*)$key->val $key->len\\n\"\n"
     ".ascii \"				printf \\\" => \\\"\\n\"\n"
     ".ascii \"			else\\n\"\n"
-    ".ascii \"				printf \\\"%d => \\\", $h\\n\"\n"
+    ".ascii \"				printf \\\"%ld => \\\", $h\\n\"\n"
     ".ascii \"			end\\n\"\n"
     ".ascii \"			if $arg1 == 0\\n\"\n"
     ".ascii \"				printf \\\"%p\\\\\\\\n\\\", $val\\n\"\n"

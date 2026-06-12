@@ -356,7 +356,7 @@ define ____print_ht
 				____print_str (char*)$key->val $key->len
 				printf " => "
 			else
-				printf "%d => ", $h
+				printf "%ld => ", $h
 			end
 			if $arg1 == 0
 				printf "%p\n", $val
