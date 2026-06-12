@@ -1051,7 +1051,7 @@ static zend_always_inline double Z_DVAL(zval zv) {
 #define Z_RAW_P(zval_p)				Z_RAW(*(zval_p))
 
 static zend_always_inline void ZVAL_UNDEF(zval *zv) {
-	zv->u64 = IS_NULL;
+	zv->u64 = IS_UNDEF;
 }
 
 static zend_always_inline void ZVAL_NULL(zval *zv) {
