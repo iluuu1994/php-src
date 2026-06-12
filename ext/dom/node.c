@@ -2219,7 +2219,13 @@ static void dom_unlink_ns_decls(HashTable *links)
 			node->ns = Z_PTR_P(data);
 		} else {
 			xmlNodePtr node = (xmlNodePtr) h;
-			while (Z_LVAL_P(data)-- > 0) {
+			while (true) {
+				zend_long l = Z_LVAL_P(data);
+				ZVAL_LONG(data, l - 1);
+				if (l <= 0) {
+					break;
+				}
+
 				xmlNsPtr ns = node->nsDef;
 				node->nsDef = ns->next;
 
