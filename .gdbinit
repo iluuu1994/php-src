@@ -1,3 +1,7 @@
+set $Z_TYPE_INFO_MASK = 0x3f
+set $Z_TYPE_MASK = 0x0f
+set $Z_TYPE_SHIFT = 6
+
 define set_ts
 	set $tsrm_ls = $arg0
 end
@@ -160,11 +164,11 @@ end
 
 define ____printzv_contents
 	set $zvalue = $arg0
-	set $type = $zvalue->u1.v.type
+	set $type = ($zvalue->u32.a & $Z_TYPE_MASK)
 
 	# 15 == IS_INDIRECT
 	if $type > 5 && $type < 12
-		printf "(refcount=%d) ", $zvalue->value.counted->gc.refcount
+		printf "(refcount=%d) ", ((zend_refcounted*)($zvalue->ptr >> $Z_TYPE_SHIFT))->gc.refcount
 	end
 
 	if $type == 0
@@ -180,19 +184,19 @@ define ____printzv_contents
 		printf "bool: true"
 	end
 	if $type == 4
-		printf "long: %ld", $zvalue->value.lval
+		printf "long: %ld", ((int64_t)$zvalue->u64 - ((int64_t)$zvalue->u64 & $Z_TYPE_INFO_MASK)) / (1 << $Z_TYPE_SHIFT)
 	end
 	if $type == 5
-		printf "double: %f", $zvalue->value.dval
+		printf "double: %f", (double)*(float*)&$zvalue->u32.b
 	end
 	if $type == 6
-		printf "string: %s", (char*)$zvalue->value.str->val
+		printf "string: %s", (char*)((zend_string*)($zvalue->ptr >> $Z_TYPE_SHIFT))->val
 	end
 	if $type == 7
 		printf "array: "
 		if ! $arg1
 			set $ind = $ind + 1
-			____print_ht $zvalue->value.arr 1
+			____print_ht ((HashTable*)($zvalue->ptr >> $Z_TYPE_SHIFT)) 1
 			set $ind = $ind - 1
 			set $i = $ind
 			while $i > 0
@@ -243,21 +247,21 @@ define ____printzv_contents
 		set $type = 0
 	end
 	if $type == 9
-		printf "resource: #%d", $zvalue->value.res->handle
+		printf "resource: #%d", ((zend_resource*)($zvalue->ptr >> $Z_TYPE_SHIFT))->handle
 	end
 	if $type == 10
 		printf "reference: "
-		____printzv &$zvalue->value.ref->val $arg1
+		____printzv &((zend_reference*)($zvalue->ptr >> $Z_TYPE_SHIFT))->val $arg1
 	end
 	if $type == 11
 		printf "CONSTANT_AST"
 	end
 	if $type == 12
 		printf "indirect: "
-		____printzv $zvalue->value.zv $arg1
+		____printzv ((zval*)($zvalue->ptr >> $Z_TYPE_SHIFT)) $arg1
 	end
 	if $type == 13
-		printf "pointer: %p", $zvalue->value.ptr
+		printf "pointer: %p", ((void*)($zvalue->ptr >> $Z_TYPE_SHIFT))
 	end
 	if $type == 15
 		printf "_ERROR"
@@ -341,7 +345,8 @@ define ____print_ht
 			set $h = $bucket->h
 		end
 		set $n = $ind
-		if $val->u1.v.type > 0
+		set $type = ($val->u32.a & $Z_TYPE_MASK)
+		if $type > 0
 			while $n > 0
 				printf "  "
 				set $n = $n - 1
@@ -361,14 +366,14 @@ define ____print_ht
 				____printzv $zval 1
 			end
 			if $arg1 == 2
-				printf "%s\n", (char*)$val->value.ptr
+				printf "%s\n", ((char*)($zvalue->ptr >> $Z_TYPE_SHIFT))
 			end
 			if $arg1 == 3
-				set $func = (zend_function*)$val->value.ptr
+				set $func = ((zend_function*)($zvalue->ptr >> $Z_TYPE_SHIFT))
 				printf "\"%s\"\n", (char*)$func->common.function_name->val
 			end
 			if $arg1 == 4
-				set $const = (zend_constant *)$val->value.ptr
+				set $const = ((zend_constant*)($zvalue->ptr >> $Z_TYPE_SHIFT))
 				____printzv $const 1
 			end
 		end
