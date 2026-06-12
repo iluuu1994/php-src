@@ -285,7 +285,10 @@ typedef union {
 
 #ifndef float8get
 # define float8get(V,M)    memcpy((char*) &(V),(char*) (M),sizeof(double))
-# define float8store(T,V)  memcpy((char*) (T),(char*) &(V),sizeof(double))
+# define float8store(T,V)  do { \
+    double __d = (V); \
+    memcpy((char*) (T),(char*) &__d, sizeof(double)); \
+  } while (0)
 #endif
 
 #endif /* MYSQLND_PORTABILITY_H */
