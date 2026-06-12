@@ -73,35 +73,32 @@
 
 #define SCP_DEBUG 0
 
-typedef struct zval_aux {
-	zval value;
-	uint32_t flags;
-} zval_aux;
-
 typedef struct _sccp_ctx {
 	scdf_ctx scdf;
 	zend_call_info **call_map;
-	zval_aux *values;
-	zval top;
-	zval bot;
+	zval *values;
+	uint32_t *flags;
+	zval *top;
+	zval *bot;
 } sccp_ctx;
+
+static sccp_ctx *_sccp_ctx;
 
 #define TOP 1
 #define BOT 2
 #define PARTIAL_ARRAY 3
 #define PARTIAL_OBJECT 4
-#define GET_AUX(zv) ((zval_aux *)((uintptr_t)(zv) - offsetof(zval_aux, value)))
-#define GET_VALUE(var) (&ctx->values[var].value)
-#define IS_TOP(zv) (GET_AUX(zv)->flags == TOP)
-#define IS_BOT(zv) (GET_AUX(zv)->flags == BOT)
-#define IS_PARTIAL_ARRAY(zv) (GET_AUX(zv)->flags == PARTIAL_ARRAY)
-#define IS_PARTIAL_OBJECT(zv) (GET_AUX(zv)->flags == PARTIAL_OBJECT)
+#define GET_FLAGS(zv) (_sccp_ctx->flags[(zv) - _sccp_ctx->values])
+#define IS_TOP(zv) (GET_FLAGS(zv) == TOP)
+#define IS_BOT(zv) (GET_FLAGS(zv) == BOT)
+#define IS_PARTIAL_ARRAY(zv) (Z_TYPE_P(zv) == PARTIAL_ARRAY)
+#define IS_PARTIAL_OBJECT(zv) (Z_TYPE_P(zv) == PARTIAL_OBJECT)
 
-#define MAKE_PARTIAL_ARRAY(zv) (GET_AUX(zv)->flags = PARTIAL_ARRAY)
-#define MAKE_PARTIAL_OBJECT(zv) (GET_AUX(zv)->flags = PARTIAL_OBJECT)
+#define MAKE_PARTIAL_ARRAY(zv) (GET_FLAGS(zv) = PARTIAL_ARRAY)
+#define MAKE_PARTIAL_OBJECT(zv) (GET_FLAGS(zv) = PARTIAL_OBJECT)
 
-#define MAKE_TOP(zv) (GET_AUX(zv)->flags = TOP)
-#define MAKE_BOT(zv) (GET_AUX(zv)->flags = BOT)
+#define MAKE_TOP(zv) (GET_FLAGS(zv) = TOP)
+#define MAKE_BOT(zv) (GET_FLAGS(zv) = BOT)
 
 static void scp_dump_value(zval *zv) {
 	if (IS_TOP(zv)) {
@@ -152,7 +149,7 @@ static inline bool value_known(zval *zv) {
 /* Sets new value for variable and ensures that it is lower or equal
  * the previous one in the constant propagation lattice. */
 static void set_value(scdf_ctx *scdf, sccp_ctx *ctx, int var, const zval *new) {
-	zval *value = GET_VALUE(var);
+	zval *value = &ctx->values[var];
 	if (IS_BOT(value) || IS_TOP(new)) {
 		return;
 	}
@@ -195,7 +192,7 @@ static zval *get_op1_value(sccp_ctx *ctx, zend_op *opline, const zend_ssa_op *ss
 	if (opline->op1_type == IS_CONST) {
 		return CT_CONSTANT_EX(ctx->scdf.op_array, opline->op1.constant);
 	} else if (ssa_op->op1_use != -1) {
-		return GET_VALUE(ssa_op->op1_use);
+		return &ctx->values[ssa_op->op1_use];
 	} else {
 		return NULL;
 	}
@@ -205,7 +202,7 @@ static zval *get_op2_value(sccp_ctx *ctx, const zend_op *opline, const zend_ssa_
 	if (opline->op2_type == IS_CONST) {
 		return CT_CONSTANT_EX(ctx->scdf.op_array, opline->op2.constant);
 	} else if (ssa_op->op2_use != -1) {
-		return GET_VALUE(ssa_op->op2_use);
+		return &ctx->values[ssa_op->op2_use];
 	} else {
 		return NULL;
 	}
@@ -871,8 +868,8 @@ static inline zend_result ct_eval_func_call(
 		set_value(scdf, ctx, ssa_op->op##_def, zv); \
 	} \
 } while (0)
-#define SET_RESULT_BOT(op) SET_RESULT(op, &ctx->bot)
-#define SET_RESULT_TOP(op) SET_RESULT(op, &ctx->top)
+#define SET_RESULT_BOT(op) SET_RESULT(op, ctx->bot)
+#define SET_RESULT_TOP(op) SET_RESULT(op, ctx->top)
 
 #define SKIP_IF_TOP(op) if (IS_TOP(op)) return;
 
@@ -1095,7 +1092,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 			zval *result = NULL;
 
 			if (opline->opcode == ZEND_ADD_ARRAY_ELEMENT) {
-				result = GET_VALUE(ssa_op->result_use);
+				result = &ctx->values[ssa_op->result_use];
 				if (IS_BOT(result)) {
 					SET_RESULT_BOT(result);
 					SET_RESULT_BOT(op1);
@@ -1194,7 +1191,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 			return;
 		}
 		case ZEND_ADD_ARRAY_UNPACK: {
-			zval *result = GET_VALUE(ssa_op->result_use);
+			zval *result = &ctx->values[ssa_op->result_use];
 			if (IS_BOT(result) || IS_BOT(op1)) {
 				SET_RESULT_BOT(result);
 				return;
@@ -1658,8 +1655,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 		case ZEND_DO_ICALL:
 		{
 			zend_call_info *call;
-			zend_string *name;
-			zval *args[3] = {NULL};
+			zval *name, *args[3] = {NULL};
 
 			if (!ctx->call_map) {
 				SET_RESULT_BOT(result);
@@ -1667,15 +1663,10 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 			}
 
 			call = ctx->call_map[opline - ctx->scdf.op_array->opcodes];
-			if (call->caller_init_opline->op2_type == IS_CONST) {
-				name = Z_STR_P(CT_CONSTANT_EX(ctx->scdf.op_array, call->caller_init_opline->op2.constant));
-			} else {
-				ZEND_ASSERT(call->callee_func);
-				name = call->callee_func->common.function_name;
-			}
+			name = CT_CONSTANT_EX(ctx->scdf.op_array, call->caller_init_opline->op2.constant);
 
 			/* We already know it can't be evaluated, don't bother checking again */
-			if (ssa_op->result_def < 0 || IS_BOT(GET_VALUE(ssa_op->result_def))) {
+			if (ssa_op->result_def < 0 || IS_BOT(&ctx->values[ssa_op->result_def])) {
 				break;
 			}
 
@@ -1706,11 +1697,11 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 			}
 
 			/* We didn't get a BOT argument, so value stays the same */
-			if (!IS_TOP(GET_VALUE(ssa_op->result_def))) {
+			if (!IS_TOP(&ctx->values[ssa_op->result_def])) {
 				break;
 			}
 
-			if (ct_eval_func_call(scdf->op_array, &zv, name, call->num_args, args) == SUCCESS) {
+			if (ct_eval_func_call(scdf->op_array, &zv, Z_STR_P(name), call->num_args, args) == SUCCESS) {
 				SET_RESULT(result, &zv);
 				zval_ptr_dtor_nogc(&zv);
 				break;
@@ -1718,11 +1709,11 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 
 #if 0
 			/* sort out | uniq -c | sort -n */
-			fprintf(stderr, "%s\n", name);
+			fprintf(stderr, "%s\n", Z_STRVAL_P(name));
 			/*if (args[1]) {
-				php_printf("%s %Z %Z\n", name, args[0], args[1]);
+				php_printf("%s %Z %Z\n", Z_STRVAL_P(name), args[0], args[1]);
 			} else {
-				php_printf("%s %Z\n", name, args[0]);
+				php_printf("%s %Z\n", Z_STRVAL_P(name), args[0]);
 			}*/
 #endif
 
@@ -1734,7 +1725,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 		case ZEND_FRAMELESS_ICALL_2:
 		case ZEND_FRAMELESS_ICALL_3: {
 			/* We already know it can't be evaluated, don't bother checking again */
-			if (ssa_op->result_def < 0 || IS_BOT(GET_VALUE(ssa_op->result_def))) {
+			if (ssa_op->result_def < 0 || IS_BOT(&ctx->values[ssa_op->result_def])) {
 				break;
 			}
 
@@ -2056,7 +2047,7 @@ static void sccp_visit_phi(scdf_ctx *scdf, const zend_ssa_phi *phi) {
 	sccp_ctx *ctx = (sccp_ctx *) scdf;
 	zend_ssa *ssa = scdf->ssa;
 	ZEND_ASSERT(phi->ssa_var >= 0);
-	if (!IS_BOT(GET_VALUE(phi->ssa_var))) {
+	if (!IS_BOT(&ctx->values[phi->ssa_var])) {
 		zend_basic_block *block = &ssa->cfg.blocks[phi->block];
 		int *predecessors = &ssa->cfg.predecessors[block->predecessor_offset];
 
@@ -2068,17 +2059,17 @@ static void sccp_visit_phi(scdf_ctx *scdf, const zend_ssa_phi *phi) {
 		if (phi->pi >= 0) {
 			ZEND_ASSERT(phi->sources[0] >= 0);
 			if (scdf_is_edge_feasible(scdf, phi->pi, phi->block)) {
-				join_phi_values(&result, GET_VALUE(phi->sources[0]), ssa->vars[phi->ssa_var].escape_state != ESCAPE_STATE_NO_ESCAPE);
+				join_phi_values(&result, &ctx->values[phi->sources[0]], ssa->vars[phi->ssa_var].escape_state != ESCAPE_STATE_NO_ESCAPE);
 			}
 		} else {
 			for (uint32_t i = 0; i < block->predecessors_count; i++) {
 				ZEND_ASSERT(phi->sources[i] >= 0);
 				if (scdf_is_edge_feasible(scdf, predecessors[i], phi->block)) {
 #if SCP_DEBUG
-					scp_dump_value(GET_VALUE(phi->sources[i]));
+					scp_dump_value(&ctx->values[phi->sources[i]]);
 					fprintf(stderr, ",");
 #endif
-					join_phi_values(&result, GET_VALUE(phi->sources[i]), ssa->vars[phi->ssa_var].escape_state != ESCAPE_STATE_NO_ESCAPE);
+					join_phi_values(&result, &ctx->values[phi->sources[i]], ssa->vars[phi->ssa_var].escape_state != ESCAPE_STATE_NO_ESCAPE);
 				} else {
 #if SCP_DEBUG
 					fprintf(stderr, " --,");
@@ -2236,14 +2227,14 @@ static uint32_t try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *
 				}
 				return 0;
 			} else if ((opline->op2_type & (IS_VAR|IS_TMP_VAR))
-					&& (!value_known(GET_VALUE(ssa_op->op2_use))
-						|| IS_PARTIAL_ARRAY(GET_VALUE(ssa_op->op2_use))
-						|| IS_PARTIAL_OBJECT(GET_VALUE(ssa_op->op2_use)))) {
+					&& (!value_known(&ctx->values[ssa_op->op2_use])
+						|| IS_PARTIAL_ARRAY(&ctx->values[ssa_op->op2_use])
+						|| IS_PARTIAL_OBJECT(&ctx->values[ssa_op->op2_use]))) {
 				return 0;
 			} else if ((opline->op1_type & (IS_VAR|IS_TMP_VAR))
-					&& (!value_known(GET_VALUE(ssa_op->op1_use))
-						|| IS_PARTIAL_ARRAY(GET_VALUE(ssa_op->op1_use))
-						|| IS_PARTIAL_OBJECT(GET_VALUE(ssa_op->op1_use)))) {
+					&& (!value_known(&ctx->values[ssa_op->op1_use])
+						|| IS_PARTIAL_ARRAY(&ctx->values[ssa_op->op1_use])
+						|| IS_PARTIAL_OBJECT(&ctx->values[ssa_op->op1_use]))) {
 				if (opline->opcode == ZEND_TYPE_CHECK
 				 || opline->opcode == ZEND_BOOL) {
 					zend_ssa_remove_result_def(ssa, ssa_op);
@@ -2287,8 +2278,8 @@ static uint32_t try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *
 					case ZEND_ASSIGN_DIM_OP:
 					case ZEND_ASSIGN_OBJ_OP:
 					case ZEND_ASSIGN_STATIC_PROP_OP:
-						if ((ssa_op->op2_use >= 0 && !value_known(GET_VALUE(ssa_op->op2_use)))
-								|| ((ssa_op+1)->op1_use >= 0 &&!value_known(GET_VALUE((ssa_op+1)->op1_use)))) {
+						if ((ssa_op->op2_use >= 0 && !value_known(&ctx->values[ssa_op->op2_use]))
+								|| ((ssa_op+1)->op1_use >= 0 &&!value_known(&ctx->values[(ssa_op+1)->op1_use]))) {
 							return 0;
 						}
 						break;
@@ -2296,7 +2287,7 @@ static uint32_t try_remove_definition(sccp_ctx *ctx, int var_num, zend_ssa_var *
 					case ZEND_PRE_DEC_OBJ:
 					case ZEND_POST_INC_OBJ:
 					case ZEND_POST_DEC_OBJ:
-						if (ssa_op->op2_use >= 0 && !value_known(GET_VALUE(ssa_op->op2_use))) {
+						if (ssa_op->op2_use >= 0 && !value_known(&ctx->values[ssa_op->op2_use])) {
 							return 0;
 						}
 						break;
@@ -2396,18 +2387,18 @@ static uint32_t replace_constant_operands(sccp_ctx *ctx) {
 		zval *value;
 		int use;
 
-		if (IS_PARTIAL_ARRAY(GET_VALUE(i))
-				|| IS_PARTIAL_OBJECT(GET_VALUE(i))) {
-			if (!Z_DELREF_P(GET_VALUE(i))) {
-				zend_array_destroy(Z_ARR_P(GET_VALUE(i)));
+		if (IS_PARTIAL_ARRAY(&ctx->values[i])
+				|| IS_PARTIAL_OBJECT(&ctx->values[i])) {
+			if (!Z_DELREF(ctx->values[i])) {
+				zend_array_destroy(Z_ARR(ctx->values[i]));
 			}
-			MAKE_BOT(GET_VALUE(i));
+			MAKE_BOT(&ctx->values[i]);
 			if ((var->use_chain < 0 && var->phi_use_chain == NULL) || var->no_val) {
 				removed_ops += try_remove_definition(ctx, i, var, NULL);
 			}
 			continue;
-		} else if (value_known(GET_VALUE(i))) {
-			value = GET_VALUE(i);
+		} else if (value_known(&ctx->values[i])) {
+			value = &ctx->values[i];
 		} else {
 			value = value_from_type_and_range(ctx, i, &tmp);
 			if (!value) {
@@ -2441,7 +2432,7 @@ static uint32_t replace_constant_operands(sccp_ctx *ctx) {
 			}
 		} FOREACH_USE_END();
 
-		if (value_known(GET_VALUE(i))) {
+		if (value_known(&ctx->values[i])) {
 			removed_ops += try_remove_definition(ctx, i, var, value);
 		}
 	}
@@ -2449,58 +2440,61 @@ static uint32_t replace_constant_operands(sccp_ctx *ctx) {
 	return removed_ops;
 }
 
-static void sccp_context_init(zend_optimizer_ctx *optimizer_ctx, sccp_ctx *ctx,
+static void sccp_context_init(zend_optimizer_ctx *ctx, sccp_ctx *sccp,
 		zend_ssa *ssa, zend_op_array *op_array, zend_call_info **call_map) {
 	int i;
-	ctx->call_map = call_map;
-	ctx->values = zend_arena_alloc(&optimizer_ctx->arena, sizeof(zval_aux) * ssa->vars_count);
+	sccp->call_map = call_map;
+	sccp->values = (zval*)zend_arena_alloc(&ctx->arena, sizeof(zval) * ssa->vars_count + 2) + 2;
+	sccp->flags = (uint32_t*)zend_arena_alloc(&ctx->arena, sizeof(uint32_t) * ssa->vars_count + 2) + 2;
+	sccp->top = sccp->values - 1;
+	sccp->bot = sccp->values - 2;
 
-	MAKE_TOP(&ctx->top);
-	MAKE_BOT(&ctx->bot);
+	MAKE_TOP(sccp->top);
+	MAKE_BOT(sccp->bot);
 
 	i = 0;
 	for (; i < op_array->last_var; ++i) {
 		/* These are all undefined variables, which we have to mark BOT.
 		 * Otherwise the undefined variable warning might not be preserved. */
-		MAKE_BOT(GET_VALUE(i));
+		MAKE_BOT(&sccp->values[i]);
 	}
 	for (; i < ssa->vars_count; ++i) {
 		if (ssa->vars[i].alias) {
-			MAKE_BOT(GET_VALUE(i));
+			MAKE_BOT(&sccp->values[i]);
 		} else {
-			MAKE_TOP(GET_VALUE(i));
+			MAKE_TOP(&sccp->values[i]);
 		}
 	}
 }
 
-static void sccp_context_free(sccp_ctx *ctx) {
+static void sccp_context_free(sccp_ctx *sccp) {
 	int i;
-	for (i = ctx->scdf.op_array->last_var; i < ctx->scdf.ssa->vars_count; ++i) {
-		zval_ptr_dtor_nogc(GET_VALUE(i));
+	for (i = sccp->scdf.op_array->last_var; i < sccp->scdf.ssa->vars_count; ++i) {
+		zval_ptr_dtor_nogc(&sccp->values[i]);
 	}
 }
 
-uint32_t sccp_optimize_op_array(zend_optimizer_ctx *optimizer_ctx, zend_op_array *op_array, zend_ssa *ssa, zend_call_info **call_map)
+uint32_t sccp_optimize_op_array(zend_optimizer_ctx *ctx, zend_op_array *op_array, zend_ssa *ssa, zend_call_info **call_map)
 {
 	sccp_ctx sccp;
+	_sccp_ctx = &sccp;
 	uint32_t removed_ops = 0;
-	void *checkpoint = zend_arena_checkpoint(optimizer_ctx->arena);
+	void *checkpoint = zend_arena_checkpoint(ctx->arena);
 
-	sccp_context_init(optimizer_ctx, &sccp, ssa, op_array, call_map);
-	sccp_ctx *ctx = &sccp;
+	sccp_context_init(ctx, &sccp, ssa, op_array, call_map);
 
 	sccp.scdf.handlers.visit_instr = sccp_visit_instr;
 	sccp.scdf.handlers.visit_phi = sccp_visit_phi;
 	sccp.scdf.handlers.mark_feasible_successors = sccp_mark_feasible_successors;
 
-	scdf_init(optimizer_ctx, &sccp.scdf, op_array, ssa);
+	scdf_init(ctx, &sccp.scdf, op_array, ssa);
 	scdf_solve(&sccp.scdf, "SCCP");
 
-	if (optimizer_ctx->debug_level & ZEND_DUMP_SCCP) {
+	if (ctx->debug_level & ZEND_DUMP_SCCP) {
 		int i, first = 1;
 
 		for (i = op_array->last_var; i < ssa->vars_count; i++) {
-			zval *zv = GET_VALUE(i);
+			zval *zv = &sccp.values[i];
 
 			if (IS_TOP(zv) || IS_BOT(zv)) {
 				continue;
@@ -2523,7 +2517,7 @@ uint32_t sccp_optimize_op_array(zend_optimizer_ctx *optimizer_ctx, zend_op_array
 	removed_ops += replace_constant_operands(&sccp);
 
 	sccp_context_free(&sccp);
-	zend_arena_release(&optimizer_ctx->arena, checkpoint);
+	zend_arena_release(&ctx->arena, checkpoint);
 
 	return removed_ops;
 }
