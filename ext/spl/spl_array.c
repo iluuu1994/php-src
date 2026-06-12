@@ -55,18 +55,24 @@ typedef struct _spl_array_object {
 
 #define Z_SPLARRAY_P(zv)  spl_array_from_obj(Z_OBJ_P((zv)))
 
-static inline HashTable **spl_array_get_hash_table_ptr(spl_array_object* intern) { /* {{{ */
+typedef enum is_zval_or_ht {
+	IS_ZVAL,
+	IS_HT
+} is_zval_or_ht;
+
+static inline void **spl_array_get_hash_table_ptr(spl_array_object* intern, is_zval_or_ht *is_zval_or_ht) { /* {{{ */
 	//??? TODO: Delay duplication for arrays; only duplicate for write operations
 	if (intern->ar_flags & SPL_ARRAY_IS_SELF) {
 		/* rebuild properties */
 		zend_std_get_properties_ex(&intern->std);
-		return &intern->std.properties;
+		*is_zval_or_ht = IS_HT;
+		return (void*)&intern->std.properties;
 	} else if (intern->ar_flags & SPL_ARRAY_USE_OTHER) {
 		spl_array_object *other = Z_SPLARRAY_P(&intern->array);
-		return spl_array_get_hash_table_ptr(other);
+		return spl_array_get_hash_table_ptr(other, is_zval_or_ht);
 	} else if (Z_TYPE(intern->array) == IS_ARRAY) {
-		abort();
-		// return &Z_ARRVAL(intern->array);
+		*is_zval_or_ht = IS_ZVAL;
+		return (void*)&intern->array;
 	} else {
 		zend_object *obj = Z_OBJ(intern->array);
 		/* Since we're directly playing with the properties table, we shall initialize the lazy object directly.
@@ -77,7 +83,8 @@ static inline HashTable **spl_array_get_hash_table_ptr(spl_array_object* intern)
 				if (!intern->sentinel_array) {
 					intern->sentinel_array = zend_new_array(0);
 				}
-				return &intern->sentinel_array;
+				*is_zval_or_ht = IS_HT;
+				return (void*)&intern->sentinel_array;
 			}
 		}
 		/* should no longer be lazy */
@@ -90,13 +97,20 @@ static inline HashTable **spl_array_get_hash_table_ptr(spl_array_object* intern)
 			}
 			obj->properties = zend_array_dup(obj->properties);
 		}
-		return &obj->properties;
+		*is_zval_or_ht = IS_HT;
+		return (void*)&obj->properties;
 	}
 }
 /* }}} */
 
 static inline HashTable *spl_array_get_hash_table(spl_array_object* intern) { /* {{{ */
-	return *spl_array_get_hash_table_ptr(intern);
+	is_zval_or_ht is_zval_or_ht;
+	void *p = spl_array_get_hash_table_ptr(intern, &is_zval_or_ht);
+	if (is_zval_or_ht == IS_ZVAL) {
+		return Z_ARR_P((zval *)p);
+	} else {
+		return *(HashTable **)p;
+	}
 }
 /* }}} */
 
@@ -1159,8 +1173,14 @@ enum spl_array_object_sort_methods {
 static void spl_array_method(INTERNAL_FUNCTION_PARAMETERS, const char *fname, size_t fname_len, enum spl_array_object_sort_methods use_arg) /* {{{ */
 {
 	spl_array_object *intern = Z_SPLARRAY_P(ZEND_THIS);
-	HashTable **ht_ptr = spl_array_get_hash_table_ptr(intern);
-	HashTable *aht = *ht_ptr;
+	is_zval_or_ht is_zval_or_ht;
+	void *ht_ptr = spl_array_get_hash_table_ptr(intern, &is_zval_or_ht);
+	HashTable *aht;
+	if (is_zval_or_ht == IS_ZVAL) {
+		aht = Z_ARR_P((zval *)ht_ptr);
+	} else {
+		aht = *(HashTable **)ht_ptr;
+	}
 	zval params[2], *arg = NULL;
 
 	zend_function *fn = zend_hash_str_find_ptr(EG(function_table), fname, fname_len);
@@ -1204,9 +1224,17 @@ static void spl_array_method(INTERNAL_FUNCTION_PARAMETERS, const char *fname, si
 exit:
 	{
 		zval *ht_zv = Z_REFVAL(params[0]);
-		zend_array_release(*ht_ptr);
+		if (is_zval_or_ht == IS_ZVAL) {
+			zend_array_release(Z_ARR_P((zval *)ht_ptr));
+		} else {
+			zend_array_release(*(HashTable **)ht_ptr);
+		}
 		SEPARATE_ARRAY(ht_zv);
-		*ht_ptr = Z_ARRVAL_P(ht_zv);
+		if (is_zval_or_ht == IS_ZVAL) {
+			ZVAL_ARR((zval *)ht_ptr, Z_ARRVAL_P(ht_zv));
+		} else {
+			*(HashTable **)ht_ptr = Z_ARRVAL_P(ht_zv);
+		}
 		ZVAL_NULL(ht_zv);
 		zval_ptr_dtor(&params[0]);
 	}
