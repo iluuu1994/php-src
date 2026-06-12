@@ -1084,7 +1084,7 @@ static zend_always_inline void ZVAL_DOUBLE(zval *zv, double d) {
 static zend_always_inline void ZVAL_STR(zval *zv, zend_string *s) {
 	zv->ptr = ((uintptr_t)s << Z_TYPE_SHIFT)
 		// FIXME: ZSTR_IS_INTERNED() isn't available.
-		| ((GC_FLAGS(s) & IS_STR_INTERNED) ? IS_INTERNED_STRING_EX : IS_STRING);
+		| ((GC_FLAGS(s) & IS_STR_INTERNED) ? IS_INTERNED_STRING_EX : IS_STRING_EX);
 }
 
 static zend_always_inline void ZVAL_INTERNED_STR(zval *zv, zend_string *s) {
