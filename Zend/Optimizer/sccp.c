@@ -89,16 +89,35 @@ static sccp_ctx *_sccp_ctx;
 #define PARTIAL_ARRAY 3
 #define PARTIAL_OBJECT 4
 #define GET_FLAGS(zv) (_sccp_ctx->flags[(zv) - _sccp_ctx->values])
-#define IS_TOP(zv) (GET_FLAGS(zv) == TOP)
-#define IS_BOT(zv) (GET_FLAGS(zv) == BOT)
-#define IS_PARTIAL_ARRAY(zv) (Z_TYPE_P(zv) == PARTIAL_ARRAY)
-#define IS_PARTIAL_OBJECT(zv) (Z_TYPE_P(zv) == PARTIAL_OBJECT)
+#define IS_IN_VALUE_RANGE(zv) ((zv) >= (_sccp_ctx->values - 2) && (zv) < (_sccp_ctx->values + _sccp_ctx->scdf.ssa->vars_count))
+#define IS_TOP(zv) (IS_IN_VALUE_RANGE(zv) && GET_FLAGS(zv) == TOP)
+#define IS_BOT(zv) (IS_IN_VALUE_RANGE(zv) && GET_FLAGS(zv) == BOT)
+#define IS_PARTIAL_ARRAY(zv) (IS_IN_VALUE_RANGE(zv) && GET_FLAGS(zv) == PARTIAL_ARRAY)
+#define IS_PARTIAL_OBJECT(zv) (IS_IN_VALUE_RANGE(zv) && GET_FLAGS(zv) == PARTIAL_OBJECT)
 
 #define MAKE_PARTIAL_ARRAY(zv) (GET_FLAGS(zv) = PARTIAL_ARRAY)
 #define MAKE_PARTIAL_OBJECT(zv) (GET_FLAGS(zv) = PARTIAL_OBJECT)
 
 #define MAKE_TOP(zv) (GET_FLAGS(zv) = TOP)
 #define MAKE_BOT(zv) (GET_FLAGS(zv) = BOT)
+
+#define SCCP_COPY_FLAGS(dst, src) do { \
+		if (IS_IN_VALUE_RANGE(dst)) { \
+			GET_FLAGS(dst) = IS_IN_VALUE_RANGE(src) ? GET_FLAGS(src) : 0; \
+		} \
+	} while (0)
+#define SCCP_ZVAL_COPY(dst, src) do { \
+		zval *_sccp_dst = (dst); \
+		const zval *_sccp_src = (src); \
+		SCCP_COPY_FLAGS(_sccp_dst, _sccp_src); \
+		ZVAL_COPY(_sccp_dst, _sccp_src); \
+	} while (0)
+#define SCCP_ZVAL_COPY_VALUE(dst, src) do { \
+		zval *_sccp_dst = (dst); \
+		const zval *_sccp_src = (src); \
+		SCCP_COPY_FLAGS(_sccp_dst, _sccp_src); \
+		ZVAL_COPY_VALUE(_sccp_dst, _sccp_src); \
+	} while (0)
 
 static void scp_dump_value(zval *zv) {
 	if (IS_TOP(zv)) {
@@ -166,7 +185,7 @@ static void set_value(scdf_ctx *scdf, sccp_ctx *ctx, int var, const zval *new) {
 
 	if (IS_TOP(value) || IS_BOT(new)) {
 		zval_ptr_dtor_nogc(value);
-		ZVAL_COPY(value, new);
+		SCCP_ZVAL_COPY(value, new);
 		scdf_add_to_worklist(scdf, var);
 		return;
 	}
@@ -176,7 +195,7 @@ static void set_value(scdf_ctx *scdf, sccp_ctx *ctx, int var, const zval *new) {
 		if (Z_TYPE_P(value) != Z_TYPE_P(new)
 			|| zend_hash_num_elements(Z_ARR_P(new)) != zend_hash_num_elements(Z_ARR_P(value))) {
 			zval_ptr_dtor_nogc(value);
-			ZVAL_COPY(value, new);
+			SCCP_ZVAL_COPY(value, new);
 			scdf_add_to_worklist(scdf, var);
 		}
 		return;
@@ -295,7 +314,7 @@ static bool try_replace_op1(
 		sccp_ctx *ctx, zend_op *opline, zend_ssa_op *ssa_op, int var, zval *value) {
 	if (ssa_op->op1_use == var && can_replace_op1(ctx->scdf.op_array, opline, ssa_op)) {
 		zval zv;
-		ZVAL_COPY(&zv, value);
+		SCCP_ZVAL_COPY(&zv, value);
 		if (zend_optimizer_update_op1_const(ctx->scdf.op_array, opline, &zv)) {
 			return true;
 		}
@@ -308,7 +327,7 @@ static bool try_replace_op2(
 		sccp_ctx *ctx, zend_op *opline, zend_ssa_op *ssa_op, int var, zval *value) {
 	if (ssa_op->op2_use == var && can_replace_op2(ctx->scdf.op_array, opline, ssa_op)) {
 		zval zv;
-		ZVAL_COPY(&zv, value);
+		SCCP_ZVAL_COPY(&zv, value);
 		if (zend_optimizer_update_op2_const(ctx->scdf.op_array, opline, &zv)) {
 			return true;
 		}
@@ -395,7 +414,7 @@ static inline zend_result ct_eval_fetch_dim(zval *result, zval *op1, zval *op2, 
 	if (Z_TYPE_P(op1) == IS_ARRAY || IS_PARTIAL_ARRAY(op1)) {
 		zval *value;
 		if (fetch_array_elem(&value, op1, op2) == SUCCESS && value && !IS_BOT(value)) {
-			ZVAL_COPY(result, value);
+			SCCP_ZVAL_COPY(result, value);
 			return SUCCESS;
 		}
 	} else if (support_strings && Z_TYPE_P(op1) == IS_STRING) {
@@ -605,7 +624,7 @@ static inline zend_result ct_eval_fetch_obj(zval *result, zval *op1, zval *op2) 
 	if (IS_PARTIAL_OBJECT(op1)) {
 		zval *value;
 		if (fetch_obj_prop(&value, op1, op2) == SUCCESS && value && !IS_BOT(value)) {
-			ZVAL_COPY(result, value);
+			SCCP_ZVAL_COPY(result, value);
 			return SUCCESS;
 		}
 	}
@@ -678,7 +697,7 @@ static inline zend_result ct_eval_incdec(zval *result, uint8_t opcode, zval *op1
 		return FAILURE;
 	}
 
-	ZVAL_COPY(result, op1);
+	SCCP_ZVAL_COPY(result, op1);
 	if (opcode == ZEND_PRE_INC
 			|| opcode == ZEND_POST_INC
 			|| opcode == ZEND_PRE_INC_OBJ
@@ -830,7 +849,7 @@ static inline zend_result ct_eval_func_call_ex(
 	EX(func) = func;
 	EX_NUM_ARGS() = num_args;
 	for (i = 0; i < num_args; i++) {
-		ZVAL_COPY(EX_VAR_NUM(i), args[i]);
+		SCCP_ZVAL_COPY(EX_VAR_NUM(i), args[i]);
 	}
 	ZVAL_NULL(result);
 	func->internal_function.handler(execute_data, result);
@@ -961,7 +980,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 				if (IS_PARTIAL_ARRAY(op1)) {
 					dup_partial_array(&zv, op1);
 				} else {
-					ZVAL_COPY(&zv, op1);
+					SCCP_ZVAL_COPY(&zv, op1);
 				}
 
 				if (!op2 && IS_PARTIAL_ARRAY(&zv)) {
@@ -1047,7 +1066,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 					if (IS_PARTIAL_OBJECT(op1)) {
 						dup_partial_object(&zv, op1);
 					} else {
-						ZVAL_COPY(&zv, op1);
+						SCCP_ZVAL_COPY(&zv, op1);
 					}
 
 					if (ct_eval_assign_obj(&zv, data, op2) == SUCCESS) {
@@ -1144,7 +1163,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 						empty_partial_array(&zv);
 					} else {
 						MAKE_PARTIAL_ARRAY(result);
-						ZVAL_COPY_VALUE(&zv, result);
+						SCCP_ZVAL_COPY_VALUE(&zv, result);
 						ZVAL_NULL(result);
 					}
 					if (!op2) {
@@ -1164,7 +1183,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 
 			} else {
 				if (result) {
-					ZVAL_COPY_VALUE(&zv, result);
+					SCCP_ZVAL_COPY_VALUE(&zv, result);
 					ZVAL_NULL(result);
 				} else {
 					array_init(&zv);
@@ -1204,7 +1223,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 				SET_RESULT_BOT(result);
 				return;
 			}
-			ZVAL_COPY_VALUE(&zv, result);
+			SCCP_ZVAL_COPY_VALUE(&zv, result);
 			ZVAL_NULL(result);
 
 			if (ct_eval_add_array_unpack(&zv, op1) == SUCCESS) {
@@ -1326,7 +1345,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 						if (IS_PARTIAL_ARRAY(op1)) {
 							dup_partial_array(&zv, op1);
 						} else {
-							ZVAL_COPY(&zv, op1);
+							SCCP_ZVAL_COPY(&zv, op1);
 						}
 
 						if (ct_eval_assign_dim(&zv, &tmp, op2) == SUCCESS) {
@@ -1655,7 +1674,8 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 		case ZEND_DO_ICALL:
 		{
 			zend_call_info *call;
-			zval *name, *args[3] = {NULL};
+			zend_string *name;
+			zval *args[3] = {NULL};
 
 			if (!ctx->call_map) {
 				SET_RESULT_BOT(result);
@@ -1663,7 +1683,12 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 			}
 
 			call = ctx->call_map[opline - ctx->scdf.op_array->opcodes];
-			name = CT_CONSTANT_EX(ctx->scdf.op_array, call->caller_init_opline->op2.constant);
+			if (call->caller_init_opline->op2_type == IS_CONST) {
+				name = Z_STR_P(CT_CONSTANT_EX(ctx->scdf.op_array, call->caller_init_opline->op2.constant));
+			} else {
+				ZEND_ASSERT(call->callee_func);
+				name = call->callee_func->common.function_name;
+			}
 
 			/* We already know it can't be evaluated, don't bother checking again */
 			if (ssa_op->result_def < 0 || IS_BOT(&ctx->values[ssa_op->result_def])) {
@@ -1701,7 +1726,7 @@ static void sccp_visit_instr(scdf_ctx *scdf, zend_op *opline, zend_ssa_op *ssa_o
 				break;
 			}
 
-			if (ct_eval_func_call(scdf->op_array, &zv, Z_STR_P(name), call->num_args, args) == SUCCESS) {
+			if (ct_eval_func_call(scdf->op_array, &zv, name, call->num_args, args) == SUCCESS) {
 				SET_RESULT(result, &zv);
 				zval_ptr_dtor_nogc(&zv);
 				break;
@@ -1990,7 +2015,7 @@ static zend_result join_partial_arrays(zval *a, zval *b)
 	empty_partial_array(&ret);
 	join_hash_tables(Z_ARRVAL(ret), Z_ARRVAL_P(a), Z_ARRVAL_P(b));
 	zval_ptr_dtor_nogc(a);
-	ZVAL_COPY_VALUE(a, &ret);
+	SCCP_ZVAL_COPY_VALUE(a, &ret);
 
 	return SUCCESS;
 }
@@ -2006,7 +2031,7 @@ static zend_result join_partial_objects(zval *a, zval *b)
 	empty_partial_object(&ret);
 	join_hash_tables(Z_ARRVAL(ret), Z_ARRVAL_P(a), Z_ARRVAL_P(b));
 	zval_ptr_dtor_nogc(a);
-	ZVAL_COPY_VALUE(a, &ret);
+	SCCP_ZVAL_COPY_VALUE(a, &ret);
 
 	return SUCCESS;
 }
@@ -2017,7 +2042,7 @@ static void join_phi_values(zval *a, zval *b, bool escape) {
 	}
 	if (IS_TOP(a)) {
 		zval_ptr_dtor_nogc(a);
-		ZVAL_COPY(a, b);
+		SCCP_ZVAL_COPY(a, b);
 		return;
 	}
 	if (IS_BOT(b)) {
@@ -2444,21 +2469,25 @@ static void sccp_context_init(zend_optimizer_ctx *ctx, sccp_ctx *sccp,
 		zend_ssa *ssa, zend_op_array *op_array, zend_call_info **call_map) {
 	int i;
 	sccp->call_map = call_map;
-	sccp->values = (zval*)zend_arena_alloc(&ctx->arena, sizeof(zval) * ssa->vars_count + 2) + 2;
-	sccp->flags = (uint32_t*)zend_arena_alloc(&ctx->arena, sizeof(uint32_t) * ssa->vars_count + 2) + 2;
+	sccp->values = (zval*)zend_arena_alloc(&ctx->arena, sizeof(zval) * (ssa->vars_count + 2)) + 2;
+	sccp->flags = (uint32_t*)zend_arena_alloc(&ctx->arena, sizeof(uint32_t) * (ssa->vars_count + 2)) + 2;
 	sccp->top = sccp->values - 1;
 	sccp->bot = sccp->values - 2;
 
+	ZVAL_UNDEF(sccp->top);
 	MAKE_TOP(sccp->top);
+	ZVAL_UNDEF(sccp->bot);
 	MAKE_BOT(sccp->bot);
 
 	i = 0;
 	for (; i < op_array->last_var; ++i) {
+		ZVAL_UNDEF(&sccp->values[i]);
 		/* These are all undefined variables, which we have to mark BOT.
 		 * Otherwise the undefined variable warning might not be preserved. */
 		MAKE_BOT(&sccp->values[i]);
 	}
 	for (; i < ssa->vars_count; ++i) {
+		ZVAL_UNDEF(&sccp->values[i]);
 		if (ssa->vars[i].alias) {
 			MAKE_BOT(&sccp->values[i]);
 		} else {
