@@ -694,7 +694,8 @@ static zend_always_inline uint8_t zval_get_type(const zval* pz) {
 
 #define Z_TYPE_SHIFT				6
 #define Z_TYPE_FLAGS_SHIFT			4
-#define Z_TYPE_INFO_EXTRA_SHIFT		16
+
+#define Z_PTR_SHIFT					16
 
 #define GC_REFCOUNT(p)				zend_gc_refcount(&(p)->gc)
 
@@ -1044,7 +1045,7 @@ static zend_always_inline double Z_DVAL(zval zv) {
 #define Z_FUNC(zval)				((zend_function *)Z_PTR(zval))
 #define Z_FUNC_P(zval_p)			Z_FUNC(*(zval_p))
 
-#define Z_PTR(zval)					((void *)((zval).ptr >> Z_TYPE_SHIFT))
+#define Z_PTR(zval)					((void *)((zval).ptr >> Z_PTR_SHIFT))
 #define Z_PTR_P(zval_p)				Z_PTR(*(zval_p))
 
 #define Z_RAW(zval)					(zval).u64
@@ -1088,18 +1089,20 @@ static zend_always_inline void ZVAL_DOUBLE(zval *zv, double d) {
 	memcpy(&zv->u32.b, &f, sizeof(f));
 }
 
+static zend_always_inline void ZVAL_PTR_EX(zval *zv, void *p, uint16_t flags) {
+	zv->ptr = ((uintptr_t)p << Z_PTR_SHIFT) + flags;
+}
+
 static zend_always_inline void ZVAL_STR(zval *zv, zend_string *s) {
-	zv->ptr = ((uintptr_t)s << Z_TYPE_SHIFT)
-		// FIXME: ZSTR_IS_INTERNED() isn't available.
-		| ((GC_FLAGS(s) & IS_STR_INTERNED) ? IS_INTERNED_STRING_EX : IS_STRING_EX);
+	ZVAL_PTR_EX(zv, s, ((GC_FLAGS(s) & IS_STR_INTERNED) ? IS_INTERNED_STRING_EX : IS_STRING_EX));
 }
 
 static zend_always_inline void ZVAL_INTERNED_STR(zval *zv, zend_string *s) {
-	zv->ptr = ((uintptr_t)s << Z_TYPE_SHIFT) | IS_INTERNED_STRING_EX;
+	ZVAL_PTR_EX(zv, s, IS_INTERNED_STRING_EX);
 }
 
 static zend_always_inline void ZVAL_NEW_STR(zval *zv, zend_string *s) {
-	zv->ptr = ((uintptr_t)s << Z_TYPE_SHIFT) | IS_STRING_EX;
+	ZVAL_PTR_EX(zv, s, IS_STRING_EX);
 }
 
 // FIXME: zend_string_copy() isn't available.
@@ -1109,11 +1112,11 @@ static zend_always_inline void ZVAL_STR_COPY(zval *zv, zend_string *s) {
 }
 
 static zend_always_inline void ZVAL_ARR(zval *zv, zend_array *a) {
-	zv->ptr = ((uintptr_t)a << Z_TYPE_SHIFT) | IS_ARRAY_EX;
+	ZVAL_PTR_EX(zv, a, IS_ARRAY_EX);
 }
 
 static zend_always_inline void ZVAL_IMMUTABLE_ARR(zval *zv, zend_array *a) {
-	zv->ptr = ((uintptr_t)a << Z_TYPE_SHIFT) | IS_ARRAY;
+	ZVAL_PTR_EX(zv, a, IS_ARRAY);
 }
 
 static zend_always_inline void ZVAL_NEW_PERSISTENT_ARR(zval *zv) {
@@ -1122,18 +1125,18 @@ static zend_always_inline void ZVAL_NEW_PERSISTENT_ARR(zval *zv) {
 }
 
 static zend_always_inline void ZVAL_OBJ(zval *zv, zend_object *o) {
-	zv->ptr = ((uintptr_t)o << Z_TYPE_SHIFT) | IS_OBJECT_EX;
+	ZVAL_PTR_EX(zv, o, IS_OBJECT_EX);
 }
 
 // FIXME: Stupid header order...
 static zend_always_inline uint32_t zend_gc_addref(zend_refcounted_h *p);
 static zend_always_inline void ZVAL_OBJ_COPY(zval *zv, zend_object *o) {
-	zv->ptr = ((uintptr_t)o << Z_TYPE_SHIFT) | IS_OBJECT_EX;
+	ZVAL_OBJ(zv, o);
 	GC_ADDREF(o);
 }
 
 static zend_always_inline void ZVAL_RES(zval *zv, zend_resource *r) {
-	zv->ptr = ((uintptr_t)r << Z_TYPE_SHIFT) | IS_RESOURCE_EX;
+	ZVAL_PTR_EX(zv, r, IS_RESOURCE_EX);
 }
 
 // FIXME: emalloc() isn't available.
@@ -1162,7 +1165,7 @@ static zend_always_inline void ZVAL_NEW_PERSISTENT_RES(zval *zv, zend_long index
 }
 
 static zend_always_inline void ZVAL_REF(zval *zv, zend_reference *r) {
-	zv->ptr = ((uintptr_t)r << Z_TYPE_SHIFT) | IS_REFERENCE_EX;
+	ZVAL_PTR_EX(zv, r, IS_REFERENCE_EX);
 }
 
 static zend_always_inline void ZVAL_NEW_EMPTY_REF(zval *zv) {
@@ -1201,15 +1204,15 @@ static zend_always_inline void ZVAL_NEW_PERSISTENT_REF(zval *d, zval *s) {
 }
 
 static zend_always_inline void ZVAL_AST(zval *zv, zend_ast_ref *a) {
-	zv->ptr = ((uintptr_t)a << Z_TYPE_SHIFT) | IS_CONSTANT_AST_EX;
+	ZVAL_PTR_EX(zv, a, IS_CONSTANT_AST_EX);
 }
 
 static zend_always_inline void ZVAL_INDIRECT(zval *zv, zval *p) {
-	zv->ptr = ((uintptr_t)p << Z_TYPE_SHIFT) | IS_INDIRECT;
+	ZVAL_PTR_EX(zv, p, IS_INDIRECT);
 }
 
 static zend_always_inline void ZVAL_PTR(zval *zv, void *p) {
-	zv->ptr = ((uintptr_t)p << Z_TYPE_SHIFT) | IS_PTR;
+	ZVAL_PTR_EX(zv, p, IS_PTR);
 }
 
 static zend_always_inline void ZVAL_FUNC(zval *zv, zend_function *f) {
@@ -1221,7 +1224,7 @@ static zend_always_inline void ZVAL_CE(zval *zv, zend_class_entry *c) {
 }
 
 static zend_always_inline void ZVAL_ALIAS_PTR(zval *zv, void *p) {
-	zv->ptr = ((uintptr_t)p << Z_TYPE_SHIFT) | IS_ALIAS_PTR;
+	ZVAL_PTR_EX(zv, p, IS_ALIAS_PTR);
 }
 
 static zend_always_inline void ZVAL_ERROR(zval *zv) {

@@ -1,3 +1,4 @@
+set $Z_PTR_SHIFT = 16
 set $Z_TYPE_INFO_MASK = 0x3f
 set $Z_TYPE_MASK = 0x0f
 set $Z_TYPE_SHIFT = 6
@@ -168,7 +169,7 @@ define ____printzv_contents
 
 	# 15 == IS_INDIRECT
 	if $type > 5 && $type < 12
-		printf "(refcount=%d) ", ((zend_refcounted*)($zvalue->ptr >> $Z_TYPE_SHIFT))->gc.refcount
+		printf "(refcount=%d) ", ((zend_refcounted*)($zvalue->ptr >> $Z_PTR_SHIFT))->gc.refcount
 	end
 
 	if $type == 0
@@ -190,13 +191,13 @@ define ____printzv_contents
 		printf "double: %f", (double)*(float*)&$zvalue->u32.b
 	end
 	if $type == 6
-		printf "string: %s", (char*)((zend_string*)($zvalue->ptr >> $Z_TYPE_SHIFT))->val
+		printf "string: %s", (char*)((zend_string*)($zvalue->ptr >> $Z_PTR_SHIFT))->val
 	end
 	if $type == 7
 		printf "array: "
 		if ! $arg1
 			set $ind = $ind + 1
-			____print_ht ((HashTable*)($zvalue->ptr >> $Z_TYPE_SHIFT)) 1
+			____print_ht ((HashTable*)($zvalue->ptr >> $Z_PTR_SHIFT)) 1
 			set $ind = $ind - 1
 			set $i = $ind
 			while $i > 0
@@ -247,21 +248,21 @@ define ____printzv_contents
 		set $type = 0
 	end
 	if $type == 9
-		printf "resource: #%d", ((zend_resource*)($zvalue->ptr >> $Z_TYPE_SHIFT))->handle
+		printf "resource: #%d", ((zend_resource*)($zvalue->ptr >> $Z_PTR_SHIFT))->handle
 	end
 	if $type == 10
 		printf "reference: "
-		____printzv &((zend_reference*)($zvalue->ptr >> $Z_TYPE_SHIFT))->val $arg1
+		____printzv &((zend_reference*)($zvalue->ptr >> $Z_PTR_SHIFT))->val $arg1
 	end
 	if $type == 11
 		printf "CONSTANT_AST"
 	end
 	if $type == 12
 		printf "indirect: "
-		____printzv ((zval*)($zvalue->ptr >> $Z_TYPE_SHIFT)) $arg1
+		____printzv ((zval*)($zvalue->ptr >> $Z_PTR_SHIFT)) $arg1
 	end
 	if $type == 13
-		printf "pointer: %p", ((void*)($zvalue->ptr >> $Z_TYPE_SHIFT))
+		printf "pointer: %p", ((void*)($zvalue->ptr >> $Z_PTR_SHIFT))
 	end
 	if $type == 15
 		printf "_ERROR"
@@ -366,14 +367,14 @@ define ____print_ht
 				____printzv $zval 1
 			end
 			if $arg1 == 2
-				printf "%s\n", ((char*)($zvalue->ptr >> $Z_TYPE_SHIFT))
+				printf "%s\n", ((char*)($zvalue->ptr >> $Z_PTR_SHIFT))
 			end
 			if $arg1 == 3
-				set $func = ((zend_function*)($zvalue->ptr >> $Z_TYPE_SHIFT))
+				set $func = ((zend_function*)($zvalue->ptr >> $Z_PTR_SHIFT))
 				printf "\"%s\"\n", (char*)$func->common.function_name->val
 			end
 			if $arg1 == 4
-				set $const = ((zend_constant*)($zvalue->ptr >> $Z_TYPE_SHIFT))
+				set $const = ((zend_constant*)($zvalue->ptr >> $Z_PTR_SHIFT))
 				____printzv $const 1
 			end
 		end
