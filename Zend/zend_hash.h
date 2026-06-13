@@ -87,7 +87,7 @@ typedef enum {
 extern ZEND_API const HashTable zend_empty_array;
 
 static zend_always_inline void ZVAL_EMPTY_ARRAY(zval *zv) {
-	zv->ptr = ((uintptr_t)&zend_empty_array << Z_TYPE_SHIFT) | IS_ARRAY;
+	ZVAL_PTR_EX(zv, (void*)&zend_empty_array, IS_ARRAY);
 }
 
 
