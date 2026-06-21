@@ -1068,11 +1068,14 @@ static int zend_may_overflow(const zend_op *opline, const zend_ssa_op *ssa_op, c
 	}
 }
 
-static int zend_jit_build_cfg(const zend_op_array *op_array, zend_cfg *cfg)
+static int zend_jit_build_cfg(const zend_op_array *op_array, zend_cfg *cfg, bool stackless)
 {
 	uint32_t flags;
 
-	flags = ZEND_CFG_STACKLESS | ZEND_CFG_NO_ENTRY_PREDECESSORS | ZEND_SSA_RC_INFERENCE_FLAG | ZEND_SSA_USE_CV_RESULTS | ZEND_CFG_RECV_ENTRY;
+	flags = ZEND_CFG_NO_ENTRY_PREDECESSORS | ZEND_SSA_RC_INFERENCE_FLAG | ZEND_SSA_USE_CV_RESULTS | ZEND_CFG_RECV_ENTRY;
+	if (stackless) {
+		flags |= ZEND_CFG_STACKLESS;
+	}
 
 	zend_build_cfg(&CG(arena), op_array, flags, cfg);
 
@@ -1094,9 +1097,9 @@ static int zend_jit_build_cfg(const zend_op_array *op_array, zend_cfg *cfg)
 	return SUCCESS;
 }
 
-static int zend_jit_op_array_analyze1(const zend_op_array *op_array, zend_script *script, zend_ssa *ssa)
+static int zend_jit_op_array_analyze1(const zend_op_array *op_array, zend_script *script, zend_ssa *ssa, bool stackless)
 {
-	if (zend_jit_build_cfg(op_array, &ssa->cfg) != SUCCESS) {
+	if (zend_jit_build_cfg(op_array, &ssa->cfg, stackless) != SUCCESS) {
 		return FAILURE;
 	}
 
@@ -3040,7 +3043,7 @@ static int zend_real_jit_func(zend_op_array *op_array, zend_script *script, cons
 		}
 	}
 
-	if (zend_jit_op_array_analyze1(op_array, script, &ssa) != SUCCESS) {
+	if (zend_jit_op_array_analyze1(op_array, script, &ssa, true) != SUCCESS) {
 		goto jit_failure;
 	}
 
@@ -3253,7 +3256,7 @@ static int zend_jit_restart_hot_counters(zend_op_array *op_array)
 		op_array->opcodes[i].handler = jit_extension->orig_handlers[i];
 	}
 
-	if (zend_jit_build_cfg(op_array, &cfg) != SUCCESS) {
+	if (zend_jit_build_cfg(op_array, &cfg, true) != SUCCESS) {
 		return FAILURE;
 	}
 
@@ -3271,7 +3274,7 @@ static int zend_jit_setup_hot_counters(zend_op_array *op_array)
 	ZEND_ASSERT(!JIT_G(hot_func) || zend_jit_func_hot_counter_handler != NULL);
 	ZEND_ASSERT(!JIT_G(hot_loop) || zend_jit_loop_hot_counter_handler != NULL);
 
-	if (zend_jit_build_cfg(op_array, &cfg) != SUCCESS) {
+	if (zend_jit_build_cfg(op_array, &cfg, true) != SUCCESS) {
 		return FAILURE;
 	}
 
@@ -3418,7 +3421,7 @@ int zend_jit_script(zend_script *script)
 		for (i = 0; i < call_graph.op_arrays_count; i++) {
 			info = ZEND_FUNC_INFO(call_graph.op_arrays[i]);
 			if (info) {
-				if (zend_jit_op_array_analyze1(call_graph.op_arrays[i], script, &info->ssa) != SUCCESS) {
+				if (zend_jit_op_array_analyze1(call_graph.op_arrays[i], script, &info->ssa, true) != SUCCESS) {
 					goto jit_failure;
 				}
 				info->ssa.cfg.flags |= info->flags;

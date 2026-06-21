@@ -548,7 +548,7 @@ static zend_ssa *zend_jit_trace_build_ssa(const zend_op_array *op_array, zend_sc
 
 	if (JIT_G(opt_level) >= ZEND_JIT_LEVEL_OPT_FUNC) {
 		do {
-			if (zend_jit_op_array_analyze1(op_array, script, ssa) != SUCCESS) {
+			if (zend_jit_op_array_analyze1(op_array, script, ssa, false) != SUCCESS) {
 				break;
 			}
 
@@ -578,7 +578,7 @@ static zend_ssa *zend_jit_trace_build_ssa(const zend_op_array *op_array, zend_sc
 		zend_cfg cfg;
 		void *checkpoint = zend_arena_checkpoint(CG(arena));
 
-		if (zend_jit_build_cfg(op_array, &cfg) == SUCCESS) {
+		if (zend_jit_build_cfg(op_array, &cfg, false) == SUCCESS) {
 			ssa->cfg.flags = cfg.flags;
 		} else{
 			ssa->cfg.flags |= ZEND_FUNC_INDIRECT_VAR_ACCESS;
@@ -8973,7 +8973,7 @@ static int zend_jit_setup_hot_trace_counters(zend_op_array *op_array)
 
 		ZEND_ASSERT(zend_jit_loop_trace_counter_handler != NULL);
 
-		if (zend_jit_build_cfg(op_array, &cfg) != SUCCESS) {
+		if (zend_jit_build_cfg(op_array, &cfg, false) != SUCCESS) {
 			return FAILURE;
 		}
 
