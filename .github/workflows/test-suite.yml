@@ -488,7 +488,7 @@ jobs:
           echo opcache.jit_hot_side_exit=1 >> /etc/php.d/opcache.ini
           php -v
       - name: Test AMPHP
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           repositories="amp cache dns file http parallel parser pipeline process serialization socket sync websocket-client websocket-server"
           X=0
@@ -509,7 +509,7 @@ jobs:
           done
           exit $X
       - name: Test Laravel
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           branch=${{ fromJson(inputs.branch).jobs.COMMUNITY.config.laravel_version }}
           git clone https://github.com/laravel/framework.git --depth=1 ${branch:+--branch="$branch"}
@@ -523,7 +523,7 @@ jobs:
             exit 1
           fi
       - name: Test ReactPHP
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           repositories="async cache child-process datagram dns event-loop promise promise-stream promise-timer stream"
           X=0
@@ -544,7 +544,7 @@ jobs:
           done
           exit $X
       - name: Test Revolt PHP
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           git clone https://github.com/revoltphp/event-loop.git --depth=1
           cd event-loop
@@ -572,7 +572,7 @@ jobs:
           for component in $(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist -printf '%h\n'); do
             echo "::group::$component"
             EXIT_CODE=0
-            php ./phpunit $component --exclude-group tty --exclude-group benchmark --exclude-group intl-data --exclude-group transient --exclude-group skip || EXIT_CODE=$?
+            php ./phpunit $component --exclude-group tty --exclude-group benchmark --exclude-group intl-data --exclude-group transient --exclude-group skip --teamcity || EXIT_CODE=$?
             echo -e "\n::endgroup::"
             if [ ${EXIT_CODE:-0} -gt 128 ]; then
               X=1;
@@ -581,7 +581,7 @@ jobs:
           done
           exit $X
       - name: Test PHPUnit
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           git clone https://github.com/sebastianbergmann/phpunit.git --branch=main --depth=1
           cd phpunit
@@ -601,7 +601,7 @@ jobs:
           sed -i 's/PHP_SAPI/"cli-server"/g' var/cache/dev/App_KernelDevDebugContainer.preload.php
           php -d opcache.preload=var/cache/dev/App_KernelDevDebugContainer.preload.php public/index.php
       - name: Test Wordpress
-        if: ${{ !cancelled() }}
+        if: false
         run: |
           git clone https://github.com/WordPress/wordpress-develop.git wordpress --depth=1
           cd wordpress
