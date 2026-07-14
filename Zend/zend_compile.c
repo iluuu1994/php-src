@@ -7125,6 +7125,8 @@ static void zend_compile_match(znode *result, zend_ast *ast)
 		zend_ast *arm_ast = arms->child[i];
 		zend_ast *body_ast = arm_ast->child[1];
 
+		CG(zend_lineno) = zend_ast_get_lineno(arm_ast);
+
 		if (arm_ast->child[0] != NULL) {
 			zend_ast_list *conds = zend_ast_get_list(arm_ast->child[0]);
 
