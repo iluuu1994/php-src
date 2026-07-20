@@ -291,6 +291,7 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <num> returns_ref function fn is_reference is_variadic property_modifiers property_hook_modifiers
 %type <num> method_modifiers class_const_modifiers member_modifier optional_cpp_modifiers
 %type <num> class_modifiers class_modifier anonymous_class_modifiers anonymous_class_modifiers_optional use_type backup_fn_flags
+%type <num> lineno
 
 %type <ptr> backup_lex_pos
 %type <str> backup_doc_comment
@@ -519,7 +520,7 @@ statement:
 			{ $$ = zend_ast_create(ZEND_AST_SWITCH, $3, $5); }
 	|	T_BREAK optional_expr ';'		{ $$ = zend_ast_create(ZEND_AST_BREAK, $2); }
 	|	T_CONTINUE optional_expr ';'	{ $$ = zend_ast_create(ZEND_AST_CONTINUE, $2); }
-	|	T_RETURN optional_expr ';'		{ $$ = zend_ast_create(ZEND_AST_RETURN, $2); }
+	|	T_RETURN lineno optional_expr ';' { $$ = zend_ast_create(ZEND_AST_RETURN, $3); $$->lineno = $2; }
 	|	T_GLOBAL global_var_list ';'	{ $$ = $2; }
 	|	T_STATIC static_var_list ';'	{ $$ = $2; }
 	|	T_ECHO echo_expr_list ';'		{ $$ = $2; }
@@ -1249,6 +1250,10 @@ new_non_dereferenceable:
 			{ $$ = zend_ast_create(ZEND_AST_NEW, $2, zend_ast_create_list(0, ZEND_AST_ARG_LIST)); }
 ;
 
+lineno:
+	%empty { $$ = CG(zend_lineno); }
+;
+
 expr:
 		variable
 			{ $$ = $1; }
@@ -1270,30 +1275,30 @@ expr:
 			name->attr = ZEND_NAME_FQ;
 			$$ = zend_ast_create(ZEND_AST_CALL, name, zend_ast_create_list(1, ZEND_AST_ARG_LIST, $2));
 		}
-	|	variable T_PLUS_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_ADD, $1, $3); }
-	|	variable T_MINUS_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SUB, $1, $3); }
-	|	variable T_MUL_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_MUL, $1, $3); }
-	|	variable T_POW_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_POW, $1, $3); }
-	|	variable T_DIV_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_DIV, $1, $3); }
-	|	variable T_CONCAT_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_CONCAT, $1, $3); }
-	|	variable T_MOD_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_MOD, $1, $3); }
-	|	variable T_AND_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_AND, $1, $3); }
-	|	variable T_OR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_OR, $1, $3); }
-	|	variable T_XOR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_BW_XOR, $1, $3); }
-	|	variable T_SL_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SL, $1, $3); }
-	|	variable T_SR_EQUAL expr
-			{ $$ = zend_ast_create_assign_op(ZEND_SR, $1, $3); }
+	|	variable T_PLUS_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_ADD, $1, $4, $3); }
+	|	variable T_MINUS_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_SUB, $1, $4, $3); }
+	|	variable T_MUL_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_MUL, $1, $4, $3); }
+	|	variable T_POW_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_POW, $1, $4, $3); }
+	|	variable T_DIV_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_DIV, $1, $4, $3); }
+	|	variable T_CONCAT_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_CONCAT, $1, $4, $3); }
+	|	variable T_MOD_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_MOD, $1, $4, $3); }
+	|	variable T_AND_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_BW_AND, $1, $4, $3); }
+	|	variable T_OR_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_BW_OR, $1, $4, $3); }
+	|	variable T_XOR_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_BW_XOR, $1, $4, $3); }
+	|	variable T_SL_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_SL, $1, $4, $3); }
+	|	variable T_SR_EQUAL lineno expr
+			{ $$ = zend_ast_create_assign_op(ZEND_SR, $1, $4, $3); }
 	|	variable T_COALESCE_EQUAL expr
 			{ $$ = zend_ast_create(ZEND_AST_ASSIGN_COALESCE, $1, $3); }
 	|	variable T_INC { $$ = zend_ast_create(ZEND_AST_POST_INC, $1); }
@@ -1308,45 +1313,45 @@ expr:
 			{ $$ = zend_ast_create(ZEND_AST_OR, $1, $3); }
 	|	expr T_LOGICAL_AND expr
 			{ $$ = zend_ast_create(ZEND_AST_AND, $1, $3); }
-	|	expr T_LOGICAL_XOR expr
-			{ $$ = zend_ast_create_binary_op(ZEND_BOOL_XOR, $1, $3); }
-	|	expr '|' expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_OR, $1, $3); }
-	|	expr T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $3); }
-	|	expr T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $3); }
-	|	expr '^' expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_XOR, $1, $3); }
-	|	expr '.' expr 	{ $$ = zend_ast_create_concat_op($1, $3); }
-	|	expr '+' expr 	{ $$ = zend_ast_create_binary_op(ZEND_ADD, $1, $3); }
-	|	expr '-' expr 	{ $$ = zend_ast_create_binary_op(ZEND_SUB, $1, $3); }
-	|	expr '*' expr	{ $$ = zend_ast_create_binary_op(ZEND_MUL, $1, $3); }
-	|	expr T_POW expr	{ $$ = zend_ast_create_binary_op(ZEND_POW, $1, $3); }
-	|	expr '/' expr	{ $$ = zend_ast_create_binary_op(ZEND_DIV, $1, $3); }
-	|	expr '%' expr 	{ $$ = zend_ast_create_binary_op(ZEND_MOD, $1, $3); }
-	| 	expr T_SL expr	{ $$ = zend_ast_create_binary_op(ZEND_SL, $1, $3); }
-	|	expr T_SR expr	{ $$ = zend_ast_create_binary_op(ZEND_SR, $1, $3); }
+	|	expr T_LOGICAL_XOR lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_BOOL_XOR, $1, $4, $3); }
+	|	expr '|' lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_OR, $1, $4, $3); }
+	|	expr T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $4, $3); }
+	|	expr T_AMPERSAND_FOLLOWED_BY_VAR_OR_VARARG lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_AND, $1, $4, $3); }
+	|	expr '^' lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_BW_XOR, $1, $4, $3); }
+	|	expr '.' lineno expr 	{ $$ = zend_ast_create_concat_op($1, $4, $3); }
+	|	expr '+' lineno expr 	{ $$ = zend_ast_create_binary_op(ZEND_ADD, $1, $4, $3); }
+	|	expr '-' lineno expr 	{ $$ = zend_ast_create_binary_op(ZEND_SUB, $1, $4, $3); }
+	|	expr '*' lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_MUL, $1, $4, $3); }
+	|	expr T_POW lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_POW, $1, $4, $3); }
+	|	expr '/' lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_DIV, $1, $4, $3); }
+	|	expr '%' lineno expr 	{ $$ = zend_ast_create_binary_op(ZEND_MOD, $1, $4, $3); }
+	| 	expr T_SL lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_SL, $1, $4, $3); }
+	|	expr T_SR lineno expr	{ $$ = zend_ast_create_binary_op(ZEND_SR, $1, $4, $3); }
 	|	'+' expr %prec '~' { $$ = zend_ast_create(ZEND_AST_UNARY_PLUS, $2); }
 	|	'-' expr %prec '~' { $$ = zend_ast_create(ZEND_AST_UNARY_MINUS, $2); }
 	|	'!' expr { $$ = zend_ast_create_ex(ZEND_AST_UNARY_OP, ZEND_BOOL_NOT, $2); }
 	|	'~' expr { $$ = zend_ast_create_ex(ZEND_AST_UNARY_OP, ZEND_BW_NOT, $2); }
-	|	expr T_IS_IDENTICAL expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_IDENTICAL, $1, $3); }
-	|	expr T_IS_NOT_IDENTICAL expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_NOT_IDENTICAL, $1, $3); }
-	|	expr T_IS_EQUAL expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_EQUAL, $1, $3); }
-	|	expr T_IS_NOT_EQUAL expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_NOT_EQUAL, $1, $3); }
+	|	expr T_IS_IDENTICAL lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_IDENTICAL, $1, $4, $3); }
+	|	expr T_IS_NOT_IDENTICAL lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_NOT_IDENTICAL, $1, $4, $3); }
+	|	expr T_IS_EQUAL lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_EQUAL, $1, $4, $3); }
+	|	expr T_IS_NOT_EQUAL lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_NOT_EQUAL, $1, $4, $3); }
 	|	expr T_PIPE expr
 			{ $$ = zend_ast_create(ZEND_AST_PIPE, $1, $3); }
-	|	expr '<' expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_SMALLER, $1, $3); }
-	|	expr T_IS_SMALLER_OR_EQUAL expr
-			{ $$ = zend_ast_create_binary_op(ZEND_IS_SMALLER_OR_EQUAL, $1, $3); }
+	|	expr '<' lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_SMALLER, $1, $4, $3); }
+	|	expr T_IS_SMALLER_OR_EQUAL lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_IS_SMALLER_OR_EQUAL, $1, $4, $3); }
 	|	expr '>' expr
 			{ $$ = zend_ast_create(ZEND_AST_GREATER, $1, $3); }
 	|	expr T_IS_GREATER_OR_EQUAL expr
 			{ $$ = zend_ast_create(ZEND_AST_GREATER_EQUAL, $1, $3); }
-	|	expr T_SPACESHIP expr
-			{ $$ = zend_ast_create_binary_op(ZEND_SPACESHIP, $1, $3); }
+	|	expr T_SPACESHIP lineno expr
+			{ $$ = zend_ast_create_binary_op(ZEND_SPACESHIP, $1, $4, $3); }
 	|	expr T_INSTANCEOF class_name_reference
 			{ $$ = zend_ast_create(ZEND_AST_INSTANCEOF, $1, $3); }
 	|	'(' expr ')' {

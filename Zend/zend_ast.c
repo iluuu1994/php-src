@@ -546,7 +546,7 @@ ZEND_API zend_ast *zend_ast_create_arg_list(uint32_t init_children, zend_ast_kin
 }
 #endif
 
-zend_ast *zend_ast_create_concat_op(zend_ast *op0, zend_ast *op1) {
+zend_ast *zend_ast_create_concat_op(zend_ast *op0, zend_ast *op1, uint32_t operator_lineno) {
 	if (op0->kind == ZEND_AST_ZVAL && op1->kind == ZEND_AST_ZVAL) {
 		zval *zv0 = zend_ast_get_zval(op0);
 		zval *zv1 = zend_ast_get_zval(op1);
@@ -556,7 +556,7 @@ zend_ast *zend_ast_create_concat_op(zend_ast *op0, zend_ast *op1) {
 			return zend_ast_create_zval(zv0);
 		}
 	}
-	return zend_ast_create_binary_op(ZEND_CONCAT, op0, op1);
+	return zend_ast_create_binary_op(ZEND_CONCAT, op0, op1, operator_lineno);
 }
 
 static inline bool is_power_of_two(uint32_t n) {

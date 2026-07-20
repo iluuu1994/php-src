@@ -15,11 +15,11 @@ echo match(15) {
 };
 
 ?>
---EXPECT--
+--EXPECTF--
 $_main:
-     ; (lines=9, args=0, vars=0, tmps=2)
+     ; (lines=9, args=0, vars=0, tmps=%d)
      ; (before optimizer)
-     ; /home/ilutov/Developer/php-src/ext/opcache/tests/gh18985.php:1-10
+     ; %sgh18985_1.php:1-10
      ; return  [] RANGE[0..0]
 L0003 0000 MATCH int(15) 13: 0001, 15: 0003, default: 0005
 L0004 0001 T1 = QM_ASSIGN string("A")

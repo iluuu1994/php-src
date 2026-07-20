@@ -10730,8 +10730,6 @@ static void zend_compile_binary_op(znode *result, zend_ast *ast) /* {{{ */
 	zend_compile_expr(&left_node, left_ast);
 	zend_compile_expr(&right_node, right_ast);
 
-	CG(zend_lineno) = ast->lineno;
-
 	if (left_node.op_type == IS_CONST && right_node.op_type == IS_CONST) {
 		if (zend_try_ct_eval_binary_op(&result->u.constant, opcode,
 				&left_node.u.constant, &right_node.u.constant)
@@ -12573,25 +12571,37 @@ static zend_op *zend_delayed_compile_var(znode *result, zend_ast *ast, uint32_t 
 {
 	zend_check_stack_limit();
 
+	uint32_t prev_lineno = CG(zend_lineno);
+	CG(zend_lineno) = zend_ast_get_lineno(ast);
+
+	zend_op *opline;
 	switch (ast->kind) {
 		case ZEND_AST_VAR:
-			return zend_compile_simple_var(result, ast, type, true);
+			opline = zend_compile_simple_var(result, ast, type, true);
+			break;
 		case ZEND_AST_DIM:
-			return zend_delayed_compile_dim(result, ast, type, by_ref);
+			opline = zend_delayed_compile_dim(result, ast, type, by_ref);
+			break;
 		case ZEND_AST_PROP:
 		case ZEND_AST_NULLSAFE_PROP:
 		{
-			zend_op *opline = zend_delayed_compile_prop(result, ast, type);
+			opline = zend_delayed_compile_prop(result, ast, type);
 			if (by_ref) {
 				opline->extended_value |= ZEND_FETCH_REF;
 			}
-			return opline;
+			break;
 		}
 		case ZEND_AST_STATIC_PROP:
-			return zend_compile_static_prop(result, ast, type, by_ref, true);
+			opline = zend_compile_static_prop(result, ast, type, by_ref, true);
+			break;
 		default:
-			return zend_compile_var(result, ast, type, false);
+			opline = zend_compile_var(result, ast, type, false);
+			break;
 	}
+
+	CG(zend_lineno) = prev_lineno;
+
+	return opline;
 }
 /* }}} */
 
