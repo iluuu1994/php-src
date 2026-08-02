@@ -38,6 +38,12 @@ pg_insert($db, 'ghsa_7qpv_r5mr_78m4', $params, PGSQL_DML_EXEC|PGSQL_DML_ESCAPE);
 var_dump(pg_select($db, 'ghsa_7qpv_r5mr_78m4', ['id' => 4])[0]['admin']);
 
 ?>
+--CLEAN--
+<?php
+include('config.inc');
+$db = pg_connect($conn_str);
+pg_query($db, "DROP TABLE IF EXISTS ghsa_7qpv_r5mr_78m4");
+?>
 --EXPECT--
 SELECT * FROM "ghsa_7qpv_r5mr_78m4" WHERE "name"='zzz'' OR 1=1 --';
 returned: 0
@@ -50,9 +56,3 @@ string(1) "f"
 
 INSERT INTO "ghsa_7qpv_r5mr_78m4" ("name","admin") VALUES ('jake\'', true) --','f');
 string(1) "f"
---CLEAN--
-<?php
-include('config.inc');
-$db = pg_connect($conn_str);
-pg_query($db, "DROP TABLE IF EXISTS ghsa_7qpv_r5mr_78m4");
-?>
