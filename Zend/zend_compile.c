@@ -3784,6 +3784,7 @@ static uint32_t zend_compile_args_ex(
 	bool uses_arg_unpack = false;
 	bool uses_variadic_placeholder = false;
 	uint32_t arg_count = 0; /* number of arguments not including unpacks */
+	uint32_t prev_lineno = CG(zend_lineno);
 
 	/* Whether named arguments are used syntactically, to enforce language level limitations.
 	 * May not actually use named argument passing. */
@@ -4024,6 +4025,7 @@ static uint32_t zend_compile_args_ex(
 			}
 		}
 
+		CG(zend_lineno) = zend_ast_get_lineno(arg);
 		opline = zend_emit_op(NULL, opcode, &arg_node, NULL);
 		if (arg_name) {
 			opline->op2_type = IS_CONST;
@@ -4043,6 +4045,8 @@ static uint32_t zend_compile_args_ex(
 	} else {
 		*uses_variadic_placeholder_p = uses_variadic_placeholder;
 	}
+
+	CG(zend_lineno) = prev_lineno;
 
 	return arg_count;
 }
@@ -6455,6 +6459,7 @@ static void zend_compile_do_while(const zend_ast *ast) /* {{{ */
 	opnum_cond = get_next_op_number();
 	zend_compile_expr(&cond_node, cond_ast);
 
+	CG(zend_lineno) = zend_ast_get_lineno(cond_ast);
 	zend_emit_cond_jump(ZEND_JMPNZ, &cond_node, opnum_start);
 
 	zend_end_loop(opnum_cond, NULL);
@@ -6772,6 +6777,8 @@ static void zend_compile_switch(zend_ast *ast) /* {{{ */
 		zend_ast *case_ast = cases->child[i];
 		zend_ast *cond_ast = case_ast->child[0];
 		znode cond_node;
+
+		CG(zend_lineno) = zend_ast_get_lineno(case_ast);
 
 		if (case_ast->attr == ZEND_ALT_CASE_SYNTAX) {
 			CG(zend_lineno) = case_ast->lineno;
