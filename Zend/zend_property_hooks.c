@@ -233,7 +233,7 @@ static void zho_dynamic_it_fetch_current(zend_object_iterator *iter)
 	}
 
 	zend_object *zobj = Z_OBJ_P(&hooked_iter->it.data);
-	if (bucket->key && zend_check_property_access(zobj, bucket->key, true) != SUCCESS) {
+	if (Z_TYPE(bucket->key) == IS_STRING && zend_check_property_access(zobj, Z_STR(bucket->key), true) != SUCCESS) {
 		return;
 	}
 
@@ -242,11 +242,7 @@ static void zho_dynamic_it_fetch_current(zend_object_iterator *iter)
 	}
 	ZVAL_COPY(&hooked_iter->current_data, &bucket->val);
 
-	if (bucket->key) {
-		ZVAL_STR_COPY(&hooked_iter->current_key, bucket->key);
-	} else {
-		ZVAL_LONG(&hooked_iter->current_key, bucket->h);
-	}
+	ZVAL_COPY(&hooked_iter->current_key, &bucket->key);
 }
 
 static void zho_it_fetch_current(zend_object_iterator *iter)

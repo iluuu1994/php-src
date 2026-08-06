@@ -638,16 +638,16 @@ static void sapi_cli_server_register_known_var_str(zval *track_vars_array,
 }
 
 /* The entry zval will always contain a zend_string* */
-static int sapi_cli_server_register_entry_cb(zval *entry, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */ {
+static int sapi_cli_server_register_entry_cb(zval *entry, int num_args, va_list args, zval *hash_key) /* {{{ */ {
 	zval *track_vars_array = va_arg(args, zval *);
 
 	ZEND_ASSERT(Z_TYPE_P(entry) == IS_STRING);
 
-	if (hash_key->key) {
+	if (Z_TYPE_P(hash_key) == IS_STRING) {
 		char *real_key, *key;
 		uint32_t i;
-		key = estrndup(ZSTR_VAL(hash_key->key), ZSTR_LEN(hash_key->key));
-		for(i=0; i<ZSTR_LEN(hash_key->key); i++) {
+		key = estrndup(Z_STRVAL_P(hash_key), Z_STRLEN_P(hash_key));
+		for(i=0; i<Z_STRLEN_P(hash_key); i++) {
 			if (key[i] == '-') {
 				key[i] = '_';
 			} else {

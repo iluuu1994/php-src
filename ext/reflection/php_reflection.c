@@ -1901,7 +1901,8 @@ ZEND_METHOD(ReflectionFunctionAbstract, getClosureUsedVariables)
 				continue;
 			}
 
-			zend_hash_add_new(Z_ARRVAL_P(return_value), bucket->key, &bucket->val);
+			ZEND_ASSERT(Z_TYPE(bucket->key) == IS_STRING);
+			zend_hash_add_new(Z_ARRVAL_P(return_value), Z_STR(bucket->key), &bucket->val);
 			Z_TRY_ADDREF(bucket->val);
 		}
 	}

@@ -87,7 +87,7 @@ static void spl_SplObjectStorage_free_storage(zend_object *object) /* {{{ */
 	zend_hash_destroy(&intern->storage);
 } /* }}} */
 
-static zend_result spl_object_storage_get_hash(zend_hash_key *key, spl_SplObjectStorage *intern, zend_object *obj) {
+static zend_result spl_object_storage_get_hash(zval *key, spl_SplObjectStorage *intern, zend_object *obj) {
 	if (UNEXPECTED(intern->fptr_get_hash)) {
 		zval param;
 		zval rv;
@@ -107,20 +107,19 @@ static zend_result spl_object_storage_get_hash(zend_hash_key *key, spl_SplObject
 				zval_ptr_dtor(&rv);
 				return FAILURE;
 			} else {
-				key->key = Z_STR(rv);
+				ZVAL_STR(key, Z_STR(rv));
 				return SUCCESS;
 			}
 		}
 	} else {
-		key->key = NULL;
-		key->h = obj->handle;
+		ZVAL_LONG(key, obj->handle);
 		return SUCCESS;
 	}
 }
 
-static void spl_object_storage_free_hash(spl_SplObjectStorage *intern, zend_hash_key *key) {
-	if (key->key) {
-		zend_string_release_ex(key->key, 0);
+static void spl_object_storage_free_hash(spl_SplObjectStorage *intern, zval *key) {
+	if (Z_TYPE_P(key) == IS_STRING) {
+		zend_string_release_ex(Z_STR_P(key), 0);
 	}
 }
 
@@ -134,13 +133,9 @@ static void spl_object_storage_dtor(zval *element) /* {{{ */
 	}
 } /* }}} */
 
-static spl_SplObjectStorageElement* spl_object_storage_get(spl_SplObjectStorage *intern, zend_hash_key *key) /* {{{ */
+static spl_SplObjectStorageElement* spl_object_storage_get(spl_SplObjectStorage *intern, zval *key) /* {{{ */
 {
-	if (key->key) {
-		return zend_hash_find_ptr(&intern->storage, key->key);
-	} else {
-		return zend_hash_index_find_ptr(&intern->storage, key->h);
-	}
+	return zend_hash_zkey_find_ptr(&intern->storage, key);
 } /* }}} */
 
 static spl_SplObjectStorageElement *spl_object_storage_create_element(zend_object *obj, zval *inf) /* {{{ */
@@ -198,7 +193,7 @@ static spl_SplObjectStorageElement *spl_object_storage_attach(spl_SplObjectStora
 	/* getHash or offsetSet is overridden. */
 
 	spl_SplObjectStorageElement *pelement, element;
-	zend_hash_key key;
+	zval key;
 	if (spl_object_storage_get_hash(&key, intern, obj) == FAILURE) {
 		return NULL;
 	}
@@ -226,11 +221,7 @@ static spl_SplObjectStorageElement *spl_object_storage_attach(spl_SplObjectStora
 	} else {
 		ZVAL_NULL(&element.inf);
 	}
-	if (key.key) {
-		pelement = zend_hash_update_mem(&intern->storage, key.key, &element, sizeof(spl_SplObjectStorageElement));
-	} else {
-		pelement = zend_hash_index_update_mem(&intern->storage, key.h, &element, sizeof(spl_SplObjectStorageElement));
-	}
+	pelement = zend_hash_zkey_update_mem(&intern->storage, &key, &element, sizeof(spl_SplObjectStorageElement));
 	spl_object_storage_free_hash(intern, &key);
 	return pelement;
 } /* }}} */
@@ -245,15 +236,11 @@ static zend_result spl_object_storage_detach(spl_SplObjectStorage *intern, zend_
 		return zend_hash_index_del(&intern->storage, obj->handle);
 	}
 	zend_result ret = FAILURE;
-	zend_hash_key key;
+	zval key;
 	if (spl_object_storage_get_hash(&key, intern, obj) == FAILURE) {
 		return ret;
 	}
-	if (key.key) {
-		ret = zend_hash_del(&intern->storage, key.key);
-	} else {
-		ret = zend_hash_index_del(&intern->storage, key.h);
-	}
+	ret = zend_hash_zkey_del(&intern->storage, &key);
 	spl_object_storage_free_hash(intern, &key);
 
 	return ret;
@@ -444,14 +431,14 @@ static bool spl_object_storage_contains(spl_SplObjectStorage *intern, zend_objec
 	if (EXPECTED(!intern->fptr_get_hash)) {
 		return zend_hash_index_find(&intern->storage, obj->handle) != NULL;
 	}
-	zend_hash_key key;
+	zval key;
 	if (spl_object_storage_get_hash(&key, intern, obj) == FAILURE) {
 		return true;
 	}
 
-	ZEND_ASSERT(key.key);
-	bool found = zend_hash_exists(&intern->storage, key.key);
-	zend_string_release_ex(key.key, 0);
+	ZEND_ASSERT(Z_TYPE(key) == IS_STRING);
+	bool found = zend_hash_exists(&intern->storage, Z_STR(key));
+	zend_string_release_ex(Z_STR(key), 0);
 
 	return found;
 } /* }}} */
@@ -601,7 +588,7 @@ PHP_METHOD(SplObjectStorage, offsetGet)
 	zend_object *obj;
 	spl_SplObjectStorageElement *element;
 	spl_SplObjectStorage *intern = Z_SPLOBJSTORAGE_P(ZEND_THIS);
-	zend_hash_key key;
+	zval key;
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
 		Z_PARAM_OBJ(obj)
@@ -985,7 +972,7 @@ PHP_METHOD(SplObjectStorage, unserialize)
 
 	while (count-- > 0) {
 		spl_SplObjectStorageElement *pelement;
-		zend_hash_key key;
+		zval key;
 		zval *entry = var_tmp_var(&var_hash);
 		zval inf;
 		ZVAL_UNDEF(&inf);

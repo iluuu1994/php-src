@@ -654,8 +654,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 
 	/* function table hash keys */
 	ZEND_HASH_MAP_FOREACH_BUCKET(CG(function_table), p) {
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 		if (Z_FUNC(p->val)->common.function_name) {
 			Z_FUNC(p->val)->common.function_name = new_interned_string(Z_FUNC(p->val)->common.function_name);
@@ -686,8 +686,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 
 		ce = (zend_class_entry*)Z_PTR(p->val);
 
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 
 		if (ce->name) {
@@ -700,8 +700,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 
 			info = (zend_property_info*)Z_PTR(q->val);
 
-			if (q->key) {
-				q->key = new_interned_string(q->key);
+			if (Z_TYPE(q->key) == IS_STRING) {
+				ZVAL_STR(&q->key, new_interned_string(Z_STR(q->key)));
 			}
 
 			if (info->name) {
@@ -710,8 +710,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 		} ZEND_HASH_FOREACH_END();
 
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->function_table, q) {
-			if (q->key) {
-				q->key = new_interned_string(q->key);
+			if (Z_TYPE(q->key) == IS_STRING) {
+				ZVAL_STR(&q->key, new_interned_string(Z_STR(q->key)));
 			}
 			if (Z_FUNC(q->val)->common.function_name) {
 				Z_FUNC(q->val)->common.function_name = new_interned_string(Z_FUNC(q->val)->common.function_name);
@@ -738,8 +738,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->constants_table, q) {
 			zend_class_constant* c;
 
-			if (q->key) {
-				q->key = new_interned_string(q->key);
+			if (Z_TYPE(q->key) == IS_STRING) {
+				ZVAL_STR(&q->key, new_interned_string(Z_STR(q->key)));
 			}
 			c = (zend_class_constant*)Z_PTR(q->val);
 			if (Z_TYPE(c->value) == IS_STRING) {
@@ -752,8 +752,8 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 	ZEND_HASH_MAP_FOREACH_BUCKET(EG(zend_constants), p) {
 		zend_constant *c;
 
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 		c = (zend_constant*)Z_PTR(p->val);
 		if (c->name) {
@@ -772,22 +772,22 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 
 		zend_string_addref(auto_global->name);
 		auto_global->name = new_interned_string(auto_global->name);
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 	} ZEND_HASH_FOREACH_END();
 
 	ZEND_HASH_MAP_FOREACH_BUCKET(&module_registry, p) {
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 	} ZEND_HASH_FOREACH_END();
 
 	ZEND_HASH_MAP_FOREACH_BUCKET(EG(ini_directives), p) {
 		zend_ini_entry *entry = (zend_ini_entry*)Z_PTR(p->val);
 
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 		if (entry->name) {
 			entry->name = new_interned_string(entry->name);
@@ -802,22 +802,22 @@ static void accel_copy_permanent_strings(zend_new_interned_string_func_t new_int
 
 	ht = php_get_stream_filters_hash_global();
 	ZEND_HASH_MAP_FOREACH_BUCKET(ht, p) {
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 	} ZEND_HASH_FOREACH_END();
 
 	ht = php_stream_get_url_stream_wrappers_hash_global();
 	ZEND_HASH_MAP_FOREACH_BUCKET(ht, p) {
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 	} ZEND_HASH_FOREACH_END();
 
 	ht = php_stream_xport_get_hash();
 	ZEND_HASH_MAP_FOREACH_BUCKET(ht, p) {
-		if (p->key) {
-			p->key = new_interned_string(p->key);
+		if (Z_TYPE(p->key) == IS_STRING) {
+			ZVAL_STR(&p->key, new_interned_string(Z_STR(p->key)));
 		}
 	} ZEND_HASH_FOREACH_END();
 }
@@ -2684,8 +2684,9 @@ static void accel_reset_pcre_cache(void)
 
 	ZEND_HASH_MAP_FOREACH_BUCKET(&PCRE_G(pcre_cache), p) {
 		/* Remove PCRE cache entries with inconsistent keys */
-		if (zend_accel_in_shm(p->key)) {
-			p->key = NULL;
+		ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+		if (zend_accel_in_shm(Z_STR(p->key))) {
+			ZVAL_UNDEF(&p->key);
 			zend_hash_del_bucket(&PCRE_G(pcre_cache), p);
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -3745,7 +3746,8 @@ static void preload_move_user_functions(HashTable *src, HashTable *dst)
 				}
 			}
 			if (copy) {
-				_zend_hash_append_ptr(dst, p->key, function);
+				ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+				_zend_hash_append_ptr(dst, Z_STR(p->key), function);
 			} else {
 				orig_dtor(&p->val);
 			}
@@ -3771,8 +3773,9 @@ static void preload_move_user_classes(HashTable *src, HashTable *dst)
 
 		/* Possible with internal class aliases */
 		if (ce->type == ZEND_INTERNAL_CLASS) {
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
 			ZEND_ASSERT(Z_TYPE(p->val) == IS_ALIAS_PTR);
-			_zend_hash_append(dst, p->key, &p->val);
+			_zend_hash_append(dst, Z_STR(p->key), &p->val);
 			zend_hash_del_bucket(src, p);
 			continue;
 		}
@@ -3791,7 +3794,8 @@ static void preload_move_user_classes(HashTable *src, HashTable *dst)
 			}
 		}
 		if (copy) {
-			_zend_hash_append(dst, p->key, &p->val);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			_zend_hash_append(dst, Z_STR(p->key), &p->val);
 		} else {
 			orig_dtor(&p->val);
 		}
@@ -4550,7 +4554,8 @@ static void preload_load(size_t orig_map_ptr_static_last)
 		zend_hash_extend(CG(function_table),
 			CG(function_table)->nNumUsed + script->function_table.nNumUsed, 0);
 		for (; p != end; p++) {
-			_zend_hash_append_ptr_ex(CG(function_table), p->key, Z_PTR(p->val), 1);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			_zend_hash_append_ptr_ex(CG(function_table), Z_STR(p->key), Z_PTR(p->val), 1);
 		}
 	}
 
@@ -4561,7 +4566,8 @@ static void preload_load(size_t orig_map_ptr_static_last)
 		zend_hash_extend(CG(class_table),
 			CG(class_table)->nNumUsed + script->class_table.nNumUsed, 0);
 		for (; p != end; p++) {
-			_zend_hash_append_ex(CG(class_table), p->key, &p->val, 1);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			_zend_hash_append_ex(CG(class_table), Z_STR(p->key), &p->val, 1);
 		}
 	}
 

@@ -92,7 +92,8 @@ void zend_accel_move_user_functions(HashTable *src, uint32_t count, zend_script 
 		function = Z_PTR(p->val);
 		if (EXPECTED(function->type == ZEND_USER_FUNCTION)
 		 && EXPECTED(function->op_array.filename == filename)) {
-			_zend_hash_append_ptr(dst, p->key, function);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			_zend_hash_append_ptr(dst, Z_STR(p->key), function);
 			zend_hash_del_bucket(src, p);
 		}
 	}
@@ -123,7 +124,7 @@ void zend_accel_move_user_classes(HashTable *src, uint32_t count, zend_script *s
 		ce = Z_PTR(p->val);
 		if (EXPECTED(ce->type == ZEND_USER_CLASS)
 		 && EXPECTED(ce->info.user.filename == filename)) {
-			_zend_hash_append_ptr(dst, p->key, ce);
+			_zend_hash_append_ptr(dst, Z_STR(p->key), ce);
 			zend_hash_del_bucket(src, p);
 		}
 	}
@@ -141,14 +142,14 @@ static zend_always_inline void _zend_accel_function_hash_copy(HashTable *target,
 	end = p + source->nNumUsed;
 	for (; p != end; p++) {
 		ZEND_ASSERT(Z_TYPE(p->val) != IS_UNDEF);
-		ZEND_ASSERT(p->key);
-		t = zend_hash_find_known_hash(target, p->key);
+		ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+		t = zend_hash_find_known_hash(target, Z_STR(p->key));
 		if (UNEXPECTED(t != NULL)) {
 			goto failure;
 		}
-		_zend_hash_append_ptr_ex(target, p->key, Z_PTR(p->val), 1);
-		if (UNEXPECTED(call_observers) && *ZSTR_VAL(p->key)) { // if not rtd key
-			_zend_observer_function_declared_notify(Z_PTR(p->val), p->key);
+		_zend_hash_append_ptr_ex(target, Z_STR(p->key), Z_PTR(p->val), 1);
+		if (UNEXPECTED(call_observers) && *Z_STRVAL(p->key)) { // if not rtd key
+			_zend_observer_function_declared_notify(Z_PTR(p->val), Z_STR(p->key));
 		}
 	}
 	target->nInternalPointer = 0;
@@ -192,10 +193,10 @@ static zend_always_inline void _zend_accel_class_hash_copy(HashTable *target, co
 	end = p + source->nNumUsed;
 	for (; p != end; p++) {
 		ZEND_ASSERT(Z_TYPE(p->val) != IS_UNDEF);
-		ZEND_ASSERT(p->key);
-		t = zend_hash_find_known_hash(target, p->key);
+		ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+		t = zend_hash_find_known_hash(target, Z_STR(p->key));
 		if (UNEXPECTED(t != NULL)) {
-			if (EXPECTED(ZSTR_LEN(p->key) > 0) && EXPECTED(ZSTR_VAL(p->key)[0] == 0)) {
+			if (EXPECTED(Z_STRLEN(p->key) > 0) && EXPECTED(Z_STRVAL(p->key)[0] == 0)) {
 				/* Runtime definition key. There are two circumstances under which the key can
 				 * already be defined:
 				 *  1. The file has been re-included without being changed in the meantime. In
@@ -219,13 +220,14 @@ static zend_always_inline void _zend_accel_class_hash_copy(HashTable *target, co
 			}
 		} else {
 			zend_class_entry *ce = Z_PTR(p->val);
-			_zend_hash_append_ptr_ex(target, p->key, Z_PTR(p->val), 1);
-			if ((ce->ce_flags & ZEND_ACC_LINKED) && ZSTR_VAL(p->key)[0]) {
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			_zend_hash_append_ptr_ex(target, Z_STR(p->key), Z_PTR(p->val), 1);
+			if ((ce->ce_flags & ZEND_ACC_LINKED) && Z_STRVAL(p->key)[0]) {
 				if (ZSTR_HAS_CE_CACHE(ce->name)) {
 					ZSTR_SET_CE_CACHE_EX(ce->name, ce, 0);
 				}
 				if (UNEXPECTED(call_observers)) {
-					_zend_observer_class_linked_notify(ce, p->key);
+					_zend_observer_class_linked_notify(ce, Z_STR(p->key));
 				}
 			}
 		}

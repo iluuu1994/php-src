@@ -2114,7 +2114,9 @@ ZEND_API uint32_t ZEND_FASTCALL zend_array_type_info(const zval *zv)
 			tmp |= 1 << (Z_TYPE_P(val) + MAY_BE_ARRAY_SHIFT);
 		} ZEND_HASH_FOREACH_END();
 	} else {
-		ZEND_HASH_MAP_FOREACH_STR_KEY_VAL(ht, str, val) {
+		// FIXME: Use ZEND_HASH_MAP_FOREACH_ZKEY_VAL().
+		ZEND_HASH_MAP_FOREACH_KEY_VAL(ht, zend_long h, str, val) {
+			ZEND_IGNORE_VALUE(h);
 			if (str) {
 				tmp |= MAY_BE_ARRAY_STRING_HASH;
 			} else {

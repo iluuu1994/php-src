@@ -141,8 +141,10 @@ static void zend_persist_zval_calc(zval *z)
 					Bucket *p;
 
 					ZEND_HASH_MAP_FOREACH_BUCKET(Z_ARRVAL_P(z), p) {
-						if (p->key) {
-							ADD_INTERNED_STRING(p->key);
+						if (Z_TYPE(p->key) == IS_STRING) {
+							zend_string *s = Z_STR(p->key);
+							ADD_INTERNED_STRING(s);
+							ZVAL_STR(&p->key, s);
 						}
 						zend_persist_zval_calc(&p->val);
 					} ZEND_HASH_FOREACH_END();
@@ -251,8 +253,10 @@ static void zend_persist_op_array_calc_ex(zend_op_array *op_array)
 			ADD_SIZE(sizeof(HashTable));
 			zend_hash_persist_calc(op_array->static_variables);
 			ZEND_HASH_MAP_FOREACH_BUCKET(op_array->static_variables, p) {
-				ZEND_ASSERT(p->key != NULL);
-				ADD_INTERNED_STRING(p->key);
+				ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+				zend_string *s = Z_STR(p->key);
+				ADD_INTERNED_STRING(s);
+				ZVAL_STR(&p->key, s);
 				zend_persist_zval_calc(&p->val);
 			} ZEND_HASH_FOREACH_END();
 		}
@@ -471,8 +475,10 @@ void zend_persist_class_entry_calc(zend_class_entry *ce)
 
 		zend_hash_persist_calc(&ce->function_table);
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->function_table, p) {
-			ZEND_ASSERT(p->key != NULL);
-			ADD_INTERNED_STRING(p->key);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			zend_string *s = Z_STR(p->key);
+			ADD_INTERNED_STRING(s);
+			ZVAL_STR(&p->key, s);
 			zend_persist_class_method_calc(Z_PTR(p->val));
 		} ZEND_HASH_FOREACH_END();
 		if (ce->default_properties_table) {
@@ -493,16 +499,20 @@ void zend_persist_class_entry_calc(zend_class_entry *ce)
 		}
 		zend_hash_persist_calc(&ce->constants_table);
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->constants_table, p) {
-			ZEND_ASSERT(p->key != NULL);
-			ADD_INTERNED_STRING(p->key);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			zend_string *s = Z_STR(p->key);
+			ADD_INTERNED_STRING(s);
+			ZVAL_STR(&p->key, s);
 			zend_persist_class_constant_calc(&p->val);
 		} ZEND_HASH_FOREACH_END();
 
 		zend_hash_persist_calc(&ce->properties_info);
 		ZEND_HASH_MAP_FOREACH_BUCKET(&ce->properties_info, p) {
 			zend_property_info *prop = Z_PTR(p->val);
-			ZEND_ASSERT(p->key != NULL);
-			ADD_INTERNED_STRING(p->key);
+			ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+			zend_string *s = Z_STR(p->key);
+			ADD_INTERNED_STRING(s);
+			ZVAL_STR(&p->key, s);
 			if (prop->ce == ce) {
 				zend_persist_property_info_calc(prop);
 			}
@@ -605,8 +615,10 @@ static void zend_accel_persist_class_table_calc(const HashTable *class_table)
 
 	zend_hash_persist_calc(class_table);
 	ZEND_HASH_MAP_FOREACH_BUCKET(class_table, p) {
-		ZEND_ASSERT(p->key != NULL);
-		ADD_INTERNED_STRING(p->key);
+		ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+		zend_string *s = Z_STR(p->key);
+		ADD_INTERNED_STRING(s);
+		ZVAL_STR(&p->key, s);
 		zend_persist_class_entry_calc(Z_CE(p->val));
 	} ZEND_HASH_FOREACH_END();
 }
@@ -663,8 +675,10 @@ uint32_t zend_accel_script_persist_calc(zend_persistent_script *new_persistent_s
 	}
 	zend_hash_persist_calc(&new_persistent_script->script.function_table);
 	ZEND_HASH_MAP_FOREACH_BUCKET(&new_persistent_script->script.function_table, p) {
-		ZEND_ASSERT(p->key != NULL);
-		ADD_INTERNED_STRING(p->key);
+		ZEND_ASSERT(Z_TYPE(p->key) == IS_STRING);
+		zend_string *s = Z_STR(p->key);
+		ADD_INTERNED_STRING(s);
+		ZVAL_STR(&p->key, s);
 		zend_persist_op_array_calc(&p->val);
 	} ZEND_HASH_FOREACH_END();
 	zend_persist_op_array_calc_ex(&new_persistent_script->script.main_op_array);
