@@ -150,7 +150,7 @@ static void zend_hash_persist(HashTable *ht)
 		for (idx = 0; idx < ht->nNumUsed; idx++) {
 			p = ht->arData + idx;
 			if (Z_TYPE(p->val) == IS_UNDEF) continue;
-			nIndex = p->h | ht->nTableMask;
+			nIndex = Z_HASH(p->key) | ht->nTableMask;
 			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 			HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 		}

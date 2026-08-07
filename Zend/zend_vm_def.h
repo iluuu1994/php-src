@@ -2180,10 +2180,10 @@ ZEND_VM_C_LABEL(fetch_obj_r_fast_copy):
 						if (EXPECTED(idx < zobj->properties->nNumUsed * sizeof(Bucket))) {
 							Bucket *p = (Bucket*)((char*)zobj->properties->arData + idx);
 
-							if (EXPECTED(p->key == name) ||
-							    (EXPECTED(p->h == ZSTR_H(name)) &&
-							     EXPECTED(p->key != NULL) &&
-							     EXPECTED(zend_string_equal_content(p->key, name)))) {
+							if (EXPECTED(Z_TYPE(p->key) == IS_STRING)
+							 && (EXPECTED(Z_STR(p->key) == name)
+							  || (EXPECTED(Z_HASH(p->key) == ZSTR_H(name)) &&
+							   && EXPECTED(zend_string_equal_content(Z_STR(p->key), name))))) {
 								retval = &p->val;
 								if (!ZEND_VM_SPEC || (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) != 0) {
 									ZEND_VM_C_GOTO(fetch_obj_r_copy);
@@ -2356,10 +2356,10 @@ ZEND_VM_C_LABEL(fetch_obj_is_fast_copy):
 						if (EXPECTED(idx < zobj->properties->nNumUsed * sizeof(Bucket))) {
 							Bucket *p = (Bucket*)((char*)zobj->properties->arData + idx);
 
-							if (EXPECTED(p->key == name) ||
-							    (EXPECTED(p->h == ZSTR_H(name)) &&
-							     EXPECTED(p->key != NULL) &&
-							     EXPECTED(zend_string_equal_content(p->key, name)))) {
+							if (EXPECTED(Z_TYPE(p->key) == IS_STRING)
+							 && (EXPECTED(Z_STR(p->key) == name)
+							  || (EXPECTED(Z_HASH(p->key) == ZSTR_H(name))
+							   && EXPECTED(zend_string_equal_content(Z_STR(p->key), name))))) {
 								retval = &p->val;
 								if (!ZEND_VM_SPEC || (OP1_TYPE & (IS_TMP_VAR|IS_VAR)) != 0) {
 									ZEND_VM_C_GOTO(fetch_obj_is_copy);
@@ -7163,15 +7163,16 @@ ZEND_VM_HELPER(zend_fe_fetch_object_helper, ANY, ANY)
 		}
 		EG(ht_iterators)[Z_FE_ITER_P(array)].pos = pos;
 		if (RETURN_VALUE_USED(opline)) {
-			if (UNEXPECTED(!p->key)) {
-				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
-			} else if (ZSTR_VAL(p->key)[0]) {
-				ZVAL_STR_COPY(EX_VAR(opline->result.var), p->key);
+			// FIXME: Changes for objects required.
+			if (UNEXPECTED(Z_TYPE(p->key) == IS_LONG)) {
+				ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL(p->key));
+			} else if (Z_STRVAL(p->key)[0]) {
+				ZVAL_STR_COPY(EX_VAR(opline->result.var), Z_STR(p->key));
 			} else {
 				const char *class_name, *prop_name;
 				size_t prop_name_len;
 				zend_unmangle_property_name_ex(
-					p->key, &class_name, &prop_name, &prop_name_len);
+					Z_STR(p->key), &class_name, &prop_name, &prop_name_len);
 				ZVAL_STRINGL(EX_VAR(opline->result.var), prop_name, prop_name_len);
 			}
 		}
@@ -7294,11 +7295,7 @@ ZEND_VM_HOT_HANDLER(78, ZEND_FE_FETCH_R, TMP, ANY, JMP_ADDR)
 		}
 		Z_FE_POS_P(array) = pos;
 		if (RETURN_VALUE_USED(opline)) {
-			if (!p->key) {
-				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
-			} else {
-				ZVAL_STR_COPY(EX_VAR(opline->result.var), p->key);
-			}
+			ZVAL_COPY(EX_VAR(opline->result.var), &p->key);
 		}
 	}
 	if (EXPECTED(OP2_TYPE == IS_CV)) {
@@ -7376,11 +7373,7 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
 			if (RETURN_VALUE_USED(opline)) {
-				if (!p->key) {
-					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
-				} else {
-					ZVAL_STR_COPY(EX_VAR(opline->result.var), p->key);
-				}
+				ZVAL_COPY(EX_VAR(opline->result.var), &p->key);
 			}
 		}
 	} else if (EXPECTED(Z_TYPE_P(array) == IS_OBJECT)) {
@@ -7436,15 +7429,15 @@ ZEND_VM_HANDLER(126, ZEND_FE_FETCH_RW, VAR, ANY, JMP_ADDR)
 			}
 			EG(ht_iterators)[Z_FE_ITER_P(EX_VAR(opline->op1.var))].pos = pos;
 			if (RETURN_VALUE_USED(opline)) {
-				if (UNEXPECTED(!p->key)) {
-					ZVAL_LONG(EX_VAR(opline->result.var), p->h);
-				} else if (ZSTR_VAL(p->key)[0]) {
-					ZVAL_STR_COPY(EX_VAR(opline->result.var), p->key);
+				if (UNEXPECTED(Z_TYPE(p->key) == IS_LONG)) {
+					ZVAL_LONG(EX_VAR(opline->result.var), Z_LVAL(p->key));
+				} else if (Z_STRVAL(p->key)[0]) {
+					ZVAL_STR_COPY(EX_VAR(opline->result.var), Z_STR(p->key));
 				} else {
 					const char *class_name, *prop_name;
 					size_t prop_name_len;
 					zend_unmangle_property_name_ex(
-						p->key, &class_name, &prop_name, &prop_name_len);
+						Z_STR(p->key), &class_name, &prop_name, &prop_name_len);
 					ZVAL_STRINGL(EX_VAR(opline->result.var), prop_name, prop_name_len);
 				}
 			}
@@ -8763,10 +8756,10 @@ ZEND_VM_HOT_HANDLER(168, ZEND_BIND_GLOBAL, CV, CONST, CACHE_SLOT)
 	if (EXPECTED(idx < EG(symbol_table).nNumUsed * sizeof(Bucket))) {
 		Bucket *p = (Bucket*)((char*)EG(symbol_table).arData + idx);
 
-		if (EXPECTED(p->key == varname) ||
-		    (EXPECTED(p->h == ZSTR_H(varname)) &&
-		     EXPECTED(p->key != NULL) &&
-		     EXPECTED(zend_string_equal_content(p->key, varname)))) {
+		if (EXPECTED(Z_TYPE(p->key) == IS_STRING)
+		 && (EXPECTED(Z_STR(p->key) == varname)
+		  || (EXPECTED(Z_HASH(p->key) == ZSTR_H(varname))
+		   && EXPECTED(zend_string_equal_content(Z_STR(p->key), varname))))) {
 
 			value = (zval*)p; /* value = &p->val; */
 			ZEND_VM_C_GOTO(check_indirect);
@@ -10681,11 +10674,7 @@ ZEND_VM_HOT_TYPE_SPEC_HANDLER(ZEND_FE_FETCH_R, op->op2_type == IS_CV && (op1_inf
 		}
 		Z_FE_POS_P(array) = pos;
 		if (RETURN_VALUE_USED(opline)) {
-			if (!p->key) {
-				ZVAL_LONG(EX_VAR(opline->result.var), p->h);
-			} else {
-				ZVAL_STR_COPY(EX_VAR(opline->result.var), p->key);
-			}
+			ZVAL_COPY(EX_VAR(opline->result.var), &p->key);
 		}
 	}
 

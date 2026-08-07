@@ -3483,7 +3483,7 @@ PHP_FUNCTION(array_pop)
 		RETVAL_COPY_VALUE(val);
 		ZVAL_UNDEF(val);
 
-		if (!p->key && (zend_long)p->h == (Z_ARRVAL_P(stack)->nNextFreeElement - 1)) {
+		if (Z_TYPE(p->key) == IS_LONG && Z_LVAL(p->key) == (Z_ARRVAL_P(stack)->nNextFreeElement - 1)) {
 			Z_ARRVAL_P(stack)->nNextFreeElement = Z_ARRVAL_P(stack)->nNextFreeElement - 1;
 		}
 
@@ -3593,9 +3593,10 @@ PHP_FUNCTION(array_shift)
 		for (idx = 0; idx < Z_ARRVAL_P(stack)->nNumUsed; idx++) {
 			p = Z_ARRVAL_P(stack)->arData + idx;
 			if (Z_TYPE(p->val) == IS_UNDEF) continue;
-			if (p->key == NULL) {
-				if (p->h != k) {
-					p->h = k++;
+			if (Z_TYPE(p->key) == IS_LONG) {
+				if (Z_LVAL(p->key) != k) {
+					Z_HASH(p->key) = k++;
+					ZVAL_LONG(&p->key, k);
 					should_rehash = 1;
 				} else {
 					k++;
@@ -3811,8 +3812,6 @@ PHP_FUNCTION(array_slice)
 	bool length_is_null = 1; /* Whether an explicit length has been omitted */
 	bool preserve_keys = 0;  /* Whether to preserve keys while copying to the new array */
 	uint32_t num_in;              /* Number of elements in the input array */
-	zend_string *string_key;
-	zend_ulong num_key;
 
 	ZEND_PARSE_PARAMETERS_START(2, 4)
 		Z_PARAM_ARRAY(input)
@@ -3910,17 +3909,11 @@ PHP_FUNCTION(array_slice)
 					break;
 				}
 				n++;
-				num_key = p->h;
-				string_key = p->key;
 
-				if (string_key) {
-					entry = zend_hash_add_new(Z_ARRVAL_P(return_value), string_key, entry);
+				if (preserve_keys) {
+					entry = zend_hash_zkey_add_new(Z_ARRVAL_P(return_value), &p->key, entry);
 				} else {
-					if (preserve_keys) {
-						entry = zend_hash_index_add_new(Z_ARRVAL_P(return_value), num_key, entry);
-					} else {
-						entry = zend_hash_next_index_insert_new(Z_ARRVAL_P(return_value), entry);
-					}
+					entry = zend_hash_next_index_insert_new(Z_ARRVAL_P(return_value), entry);
 				}
 				zval_add_ref(entry);
 			}
@@ -4969,11 +4962,7 @@ PHP_FUNCTION(array_unique)
 			} else {
 				p = &cmpdata->b;
 			}
-			if (p->key == NULL) {
-				zend_hash_index_del(Z_ARRVAL_P(return_value), p->h);
-			} else {
-				zend_hash_del(Z_ARRVAL_P(return_value), p->key);
-			}
+			zend_hash_zkey_del(Z_ARRVAL_P(return_value), &p->key);
 		}
 	}
 
@@ -5287,11 +5276,7 @@ static void php_array_intersect(INTERNAL_FUNCTION_PARAMETERS, int behavior, int 
 					if (Z_TYPE(p->val) == IS_UNDEF) {
 						goto out;
 					}
-					if (p->key == NULL) {
-						zend_hash_index_del(Z_ARRVAL_P(return_value), p->h);
-					} else {
-						zend_hash_del(Z_ARRVAL_P(return_value), p->key);
-					}
+					zend_hash_zkey_del(Z_ARRVAL_P(return_value), &p->key);
 				}
 			}
 			if (c) /* here we get if not all are equal */
@@ -5303,11 +5288,7 @@ static void php_array_intersect(INTERNAL_FUNCTION_PARAMETERS, int behavior, int 
 			/* with value < value of ptrs[i] */
 			for (;;) {
 				p = ptrs[0];
-				if (p->key == NULL) {
-					zend_hash_index_del(Z_ARRVAL_P(return_value), p->h);
-				} else {
-					zend_hash_del(Z_ARRVAL_P(return_value), p->key);
-				}
+				zend_hash_zkey_del(Z_ARRVAL_P(return_value), &p->key);
 				if (Z_TYPE((++ptrs[0])->val) == IS_UNDEF) {
 					goto out;
 				}
@@ -5691,11 +5672,7 @@ static void php_array_diff(INTERNAL_FUNCTION_PARAMETERS, int behavior, int data_
 			/* delete all entries with value as ptrs[0] */
 			for (;;) {
 				p = ptrs[0];
-				if (p->key == NULL) {
-					zend_hash_index_del(Z_ARRVAL_P(return_value), p->h);
-				} else {
-					zend_hash_del(Z_ARRVAL_P(return_value), p->key);
-				}
+				zend_hash_zkey_del(Z_ARRVAL_P(return_value), &p->key);
 				if (Z_TYPE((++ptrs[0])->val) == IS_UNDEF) {
 					goto out;
 				}

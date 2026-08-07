@@ -450,7 +450,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_discard(HashTable *ht, uint32_t nNumUsed)
 			abort();
 		}
 #endif
-		nIndex = p->h | ht->nTableMask;
+		nIndex = Z_HASH(p->key) | ht->nTableMask;
 		HT_HASH_EX(arData, nIndex) = Z_NEXT(p->val);
 	}
 }
@@ -756,14 +756,14 @@ static zend_always_inline Bucket *zend_hash_find_bucket(const HashTable *ht, con
 		return NULL;
 	}
 	p = HT_HASH_TO_BUCKET_EX(arData, idx);
-	if (EXPECTED(p->key == key)) { /* check for the same interned string */
+	if (EXPECTED(Z_TYPE(p->key) == IS_STRING && Z_STR(p->key) == key)) { /* check for the same interned string */
 		return p;
 	}
 
 	while (1) {
-		if (p->h == ZSTR_H(key) &&
-		    EXPECTED(p->key) &&
-		    zend_string_equal_content(p->key, key)) {
+		if (Z_TYPE(p->key) == IS_STRING
+		 && Z_HASH(p->key) == ZSTR_H(key)
+		 && zend_string_equal_content(Z_STR(p->key), key)) {
 			return p;
 		}
 		idx = Z_NEXT(p->val);
@@ -771,7 +771,7 @@ static zend_always_inline Bucket *zend_hash_find_bucket(const HashTable *ht, con
 			return NULL;
 		}
 		p = HT_HASH_TO_BUCKET_EX(arData, idx);
-		if (p->key == key) { /* check for the same interned string */
+		if (Z_TYPE(p->key) == IS_STRING && Z_STR(p->key) == key) { /* check for the same interned string */
 			return p;
 		}
 	}
@@ -789,9 +789,9 @@ static zend_always_inline Bucket *zend_hash_str_find_bucket(const HashTable *ht,
 	while (idx != HT_INVALID_IDX) {
 		ZEND_ASSERT(idx < HT_IDX_TO_HASH(ht->nTableSize));
 		p = HT_HASH_TO_BUCKET_EX(arData, idx);
-		if ((p->h == h)
-			 && p->key
-			 && zend_string_equals_cstr(p->key, str, len)) {
+		if (Z_TYPE(p->key) == IS_STRING
+		 && Z_HASH(p->key) == h
+		 && zend_string_equals_cstr(Z_STR(p->key), str, len)) {
 			return p;
 		}
 		idx = Z_NEXT(p->val);
@@ -811,7 +811,7 @@ static zend_always_inline Bucket *zend_hash_index_find_bucket(const HashTable *h
 	while (idx != HT_INVALID_IDX) {
 		ZEND_ASSERT(idx < HT_IDX_TO_HASH(ht->nTableSize));
 		p = HT_HASH_TO_BUCKET_EX(arData, idx);
-		if (p->h == h && !p->key) {
+		if (Z_TYPE(p->key) == IS_LONG && Z_LVAL(p->key) == h) {
 			return p;
 		}
 		idx = Z_NEXT(p->val);
@@ -886,8 +886,8 @@ add_to_hash:
 	ht->nNumOfElements++;
 	arData = ht->arData;
 	p = arData + idx;
-	p->key = key;
-	p->h = h = ZSTR_H(key);
+	ZVAL_STR(&p->key, key);
+	Z_HASH(p->key) = h = ZSTR_H(key);
 	nIndex = h | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH_EX(arData, nIndex);
 	HT_HASH_EX(arData, nIndex) = HT_IDX_TO_HASH(idx);
@@ -960,13 +960,14 @@ add_to_hash:
 	idx = ht->nNumUsed++;
 	ht->nNumOfElements++;
 	p = ht->arData + idx;
-	p->key = key = zend_string_init(str, len, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+	key = zend_string_init(str, len, GC_FLAGS(ht) & IS_ARRAY_PERSISTENT);
+	ZVAL_STR(&p->key, key);
 #if ZEND_RC_DEBUG
 	if (GC_FLAGS(ht) & GC_PERSISTENT_LOCAL) {
 		GC_MAKE_PERSISTENT_LOCAL(key);
 	}
 #endif
-	p->h = ZSTR_H(key) = h;
+	Z_HASH(p->key) = ZSTR_H(key) = h;
 	HT_FLAGS(ht) &= ~HASH_FLAG_STATIC_KEYS;
 	if (flag & HASH_LOOKUP) {
 		ZVAL_NULL(&p->val);
@@ -1192,8 +1193,8 @@ convert_to_hash:
 		ht->nNextFreeElement = (zend_long)h < ZEND_LONG_MAX ? h + 1 : ZEND_LONG_MAX;
 	}
 	ht->nNumOfElements++;
-	p->h = h;
-	p->key = NULL;
+	Z_HASH(p->key) = h;
+	ZVAL_LONG(&p->key, h);
 	if (flag & HASH_LOOKUP) {
 		ZVAL_NULL(&p->val);
 	} else {
@@ -1249,6 +1250,39 @@ ZEND_API zval* ZEND_FASTCALL zend_hash_next_index_insert_new(HashTable *ht, zval
 ZEND_API zval* ZEND_FASTCALL zend_hash_index_lookup(HashTable *ht, zend_ulong h)
 {
 	return _zend_hash_index_add_or_update_i(ht, h, NULL, HASH_LOOKUP);
+}
+
+ZEND_API zval* ZEND_FASTCALL zend_hash_zkey_update(HashTable *ht, zval *key, zval *val)
+{
+	switch (Z_TYPE_P(key)) {
+		case IS_LONG:
+			return zend_hash_index_update(ht, Z_LVAL_P(key), val);
+		case IS_STRING:
+			return zend_hash_update(ht, Z_STR_P(key), val);
+		default: ZEND_UNREACHABLE();
+	}
+}
+
+ZEND_API zval* ZEND_FASTCALL zend_hash_zkey_add_new(HashTable *ht, zval *key, zval *val)
+{
+	switch (Z_TYPE_P(key)) {
+		case IS_LONG:
+			return zend_hash_index_add_new(ht, Z_LVAL_P(key), val);
+		case IS_STRING:
+			return zend_hash_add_new(ht, Z_STR_P(key), val);
+		default: ZEND_UNREACHABLE();
+	}
+}
+
+ZEND_API zend_result ZEND_FASTCALL zend_hash_zkey_del(HashTable *ht, zval *key)
+{
+	switch (Z_TYPE_P(key)) {
+		case IS_LONG:
+			return zend_hash_index_del(ht, Z_LVAL_P(key));
+		case IS_STRING:
+			return zend_hash_del(ht, Z_STR_P(key));
+		default: ZEND_UNREACHABLE();
+	}
 }
 
 ZEND_API zval* ZEND_FASTCALL zend_hash_set_bucket_key(HashTable *ht, Bucket *b, zend_string *key)
@@ -1372,7 +1406,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 	p = ht->arData;
 	if (HT_IS_WITHOUT_HOLES(ht)) {
 		do {
-			nIndex = p->h | ht->nTableMask;
+			nIndex = Z_HASH(p->key) | ht->nTableMask;
 			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 			HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(i);
 			p++;
@@ -1389,9 +1423,9 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 						p++;
 						if (EXPECTED(Z_TYPE_INFO(p->val) != IS_UNDEF)) {
 							ZVAL_COPY_VALUE(&q->val, &p->val);
-							q->h = p->h;
-							nIndex = q->h | ht->nTableMask;
-							q->key = p->key;
+							Z_HASH(q->key) = Z_HASH(p->key);
+							nIndex = Z_HASH(q->key) | ht->nTableMask;
+							ZVAL_COPY_VALUE(&q->key, &p->key);
 							Z_NEXT(q->val) = HT_HASH(ht, nIndex);
 							HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(j);
 							if (UNEXPECTED(ht->nInternalPointer > j && ht->nInternalPointer <= i)) {
@@ -1408,9 +1442,9 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 						p++;
 						if (EXPECTED(Z_TYPE_INFO(p->val) != IS_UNDEF)) {
 							ZVAL_COPY_VALUE(&q->val, &p->val);
-							q->h = p->h;
-							nIndex = q->h | ht->nTableMask;
-							q->key = p->key;
+							Z_HASH(q->key) = Z_HASH(p->key);
+							nIndex = Z_HASH(q->key) | ht->nTableMask;
+							ZVAL_COPY_VALUE(&q->key, &p->key);
 							Z_NEXT(q->val) = HT_HASH(ht, nIndex);
 							HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(j);
 							if (UNEXPECTED(ht->nInternalPointer > j && ht->nInternalPointer <= i)) {
@@ -1430,7 +1464,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_rehash(HashTable *ht)
 				ht->nNumUsed = j;
 				break;
 			}
-			nIndex = p->h | ht->nTableMask;
+			nIndex = Z_HASH(p->key) | ht->nTableMask;
 			Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 			HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(i);
 			p++;
@@ -1484,7 +1518,7 @@ static zend_always_inline void _zend_hash_del_el_ex(HashTable *ht, uint32_t idx,
 	if (prev) {
 		Z_NEXT(prev->val) = Z_NEXT(p->val);
 	} else {
-		HT_HASH(ht, p->h | ht->nTableMask) = Z_NEXT(p->val);
+		HT_HASH(ht, Z_HASH(p->key) | ht->nTableMask) = Z_NEXT(p->val);
 	}
 	idx = HT_HASH_TO_IDX(idx);
 	ht->nNumOfElements--;
@@ -1511,7 +1545,7 @@ static zend_always_inline void _zend_hash_del_el(HashTable *ht, uint32_t idx, Bu
 	uint32_t nIndex;
 	uint32_t i;
 
-	nIndex = p->h | ht->nTableMask;
+	nIndex = Z_HASH(p->key) | ht->nTableMask;
 	i = HT_HASH(ht, nIndex);
 
 	if (i != idx) {
@@ -1522,9 +1556,9 @@ static zend_always_inline void _zend_hash_del_el(HashTable *ht, uint32_t idx, Bu
 		}
 	}
 
-	if (p->key) {
-		zend_string_release(p->key);
-		p->key = NULL;
+	if (Z_REFCOUNTED(p->key)) {
+		zval_ptr_dtor(&p->key);
+		ZVAL_UNDEF(&p->key);
 	}
 	_zend_hash_del_el_ex(ht, idx, p, prev);
 }
@@ -1563,12 +1597,12 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_del(HashTable *ht, zend_string *key
 	idx = HT_HASH(ht, nIndex);
 	while (idx != HT_INVALID_IDX) {
 		p = HT_HASH_TO_BUCKET(ht, idx);
-		if ((p->key == key) ||
-			(p->h == h &&
-		     p->key &&
-		     zend_string_equal_content(p->key, key))) {
-			zend_string_release(p->key);
-			p->key = NULL;
+		if (Z_TYPE(p->key) == IS_STRING
+		 && (Z_STR(p->key) == key
+		  || (Z_HASH(p->key) == h
+		   && zend_string_equal_content(Z_STR(p->key), key)))) {
+			zend_string_release(Z_STR(p->key));
+			ZVAL_UNDEF(&p->key);
 			_zend_hash_del_el_ex(ht, idx, p, prev);
 			return SUCCESS;
 		}
@@ -1595,10 +1629,10 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_del_ind(HashTable *ht, zend_string 
 	idx = HT_HASH(ht, nIndex);
 	while (idx != HT_INVALID_IDX) {
 		p = HT_HASH_TO_BUCKET(ht, idx);
-		if ((p->key == key) ||
-			(p->h == h &&
-		     p->key &&
-		     zend_string_equal_content(p->key, key))) {
+		if (Z_TYPE(p->key) == IS_STRING
+		 && (Z_STR(p->key) == key
+		  || (Z_HASH(p->key) == h
+		   && zend_string_equal_content(Z_STR(p->key), key)))) {
 			if (Z_TYPE(p->val) == IS_INDIRECT) {
 				zval *data = Z_INDIRECT(p->val);
 
@@ -1645,9 +1679,9 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_str_del_ind(HashTable *ht, const ch
 	idx = HT_HASH(ht, nIndex);
 	while (idx != HT_INVALID_IDX) {
 		p = HT_HASH_TO_BUCKET(ht, idx);
-		if ((p->h == h)
-			 && p->key
-			 && zend_string_equals_cstr(p->key, str, len)) {
+		if (Z_TYPE(p->key) == IS_STRING
+		 && (Z_HASH(p->key) == h
+		 && zend_string_equals_cstr(Z_STR(p->key), str, len))) {
 			if (Z_TYPE(p->val) == IS_INDIRECT) {
 				zval *data = Z_INDIRECT(p->val);
 
@@ -1661,8 +1695,8 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_str_del_ind(HashTable *ht, const ch
 					HT_FLAGS(ht) |= HASH_FLAG_HAS_EMPTY_IND;
 				}
 			} else {
-				zend_string_release(p->key);
-				p->key = NULL;
+				zend_string_release(Z_STR(p->key));
+				ZVAL_UNDEF(&p->key);
 				_zend_hash_del_el_ex(ht, idx, p, prev);
 			}
 			return SUCCESS;
@@ -1690,11 +1724,11 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_str_del(HashTable *ht, const char *
 	idx = HT_HASH(ht, nIndex);
 	while (idx != HT_INVALID_IDX) {
 		p = HT_HASH_TO_BUCKET(ht, idx);
-		if ((p->h == h)
-			 && p->key
-			 && zend_string_equals_cstr(p->key, str, len)) {
-			zend_string_release(p->key);
-			p->key = NULL;
+		if (Z_TYPE(p->key) == IS_STRING
+		 && Z_HASH(p->key) == h
+		 && zend_string_equals_cstr(Z_STR(p->key), str, len)) {
+			zend_string_release(Z_STR(p->key));
+			ZVAL_UNDEF(&p->key);
 			_zend_hash_del_el_ex(ht, idx, p, prev);
 			return SUCCESS;
 		}
@@ -1729,7 +1763,7 @@ ZEND_API zend_result ZEND_FASTCALL zend_hash_index_del(HashTable *ht, zend_ulong
 	idx = HT_HASH(ht, nIndex);
 	while (idx != HT_INVALID_IDX) {
 		p = HT_HASH_TO_BUCKET(ht, idx);
-		if ((p->h == h) && (p->key == NULL)) {
+		if (Z_TYPE(p->key) == IS_LONG && Z_LVAL(p->key) == h) {
 			_zend_hash_del_el_ex(ht, idx, p, prev);
 			return SUCCESS;
 		}
@@ -2153,7 +2187,7 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht, apply_func_args_t ap
 {
 	uint32_t idx;
 	va_list args;
-	zend_hash_key hash_key;
+	zval hash_key;
 	int result;
 
 	IS_CONSISTENT(ht);
@@ -2164,8 +2198,7 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht, apply_func_args_t ap
 
 			if (UNEXPECTED(Z_TYPE_P(zv) == IS_UNDEF)) continue;
 			va_start(args, num_args);
-			hash_key.h = idx;
-			hash_key.key = NULL;
+			ZVAL_LONG(&hash_key, idx);
 
 			result = apply_func(zv, num_args, args, &hash_key);
 
@@ -2185,10 +2218,8 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht, apply_func_args_t ap
 
 			if (UNEXPECTED(Z_TYPE(p->val) == IS_UNDEF)) continue;
 			va_start(args, num_args);
-			hash_key.h = p->h;
-			hash_key.key = p->key;
 
-			result = apply_func(&p->val, num_args, args, &hash_key);
+			result = apply_func(&p->val, num_args, args, &p->key);
 
 			if (result & ZEND_HASH_APPLY_REMOVE) {
 				HT_ASSERT_RC1(ht);
@@ -2287,11 +2318,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_copy(HashTable *target, const HashTable *s
 				continue;
 			}
 		}
-		if (p->key) {
-			new_entry = zend_hash_update(target, p->key, data);
-		} else {
-			new_entry = zend_hash_index_update(target, p->h, data);
-		}
+		zend_hash_zkey_update(target, &p->key, data);
 		if (pCopyConstructor) {
 			pCopyConstructor(new_entry);
 		}
@@ -2345,10 +2372,10 @@ static zend_always_inline bool zend_array_dup_element(const HashTable *source, H
 	if (!packed) {
 		uint32_t nIndex;
 
-		q->h = p->h;
-		q->key = p->key;
+		Z_HASH(q->key) = Z_HASH(p->key);
+		ZVAL_COPY_VALUE(&q->key, &p->key);
 		if (!static_keys && q->key) {
-			zend_string_addref(q->key);
+			Z_TRY_ADDREF(q->key);
 		}
 
 		nIndex = q->h | target->nTableMask;
@@ -2596,13 +2623,13 @@ ZEND_API void ZEND_FASTCALL zend_hash_merge(HashTable *target, const HashTable *
 			if (UNEXPECTED(Z_TYPE_P(s) == IS_UNDEF)) {
 				continue;
 			}
-			if (p->key) {
-				t = _zend_hash_add_or_update_i(target, p->key, s, HASH_UPDATE | HASH_UPDATE_INDIRECT);
+			if (Z_TYPE(p->key) == IS_STRING) {
+				t = _zend_hash_add_or_update_i(target, Z_STR(p->key), s, HASH_UPDATE | HASH_UPDATE_INDIRECT);
 				if (pCopyConstructor) {
 					pCopyConstructor(t);
 				}
 			} else {
-				t = zend_hash_index_update(target, p->h, s);
+				t = zend_hash_index_update(target, Z_LVAL(p->key), s);
 				if (pCopyConstructor) {
 					pCopyConstructor(t);
 				}
@@ -2632,29 +2659,19 @@ ZEND_API void ZEND_FASTCALL zend_hash_merge(HashTable *target, const HashTable *
 			if (UNEXPECTED(Z_TYPE_P(s) == IS_UNDEF)) {
 				continue;
 			}
-			if (p->key) {
-				t = _zend_hash_add_or_update_i(target, p->key, s, HASH_ADD | HASH_UPDATE_INDIRECT);
+			if (Z_TYPE(p->key) == IS_STRING) {
+				t = _zend_hash_add_or_update_i(target, Z_STR(p->key), s, HASH_ADD | HASH_UPDATE_INDIRECT);
 				if (t && pCopyConstructor) {
 					pCopyConstructor(t);
 				}
 			} else {
-				t = zend_hash_index_add(target, p->h, s);
+				t = zend_hash_index_add(target, Z_LVAL(p->key), s);
 				if (t && pCopyConstructor) {
 					pCopyConstructor(t);
 				}
 			}
 		}
 	}
-}
-
-
-static bool ZEND_FASTCALL zend_hash_replace_checker_wrapper(HashTable *target, zval *source_data, zend_ulong h, zend_string *key, void *pParam, merge_checker_func_t merge_checker_func)
-{
-	zend_hash_key hash_key;
-
-	hash_key.h = h;
-	hash_key.key = key;
-	return merge_checker_func(target, source_data, &hash_key, pParam);
 }
 
 
@@ -2672,7 +2689,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_merge_ex(HashTable *target, const HashTabl
 	for (idx = 0; idx < source->nNumUsed; idx++) {
 		p = source->arData + idx;
 		if (UNEXPECTED(Z_TYPE(p->val) == IS_UNDEF)) continue;
-		if (zend_hash_replace_checker_wrapper(target, &p->val, p->h, p->key, pParam, pMergeSource)) {
+		if (pMergeSource(target, &p->val, &p->key, pParam)) {
 			t = zend_hash_update(target, p->key, &p->val);
 			if (pCopyConstructor) {
 				pCopyConstructor(t);
@@ -2873,11 +2890,11 @@ ZEND_API zend_hash_key_type ZEND_FASTCALL zend_hash_get_current_key_ex(const Has
 			return HASH_KEY_IS_LONG;
 		}
 		p = ht->arData + idx;
-		if (p->key) {
-			*str_index = p->key;
+		if (Z_TYPE(p->key) == IS_STRING) {
+			*str_index = Z_STR(p->key);
 			return HASH_KEY_IS_STRING;
 		} else {
-			*num_index = p->h;
+			*num_index = Z_LVAL(p->key);
 			return HASH_KEY_IS_LONG;
 		}
 	}
@@ -2899,11 +2916,7 @@ ZEND_API void ZEND_FASTCALL zend_hash_get_current_key_zval_ex(const HashTable *h
 			return;
 		}
 		p = ht->arData + idx;
-		if (p->key) {
-			ZVAL_STR_COPY(key, p->key);
-		} else {
-			ZVAL_LONG(key, p->h);
-		}
+		ZVAL_COPY(&key, &p->key);
 	}
 }
 
@@ -2950,19 +2963,15 @@ ZEND_API zval* ZEND_FASTCALL zend_hash_get_current_data_ex(const HashTable *ht, 
 ZEND_API void zend_hash_bucket_swap(Bucket *p, Bucket *q)
 {
 	zval val;
-	zend_ulong h;
-	zend_string *key;
+	zval key;
 
 	val = p->val;
-	h = p->h;
 	key = p->key;
 
 	p->val = q->val;
-	p->h = q->h;
 	p->key = q->key;
 
 	q->val = val;
-	q->h = h;
 	q->key = key;
 }
 
@@ -2973,21 +2982,6 @@ ZEND_API void zend_hash_bucket_renum_swap(Bucket *p, Bucket *q)
 	val = p->val;
 	p->val = q->val;
 	q->val = val;
-}
-
-ZEND_API void zend_hash_bucket_packed_swap(Bucket *p, Bucket *q)
-{
-	zval val;
-	zend_ulong h;
-
-	val = p->val;
-	h = p->h;
-
-	p->val = q->val;
-	p->h = q->h;
-
-	q->val = val;
-	q->h = h;
 }
 
 static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_compare_func_t compar, bool renumber)
@@ -3036,19 +3030,16 @@ static void zend_hash_sort_internal(HashTable *ht, sort_func_t sort, bucket_comp
 	}
 
 	sort((void *)ht->arData, ht->nNumUsed, sizeof(Bucket), (compare_func_t) compar,
-			(swap_func_t)(renumber? zend_hash_bucket_renum_swap :
-				(HT_IS_PACKED(ht) ? zend_hash_bucket_packed_swap : zend_hash_bucket_swap)));
+			(swap_func_t)(renumber? zend_hash_bucket_renum_swap : zend_hash_bucket_swap));
 
 	ht->nInternalPointer = 0;
 
 	if (renumber) {
 		for (j = 0; j < i; j++) {
 			p = ht->arData + j;
-			p->h = j;
-			if (p->key) {
-				zend_string_release(p->key);
-				p->key = NULL;
-			}
+			Z_HASH(p->key) = j;
+			zval_ptr_dtor(&p->key);
+			ZVAL_LONG(&p->key, j);
 		}
 
 		ht->nNextFreeElement = i;
@@ -3109,6 +3100,7 @@ ZEND_API void ZEND_FASTCALL zend_array_sort_ex(HashTable *ht, sort_func_t sort, 
 	}
 }
 
+// FIXME: Tweaks needed for object support.
 static zend_always_inline int zend_hash_compare_impl(const HashTable *ht1, const HashTable *ht2, compare_func_t compar, bool ordered) {
 	uint32_t idx1, idx2;
 	zend_string *key1, *key2;
@@ -3128,8 +3120,13 @@ static zend_always_inline int zend_hash_compare_impl(const HashTable *ht1, const
 		} else {
 			Bucket *p = ht1->arData + idx1;
 			pData1 = &p->val;
-			h1 = p->h;
-			key1 = p->key;
+			if (Z_TYPE(p->key) == IS_LONG) {
+				h1 = Z_LVAL(p->key);
+				key1 = NULL;
+			} else {
+				h1 = Z_HASH(p->key);
+				key1 = Z_STR(p->key);
+			}
 		}
 
 		if (Z_TYPE_P(pData1) == IS_UNDEF) continue;
@@ -3149,8 +3146,13 @@ static zend_always_inline int zend_hash_compare_impl(const HashTable *ht1, const
 					ZEND_ASSERT(idx2 != ht2->nNumUsed);
 					p = ht2->arData + idx2;
 					pData2 = &p->val;
-					h2 = p->h;
-					key2 = p->key;
+					if (Z_TYPE(p->key) == IS_LONG) {
+						h2 = Z_LVAL(p->key);
+						key2 = NULL;
+					} else {
+						h2 = Z_HASH(p->key);
+						key2 = Z_STR(p->key);
+					}
 					if (Z_TYPE_P(pData2) != IS_UNDEF) break;
 					idx2++;
 				}

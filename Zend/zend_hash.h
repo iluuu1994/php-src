@@ -93,12 +93,7 @@ extern ZEND_API const HashTable zend_empty_array;
 	} while (0)
 
 
-typedef struct _zend_hash_key {
-	zend_ulong h;
-	zend_string *key;
-} zend_hash_key;
-
-typedef bool (*merge_checker_func_t)(HashTable *target_ht, zval *source_data, zend_hash_key *hash_key, void *pParam);
+typedef bool (*merge_checker_func_t)(HashTable *target_ht, zval *source_data, zval *hash_key, void *pParam);
 
 BEGIN_EXTERN_C()
 
@@ -144,6 +139,10 @@ ZEND_API zval* ZEND_FASTCALL zend_hash_add_empty_element(HashTable *ht, zend_str
 ZEND_API zval* ZEND_FASTCALL zend_hash_str_add_empty_element(HashTable *ht, const char *key, size_t len);
 
 ZEND_API zval* ZEND_FASTCALL zend_hash_set_bucket_key(HashTable *ht, Bucket *p, zend_string *key);
+
+ZEND_API zval* ZEND_FASTCALL zend_hash_zkey_update(HashTable *ht, zval *key, zval *val);
+ZEND_API zval* ZEND_FASTCALL zend_hash_zkey_add_new(HashTable *ht, zval *key, zval *val);
+ZEND_API zend_result ZEND_FASTCALL zend_hash_zkey_del(HashTable *ht, zval *key);
 
 #define ZEND_HASH_APPLY_KEEP				0
 #define ZEND_HASH_APPLY_REMOVE				1<<0
@@ -297,7 +296,6 @@ ZEND_API void  ZEND_FASTCALL zend_hash_merge(HashTable *target, const HashTable 
 ZEND_API void  ZEND_FASTCALL zend_hash_merge_ex(HashTable *target, const HashTable *source, copy_ctor_func_t pCopyConstructor, merge_checker_func_t pMergeSource, void *pParam);
 ZEND_API void  zend_hash_bucket_swap(Bucket *p, Bucket *q);
 ZEND_API void  zend_hash_bucket_renum_swap(Bucket *p, Bucket *q);
-ZEND_API void  zend_hash_bucket_packed_swap(Bucket *p, Bucket *q);
 
 typedef int (*bucket_compare_func_t)(Bucket *a, Bucket *b);
 ZEND_API int   zend_hash_compare(HashTable *ht1, const HashTable *ht2, compare_func_t compar, bool ordered);
@@ -1087,8 +1085,13 @@ static zend_always_inline void *zend_hash_get_current_data_ptr_ex(const HashTabl
 				_p--; \
 				__z = &_p->val; \
 				_z = __z; \
-				__h = _p->h; \
-				__key = _p->key; \
+				if (Z_TYPE(_p->key) == IS_LONG) { \
+					__h = Z_LVAL(_p->key); \
+					__key = NULL; \
+				} else { \
+					/* FIXME: Is it ok to omit the hash? */ \
+					__key = Z_STR(_p->key); \
+				} \
 				if (indirect && Z_TYPE_P(_z) == IS_INDIRECT) { \
 					_z = Z_INDIRECT_P(_z); \
 				} \
@@ -1644,9 +1647,13 @@ static zend_always_inline zval *_zend_hash_append_ex(HashTable *ht, zend_string 
 		zend_string_addref(key);
 		zend_string_hash_val(key);
 	}
-	p->key = key;
-	p->h = ZSTR_H(key);
-	nIndex = (uint32_t)p->h | ht->nTableMask;
+	if (key_guaranteed_interned) {
+		ZVAL_INTERNED_STR(&p->key, key);
+	} else {
+		ZVAL_STR(&p->key, key);
+	}
+	Z_HASH(p->key) = ZSTR_H(key);
+	nIndex = Z_HASH(p->key) | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
@@ -1671,9 +1678,9 @@ static zend_always_inline zval *_zend_hash_append_ptr_ex(HashTable *ht, zend_str
 		zend_string_addref(key);
 		zend_string_hash_val(key);
 	}
-	p->key = key;
-	p->h = ZSTR_H(key);
-	nIndex = (uint32_t)p->h | ht->nTableMask;
+	ZVAL_STR(&p->key, key);
+	Z_HASH(p->key) = ZSTR_H(key);
+	nIndex = Z_HASH(p->key) | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
@@ -1697,9 +1704,9 @@ static zend_always_inline void _zend_hash_append_ind(HashTable *ht, zend_string 
 		zend_string_addref(key);
 		zend_string_hash_val(key);
 	}
-	p->key = key;
-	p->h = ZSTR_H(key);
-	nIndex = (uint32_t)p->h | ht->nTableMask;
+	ZVAL_STR(&p->key, key);
+	Z_HASH(p->key) = ZSTR_H(key);
+	nIndex = Z_HASH(p->key) | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
 	ht->nNumOfElements++;
