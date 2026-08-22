@@ -362,10 +362,17 @@ fprintf(stderr, "stream_free: %s:%p[%s] preserve_handle=%d release_cast=%d remov
 				Let's let the cookie code clean it all up.
 			 */
 			stream->in_free = 0;
-			return fclose(stream->stdiocast) || flush_ret;
+			ret = fclose(stream->stdiocast);
+			if (!ret) {
+				ret = flush_ret;
+			}
+			return ret;
 		}
 
-		ret = stream->ops->close(stream, preserve_handle ? 0 : 1) || flush_ret;
+		ret = stream->ops->close(stream, preserve_handle ? 0 : 1);
+		if (!ret) {
+			ret = flush_ret;
+		}
 		stream->abstract = NULL;
 
 		/* tidy up any FILE* that might have been fdopened */
