@@ -335,9 +335,10 @@ fprintf(stderr, "stream_free: %s:%p[%s] preserve_handle=%d release_cast=%d remov
 		(close_options & PHP_STREAM_FREE_RSRC_DTOR) == 0);
 #endif
 
+	int flush_ret = 0;
 	if (stream->flags & PHP_STREAM_FLAG_WAS_WRITTEN || stream->writefilters.head) {
 		/* make sure everything is saved */
-		php_stream_flush_ex(stream, true);
+		flush_ret = php_stream_flush_ex(stream, true);
 	}
 
 	/* If not called from the resource dtor, remove the stream from the resource list. */
@@ -361,10 +362,17 @@ fprintf(stderr, "stream_free: %s:%p[%s] preserve_handle=%d release_cast=%d remov
 				Let's let the cookie code clean it all up.
 			 */
 			stream->in_free = 0;
-			return fclose(stream->stdiocast);
+			ret = fclose(stream->stdiocast);
+			if (!ret) {
+				ret = flush_ret;
+			}
+			return ret;
 		}
 
 		ret = stream->ops->close(stream, preserve_handle ? 0 : 1);
+		if (!ret) {
+			ret = flush_ret;
+		}
 		stream->abstract = NULL;
 
 		/* tidy up any FILE* that might have been fdopened */
