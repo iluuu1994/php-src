@@ -195,7 +195,10 @@ PHPAPI zend_result php_stream_cast(php_stream *stream, int castas, void **ret, i
 
 	/* synchronize our buffer (if possible) */
 	if (ret && castas != PHP_STREAM_AS_FD_FOR_SELECT && castas != PHP_STREAM_AS_FD_FOR_COPY) {
-		php_stream_flush(stream);
+		/* If we're failing to flush the handle will be stale. */
+		if (php_stream_flush(stream)) {
+			return FAILURE;
+		}
 		if (stream->ops->seek && (stream->flags & PHP_STREAM_FLAG_NO_SEEK) == 0) {
 			zend_off_t dummy;
 

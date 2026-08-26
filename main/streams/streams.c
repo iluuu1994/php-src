@@ -1337,7 +1337,9 @@ PHPAPI int php_stream_seek(php_stream *stream, zend_off_t offset, int whence)
 	bool is_start_seeking = whence == SEEK_SET && offset == 0;
 
 	if (stream->writefilters.head) {
-		php_stream_flush(stream);
+		if (php_stream_flush(stream)) {
+			return -1;
+		}
 		if (!php_stream_are_filters_seekable(stream->writefilters.head, is_start_seeking,
 				PHP_STREAM_FILTER_WRITE)) {
 			return -1;

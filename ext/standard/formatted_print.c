@@ -878,9 +878,9 @@ PHP_FUNCTION(fprintf)
 		RETURN_THROWS();
 	}
 
-	php_stream_write(stream, ZSTR_VAL(result), ZSTR_LEN(result));
+	ssize_t written = php_stream_write(stream, ZSTR_VAL(result), ZSTR_LEN(result));
 
-	RETVAL_LONG(ZSTR_LEN(result));
+	RETVAL_LONG(written);
 	zend_string_efree(result);
 }
 /* }}} */
@@ -910,9 +910,9 @@ PHP_FUNCTION(vfprintf)
 		RETURN_THROWS();
 	}
 
-	php_stream_write(stream, ZSTR_VAL(result), ZSTR_LEN(result));
+	ssize_t written = php_stream_write(stream, ZSTR_VAL(result), ZSTR_LEN(result));
 
-	RETVAL_LONG(ZSTR_LEN(result));
+	RETVAL_LONG(written);
 	zend_string_efree(result);
 }
 /* }}} */
