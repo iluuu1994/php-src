@@ -6195,13 +6195,8 @@ ZEND_VM_HANDLER(181, ZEND_FETCH_CLASS_CONSTANT, VAR|CONST|UNUSED|CLASS_FETCH, CO
 			break;
 		}
 
-		constant_zv = GET_OP2_ZVAL_PTR_DEREF(BP_VAR_R);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP2();
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = GET_OP2_ZVAL_PTR(BP_VAR_R);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (OP2_TYPE != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {

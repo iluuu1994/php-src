@@ -1107,8 +1107,7 @@ static zend_result ZEND_FASTCALL zend_ast_evaluate_inner(
 			if (UNEXPECTED(zend_ast_evaluate_ex(&op2, ast->child[1], scope, &short_circuited, ctx) != SUCCESS)) {
 				return FAILURE;
 			}
-			if (UNEXPECTED(Z_TYPE(op2) != IS_STRING)) {
-				zend_invalid_class_constant_type_error(Z_TYPE(op2));
+			if (!try_convert_to_string(&op2)) {
 				zval_ptr_dtor_nogc(&op2);
 				return FAILURE;
 			}

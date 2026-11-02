@@ -228,7 +228,7 @@ $op2_get_zval_ptr = array(
     "UNUSED"   => "NULL",
     "CV"       => "_get_zval_ptr_cv_\\1(opline->op2.var EXECUTE_DATA_CC)",
     "TMPVAR"   => "_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC)",
-    "TMPVARCV" => "???",
+    "TMPVARCV" => "_get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC)",
 );
 
 $op1_get_zval_ptr_ptr = array(

@@ -90,8 +90,6 @@ ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_readonly_property_m
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_readonly_property_modification_error_ex(const char *class_name, const char *prop_name);
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_readonly_property_indirect_modification_error(const zend_property_info *info);
 
-ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_invalid_class_constant_type_error(uint8_t type);
-
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_object_released_while_assigning_to_property_error(const zend_property_info *info);
 
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_cannot_add_element(void);

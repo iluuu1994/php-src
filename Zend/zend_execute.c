@@ -945,11 +945,6 @@ ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_readonly_property_i
 		info->ce->name, zend_get_unmangled_property_name(info->name));
 }
 
-ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_invalid_class_constant_type_error(const uint8_t type)
-{
-	zend_type_error("Cannot use value of type %s as class constant name", zend_get_type_by_const(type));
-}
-
 ZEND_API zend_never_inline ZEND_COLD void ZEND_FASTCALL zend_object_released_while_assigning_to_property_error(const zend_property_info *info)
 {
 	zend_throw_error(NULL, "Object was released while assigning to property %pS::$%s",

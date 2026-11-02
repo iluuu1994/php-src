@@ -3238,6 +3238,10 @@ static zend_op *zend_delayed_compile_prop(znode *result, zend_ast *ast, uint32_t
 	}
 
 	zend_compile_expr(&prop_node, prop_ast);
+	if (prop_node.op_type != IS_CONST) {
+		opline = zend_emit_op_tmp(&prop_node, ZEND_CAST, &prop_node, NULL);
+		opline->extended_value = IS_STRING;
+	}
 
 	opline = zend_delayed_emit_op(result, ZEND_FETCH_OBJ_R, &obj_node, &prop_node);
 	if (opline->op2_type == IS_CONST) {
@@ -11897,6 +11901,10 @@ static void zend_compile_class_const(znode *result, zend_ast *ast, uint8_t type)
 	zend_compile_class_ref(&class_node, class_ast, ZEND_FETCH_CLASS_EXCEPTION);
 
 	zend_compile_expr(&const_node, const_ast);
+	if (const_node.op_type != IS_CONST) {
+		opline = zend_emit_op_tmp(&const_node, ZEND_CAST, &const_node, NULL);
+		opline->extended_value = IS_STRING;
+	}
 
 	opline = zend_emit_op(result, ZEND_FETCH_CLASS_CONSTANT, NULL, &const_node);
 	if (type == BP_VAR_R || type == BP_VAR_IS) {

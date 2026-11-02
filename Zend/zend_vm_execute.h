@@ -7868,13 +7868,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -9173,13 +9167,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -26096,13 +26085,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -26637,13 +26620,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -34702,13 +34680,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -35084,13 +35056,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_FUNC_CCONV ZEND_FETCH_CLASS_C
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -60747,13 +60714,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -62052,13 +62013,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -78773,13 +78729,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -79314,13 +79264,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -87379,13 +87324,7 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 		}
 
 		constant_zv = RT_CONSTANT(opline, opline->op2);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-
-
-			HANDLE_EXCEPTION();
-		}
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if (IS_CONST != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
@@ -87761,13 +87700,8 @@ static ZEND_OPCODE_HANDLER_RET ZEND_OPCODE_HANDLER_CCONV ZEND_FETCH_CLASS_CONSTA
 			break;
 		}
 
-		constant_zv = _get_zval_ptr_tmpvarcv(opline->op2_type, opline->op2, BP_VAR_R EXECUTE_DATA_CC);
-		if (UNEXPECTED(Z_TYPE_P(constant_zv) != IS_STRING)) {
-			zend_invalid_class_constant_type_error(Z_TYPE_P(constant_zv));
-			ZVAL_UNDEF(EX_VAR(opline->result.var));
-			FREE_OP(opline->op2_type, opline->op2.var);
-			HANDLE_EXCEPTION();
-		}
+		constant_zv = _get_zval_ptr_var(opline->op2.var EXECUTE_DATA_CC);
+		ZEND_ASSERT(Z_TYPE_P(constant_zv) == IS_STRING);
 		constant_name = Z_STR_P(constant_zv);
 		/* Magic 'class' for constant OP2 is caught at compile-time */
 		if ((IS_TMP_VAR|IS_VAR|IS_CV) != IS_CONST && UNEXPECTED(zend_string_equals_literal_ci(constant_name, "class"))) {
