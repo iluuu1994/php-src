@@ -48,7 +48,7 @@ runs:
           -d opcache.jit=${{ inputs.jitType }} \
           -d opcache.protect_memory=1 \
           -d opcache.jit_buffer_size=64M \
-          ${{ inputs.idleCpu == 'true' && '-j$(($(/usr/bin/nproc) - 1))' || '-j$(/usr/bin/nproc)' }} \
+          -j1 \
           -g FAIL,BORK,LEAK,XLEAK \
           --offline \
           --show-diff \
