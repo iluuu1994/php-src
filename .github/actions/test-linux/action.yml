@@ -50,7 +50,6 @@ runs:
           -d opcache.jit_buffer_size=64M \
           ${{ inputs.idleCpu == 'true' && '-j$(($(/usr/bin/nproc) - 1))' || '-j$(/usr/bin/nproc)' }} \
           -g FAIL,BORK,LEAK,XLEAK \
-          --no-progress \
           --offline \
           --show-diff \
           --show-slow 1000 \
