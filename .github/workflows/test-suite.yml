@@ -481,7 +481,7 @@ jobs:
           export ASAN_OPTIONS=exitcode=139
           export UBSAN_OPTIONS=print_stacktrace=1
           export USE_ZEND_ALLOC=0
-          echo opcache.protect_memory=1 >> /etc/php.d/opcache.ini
+          #echo opcache.protect_memory=1 >> /etc/php.d/opcache.ini
           echo opcache.jit=tracing >> /etc/php.d/opcache.ini
           echo opcache.jit_buffer_size=1G >> /etc/php.d/opcache.ini
           echo opcache.jit_max_root_traces=100000 >> /etc/php.d/opcache.ini
