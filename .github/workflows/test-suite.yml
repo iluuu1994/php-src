@@ -438,6 +438,17 @@ jobs:
     name: "COMMUNITY_${{ matrix.type }}"
     runs-on: ubuntu-${{ fromJson(inputs.branch).config.ubuntu_version }}
     steps:
+      - name: ASAN settings
+        if: ${{ matrix.type != 'verify_type_inference' }}
+        run: |
+          echo "ASAN_OPTIONS=exitcode=139" >> "$GITHUB_ENV"
+          echo "UBSAN_OPTIONS=print_stacktrace=1" >> "$GITHUB_ENV"
+          echo "USE_ZEND_ALLOC=0" >> "$GITHUB_ENV"
+      - name: Test
+        run: |
+          echo $ASAN_OPTIONS
+          echo $UBSAN_OPTIONS
+          echo $USE_ZEND_ALLOC
       - name: git checkout
         uses: actions/checkout@v7
         with:
